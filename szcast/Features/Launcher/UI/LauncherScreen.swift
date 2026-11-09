@@ -332,7 +332,7 @@ struct LauncherScreen: PaletteScreen {
         case .edit: return editItem(at: selection)
         case .copyPath: return copyQuicklink(at: selection)
         case .copyFile: return copyDeepLink(at: selection)
-        case .favoriteSlot(let index): return launchFavorite(at: index)
+        case .favoriteSlot(let index): return launchSlot(at: index)
         case .copyCalculation: return copyCalculation(at: selection)
         case .openInApp, .showDetails:
             guard let meeting = meeting(at: selection) else { return false }
@@ -411,10 +411,16 @@ struct LauncherScreen: PaletteScreen {
         return true
     }
 
-    /// ⌘1–⌘9/⌘0 — launch a favorite by position, in either palette size.
-    private func launchFavorite(at index: Int) -> Bool {
-        guard pinnedFavorites.indices.contains(index) else { return false }
-        activate(at: index + (leadCard == nil ? 0 : 1))
+    /// ⌘1–⌘9/⌘0 — a favorite on a blank launcher; otherwise the Nth visible row, Alfred style.
+    private func launchSlot(at index: Int) -> Bool {
+        if pinnedFavorites.indices.contains(index) {
+            activate(at: index + (leadCard == nil ? 0 : 1))
+            return true
+        }
+        // Nothing pins while a query is typed, so the digit reaches whichever row is there.
+        let row = index + (leadCard == nil ? 0 : 1)
+        guard rows.indices.contains(row) else { return false }
+        activate(at: row)
         return true
     }
 
@@ -539,7 +545,7 @@ struct LauncherScreen: PaletteScreen {
                 if let index = rows.firstIndex(of: .entry(app)) { vm.selection = index }
                 openActions()
             },
-            onActivateFavorite: { _ = launchFavorite(at: $0) },
+            onActivateFavorite: { _ = launchSlot(at: $0) },
             onFavoriteActions: {
                 vm.selection = $0 + (leadCard == nil ? 0 : 1)
                 openActions()

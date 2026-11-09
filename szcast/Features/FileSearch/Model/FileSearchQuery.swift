@@ -7,6 +7,8 @@ enum FileSearchQuery {
     static let launcherLimit = 5
     /// Category search's threshold too: below it a query matches too many names to be useful.
     static let launcherMinimumLength = 3
+    /// Space mode asks for files explicitly, so one typed character is enough of a question.
+    static let spaceMinimumLength = 1
     static let priorWeight = 1_500
     static let nonASCIIBit: UInt64 = 1 << 40
 
@@ -16,14 +18,29 @@ enum FileSearchQuery {
         let mask: UInt64
     }
 
+    /// A leading space widens the launcher to files: the Alfred quick search.
+    /// The space is a scope marker, not a search term, so the rest is the query.
+    static func spaceScope(_ query: String) -> (term: String, isSpaceScoped: Bool) {
+        guard query.hasPrefix(" ") else { return (query, false) }
+        return (String(query.dropFirst()), true)
+    }
+
     static func answersLauncher(_ query: String) -> Bool {
         query.trimmingCharacters(in: .whitespacesAndNewlines).count >= launcherMinimumLength
+    }
+
+    /// Space mode requires the file search itself on, not the ambient launcher toggle:
+    /// pressing the space is the explicit intent.
+    static func answersSpaceLauncher(_ query: String) -> Bool {
+        guard case let (term, true) = spaceScope(query) else { return false }
+        return term.trimmingCharacters(in: .whitespacesAndNewlines).count >= spaceMinimumLength
     }
 
     static func launcherResults(
         _ query: String, favorites: [FileSearchResult], indexed: [FileSearchResult]
     ) -> [FileSearchResult] {
-        guard let prepared = prepare(query) else { return [] }
+        let (term, isSpaceScoped) = spaceScope(query)
+        guard let prepared = prepare(term) else { return [] }
         let favorites = favorites.filter { file in
             var name = fold(file.name)
             return name.withUTF8 { name in
@@ -31,7 +48,8 @@ enum FileSearchQuery {
             }
         }
         let favoriteIDs = Set(favorites.map(\.id))
-        let results = answersLauncher(query) ? indexed.filter { !favoriteIDs.contains($0.id) } : []
+        let answered = isSpaceScoped ? answersSpaceLauncher(query) : answersLauncher(query)
+        let results = answered ? indexed.filter { !favoriteIDs.contains($0.id) } : []
         return Array((favorites + results).prefix(launcherLimit))
     }
 

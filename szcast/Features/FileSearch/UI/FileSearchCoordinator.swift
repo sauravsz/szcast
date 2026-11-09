@@ -56,20 +56,29 @@ final class FileSearchCoordinator {
 
     /// Borrows the screen's session, so Search Files then opens on the request already answered.
     func searchFromLauncher(_ query: String) {
-        guard showsFilesInLauncher, FileSearchQuery.answersLauncher(query) else {
+        let (term, isSpaceScoped) = FileSearchQuery.spaceScope(query)
+        // Space mode needs only the file search itself on: the space is the explicit intent.
+        let allowed = isSpaceScoped ? settings.fileSearchEnabled : showsFilesInLauncher
+        let answered = isSpaceScoped ? FileSearchQuery.answersSpaceLauncher(query)
+            : FileSearchQuery.answersLauncher(query)
+        guard allowed, answered else {
             session.cancel()
             return
         }
-        session.search(query)
+        session.search(term)
     }
 
     /// Checks the switch before reading the session, so with it off the launcher observes nothing.
     func launcherFiles(for query: String) -> [FileSearchResult] {
+        let (_, isSpaceScoped) = FileSearchQuery.spaceScope(query)
         guard settings.fileSearchEnabled, !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         else {
             return []
         }
-        let results = showsFilesInLauncher && FileSearchQuery.answersLauncher(query) ? session.results : []
+        let answered = isSpaceScoped ? FileSearchQuery.answersSpaceLauncher(query)
+            : FileSearchQuery.answersLauncher(query)
+        let allowed = showsFilesInLauncher || isSpaceScoped
+        let results = allowed && answered ? session.results : []
         return FileSearchQuery.launcherResults(query, favorites: favoriteFiles, indexed: results)
     }
 

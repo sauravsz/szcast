@@ -756,6 +756,9 @@ is why `LauncherScreen.pinnedFavorites` feeds the chords and the numbered rows a
 the compact bar re-deriving an empty-query order of its own. The compact bar draws no favorites, yet
 every slot still launches one.
 
+Once a query is typed nothing pins, so the digit goads whichever row is there: **⌘1…⌘0 is the
+Nth visible row**, Alfred style, both palette sizes. The first ten rows carry the digit by their
+flat index, carried on the `Row` case like a favorite's slot.
 Holding ⌘ swaps each numbered row's kind label for its chord. `PalettePanel` publishes the modifier
 into `PaletteState.commandHeld` from `.flagsChanged` and clears it in `resignKey` — not in `prepare`,
 which a re-show that preserves state skips entirely. The flag flips **400 ms after** the press, not

@@ -281,6 +281,11 @@ keystroke and when the launcher becomes the mode, and `applyLauncherFiles` re-ru
 changes. `cancel()` returns early on an idle session, so with the section off a keystroke publishes
 nothing.
 
+Pressing a space before typing is the launcher's quick search: the space is a scope marker, not a
+search term, so ` space report` searches for `report`. Space mode answers with the file search on
+its own — it ignores the **Show in launcher** toggle, like `favorites` always — so the space
+prefix still widens when only the feature switch is on. The threshold drops to one character and
+the list stays capped at `launcherLimit`, in place after the app results.
 A Files row is not an `AppEntry`: no `Kind`, ranking, alias or Hide from Search. Files and folders
 can be favorited through ⌘K or ⇧⌘F in either screen; their saved paths join the launcher’s Favorites
 section, share its reordering and ⌘-digit slots, and survive relaunch and settings backups. Explicit
