@@ -499,9 +499,9 @@ final class DictationCueRunner {
 
 @MainActor
 final class ClipboardManager {
-    static let internalType = NSPasteboard.PasteboardType("com.tinycast.internal")
-    func prepareForTinycastPasteboardMutation() {}
-    func synchronizeAfterTinycastPasteboardMutation(changeCount: Int) {}
+    static let internalType = NSPasteboard.PasteboardType("com.sauravsz.szcast.internal")
+    func prepareForSzcastPasteboardMutation() {}
+    func synchronizeAfterSzcastPasteboardMutation(changeCount: Int) {}
     func pauseCapture() {}
     func resumeCapture() {}
 }
@@ -514,7 +514,7 @@ enum Permissions {
 
 @MainActor
 enum Paster {
-    static let tinycastEventTag: Int64 = 0x54494E59
+    static let szcastEventTag: Int64 = 0x54494E59
     static var copies: [String] = []
     static func copyPlainText(_ text: String) { copies.append(text) }
     static func postCommandV(toPid pid: pid_t? = nil) {}

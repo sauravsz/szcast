@@ -1,12 +1,12 @@
 name: Extension Bug
-description: A Raycast extension misbehaves inside Tinycast
+description: A Raycast extension misbehaves inside Szcast
 title: "[Extension]: "
 labels: ["bug", "extension"]
 body:
   - type: markdown
     attributes:
       value: |
-        **Read this first.** Tinycast runs Raycast extensions in its own runtime — a different system,
+        **Read this first.** Szcast runs Raycast extensions in its own runtime — a different system,
         not Raycast. An extension that reaches for something only Raycast has cannot be made to work
         here, and the issue is closed as `wontfix`:
 
@@ -14,12 +14,12 @@ body:
         - the Raycast browser extension (`BrowserExtension`)
         - Raycast's `WindowManagement` service
         - Raycast Pro, cloud sync, accounts or teams
-        - an OS permission or entitlement Tinycast doesn't hold
+        - an OS permission or entitlement Szcast doesn't hold
         - Raycast-internal APIs, private modules and unpublished behaviour
 
         The full list of gaps is in
-        [docs/features/extensions.md](https://github.com/abue-ammar/tinycast/blob/main/docs/features/extensions.md#what-isnt-supported-yet).
-        A missing API that Tinycast *could* reasonably implement is worth reporting. "It works in
+        [docs/features/extensions.md](https://github.com/sauravsz/szcast/blob/main/docs/features/extensions.md#what-isnt-supported-yet).
+        A missing API that Szcast *could* reasonably implement is worth reporting. "It works in
         Raycast" on its own is not.
   - type: checkboxes
     id: existing-search
@@ -67,7 +67,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: Tinycast version + channel
+      label: Szcast version + channel
       placeholder: 0.1.0 stable
     validations:
       required: true
@@ -92,7 +92,7 @@ body:
       description: >
         **Ticking this is not permission to start.** Wait until a maintainer labels this issue
         `approved` — that label is the only green light. Docs-only changes are the exception. Read
-        [CONTRIBUTING.md](https://github.com/abue-ammar/tinycast/blob/main/CONTRIBUTING.md)
+        [CONTRIBUTING.md](https://github.com/sauravsz/szcast/blob/main/CONTRIBUTING.md)
         first — it is required reading, and it is what your PR is held to.
       options:
         - label: I'm willing to implement this myself **once this issue is labelled `approved`**

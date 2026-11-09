@@ -843,7 +843,7 @@ The fetch runs on a private **cacheless** `URLSession` (`.ephemeral`, `urlCache 
 `Cache-Control: public, max-age=…`, so the shared session would keep a second copy in the on-disk
 `URLCache` that deleting the snapshot doesn't touch.
 
-Both feeds are served by the website's Worker at `tinycast.dev/api/v1/currencies`, which reshapes the
+Both feeds are served by the website's Worker at `szcast.dev/api/v1/currencies`, which reshapes the
 CC0 [exchange-api](https://github.com/fawazahmed0/exchange-api) daily snapshot and edge-caches it
 (see `website/worker/currencies.ts`).
 
@@ -868,7 +868,7 @@ that test, and it is sound only because a partial snapshot is never persisted.
 The table is cached at `~/Library/Caches/<bundle-id>/currency-rates.json` and refreshed every 24h.
 The feed republishes about once a day, so a tighter interval would cost requests without returning
 newer numbers. Age is measured from the persisted `fetchedAt`, not from launch, so relaunching
-Tinycast never re-fetches a snapshot that is still fresh — a cold start with a same-day cache makes
+Szcast never re-fetches a snapshot that is still fresh — a cold start with a same-day cache makes
 zero requests. Offline, the last snapshot keeps answering; with no snapshot at all the card says so
 rather than guessing, and a currency the feed doesn't quote reports `No exchange rate for <CODE>.`
 A money answer sets `CalcResult.isCurrency`, so its card shows when the snapshot was fetched and a

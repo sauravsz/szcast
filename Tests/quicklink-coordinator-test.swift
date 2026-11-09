@@ -50,7 +50,7 @@ struct QuicklinkCoordinatorTests {
         fixture.coordinator.openQuicklink(id: fixture.link.id)
         try await Task.sleep(for: .milliseconds(1))
         expect(
-            fixture.core.messages == ["Allow Tinycast to use Accessibility in System Settings"],
+            fixture.core.messages == ["Allow Szcast to use Accessibility in System Settings"],
             "without Accessibility the failure names the permission")
     }
 
@@ -220,15 +220,15 @@ struct QuicklinkCoordinatorTests {
     }
 
     static func ownSchemeLink() throws {
-        let fixture = try Fixture(link: "tinycast://command/search-files?fallbackText={argument}")
+        let fixture = try Fixture(link: "szcast://command/search-files?fallbackText={argument}")
         defer { fixture.cleanUp() }
         fixture.coordinator.openQuicklink(id: fixture.link.id, values: ["Argument": "~/Downloads"])
-        expect(QuicklinkLauncher.opened.isEmpty, "Tinycast's own link never leaves the process")
+        expect(QuicklinkLauncher.opened.isEmpty, "Szcast's own link never leaves the process")
         expect(
             fixture.core.deepLinkCoordinator.opened.map(\.0.absoluteString)
-                == ["tinycast://command/search-files?fallbackText=~%2FDownloads"]
-                && fixture.core.deepLinkCoordinator.opened.first?.1 == .tinycast,
-            "it runs as a link Tinycast chose, so it never asks")
+                == ["szcast://command/search-files?fallbackText=~%2FDownloads"]
+                && fixture.core.deepLinkCoordinator.opened.first?.1 == .szcast,
+            "it runs as a link Szcast chose, so it never asks")
     }
 
     static func copying() throws {
@@ -503,13 +503,13 @@ enum AppLauncher {
 
 enum DialogTone { case danger, neutral, success }
 
-enum DeepLinkSource { case outside, tinycast }
+enum DeepLinkSource { case outside, szcast }
 
 @MainActor
 final class DeepLinkCoordinator {
     var opened: [(URL, DeepLinkSource)] = []
     func handles(_ url: URL) -> Bool {
-        url.scheme?.lowercased() == "tinycast"
+        url.scheme?.lowercased() == "szcast"
             && url.host(percentEncoded: false)?.lowercased() != "extensions"
     }
     func open(_ url: URL, source: DeepLinkSource = .outside) { opened.append((url, source)) }
