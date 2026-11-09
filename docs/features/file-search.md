@@ -285,7 +285,9 @@ Pressing a space before typing is the launcher's quick search: the space is a sc
 search term, so ` space report` searches for `report`. Space mode answers with the file search on
 its own — it ignores the **Show in launcher** toggle, like `favorites` always — so the space
 prefix still widens when only the feature switch is on. The threshold drops to one character and
-the list stays capped at `launcherLimit`, in place after the app results.
+the list stays capped at `launcherLimit`, in place after the app results. While scanning files,
+each file row's trailing label is a file-kind icon instead of the word, so the lane reads as
+files-first at a glance.
 A Files row is not an `AppEntry`: no `Kind`, ranking, alias or Hide from Search. Files and folders
 can be favorited through ⌘K or ⇧⌘F in either screen; their saved paths join the launcher’s Favorites
 section, share its reordering and ⌘-digit slots, and survive relaunch and settings backups. Explicit

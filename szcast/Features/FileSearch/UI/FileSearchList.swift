@@ -120,7 +120,7 @@ struct FileSearchRow: View {
                     KeyCapChip(text: String(slot), style: .outline)
                 }
             } else if showsLocation {
-                Text(result.isDirectory ? "Folder" : "File")
+                Image(systemName: result.isDirectory ? "folder" : "doc")
                     .font(metrics.typography.rowTrailing)
                     .foregroundStyle(.secondary)
             }
