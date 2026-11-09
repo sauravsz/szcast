@@ -1242,7 +1242,7 @@ struct ExtensionTests {
               ].join(",");
               // Bitwarden derives its session hash and caches the vault through exactly these calls.
               const encrypter = crypto.createCipheriv("aes-256-cbc", "k".repeat(32), "i".repeat(16));
-              const encrypted = Buffer.concat([encrypter.update("hello szcast"), encrypter.final()]);
+              const encrypted = Buffer.concat([encrypter.update("hello tinycast"), encrypter.final()]);
               const decrypter = crypto.createDecipheriv("aes-256-cbc", "k".repeat(32), Buffer.from("i".repeat(16)));
               const ecb = crypto.createCipheriv("aes-128-ecb", Buffer.alloc(16, 1), null).setAutoPadding(false);
               const gcmKey = Buffer.alloc(32, 7);
@@ -1356,7 +1356,7 @@ struct ExtensionTests {
                 screen.items.first?.node.array("accessories").dropFirst(4).first)
                 == "afe6c5530785b6cc6b1c6453384731bd,f7ce0b653d2d72a4,5d11c49af18b4b3e482508362bd2c857,"
                 + "eb7b227687302ff167fef6a04d9f99f3,"
-                + "hello szcast,17d614f379a9359077e95577fd31c20a,ERR_OSSL_BAD_DECRYPT,"
+                + "hello tinycast,17d614f379a9359077e95577fd31c20a,ERR_OSSL_BAD_DECRYPT,"
                 + "ERR_CRYPTO_INVALID_KEYLEN,ERR_CRYPTO_INVALID_DIGEST,"
                 + "875a7af65e66ba29298577f2c937c48b:589dd2d6d2696c5310,"
                 + "749e7f715a23139cbfa9b3259ab594e1:aaefe159005653143a,hello gcm,"

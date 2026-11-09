@@ -1,7 +1,6 @@
 import Foundation
 
-/// The fork ships no signed release stream yet, so no build updates itself. Add a
-/// channel here — and a real feed — if a release pipeline lands later.
+/// Side-by-side apps with their own bundle ids, so a build updates within its own.
 enum ReleaseChannel: Sendable {
     case stable
     case beta
@@ -10,8 +9,9 @@ enum ReleaseChannel: Sendable {
 
     init(bundleID: String?) {
         switch bundleID {
-        case "": self = .development
-        case _: self = .development
+        case "com.sauravsz.szcast": self = .stable
+        case "com.sauravsz.szcast.beta": self = .beta
+        default: self = .development
         }
     }
 
