@@ -33,6 +33,13 @@ Confirmed mechanics:
 
 ### Edits
 
+### Interaction note (added)
+File rows in `FileSearchList` use `onRowClick` (double-click activates) while launcher rows use
+`onRowTap` (single tap activates), so the same action feels different between windows. Left
+unchanged: `onRowTap` exists so drag-out never activates — on launcher rows a drag is an intent,
+so single-tap-to-open was the deliberate choice there. If unified feel is later wanted, the seam
+is swapping `onRowTap` for `onRowClick` on the launcher's file rows — the semantics already
+exist on the file screen.
 1. `szcast/Features/FileSearch/Model/FileSearchQuery.swift`
    - Add a single parser: `static func fileTerms(_ query: String) -> (isSpacePrefixed: Bool, term: String)`
      — `isSpacePrefixed = query.hasPrefix(" ")`; `term = String(query.dropFirst()).trimmingCharacters(in: .whitespacesAndNewlines)`.
