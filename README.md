@@ -82,6 +82,11 @@ See [docs/testing.md](docs/testing.md).
   [szcast.vercel.app](https://szcast.vercel.app) on every push to `main`.
 - **Rates still come from upstream** — the calculator fetches exchange rates from
   `tinycast.dev/api/v1/currencies`. Harmless, but it is a dependency on Abue's server.
+- **Space-prefix file search** — open the launcher and type a leading space (` demo`) to widen
+  results to files and folders with a one-character floor, Alfred-style. The space overrides the
+  *Show in launcher* toggle (still needs the file search itself on).
+- **⌘1…⌘0 activates the Nth visible row** — hold ⌘ to see the digits printed on the first ten
+  rows; with a blank query they still launch pinned favourites by position.
 
 ## Contributing
 
