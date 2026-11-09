@@ -103,17 +103,17 @@ struct LauncherList: View {
         return selectedRowID != nil && selectedRowID == (favorites.first?.id ?? results.first?.id)
     }
 
-    private func fileRows(base: Int) -> [Row] {
+    private var fileRows: [Row] {
         guard let files else { return [] }
         return [.header(String(localized: "Files"))]
-            + files.results.enumerated().map { Row.file($1, index: base + $0) }
+            + files.results.enumerated().map { Row.file($1, index: $0) }
     }
 
     /// Every row the fallback section contributes, always after the results.
-    private func fallbackRows(base: Int) -> [Row] {
+    private var fallbackRows: [Row] {
         guard let fallbacks else { return [] }
         return [.fallbackHeader(fallbacks.title)]
-            + fallbacks.entries.enumerated().map { Row.fallback($1, index: base + $0) }
+            + fallbacks.entries.enumerated().map { Row.fallback($1, index: $0) }
     }
     private var rows: [Row] {
         var rows: [Row] = []
@@ -163,9 +163,7 @@ struct LauncherList: View {
             grouped.keys.allSatisfy(kinds.contains),
             "kind missing from the launcher's section order: "
                 + grouped.keys.filter { !kinds.contains($0) }.map(\.rawValue).joined(separator: ", "))
-        let filesBase = flat
-        let fallbacksBase = filesBase + (files?.results.count ?? 0)
-        return rows + fileRows(base: filesBase) + fallbackRows(base: fallbacksBase)
+        return rows + fileRows + fallbackRows
     }
 
 
