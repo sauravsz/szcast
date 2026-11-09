@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Szcast — a native macOS launcher for everyday productivity. Lightweight and open source. A fork of Tinycast." />
+  <meta name="theme-color" content="#0b0b0f" />
+  <title>szcast — native macOS launcher</title>
+  <style>
+    :root { color-scheme: dark; --bg:#0b0b0f; --panel:#131318; --fg:#f2f2f5; --muted:#9aa3ad; --line:#24242e; --accent:#60a5fa; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:var(--bg); color:var(--fg); }
+    a { color:var(--accent); text-decoration:none; }
+    a:hover { text-decoration:underline; }
+    .wrap { max-width:880px; margin:0 auto; padding:56px 20px 96px; }
+    header { display:flex; align-items:center; gap:16px; }
+    header img { width:64px; height:64px; border-radius:16px; }
+    h1 { font-size:40px; margin:0; letter-spacing:-.02em; }
+    .tag { color:var(--muted); font-size:17px; margin:6px 0 0; }
+    .badges img { height:20px; margin-right:6px; vertical-align:middle; }
+    .panel { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:20px; margin:24px 0; }
+    pre { overflow:auto; background:#0d0d11; border:1px solid var(--line); border-radius:10px; padding:14px; }
+    code { font:12.5px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .shot { width:100%; border-radius:12px; border:1px solid var(--line); }
+    .cols { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    @media (max-width:640px){ .cols{grid-template-columns:1fr} h1{font-size:32px} }
+    footer { color:var(--muted); font-size:13px; margin-top:40px; }
+    nav a { margin-right:14px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <img src="docs-images/icon.png" alt="szcast app icon" />
+      <div>
+        <h1>szcast</h1>
+        <p class="tag">A native macOS launcher for everyday productivity. Lightweight and open source.</p>
+      </div>
+    </header>
+
+    <p class="badges" aria-label="badges">
+      <a href="https://github.com/sauravsz/szcast/releases/latest"><img alt="Latest release" src="https://shieldcn.dev/github/release/sauravsz/szcast.svg?variant=ghost&amp;font=geist-mono&amp;mode=light&amp;label=RELEASE&amp;logo=lu:Tag&amp;valueColor=2563EB" /></a>
+      <img alt="macOS 26 or later" src="https://shieldcn.dev/badge/MACOS-26%2B.svg?variant=ghost&amp;font=geist-mono&amp;mode=light&amp;logo=apple" />
+      <img alt="Swift 6" src="https://shieldcn.dev/badge/SWIFT-6.svg?variant=ghost&amp;font=geist-mono&amp;mode=light&amp;logo=swift&amp;valueColor=EA580C" />
+      <a href="https://github.com/sauravsz/szcast/blob/main/LICENSE"><img alt="License: AGPL-3.0" src="https://shieldcn.dev/badge/LICENSE-AGPL--3.0.svg?variant=ghost&amp;font=geist-mono&amp;mode=light&amp;logo=lu:Scale" /></a>
+    </p>
+
+    <img class="shot" src="docs-screenshot.jpg" alt="szcast command palette" />
+
+    <div class="panel">
+      <p>Built with SwiftUI and AppKit. No dependencies, no Electron, no telemetry. It runs your Raycast extensions, too.</p>
+      <nav>
+        <a href="https://github.com/sauravsz/szcast/releases">Releases</a>
+        <a href="https://github.com/sauravsz/szcast/tree/main/docs">Docs</a>
+        <a href="https://github.com/sauravsz/szcast/issues">Support</a>
+        <a href="https://github.com/sauravsz/szcast">GitHub</a>
+      </nav>
+    </div>
+
+    <div class="cols">
+      <div class="panel">
+        <h2>Install</h2>
+        <p>On an Apple silicon Mac with macOS 26 or newer:</p>
+        <pre><code>brew install --cask szcast
+brew install --cask szcast@beta</code></pre>
+        <ul>
+          <li><strong>DMG</strong>: notarized, from <a href="https://github.com/sauravsz/szcast/releases">Releases</a>. Drag <code>Szcast.app</code> to <code>/Applications</code>.</li>
+          <li><strong>Intel Mac</strong>: install from <a href="https://github.com/sauravsz/homebrew-szcast">Homebrew tap</a>.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h2>License &amp; attribution</h2>
+        <p>szcast is a personal fork of
+          <a href="https://github.com/abue-ammar/tinycast">Tinycast</a> by Abue Ammar,
+          under the GNU AGPL v3 license. Original copyright © 2026 Abue Ammar.
+          No affiliation or endorsement implied.</p>
+        <p><a href="https://github.com/sauravsz/szcast/blob/main/LICENSE">LICENSE</a> ·
+           <a href="https://github.com/sauravsz/szcast/blob/main/NOTICE.md">NOTICE</a></p>
+      </div>
+    </div>
+
+    <footer>
+      <p>szcast is free and stays free. AGPL-3.0 — see the repo for details.</p>
+      <p>Forked from <a href="https://github.com/abue-ammar/tinycast">abue-ammar/tinycast</a>. Hosted on <a href="https://github.com/sauravsz/szcast">GitHub</a>, deployed to Vercel.</p>
+    </footer>
+  </div>
+</body>
+</html>
