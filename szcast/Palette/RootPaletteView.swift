@@ -427,6 +427,14 @@ struct RootPaletteView: View {
             .onChange(of: vm.query) {
                 resetCompactSelection()
                 if vm.collapseQueryLineBreaks() { return }
+                // Alfred's quick search: a leading space opens the file search screen.
+                if vm.mode == .launcher,
+                    let term = FileSearchQuery.spaceTerm(vm.query),
+                    settings.fileSearchEnabled
+                {
+                    core.fileSearchCoordinator.show(query: term)
+                    return
+                }
                 land(restoringSelection: true)
                 if vm.mode == .fileSearch { fileSearch.search(vm.query, filter: vm.fileSearchFilter) }
                 if vm.mode == .launcher { core.fileSearchCoordinator.searchFromLauncher(vm.query) }

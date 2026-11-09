@@ -25,6 +25,11 @@ enum FileSearchQuery {
         return (String(query.dropFirst()), true)
     }
 
+    /// The term after a leading space, or nil when the query has no space prefix.
+    static func spaceTerm(_ query: String) -> String? {
+        guard case let (term, true) = spaceScope(query) else { return nil }
+        return term
+    }
     static func answersLauncher(_ query: String) -> Bool {
         query.trimmingCharacters(in: .whitespacesAndNewlines).count >= launcherMinimumLength
     }
