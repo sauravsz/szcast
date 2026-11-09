@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/sauravsz/szcast"><strong>Website</strong></a> ·
+  <a href="https://szcast.vercel.app"><strong>Website</strong></a> ·
   <a href="#install"><strong>Install</strong></a> ·
   <a href="docs/"><strong>Docs</strong></a> ·
   <a href="https://github.com/sauravsz/szcast/issues"><strong>Support</strong></a>
