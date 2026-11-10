@@ -9,13 +9,14 @@
 
 <p align="center">
   <a href="https://szcast.vercel.app"><strong>Website</strong></a> ·
-  <a href="#build-from-source"><strong>Build</strong></a> ·
+  <a href="https://github.com/sauravsz/szcast/releases/latest"><strong>Download</strong></a> ·
   <a href="docs/"><strong>Docs</strong></a> ·
   <a href="https://github.com/sauravsz/szcast/issues"><strong>Issues</strong></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/sauravsz/szcast"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/MACOS-26%2B.svg?variant=ghost&amp;font=geist-mono&amp;mode=dark&amp;logo=apple" /><img alt="macOS 26 or later" src="https://shieldcn.dev/badge/MACOS-26%2B.svg?variant=ghost&amp;font=geist-mono&amp;mode=light&amp;logo=apple" /></picture></a>
+  <a href="https://github.com/sauravsz/szcast/releases/latest"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/release/sauravsz/szcast.svg?variant=ghost&amp;font=geist-mono&amp;mode=dark&amp;label=RELEASE&amp;logo=lu:Tag&amp;valueColor=60A5FA" /><img alt="Latest release" src="https://shieldcn.dev/github/release/sauravsz/szcast.svg?variant=ghost&amp;font=geist-mono&amp;mode=light&amp;label=RELEASE&amp;logo=lu:Tag&amp;valueColor=2563EB" /></picture></a>
+  <picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/MACOS-26%2B.svg?variant=ghost&amp;font=geist-mono&amp;mode=dark&amp;logo=apple" /><img alt="macOS 26 or later" src="https://shieldcn.dev/badge/MACOS-26%2B.svg?variant=ghost&amp;font=geist-mono&amp;mode=light&amp;logo=apple" /></picture>
   <picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/SWIFT-6.svg?variant=ghost&amp;font=geist-mono&amp;mode=dark&amp;logo=swift&amp;valueColor=FB923C" /><img alt="Swift 6" src="https://shieldcn.dev/badge/SWIFT-6.svg?variant=ghost&amp;font=geist-mono&amp;mode=light&amp;logo=swift&amp;valueColor=EA580C" /></picture>
   <a href="LICENSE"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/LICENSE-AGPL--3.0.svg?variant=ghost&amp;font=geist-mono&amp;mode=dark&amp;logo=lu:Scale" /><img alt="License: AGPL-3.0" src="https://shieldcn.dev/badge/LICENSE-AGPL--3.0.svg?variant=ghost&amp;font=geist-mono&amp;mode=light&amp;logo=lu:Scale" /></picture></a>
 </p>
@@ -30,11 +31,26 @@ AppKit — no dependencies, no Electron, no telemetry. It runs Raycast extension
 
 [Explore all features →](docs/features/)
 
+## Launcher touches in this build
+
+Three changes to the palette, on top of upstream:
+
+- **Space opens file search.** Type a space at the start of root search and the file search screen
+  opens, Alfred-style, with the rest of the line already in its field. Escape walks back to the
+  launcher with a clean field. Needs File Search enabled; it ignores the *Show in launcher* toggle,
+  because the space is the explicit intent.
+- **⌘1…⌘0 activates the Nth visible row.** Hold ⌘ and the first ten rows swap their kind label for
+  the digit that activates them. On a blank query the digits launch pinned favourites by position
+  instead. Rows past the tenth carry no chord.
+- **File rows carry an icon.** A document or folder glyph in place of the word.
+
 ## Install
 
 Download the DMG from [Releases](https://github.com/sauravsz/szcast/releases/latest), open it, and
-drag **Szcast** into `/Applications`. The build is **self-signed, not notarized** — right-click →
-**Open** the first time. Requires macOS 26 or newer on Apple silicon. There is no Homebrew cask.
+drag **Szcast** into `/Applications`.
+
+The build is **self-signed, not notarized**: right-click → **Open** on first launch and macOS will
+not ask again. macOS 26 or newer, Apple silicon. There is no Homebrew cask.
 
 ## Build from source
 
@@ -53,7 +69,7 @@ xcodebuild -project szcast.xcodeproj -scheme Szcast -configuration Release \
   -derivedDataPath build/DerivedData build
 ```
 
-The Debug configuration builds **Szcast Dev** (`com.sauravsz.szcast.dev`) so it runs side by side
+The Debug configuration builds **Szcast Dev** (`com.sauravsz.szcast.dev`), so it runs side by side
 with a release install. Release builds are `com.sauravsz.szcast`.
 
 ### Local DMG
@@ -62,9 +78,9 @@ with a release install. Release builds are `com.sauravsz.szcast`.
 ./Scripts/build-dmg.sh          # → build/Szcast-<version>.dmg
 ```
 
-The script signs with the **Szcast Self-Signed** identity so macOS keeps your Accessibility grant
-across rebuilds. Create that identity once — see [docs/signing.md](docs/signing.md) §1. Without it,
-every rebuild resets your privacy permissions.
+The script signs with the **Szcast Self-Signed** identity, so macOS keeps your Accessibility grant
+across rebuilds. Create that identity once — [docs/signing.md](docs/signing.md) §1. Without it, every
+rebuild resets your privacy permissions.
 
 ### Tests
 
@@ -75,21 +91,19 @@ every rebuild resets your privacy permissions.
 Each harness compiles the shipped sources it guards, so it needs Xcode, not just Command Line Tools.
 See [docs/testing.md](docs/testing.md).
 
-## What's in the build
+## What to know before you rely on it
 
-- **Self-update has a key but no feed** — the build carries the release verification key, so a
-  signed update can be checked against a key this project owns. There is no update feed published
-  yet, so nothing installs over itself. [docs/features/updates.md](docs/features/updates.md).
-- **Static site** — the project page is `site/`, deployed to
-  [szcast.vercel.app](https://szcast.vercel.app) on every push to `main`.
-- **Rates come from `tinycast.dev`** — the calculator fetches exchange rates from
-  `tinycast.dev/api/v1/currencies`.
-- **Space opens file search** — a leading space in root search jumps straight to the file search
-  screen, Alfred-style, with the term after the space already in the field. Needs File Search
-  enabled; ignores the *Show in launcher* toggle.
-- **⌘1…⌘0 activates the Nth visible row** — hold ⌘ and the first ten rows swap their kind label for
-  the digit that activates them; with a blank query the digits launch pinned favourites by position
-  instead.
+- **The site is static.** `site/` is plain HTML, deployed to
+  [szcast.vercel.app](https://szcast.vercel.app) on every push to `main`. No build step.
+- **Self-update has a key but no feed.** The build carries the release verification key, so a signed
+  update is checked against a key this project owns — but no update feed is published, so nothing
+  installs over itself. [docs/features/updates.md](docs/features/updates.md).
+- **Exchange rates come from `tinycast.dev`**, the upstream project's server, not one this repo
+  controls. If it goes away, conversions stop updating and the last cached snapshot is served until
+  it ages out. [docs/features/calculator.md](docs/features/calculator.md).
+- **CI cannot cut a release yet.** The Release workflow needs a Developer ID certificate and
+  notarization secrets that are not configured; `v1.0.0` was built and signed locally instead.
+  [docs/signing.md](docs/signing.md) §2.
 
 ## Contributing
 
