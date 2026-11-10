@@ -6,6 +6,8 @@ struct ExtensionCommandMetadata: Codable, Sendable, Equatable {
     var subtitle: String?
     /// Off until the first manual run or the Settings toggle.
     var backgroundEnabled = false
+    /// Set once the user has been asked about the schedule, so a decline is not re-asked.
+    var backgroundAsked = false
     var lastRun: Date?
     var lastError: String?
     var consecutiveFailures = 0
@@ -21,6 +23,8 @@ struct ExtensionCommandMetadata: Codable, Sendable, Equatable {
         let record = try decoder.container(keyedBy: CodingKeys.self)
         subtitle = try record.decodeIfPresent(String.self, forKey: .subtitle)
         backgroundEnabled = try record.decodeIfPresent(Bool.self, forKey: .backgroundEnabled) ?? false
+        backgroundAsked =
+            try record.decodeIfPresent(Bool.self, forKey: .backgroundAsked) ?? false
         lastRun = try record.decodeIfPresent(Date.self, forKey: .lastRun)
         lastError = try record.decodeIfPresent(String.self, forKey: .lastError)
         consecutiveFailures = try record.decodeIfPresent(Int.self, forKey: .consecutiveFailures) ?? 0

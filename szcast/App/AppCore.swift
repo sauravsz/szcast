@@ -408,6 +408,23 @@ final class AppCore {
             extensions.onDidUninstall = { [weak self] entryIDs in
                 self?.extensionCoordinator.removeExtensionReferences(entryIDs: entryIDs)
             }
+            // A schedule runs with nobody watching, so it is asked for rather than assumed.
+            extensions.onBackgroundConsent = { [weak self] extensionName, commandTitle, interval
+                in
+                guard let self else { return false }
+                return await self.confirm(
+                    title: String(
+                        localized: "Run “\(commandTitle)” in the background?"),
+                    message: String(
+                        localized: """
+                            \(extensionName) can run this command on a schedule, about every \
+                            \(Self.intervalDescription(interval)). It runs on this Mac with no \
+                            window open, so it can reach the network and your files while you \
+                            are not watching. You can turn this off again in Settings.
+                            """),
+                    symbol: "clock.arrow.circlepath", confirmTitle: String(localized: "Allow"),
+                    tone: .neutral, confirmRole: .standard)
+            }
             appIndex.onScan = { [weak self] in
                 guard let self else { return }
                 hotKeys.removeAppBindings(where: appIndex.isUninstalled)
@@ -974,6 +991,17 @@ final class AppCore {
     }
 
     /// `tone` styles the glyph, `confirmRole` the button; separate on purpose.
+    /// A human interval for the consent prompt: minutes under an hour, otherwise whole hours.
+    private nonisolated static func intervalDescription(_ interval: TimeInterval) -> String {
+        let minutes = Int((interval / 60).rounded())
+        if minutes < 60 {
+            return minutes == 1
+                ? String(localized: "minute") : String(localized: "\(minutes) minutes")
+        }
+        let hours = Int((interval / 3600).rounded())
+        return hours == 1 ? String(localized: "hour") : String(localized: "\(hours) hours")
+    }
+
     func confirm(
         title: String, message: String?, symbol: String?, confirmTitle: String,
         tone: DialogTone = .danger, confirmRole: DialogAction.Role = .destructive,

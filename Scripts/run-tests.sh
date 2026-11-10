@@ -133,6 +133,7 @@ run scopes-test            $L/SearchScopes.swift
 run app-name-test          Szcast/Platform/AppDisplayName.swift \
                            Szcast/Platform/BundleLocalization.swift \
                            $L/SearchRelevance.swift
+run ext-install-policy-test Szcast/Features/Extensions/Model/ExtensionInstallPolicy.swift
 run favorites-test         $L/FavoriteSlots.swift
 run favorite-slot-target-test  $L/FavoriteSlots.swift
 run app-installation-test  $L/SearchRelevance.swift $L/ScriptRomanization.swift \

@@ -362,3 +362,62 @@ Closed after the first round, same day:
 | **L-6** (part) | `values(for:)` throws on a corrupt item instead of reporting none. **`.userPresence` was tried and reverted:** `AIProviderFactory.make` reads the key on every message, so a presence prompt there would fire once per turn |
 | **L-7** (rest) | `chmod` refuses `0o777`-style modes and set-id bits, comparing the whole mode so `0o4000` is refused rather than silently masked to `0000` |
 | **`isReleaseSigned` log** | Failure line is `.private`, so a URL and network error no longer land in the public log |
+
+---
+
+## 7. Provenance work — 2026-11-10
+
+Not a fix for H-1. Two controls were added that reduce the chance hostile extension code arrives,
+and one that removes an assumption about consent. **H-1 stays open: capability is unchanged.**
+
+### Background runs now require consent
+
+`ExtensionManager.run` used to call `activateBackgroundRefresh` on the first manual run, so one
+click bought permanent unattended execution with no prompt. Now a schedulable command (`no-view`
+with an interval) asks once, naming the interval:
+
+- `ExtensionCommandMetadata.backgroundAsked` records that the question was answered, so a decline
+  is not re-asked every run.
+- `ExtensionManager.onBackgroundConsent` returning nil or false consents to nothing; the schedule
+  stays off.
+- The Settings toggle sets `backgroundAsked` too, so an explicit choice there counts as the answer.
+- `setBackgroundEnabled` is unchanged otherwise, so a user can still turn a schedule on later.
+
+Residual: this bounds *unattended* execution to commands the user approved. An approved background
+command still has the full shim surface, so an approved poller can exfiltrate on a timer.
+
+### Installs are limited to the Raycast store
+
+`ExtensionInstallPolicy` is the single source of truth, and **store-only is the default** — absence
+of the key means locked down.
+
+| Path | Before | Now |
+| --- | --- | --- |
+| Store listing | allowed | allowed, but the download host must be `raycast.com` over https |
+| GitHub link | allowed | refused unless the user turns the policy off |
+| Folder / zip | allowed | refused unless the user turns the policy off |
+| Import from `~/.config/raycast/extensions` | allowed | refused unless the user turns the policy off |
+
+That last one matters: Raycast's folder holds dev builds and GitHub installs, not only its store, so
+it takes the unreviewed path rather than inheriting store trust.
+
+`Tests/ext-install-policy-test.swift` pins the default, the toggle, and the host check — including
+that `raycast.com.evil.example` and plain `http` are refused.
+
+**What this does not do.** A reviewed extension still runs with an unrestricted `fs`, an
+unrestricted `fetch` (including `socketPath`), `/bin/sh -c`, and — if scheduled — no user present.
+Review reduces the chance that code is hostile; it does not reduce what hostile code can do. It also
+binds a moment, not behaviour: an extension can `eval` a downloaded payload after passing review,
+and a compromised maintainer ships new code as an update through the same reviewed channel.
+
+So the honest ordering of what is left, unchanged:
+
+1. Host allowlist on `fetch`.
+2. Path confinement on `fs`.
+3. argv-only spawn, no `/bin/sh -c`.
+4. Signature re-check of the bundle at each launch.
+5. A separate helper process. Note `com.apple.security.app-sandbox` is `false` in
+   `szcast/Szcast.entitlements`, so a helper spawned from this app inherits the same authority —
+   it would give crash isolation and a narrower shim surface, not containment. Real containment
+   needs the helper sandboxed, which breaks the `fs` and `spawn` expectations most Raycast
+   extensions rely on.

@@ -49,6 +49,8 @@ final class ExtensionManager: ExtensionRuntimeDelegate, ExtensionHostContext {
 
     /// The entry ids an uninstall invalidated, so another feature can drop what it keyed to them.
     @ObservationIgnored var onDidUninstall: (([String]) -> Void)?
+    /// Asked once per schedulable command, on the first manual run. Nil consents to nothing.
+    @ObservationIgnored var onBackgroundConsent: ((String, String, TimeInterval) async -> Bool)?
 
     @ObservationIgnored private var sessionID: String?
     @ObservationIgnored private var backgroundSessionID: String?
@@ -219,8 +221,16 @@ final class ExtensionManager: ExtensionRuntimeDelegate, ExtensionHostContext {
     // MARK: - Install / uninstall
 
     func install(from source: URL) async throws {
+        try requireUnreviewedSourceAllowed()
         untrack(try ExtensionCatalog.install(from: source).manifest.name)
         await refresh()
+    }
+
+    /// Store-only is the default: any other source needs the user to have turned it on.
+    private func requireUnreviewedSourceAllowed() throws {
+        guard ExtensionInstallPolicy.allowsUnreviewedSources() else {
+            throw ExtensionInstallPolicyError.storeOnly
+        }
     }
 
     /// Scanned off-main: it reads a manifest per directory, and a full Raycast install is dozens.
@@ -249,6 +259,7 @@ final class ExtensionManager: ExtensionRuntimeDelegate, ExtensionHostContext {
         additionalSearchPaths: [String],
         onProgress: @Sendable @escaping (ExtensionInstaller.Progress) -> Void
     ) async throws -> InstalledExtension {
+        try requireUnreviewedSourceAllowed()
         let installer = ExtensionInstaller(
             packageManager: packageManager, additionalSearchPaths: additionalSearchPaths)
         let installed = try await installer.install(source, onProgress: onProgress)
@@ -262,6 +273,11 @@ final class ExtensionManager: ExtensionRuntimeDelegate, ExtensionHostContext {
     func importAllFromRaycast(
         _ candidates: [InstalledExtension], onProgress: (Int) -> Void = { _ in }
     ) async -> [String] {
+        // Whatever sits in Raycast's folder is not necessarily from its store: dev builds and
+        // GitHub installs land there too, so it takes the unreviewed path.
+        guard ExtensionInstallPolicy.allowsUnreviewedSources() else {
+            return candidates.map(\.title)
+        }
         var failed: [String] = []
         for (index, candidate) in candidates.enumerated() {
             do {
@@ -323,6 +339,10 @@ final class ExtensionManager: ExtensionRuntimeDelegate, ExtensionHostContext {
         _ listing: ExtensionListing,
         onProgress: @Sendable @escaping (ExtensionInstaller.Progress) -> Void
     ) async throws {
+        // The URL comes back from a remote response; store-only means it must name the store.
+        guard ExtensionInstallPolicy.isTrustedDownloadURL(listing.downloadURL) else {
+            throw ExtensionInstallPolicyError.untrustedDownloadHost(listing.downloadURL.host ?? "")
+        }
         let installed = try await ExtensionInstaller().install(listing, onProgress: onProgress)
         storeVersions.record(listing.commitSHA, for: installed.manifest.name)
         updates[installed.manifest.name] = nil
@@ -424,11 +444,19 @@ final class ExtensionManager: ExtensionRuntimeDelegate, ExtensionHostContext {
         // The runtime holds one context: a background tick in flight yields to the manual run.
         await abortBackgroundRun()
 
-        // Raycast activates the schedule on first manual open; the run itself is the first refresh.
-        if ExtensionRefreshPolicy.isSchedulable(mode: command.mode, interval: command.interval) {
-            commandMetadata.activateBackgroundRefresh(
-                extension: owner.manifest.name, command: command.name, now: Date())
-            restartBackgroundLoop()
+        // A first manual run used to arm the schedule silently, which meant one click bought
+        // permanent unattended execution. Consent is now explicit, and asked once per command.
+        if ExtensionRefreshPolicy.isSchedulable(mode: command.mode, interval: command.interval),
+            !commandMetadata.metadata(
+                extension: owner.manifest.name, command: command.name
+            ).backgroundAsked
+        {
+            commandMetadata.markBackgroundAsked(extension: owner.manifest.name, command: command.name)
+            if await onBackgroundConsent?(owner.manifest.title, command.title, command.interval!) == true {
+                commandMetadata.activateBackgroundRefresh(
+                    extension: owner.manifest.name, command: command.name, now: Date())
+                restartBackgroundLoop()
+            }
         }
 
         let supportPath = ExtensionCatalog.supportPath(for: owner.manifest.name)

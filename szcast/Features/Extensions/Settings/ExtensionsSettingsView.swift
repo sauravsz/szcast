@@ -6,6 +6,18 @@ struct ExtensionsSettingsView: View {
     @State private var expanded: String?
     @State private var filter = ""
     @State private var importCandidates: ImportCandidates?
+    /// Store-only is the source-of-truth policy, read through `ExtensionInstallPolicy`.
+    @State private var storeOnly = ExtensionInstallPolicy.isStoreOnly()
+
+    private var storeOnlyBinding: Binding<Bool> {
+        Binding(
+            get: { storeOnly },
+            set: { newValue in
+                storeOnly = newValue
+                UserDefaults.standard.set(newValue, forKey: ExtensionInstallPolicy.storeOnlyKey)
+            })
+    }
+
     @State private var browsingStore = false
     @State private var storeInstall: ExtensionDeepLink.StoreInstall?
     @State private var installingFromGitHub = false
@@ -222,6 +234,7 @@ struct ExtensionsSettingsView: View {
                 ExtensionSettingsIcon(systemName: "hammer")
             } trailing: {
                 Button("Install…") { installingFromGitHub = true }
+                    .disabled(storeOnly)
             }
             // A state of this row, not a card: the same job as the button beside it.
             SettingsRow(
@@ -234,7 +247,7 @@ struct ExtensionsSettingsView: View {
                     ProgressView().controlSize(.small)
                 } else {
                     Button("Import…", action: openImport)
-                        .disabled(!raycastAvailable)
+                        .disabled(!raycastAvailable || storeOnly)
                     if !pending.isEmpty {
                         Button("Import All") { Task { await importAll(pending.map(\.installed)) } }
                     }
@@ -248,6 +261,22 @@ struct ExtensionsSettingsView: View {
                 ExtensionSettingsIcon(systemName: "folder")
             } trailing: {
                 Button("Choose…", action: addFolder)
+                    .disabled(storeOnly)
+            }
+            // Visible rather than hidden, so it is clear the limit is a choice and where to undo it.
+            SettingsRow(
+                title: "Install from the store only",
+                subtitle: String(
+                    localized: """
+                        Refuses folders, links and Raycast imports. Reviewed store extensions still \
+                        run without a sandbox — this limits where code comes from, not what it can \
+                        reach.
+                        """),
+                anchor: .extensionsInstall
+            ) {
+                ExtensionSettingsIcon(systemName: "checkmark.shield")
+            } trailing: {
+                Toggle("", isOn: storeOnlyBinding).labelsHidden()
             }
         } header: {
             SettingsSectionHeader(.extensionsInstall)

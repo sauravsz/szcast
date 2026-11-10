@@ -627,6 +627,7 @@
 		B15CF5D63FED5BC8AF375400 /* MenuSearchItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DEF8D0211CA35DF44537B2 /* MenuSearchItem.swift */; };
 		B17B6FE6F8DE23D815E3C5BB /* InstalledCLIProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = E08F20B0B823443E176F1566 /* InstalledCLIProvider.swift */; };
 		B2404EBFB52B8199DC2536F6 /* HotKeyBinding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85B00A698366E83C7352BC1E /* HotKeyBinding.swift */; };
+		B24D0E1A5C3F4A9B00DEFA02 /* ExtensionInstallPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3D5 /* ExtensionInstallPolicy.swift */; };
 		B24D0E1A5C3F4A9B00DEFA01 /* DefaultHotKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3D4 /* DefaultHotKeys.swift */; };
 		B277075C16A5641C8F3E58C6 /* CameraAccess.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DD86B3ABBB71BC6EA116D85 /* CameraAccess.swift */; };
 		B32BBDF9B4D9705DAFFD11BF /* CalcHolidays.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAAAAB96B2F3061C9CC50978 /* CalcHolidays.swift */; };
@@ -1406,6 +1407,7 @@
 		856F65245B10433A230194E6 /* QuicklinkListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuicklinkListView.swift; sourceTree = "<group>"; };
 		858E08BB313EC330C2D5E50C /* LauncherCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LauncherCoordinator.swift; sourceTree = "<group>"; };
 		85B00A698366E83C7352BC1E /* HotKeyBinding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotKeyBinding.swift; sourceTree = "<group>"; };
+		85D0FA9B72E4C3D6A1B2C3D5 /* ExtensionInstallPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionInstallPolicy.swift; sourceTree = "<group>"; };
 		85D0FA9B72E4C3D6A1B2C3D4 /* DefaultHotKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultHotKeys.swift; sourceTree = "<group>"; };
 		85DAEE77ABAC4260C95F9AB5 /* AIProviderFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProviderFactory.swift; sourceTree = "<group>"; };
 		86545F54669A075FBDA5D1F1 /* CalculatorHistoryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalculatorHistoryScreen.swift; sourceTree = "<group>"; };
@@ -2509,6 +2511,7 @@
 				DB40137D0539CB3BB9A305C8 /* ExtensionLaunchError.swift */,
 				47B4E3146143B6120340EC01 /* ExtensionLaunchType.swift */,
 				4479345B4ECF587F3BC08093 /* ExtensionListing.swift */,
+				85D0FA9B72E4C3D6A1B2C3D5 /* ExtensionInstallPolicy.swift */,
 				30BBF211CE6A076EAF8D6C33 /* ExtensionManifest.swift */,
 				3111655F925234368AA7EE31 /* ExtensionMenuBarSnapshot.swift */,
 				0ADFFB5180991764FB13FE0B /* ExtensionPackageManager.swift */,
@@ -4568,6 +4571,7 @@
 				949FF96BBC6C270F927D3DAC /* HotKeyAction+EntryID.swift in Sources */,
 				507D6A26EA5451465B1BE5AF /* HotKeyAction.swift in Sources */,
 				B2404EBFB52B8199DC2536F6 /* HotKeyBinding.swift in Sources */,
+				B24D0E1A5C3F4A9B00DEFA02 /* ExtensionInstallPolicy.swift in Sources */,
 				B24D0E1A5C3F4A9B00DEFA01 /* DefaultHotKeys.swift in Sources */,
 				ACD8CAE659B1C49EC8652576 /* HotKeyCenter.swift in Sources */,
 				CC9A286B77E32C22B21A22BE /* HotKeyManager.swift in Sources */,

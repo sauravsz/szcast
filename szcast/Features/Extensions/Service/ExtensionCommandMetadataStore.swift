@@ -32,7 +32,16 @@ final class ExtensionCommandMetadataStore {
     }
 
     func setBackgroundEnabled(_ enabled: Bool, extension name: String, command: String) {
-        mutate(name, command) { $0.backgroundEnabled = enabled }
+        mutate(name, command) {
+            $0.backgroundEnabled = enabled
+            // An explicit choice in Settings answers the question too.
+            $0.backgroundAsked = true
+        }
+    }
+
+    /// Records that the user has answered, so a decline is not asked again every run.
+    func markBackgroundAsked(extension name: String, command: String) {
+        mutate(name, command) { $0.backgroundAsked = true }
     }
 
     func menuBarCommands() -> [(extension: String, command: String)] {

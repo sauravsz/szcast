@@ -483,6 +483,12 @@ build produces.
 
 Settings → Extensions offers four routes, under **Install New**:
 
+> **Store-only by default.** Only the first source below is allowed out of the box;
+> `ExtensionInstallPolicy` refuses the other three until the user turns the limit off in
+> Settings › Extensions. Even then the store download host is checked against `raycast.com`, because
+> `listing.downloadURL` comes back in a remote response. This is a **provenance** control, not a
+> sandbox — see `docs/SECURITY-AUDIT.md` §6-7, H-1.
+
 1. **Search extensions** — searches the Raycast Store and installs the bundle it already built. Nothing
    is compiled, so no Node or package manager is involved. The search is
    `raycast.com/frontend_api/extensions/search`, the endpoint the store's own site uses; it is
@@ -653,9 +659,15 @@ search, unless it merely restates the owning extension, which the row already ca
 Coffee's "Caffeinate Status" is the reference case: every minute it rewrites its subtitle to
 `✔ Caffeinated (…)` or `✖ Decaffeinated`.
 
-Refresh is opt-in per command: off until the first manual run or the Settings toggle
-(Settings › Extensions › the command › Background refresh), which also shows the last refresh and the
-last error. The launcher row carries the state too: a dot while refresh is on, its dimmed twin
+Refresh is opt-in per command, and the opt-in is asked for rather than assumed. The first manual
+run of a schedulable command prompts once — naming the interval, saying it runs with no window and
+can reach the network and your files — and only an Allow arms the schedule. `backgroundAsked` records
+that the question was answered, so a decline is not re-asked on every run, and the Settings toggle
+(Settings › Extensions › the command › Background refresh) counts as an answer too. Before this, the
+first manual run armed the schedule silently, which meant one click bought permanent unattended
+execution.
+
+The Settings toggle also shows the last refresh and the last error. The launcher row carries the state too: a dot while refresh is on, its dimmed twin
 while it is off, a warning with the error as its tooltip when the last background run failed, and
 the Actions menu offers Enable / Disable Background Refresh plus Refresh Now. Refresh Now never
 queues: while another command holds the runtime it shows a HUD saying so, since a deferred run could
