@@ -797,6 +797,7 @@ run update-check-test      Szcast/Features/Updates/Model/*.swift \
                            Szcast/Platform/AppPaths.swift
 run support-test           Szcast/Features/Support/Model/*.swift
 run ai-provider-test       Szcast/Features/Settings/AppSettingsKey.swift \
+                           Szcast/Platform/KeychainSecretStore.swift \
                            Szcast/Features/AI/Model/*.swift \
                            Szcast/Features/AI/Settings/AISettingsStore.swift \
                            Szcast/Features/AI/Service/CodexAppServerClient.swift \
@@ -940,6 +941,9 @@ run slow mcp-stdio-test    Szcast/Platform/ExecutableLocator.swift \
                            Szcast/Features/MCP/Service/*.swift
 run focus-timer-test       szcast/Features/FocusTimer/Model/*.swift \
                            szcast/Features/FocusTimer/Service/*.swift
+run web-search-test        szcast/Features/AI/Model/WebSearchModel.swift \
+                           szcast/Features/AI/Service/WebSearchService.swift
+
 
 if [ "$emit_db" -eq 1 ]; then
     printf ']\n' >> "$DB"

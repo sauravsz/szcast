@@ -16,12 +16,18 @@ struct KeychainSecretStore: Sendable {
     static let installedAIEnvironment = KeychainSecretStore(scope: "installed-ai-environment")
     /// Third-party OAuth tokens, one JSON item per extension/provider pair.
     static let extensionOAuthTokens = KeychainSecretStore(scope: "extension-oauth-tokens")
+    /// Web search API keys (Tavily, Exa, Jina).
+    static let webSearchAPIKeys = KeychainSecretStore(scope: "web-search-api-keys")
 
     init(scope: String, bundleIdentifier: String? = Bundle.main.bundleIdentifier) {
         service = "\(bundleIdentifier ?? "com.sauravsz.szcast").\(scope)"
     }
 
     func secret(for account: UUID) throws -> String? {
+        try secret(for: account.uuidString)
+    }
+
+    func secret(for account: String) throws -> String? {
         var result: CFTypeRef?
         let status = SecItemCopyMatching(
             query(for: account, returningData: true) as CFDictionary, &result)
@@ -35,6 +41,10 @@ struct KeychainSecretStore: Sendable {
 
     /// Presence check without `kSecReturn*`, so no secret bytes are materialized.
     func hasSecret(for account: UUID) throws -> Bool {
+        try hasSecret(for: account.uuidString)
+    }
+
+    func hasSecret(for account: String) throws -> Bool {
         let status = SecItemCopyMatching(
             query(for: account, returningData: false) as CFDictionary, nil)
         if status == errSecItemNotFound { return false }
@@ -43,6 +53,10 @@ struct KeychainSecretStore: Sendable {
     }
 
     func setSecret(_ secret: String, for account: UUID) throws {
+        try setSecret(secret, for: account.uuidString)
+    }
+
+    func setSecret(_ secret: String, for account: String) throws {
         guard let data = secret.data(using: .utf8) else { throw StoreError.invalidEncoding }
         let lookup = query(for: account, returningData: false)
         let update = [kSecValueData as String: data]
@@ -62,6 +76,10 @@ struct KeychainSecretStore: Sendable {
     }
 
     func removeSecret(for account: UUID) throws {
+        try removeSecret(for: account.uuidString)
+    }
+
+    func removeSecret(for account: String) throws {
         let status = SecItemDelete(query(for: account, returningData: false) as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound else {
             throw StoreError.keychain(status)
@@ -96,10 +114,14 @@ struct KeychainSecretStore: Sendable {
     }
 
     private func query(for account: UUID, returningData: Bool) -> [String: Any] {
+        query(for: account.uuidString, returningData: returningData)
+    }
+
+    private func query(for account: String, returningData: Bool) -> [String: Any] {
         var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: account.uuidString
+            kSecAttrAccount as String: account
         ]
         if returningData {
             query[kSecReturnData as String] = true

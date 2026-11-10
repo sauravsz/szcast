@@ -206,6 +206,8 @@ enum SettingsBackupCoverage {
         AppSettingsKey.focusTimerLongBreak.rawValue:
             "Focus timer long break duration is a local preference on this Mac.",
         AppSettingsKey.focusTimerShowsInMenuBar.rawValue:
-            "Focus timer menu bar display is a local preference on this Mac."
+            "Focus timer menu bar display is a local preference on this Mac.",
+        AppSettingsKey.webSearchProvider.rawValue:
+            "Web search engine selection is a local preference on this Mac."
     ]
 }

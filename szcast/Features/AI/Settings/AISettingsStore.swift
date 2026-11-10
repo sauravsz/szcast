@@ -16,6 +16,36 @@ final class AISettingsStore {
     var webSearchEnabled: Bool {
         didSet { defaults.set(webSearchEnabled, forKey: AppSettingsKey.aiWebSearch.rawValue) }
     }
+    var webSearchProvider: WebSearchProvider {
+        didSet { defaults.set(webSearchProvider.rawValue, forKey: AppSettingsKey.webSearchProvider.rawValue) }
+    }
+    private(set) var webSearchKeysRevision: Int = 0
+
+    func webSearchAPIKey(for provider: WebSearchProvider) -> String? {
+        _ = webSearchKeysRevision
+        return try? KeychainSecretStore.webSearchAPIKeys.secret(for: provider.rawValue)
+    }
+
+    func setWebSearchAPIKey(_ key: String, for provider: WebSearchProvider) {
+        let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            try? KeychainSecretStore.webSearchAPIKeys.removeSecret(for: provider.rawValue)
+        } else {
+            try? KeychainSecretStore.webSearchAPIKeys.setSecret(trimmed, for: provider.rawValue)
+        }
+        webSearchKeysRevision += 1
+    }
+
+    func hasWebSearchAPIKey(for provider: WebSearchProvider) -> Bool {
+        _ = webSearchKeysRevision
+        return (try? KeychainSecretStore.webSearchAPIKeys.hasSecret(for: provider.rawValue)) ?? false
+    }
+
+    var hasAnyWebSearchAPIKey: Bool {
+        _ = webSearchKeysRevision
+        return WebSearchProvider.allCases.contains { hasWebSearchAPIKey(for: $0) }
+    }
+
     var choicesEnabled: Bool {
         didSet { defaults.set(choicesEnabled, forKey: AppSettingsKey.aiChoices.rawValue) }
     }
@@ -98,6 +128,8 @@ final class AISettingsStore {
             defaults.data(forKey: AppSettingsKey.aiDefaultModel.rawValue))
         webSearchEnabled =
             defaults.object(forKey: AppSettingsKey.aiWebSearch.rawValue) as? Bool ?? false
+        webSearchProvider = defaults.string(forKey: AppSettingsKey.webSearchProvider.rawValue)
+            .flatMap(WebSearchProvider.init(rawValue:)) ?? .tavily
         choicesEnabled =
             defaults.object(forKey: AppSettingsKey.aiChoices.rawValue) as? Bool ?? true
         expandsReasoning =

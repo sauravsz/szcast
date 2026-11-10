@@ -132,7 +132,17 @@ struct AISettingsView: View {
         return Section {
             Toggle(isOn: $settings.webSearchEnabled) {
                 SettingsRowTitle(.aiChat, "Web search")
-                Text("Codex and OpenRouter only. Prompts go to a search engine.")
+                Text("Prompts query the web for real-time citations and context.")
+            }
+            if settings.webSearchEnabled {
+                Picker(selection: $settings.webSearchProvider) {
+                    ForEach(WebSearchProvider.allCases) { provider in
+                        Text(provider.title).tag(provider)
+                    }
+                } label: {
+                    SettingsRowTitle(.aiChat, "Search engine")
+                }
+                WebSearchAPIKeyRow(provider: settings.webSearchProvider)
             }
             Toggle(isOn: $settings.choicesEnabled) {
                 SettingsRowTitle(.aiChat, "Suggested replies")
@@ -204,5 +214,59 @@ struct AISettingsView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
+    }
+}
+
+private struct WebSearchAPIKeyRow: View {
+    let provider: WebSearchProvider
+    @Environment(AISettingsStore.self) private var settings
+    @State private var apiKey: String = ""
+    @State private var isStored: Bool = false
+
+    var body: some View {
+        LabeledContent {
+            HStack(spacing: Theme.Spacing.sm) {
+                RevealableSecureField(
+                    title: String(localized: "\(provider.title) API Key"),
+                    text: $apiKey,
+                    prompt: Text(provider.placeholder)
+                )
+                .labelsHidden()
+                .textFieldStyle(.roundedBorder)
+                .multilineTextAlignment(.leading)
+                .frame(minWidth: 160)
+
+                if isStored && apiKey.isEmpty {
+                    Button("Clear") {
+                        settings.setWebSearchAPIKey("", for: provider)
+                        isStored = false
+                        apiKey = ""
+                    }
+                    .buttonStyle(.bordered)
+                } else {
+                    Button("Save") {
+                        settings.setWebSearchAPIKey(apiKey, for: provider)
+                        isStored = true
+                        apiKey = ""
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        } label: {
+            SettingsRowTitle(.aiChat, "\(provider.title) API key")
+            if isStored {
+                Text("Stored securely in Keychain.")
+            } else {
+                Text("Required for live web search.")
+            }
+        }
+        .onAppear { refresh() }
+        .onChange(of: provider) { refresh() }
+    }
+
+    private func refresh() {
+        isStored = settings.hasWebSearchAPIKey(for: provider)
+        apiKey = ""
     }
 }

@@ -636,6 +636,9 @@
 		B24D0E1A5C3F4A9B00DEFA16 /* FocusTimerCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3E6 /* FocusTimerCoordinator.swift */; };
 		B24D0E1A5C3F4A9B00DEFA17 /* FocusTimerMenuBarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3E7 /* FocusTimerMenuBarItem.swift */; };
 		B24D0E1A5C3F4A9B00DEFA18 /* FocusTimerScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3E8 /* FocusTimerScreen.swift */; };
+		B24D0E1A5C3F4A9B00DEFA21 /* WebSearchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3F1 /* WebSearchModel.swift */; };
+		B24D0E1A5C3F4A9B00DEFA22 /* WebSearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3F2 /* WebSearchService.swift */; };
+		B24D0E1A5C3F4A9B00DEFA23 /* WebSearchAIProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3F3 /* WebSearchAIProvider.swift */; };
 		B24D0E1A5C3F4A9B00DEFA01 /* DefaultHotKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3D4 /* DefaultHotKeys.swift */; };
 		B277075C16A5641C8F3E58C6 /* CameraAccess.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DD86B3ABBB71BC6EA116D85 /* CameraAccess.swift */; };
 		B32BBDF9B4D9705DAFFD11BF /* CalcHolidays.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAAAAB96B2F3061C9CC50978 /* CalcHolidays.swift */; };
@@ -1424,6 +1427,9 @@
 		85D0FA9B72E4C3D6A1B2C3E6 /* FocusTimerCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusTimerCoordinator.swift; sourceTree = "<group>"; };
 		85D0FA9B72E4C3D6A1B2C3E7 /* FocusTimerMenuBarItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusTimerMenuBarItem.swift; sourceTree = "<group>"; };
 		85D0FA9B72E4C3D6A1B2C3E8 /* FocusTimerScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusTimerScreen.swift; sourceTree = "<group>"; };
+		85D0FA9B72E4C3D6A1B2C3F1 /* WebSearchModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSearchModel.swift; sourceTree = "<group>"; };
+		85D0FA9B72E4C3D6A1B2C3F2 /* WebSearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSearchService.swift; sourceTree = "<group>"; };
+		85D0FA9B72E4C3D6A1B2C3F3 /* WebSearchAIProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSearchAIProvider.swift; sourceTree = "<group>"; };
 		85D0FA9B72E4C3D6A1B2C3D4 /* DefaultHotKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultHotKeys.swift; sourceTree = "<group>"; };
 		85DAEE77ABAC4260C95F9AB5 /* AIProviderFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProviderFactory.swift; sourceTree = "<group>"; };
 		86545F54669A075FBDA5D1F1 /* CalculatorHistoryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalculatorHistoryScreen.swift; sourceTree = "<group>"; };
@@ -2740,6 +2746,7 @@
 				459B988A5AE16F60A4D573AF /* SyntaxGrammar.swift */,
 				BCF9862B0BB24D73427B676C /* SyntaxHighlighter.swift */,
 				823F8F6B9EAAD17DD1062137 /* SyntaxStructuredLexers.swift */,
+				85D0FA9B72E4C3D6A1B2C3F1 /* WebSearchModel.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -3868,6 +3875,8 @@
 				1C8F318681FA5313677A14DA /* InstalledAIProbe.swift */,
 				E08F20B0B823443E176F1566 /* InstalledCLIProvider.swift */,
 				A25FA208C0AA74234DEC73F0 /* OpenCodeMCPBridge.swift */,
+				85D0FA9B72E4C3D6A1B2C3F2 /* WebSearchService.swift */,
+				85D0FA9B72E4C3D6A1B2C3F3 /* WebSearchAIProvider.swift */,
 			);
 			path = Service;
 			sourceTree = "<group>";
@@ -4660,6 +4669,9 @@
 				B24D0E1A5C3F4A9B00DEFA16 /* FocusTimerCoordinator.swift in Sources */,
 				B24D0E1A5C3F4A9B00DEFA17 /* FocusTimerMenuBarItem.swift in Sources */,
 				B24D0E1A5C3F4A9B00DEFA18 /* FocusTimerScreen.swift in Sources */,
+				B24D0E1A5C3F4A9B00DEFA21 /* WebSearchModel.swift in Sources */,
+				B24D0E1A5C3F4A9B00DEFA22 /* WebSearchService.swift in Sources */,
+				B24D0E1A5C3F4A9B00DEFA23 /* WebSearchAIProvider.swift in Sources */,
 				B24D0E1A5C3F4A9B00DEFA01 /* DefaultHotKeys.swift in Sources */,
 				ACD8CAE659B1C49EC8652576 /* HotKeyCenter.swift in Sources */,
 				CC9A286B77E32C22B21A22BE /* HotKeyManager.swift in Sources */,

@@ -127,4 +127,5 @@ enum AppSettingsKey: String, CaseIterable {
     case focusTimerShortBreak = "focusTimerShortBreak"
     case focusTimerLongBreak = "focusTimerLongBreak"
     case focusTimerShowsInMenuBar = "focusTimerShowsInMenuBar"
+    case webSearchProvider = "webSearchProvider"
 }

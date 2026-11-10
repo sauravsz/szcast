@@ -451,22 +451,32 @@ final class AIChatCoordinator {
 
     /// What the chat's model can take; the composer offers only what applies.
     func capabilities(for chat: AIChatState) -> AIModelCapabilities {
+        let base: AIModelCapabilities
         switch model(for: chat) {
-        case .appleIntelligence?: return .appleIntelligence
-        case .codex?: return .codex
-        case .claude?: return .claudeCommand
+        case .appleIntelligence?: base = .appleIntelligence
+        case .codex?: base = .codex
+        case .claude?: base = .claudeCommand
         case .openCode(let model, _)?:
             let entry = core.installedAI.status(for: .openCode).models.first { $0.id == model }
-            return AIModelCapabilities(
+            base = AIModelCapabilities(
                 images: entry?.acceptsImages == true, documents: false, webSearch: false,
                 tools: entry?.supportsTools == true)
         case .grok?, .cursor?:
-            return .none
+            base = .none
         case .api(let connection, let model, _)?:
-            return core.aiSettings.connection(id: connection)?.capabilities(for: model)
+            base = core.aiSettings.connection(id: connection)?.capabilities(for: model)
                 ?? AIModelCapabilities.none
-        case nil: return AIModelCapabilities.none
+        case nil: base = AIModelCapabilities.none
         }
+
+        if base.webSearch || core.aiSettings.hasWebSearchAPIKey(for: core.aiSettings.webSearchProvider) {
+            return AIModelCapabilities(
+                images: base.images,
+                documents: base.documents,
+                webSearch: true,
+                tools: base.tools)
+        }
+        return base
     }
 
     /// How much history the chat's route can hold; the on-device window is far smaller.

@@ -14,6 +14,7 @@ enum AIProviderFactory {
         toolServers: AIToolServerSession? = nil,
         toolSession: AIToolSession? = nil
     ) throws -> any AIProvider {
+        let baseProvider: any AIProvider
         switch selection {
         case .appleIntelligence:
             guard settings.isRouteEnabled(.appleIntelligence) else {
@@ -23,36 +24,36 @@ enum AIProviderFactory {
             if let message = AppleIntelligenceProvider.status().message {
                 throw AIProviderError.unavailable(message)
             }
-            return AppleIntelligenceProvider(guardrails: guardrails)
+            baseProvider = AppleIntelligenceProvider(guardrails: guardrails)
         case .codex(let model, let effort):
             guard settings.enabledInstalledProviders.contains(.codex) else {
                 throw AIProviderError.unavailable(String(localized: "Codex is disabled in AI Settings."))
             }
-            return CodexInstalledProvider(
+            baseProvider = CodexInstalledProvider(
                 turns: subscription.turns, model: model, effort: effort,
                 toolServers: toolServers)
         case .claude(let model, let effort):
             guard settings.enabledInstalledProviders.contains(.claude) else {
                 throw AIProviderError.unavailable(String(localized: "Claude is disabled in AI Settings."))
             }
-            return try installedAI.provider(
+            baseProvider = try installedAI.provider(
                 kind: .claude, model: model, effort: effort, toolServers: toolServers)
         case .grok(let model, let effort):
             guard settings.enabledInstalledProviders.contains(.grok) else {
                 throw AIProviderError.unavailable(String(localized: "Grok is disabled in AI Settings."))
             }
-            return try installedAI.provider(kind: .grok, model: model, effort: effort)
+            baseProvider = try installedAI.provider(kind: .grok, model: model, effort: effort)
         case .openCode(let model, let effort):
             guard settings.enabledInstalledProviders.contains(.openCode) else {
                 throw AIProviderError.unavailable(String(localized: "OpenCode is disabled in AI Settings."))
             }
-            return try installedAI.provider(
+            baseProvider = try installedAI.provider(
                 kind: .openCode, model: model, effort: effort, toolSession: toolSession)
         case .cursor(let model, let effort):
             guard settings.enabledInstalledProviders.contains(.cursor) else {
                 throw AIProviderError.unavailable(String(localized: "Cursor is disabled in AI Settings."))
             }
-            return try installedAI.provider(kind: .cursor, model: model, effort: effort)
+            baseProvider = try installedAI.provider(kind: .cursor, model: model, effort: effort)
         case .api(let connectionID, let model, let savedEffort):
             guard let connection = settings.connection(id: connectionID) else {
                 throw AIProviderError.unavailable(String(localized: "Choose an API connection in Settings."))
@@ -86,7 +87,7 @@ enum AIProviderFactory {
                 throw AIProviderError.unavailable(String(localized: "Add an API key in Settings."))
             }
             let effort = connection.offeredEffort(savedEffort, for: model)
-            return HTTPAIProvider(
+            baseProvider = HTTPAIProvider(
                 configuration: AIHTTPConfiguration(
                     provider: connection.provider, baseURL: baseURL, model: model, effort: effort,
                     disablesThinking: effort == AIConnection.ReasoningOptions.noEffort
@@ -94,5 +95,11 @@ enum AIProviderFactory {
                     maxOutputTokens: connection.outputLimits?[model], headers: headers),
                 apiKey: key)
         }
+
+        if let apiKey = settings.webSearchAPIKey(for: settings.webSearchProvider), !apiKey.isEmpty {
+            return WebSearchAIProvider(
+                base: baseProvider, provider: settings.webSearchProvider, apiKey: apiKey)
+        }
+        return baseProvider
     }
 }
