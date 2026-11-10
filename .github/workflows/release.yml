@@ -18,15 +18,13 @@ on:
 
 permissions:
   contents: write
-  # Dispatches the Website workflow, whose version and changelog are read at build time.
-  actions: write
 
 env:
   SIGNING_IDENTITY: ""
 
 jobs:
   build:
-    runs-on: xcode-27
+    runs-on: macos-26
     environment: release
     # Consumed by the `universal` job, so the channel identity is derived in exactly one place.
     outputs:
@@ -90,7 +88,7 @@ jobs:
           BUILD_NUMBER: ${{ github.run_number }}
         run: |
           # ARCHS pinned: trusting ARCHS_STANDARD once let a thin arm64 build reach Intel users.
-          xcodebuild -project Szcast.xcodeproj -scheme Szcast -configuration Release \
+          xcodebuild -project szcast.xcodeproj -scheme Szcast -configuration Release \
             -derivedDataPath "$RUNNER_TEMP/DerivedData" \
             ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
             CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="$SIGNING_IDENTITY" \
@@ -177,13 +175,6 @@ jobs:
             --notes-file "$RUNNER_TEMP/notes.md" \
             $PRERELEASE_FLAG
 
-      # A dispatch is the one event GITHUB_TOKEN may start another workflow with.
-      - name: Rebuild the website
-        if: github.event.inputs.channel == 'stable'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh workflow run website.yml --repo "$GITHUB_REPOSITORY" --ref main
-
       - name: Announce on Discord
         if: success()
         env:
@@ -233,7 +224,7 @@ jobs:
   universal:
     needs: build
     if: github.event.inputs.channel == 'stable'
-    runs-on: xcode-27
+    runs-on: macos-26
     environment: release
     env:
       VERSION: ${{ needs.build.outputs.full_version }}
@@ -265,7 +256,7 @@ jobs:
         env:
           BUILD_NUMBER: ${{ github.run_number }}
         run: |
-          xcodebuild -project Szcast.xcodeproj -scheme Szcast -configuration Release \
+          xcodebuild -project szcast.xcodeproj -scheme Szcast -configuration Release \
             -derivedDataPath "$RUNNER_TEMP/DerivedData" \
             ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
             CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="$SIGNING_IDENTITY" \

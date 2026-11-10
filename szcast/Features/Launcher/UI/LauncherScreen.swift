@@ -413,13 +413,9 @@ struct LauncherScreen: PaletteScreen {
 
     /// ⌘1–⌘9/⌘0 — a favorite on a blank launcher; otherwise the Nth visible row, Alfred style.
     private func launchSlot(at index: Int) -> Bool {
-        if pinnedFavorites.indices.contains(index) {
-            activate(at: index + (leadCard == nil ? 0 : 1))
-            return true
-        }
-        // Nothing pins while a query is typed, so the digit reaches whichever row is there.
-        let row = index + (leadCard == nil ? 0 : 1)
-        guard rows.indices.contains(row) else { return false }
+        guard case .row(let row) = FavoriteSlots.target(
+            slot: index, rowCount: rows.count, leadCardOffset: leadCard == nil ? 0 : 1)
+        else { return false }
         activate(at: row)
         return true
     }

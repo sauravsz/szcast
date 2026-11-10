@@ -134,6 +134,7 @@ run app-name-test          Szcast/Platform/AppDisplayName.swift \
                            Szcast/Platform/BundleLocalization.swift \
                            $L/SearchRelevance.swift
 run favorites-test         $L/FavoriteSlots.swift
+run favorite-slot-target-test  $L/FavoriteSlots.swift
 run app-installation-test  $L/SearchRelevance.swift $L/ScriptRomanization.swift \
                            $L/LauncherMatch.swift $L/EntryNaming.swift $L/LauncherOrder.swift \
                            $L/LauncherRankingStore.swift $L/LauncherSuggestions.swift $L/SearchScopes.swift \

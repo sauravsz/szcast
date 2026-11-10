@@ -854,6 +854,14 @@ into the single units-per-base map `CurrencyRates` stores, inverting the coins o
 merging them last so a symbol both feeds quote takes the coin feed's own price. One flat table means
 `convert(_:from:to:)` cross-rates fiat against crypto with no special case anywhere downstream.
 
+> **Third-party dependency, accepted.** Both requests go to **`tinycast.dev`**, the upstream
+> project's server — Szcast does not host a rates service. The calculator's FX is therefore
+> dependent on an endpoint this project does not control: if `tinycast.dev` is retired, renamed,
+> or rate-limited, fiat and crypto conversions stop updating and the last cached snapshot is
+> served until it ages out. Nothing else in the app talks to that host. Replacing it means
+> pointing the two constants (`CurrencyRateStore.fiatEndpoint`, `cryptoEndpoint`) at any server
+> that answers the same two shapes.
+
 The fiat half is required; the coins are best-effort. A run that misses them still answers for the
 session but is **not** written to disk, and retries in **30 minutes** rather than waiting out the day.
 Both halves of that follow from the store scheduling off the newest _whole_ snapshot rather than off
