@@ -306,7 +306,9 @@ final class ExtensionNodeShims: @unchecked Sendable {
                 try fileManager.createDirectory(atPath: target, withIntermediateDirectories: true)
                 return target
             }
-            guard Darwin.mkdir(target, 0o777) == 0 else { throw fileError("mkdir", target) }
+            // 0755 rather than 0777: the umask would strip it anyway, but asking for world-writable
+            // tells an auditing tool the wrong thing and fails if the umask is ever loosened.
+            guard Darwin.mkdir(target, 0o755) == 0 else { throw fileError("mkdir", target) }
             return nil
 
         case "utimes":
@@ -591,12 +593,13 @@ final class ExtensionNodeShims: @unchecked Sendable {
         }
     }
 
-    /// `process.kill`, refusing every target that would signal Szcast along with the child.
+    /// `process.kill`, refusing every target that is not a child this app started.
     private func signal(_ arguments: [Any]) throws -> Any? {
         guard let pid = (arguments[safe: 0] as? NSNumber).flatMap({ Int32(exactly: $0.doubleValue) }),
             let signal = (arguments[safe: 1] as? NSNumber).flatMap({ Int32(exactly: $0.doubleValue) })
         else { throw ShimError.failed("kill EINVAL", "EINVAL") }
-        guard pid > 0 || pid < -1, pid != getpid(), pid != -getpgrp() else {
+        // Nothing else is in reach: no pid reuse, no other app, no system agent.
+        guard ExtensionAsyncProcess.isTracked(pid) else {
             throw ShimError.failed("kill EPERM", "EPERM")
         }
         guard Darwin.kill(pid, signal) == 0 else {

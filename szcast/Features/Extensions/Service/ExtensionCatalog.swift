@@ -122,7 +122,6 @@ enum ExtensionCatalog {
         return
             entries
             .compactMap { directory -> InstalledExtension? in
-                try? restoreExecutablePermissions(in: directory)
                 guard let manifest = try? ExtensionManifest.load(directory: directory),
                     manifest.supportsMacOS
                 else { return nil }
@@ -134,6 +133,8 @@ enum ExtensionCatalog {
     }
 
     /// GitHub's raw-file downloads lose mode bits, so restore runnable helper assets by content.
+    /// Called **only** when copying an extension in: re-running it on every scan would let an
+    /// extension drop a shebang file into `assets/` afterwards and have it marked executable.
     nonisolated static func restoreExecutablePermissions(in directory: URL) throws {
         let fileManager = FileManager.default
         let assets = directory.appendingPathComponent("assets", isDirectory: true)

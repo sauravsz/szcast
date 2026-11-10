@@ -14,6 +14,8 @@ struct KeychainSecretStore: Sendable {
     static let aiRequestHeaders = KeychainSecretStore(scope: "ai-request-headers")
     static let mcpSecrets = KeychainSecretStore(scope: "mcp-secrets")
     static let installedAIEnvironment = KeychainSecretStore(scope: "installed-ai-environment")
+    /// Third-party OAuth tokens, one JSON item per extension/provider pair.
+    static let extensionOAuthTokens = KeychainSecretStore(scope: "extension-oauth-tokens")
 
     init(scope: String, bundleIdentifier: String? = Bundle.main.bundleIdentifier) {
         service = "\(bundleIdentifier ?? "com.sauravsz.szcast").\(scope)"
@@ -48,6 +50,9 @@ struct KeychainSecretStore: Sendable {
         if status == errSecItemNotFound {
             var addition = lookup
             addition[kSecValueData as String] = data
+            // Without this the item inherits the legacy default, readable whenever the file is
+            // unlocked; after-first-unlock is the strongest class a background helper can use.
+            addition[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
             let addStatus = SecItemAdd(addition as CFDictionary, nil)
             guard addStatus == errSecSuccess else { throw StoreError.keychain(addStatus) }
         } else if status != errSecSuccess {
@@ -57,6 +62,15 @@ struct KeychainSecretStore: Sendable {
 
     func removeSecret(for account: UUID) throws {
         let status = SecItemDelete(query(for: account, returningData: false) as CFDictionary)
+        guard status == errSecSuccess || status == errSecItemNotFound else {
+            throw StoreError.keychain(status)
+        }
+    }
+
+    /// Deletes every item in this scope. An uninstalled extension leaves no credentials behind.
+    func removeAllSecrets() throws {
+        let status = SecItemDelete([kSecClass as String: kSecClassGenericPassword,
+                                    kSecAttrService as String: service] as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound else {
             throw StoreError.keychain(status)
         }

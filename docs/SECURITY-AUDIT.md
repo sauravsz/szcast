@@ -85,10 +85,10 @@ This contradicts `SECURITY.md`:
 
 ---
 
-### M-2 — Update signature verification is inert in this tree: the Ed25519 public key is an empty string
-**Severity: Medium**
+### M-2 — Update signature verification was inert: the Ed25519 public key was an empty string
+**Severity: Medium** — **FIXED 2026-11-10**
 
-`szcast/Info.plist:83-84` ships `<string></string>` for `SzcastUpdatePublicKey`, and verification fails closed to `false`:
+`szcast/Info.plist` used to ship `<string></string>` for `SzcastUpdatePublicKey`, so this returned `nil`:
 
 `szcast/Features/Updates/Service/UpdateSignature.swift:23-29`
 ```swift
@@ -108,12 +108,19 @@ let requirement = releaseSigned ? compiled(developerID) : runningRequirement
 The any-team requirement (`BundleSignature.swift:5-11`, `"Any team, so a new one still updates through the release key"`) is consequently unreachable — but so is the release key's intended cross-team continuity. Trust in this configuration reduces entirely to "the staged bundle satisfies the installed app's own DR". That is still a real barrier, but the second, independent trust root the design documents does not exist in this tree.
 
 **Why it matters:** the release pipeline must inject the key; if it ever ships without it (local build, ad-hoc DMG, forgotten `--dmg` flag), updates silently downgrade to single-root trust and the `.sig` asset is fetched and discarded. Also note `UpdateInstaller.isReleaseSigned` logs at `.public` on failure (`:104`), leaking fetch failures into unified log.
-**Fix:** fail the update (do not proceed) when `bundledKey == nil` and the release channel is stable/beta, rather than proceeding unverified.
+
+**Resolution.** An Ed25519 keypair was generated and the public half committed —
+`IwtZDpObVvUn0+fexjf+7U8fV/w50jcdQqRhp1iBvac=`. `Scripts/sign-update.swift` refuses to package unless the
+built app's key matches the signing key, so a mismatch is caught before upload rather than at install
+time; `v1.0.0` is signed and ships with it. The private half is not in the repo and must be set as
+`UPDATE_SIGNING_KEY` (see [signing.md](signing.md)). The second trust root is therefore live again.
+Two parts of this finding remain open by design: no notarization (no Developer ID), and
+`isReleaseSigned` still logs failures at `.public` — a debug-level line would do.
 
 ---
 
 ### M-3 — Extension code can signal any other process on the machine
-**Severity: Medium**
+**Severity: Medium** — **FIXED 2026-11-10**
 
 `szcast/Features/Extensions/Service/ExtensionNodeShims.swift:595-603`
 ```swift
@@ -125,12 +132,13 @@ guard Darwin.kill(pid, signal) == 0 else {
 The guard excludes only Szcast's own pid and process group. Any other pid — the user's editor, a security agent, another app — is signalable with `SIGKILL`, from an unattended background command.
 
 **Why it matters:** a malicious extension can terminate AV/EDR agents, backup daemons, or `WindowServer`-adjacent helpers as a precursor to F-1 abuse, without any prompt.
-**Fix:** allow signalling only pid values this runtime itself launched (track them in `ExtensionAsyncProcess`), reject everything else with `EPERM`.
+
+**Resolution.** `kill` now accepts only pids `ExtensionAsyncProcess` launched itself, via a new `isTracked` check; everything else, including process-group and negative-pid forms, gets `EPERM`. PID reuse is no longer a way in either, since a recycled pid is not in the registry.
 
 ---
 
 ### M-4 — Extension assets are auto-marked executable on every scan
-**Severity: Medium** (multiplier for H-1)
+**Severity: Medium** (multiplier for H-1) — **FIXED 2026-11-10**
 
 `szcast/Features/Extensions/Service/ExtensionCatalog.swift:151-170`
 ```swift
@@ -143,12 +151,13 @@ try fileManager.setAttributes([.posixPermissions: permissions | executeBits], of
 and `isExecutablePayload` (`:172-185`) treats a `#!` shebang **or any Mach-O magic** as grounds to add `+x`. This runs inside `scan()`, i.e. on every launch, over content that came from a downloaded zip.
 
 **Why it matters:** combined with H-1's `/bin/sh -c`, any file dropped into `assets/` becomes directly runnable without a user action, and a Mach-O payload gets the execute bit without a notarization check.
-**Fix:** do not restore execute bits automatically; require an explicit, signed allowlist or refuse to execute anything from `assets/` that is not a script the user selected.
+
+**Resolution.** `restoreExecutablePermissions` now runs **only** at install time, when the extension is copied in, not from `scan()`. An extension can no longer drop a shebang file into `assets/` afterwards and have it marked executable on the next launch. The content sniff itself is unchanged: a downloaded install still restores mode bits GitHub strips. A tighter allowlist remains open — see the residual note under H-1.
 
 ---
 
 ### M-5 — Deep-link surface is claimed under Raycast's own URL schemes
-**Severity: Medium** (exposure — input validation itself is good)
+**Severity: Medium** (exposure — input validation itself is good) — **`launchType` FIXED 2026-11-10; scheme claims open**
 
 `szcast/Info.plist:20-28`
 ```xml
@@ -168,12 +177,14 @@ Two residual gaps:
 - `CFBundleURLSchemes` claims `raycast://extensions/...`, whose handler is `ExtensionDeepLink`, which parses `arguments` **and `launchType`** straight out of the URL query (`szcast/Features/Extensions/Model/ExtensionDeepLink.swift:104-127`: `var launchType = ExtensionLaunchType.userInitiated` then overwritten from the query). Whether that path is consent-gated was **not verified** — `ExtensionDeepLink` dispatch/coordinator was outside what I read. `[SUSPECTED]` If the query-supplied `launchType` is trusted, a web page could force `.background` semantics (bypassing `ExtensionHostBridge.swift:423-425`'s "Signing in during a background refresh" guard).
 
 **Why it matters:** claiming another product's scheme enlarges the attack surface to any `raycast://` link ever clicked; the `note`/`chat` consent exemption is an unauthenticated read/inspect primitive.
-**Fix:** drop `raycast`/`com.raycast` from `CFBundleURLSchemes` if interop does not require it; put `.note`/`.chat` behind the same gate; verify `ExtensionDeepLink` rejects a URL-supplied `launchType` (force `.userInitiated` for non-Szcast sources).
+**Resolution (partial).** `ExtensionDeepLink` now honours `launchType=background` **only** when the URL's scheme is this channel's own (`AppURLScheme.current`). A `raycast://…?launchType=background` link is downgraded to `.userInitiated`, so a web page can no longer start an installed command with no window and nobody in front of it. Verified live before the change: the parameter was read straight from the query and passed into `run(...)` behind only the global extensions switch.
+
+Still open: `raycast`/`com.raycast` remain in `CFBundleURLSchemes`, and `.note`/`.chat` still skip consent. Both are deliberate for now — dropping the schemes breaks Raycast interop, and the note/chat exemption is a usability choice — but they should be revisited before a store listing.
 
 ---
 
 ### L-6 — Keychain items carry no accessibility class and no per-item ACL
-**Severity: Low** (no plaintext-on-disk credentials; storage choice is correct)
+**Severity: Low** (no plaintext-on-disk credentials; storage choice is correct) — **FIXED 2026-11-10**
 
 `szcast/Platform/KeychainSecretStore.swift:79-89`
 ```swift
@@ -187,19 +198,25 @@ No `kSecAttrAccessible`, no `kSecAttrAccessControl`, no `kSecUseDataProtectionKe
 
 Residual weakness: on macOS the item defaults to the legacy file-based login keychain, where access is granted per-application by a user dialog and remembered. Any other program the user is once tricked into approving can read the same items; `KeychainSecretStore` also has no `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly` semantics, so items ride keychain/iCloud backup paths according to the user's keychain settings. Also `values(for:)` swallows a decode failure and reports "no values" (`:66-69`), which converts corruption into silent credential loss rather than an error.
 
-**Fix:** add `kSecAttrAccessible: kSecAttrAccessibleWhenUnlockedThisDeviceOnly` and `kSecUseDataProtectionKeychain: true`, and an `SecAccessControl` requiring biometry/presence for the AI-key scope.
+**Resolution.** New items are written with `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`, the strongest class a background helper can use — a menu-bar command has to read its config with the screen locked, so `WhenUnlocked` would break it. Items written before this change keep their old class until rewritten; the AI-key path rewrites on next save.
+
+Still open: no `kSecAttrAccessControl` per item (biometry for the AI-key scope), and `values(for:)` still reports a decode failure as "no values" rather than an error.
 
 ---
 
 ### L-7 — `mkdir` in the extension `fs` shim is created world-writable pre-umask
-**Severity: Low**
+**Severity: Low** — **FIXED 2026-11-10**
 
 `ExtensionNodeShims.swift:309`
 ```swift
 guard Darwin.mkdir(target, 0o777) == 0 else { throw fileError("mkdir", target) }
 ```
 The process umask trims this in practice (typically `0755`), but the shim also exposes `chmod` with arbitrary modes (`:360-368`), so an extension can explicitly `chmod` any file it can reach to `0777`. Only matters for shared/multi-user Macs.
-**Fix:** mask to `0o700`, and bound `chmod` to modes without group/other write.
+**Resolution.** The `mkdir` mode is now `0o755`. The umask already made this `0755` in practice, so
+behaviour is unchanged; the literal stops claiming world-writable and survives a loosened umask.
+
+**Still open:** `chmod` still accepts arbitrary modes, so an extension can mark any file it can reach
+`0777`. Bounding it to modes without group/other write is the remaining half.
 
 ---
 
@@ -255,12 +272,13 @@ Coverage gaps §4 closed by direct inspection:
    Release configurations. `get-task-allow` appears nowhere in the project. No debug
    entitlement is wired into Release.
 
-4. **`ExtensionStorage` / OAuth tokens — on disk, plaintext JSON, under Application Support.**
-   Confirmed `[SUSPECTED]` from §4: third-party OAuth tokens ride `context.storage` and are
-   persisted as an ordinary file under Application Support, not the Keychain — the only
-   plaintext credential store in the app. AI provider keys, by contrast, live in Keychain via
-   `KeychainSecretStore` (see §3). Treat every installed extension's OAuth refresh token as
-   readable by any process running as the user.
+4. **`ExtensionStorage` / OAuth tokens — were on disk as plaintext JSON.** **FIXED 2026-11-10.**
+   Third-party OAuth tokens rode `context.storage` and landed in the same Application Support file
+   as caches and preferences. They now live in the Keychain via a dedicated
+   `KeychainSecretStore.extensionOAuthTokens` scope, one item per extension/provider pair, keyed by a
+   deterministic SHA-256 account. A store written by an older build is migrated on first read and the
+   plaintext copy is dropped. Non-credential state (caches, preferences, form values) stays in the
+   file, which is the right split.
 
 5. **`fetch`/WebSocket — no host allowlist confirmed.**
    `ExtensionFetcher` performs the request with no domain filtering; there is no consent or
@@ -285,3 +303,34 @@ Coverage gaps §4 closed by direct inspection:
 **Revised severity:** with §4.6 confirmed, the top items are H-1 (unattended exec) and
 M-5 (URL-driven `launchType=background`) as a pair on the same extension-runtime attack
 surface; M-2 (inert update signature) is medium but cheap to fail-closed.
+
+---
+
+## 6. Remediation round — 2026-11-10
+
+Closed in this round, with the test that now pins each one:
+
+| Finding | Change | Pinned by |
+| --- | --- | --- |
+| **M-2** | Real Ed25519 public key committed; `sign-update.swift` refuses a key mismatch before upload | `Scripts/sign-update.swift` (refuses) + `v1.0.0` artifact |
+| **M-3** | `kill` accepts only pids `ExtensionAsyncProcess` launched | `ext-test`: pid 0 and an invented pid both `EPERM` |
+| **M-4** | `restoreExecutablePermissions` runs at install only, never from `scan()` | `ext-cleanup-test` |
+| **M-5** (half) | A foreign scheme cannot request `launchType=background` | `ext-test`: `raycast://…?launchType=background` → `.userInitiated`, `szcast://` → `.background` |
+| **L-6** | New Keychain items use `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly` | — (attribute inspection only) |
+| **L-7** (half) | `mkdir` literal is `0755`, not `0777` | — |
+| **OAuth tokens** | Moved to a dedicated Keychain scope, with a migration that clears the plaintext copy | — (needs a live Keychain) |
+
+Two tests encoded the *old*, vulnerable behaviour and were rewritten rather than kept:
+`ext-test`'s "deeplink reads fallback text and background launch" and "process.kill guards Szcast
+itself". Both asserted exactly the defect being fixed.
+
+### Still open
+
+**H-1 is untouched and remains the only High.** Path confinement, a network allowlist, and
+per-extension consent are all still absent: an installed extension still has unrestricted filesystem
+access, unrestricted `fetch`, and can still spawn `/bin/sh -c` with the inherited environment. M-3,
+M-4 and the `kill` restriction reduce the blast radius without changing that.
+
+Also open: `raycast`/`com.raycast` remain claimed (M-5); `.note`/`.chat` still skip consent; `chmod`
+still takes arbitrary modes (L-7); no `SecAccessControl` per item (L-6); `UpdateInstaller` still logs
+fetch failures at `.public`; and `fetch`/WebSocket have no host allowlist (§4.5).

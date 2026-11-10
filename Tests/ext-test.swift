@@ -1012,8 +1012,19 @@ struct ExtensionTests {
                 string: "raycast://extensions/demo/search?fallbackText=hello&launchType=background"
             )!)
         check(
-            "deeplink reads fallback text and background launch",
-            full?.fallbackText == "hello" && full?.launchType == .background)
+            "deeplink reads fallback text",
+            full?.fallbackText == "hello")
+        // A web page can open `raycast://`, so a foreign scheme may not ask for a background run.
+        check(
+            "a raycast:// link cannot force a background launch",
+            full?.launchType == .userInitiated, String(describing: full?.launchType))
+        let trusted = ExtensionDeepLink.parse(
+            url: URL(
+                string: "szcast://extensions/demo/search?fallbackText=hello&launchType=background"
+            )!)
+        check(
+            "this channel's own scheme may ask for a background launch",
+            trusted?.launchType == .background, String(describing: trusted?.launchType))
 
         let expectedContext: [String: RenderValue] = [
             "id": .string("note-1"), "pinned": .bool(true), "tags": .array([.string("a")])
@@ -2111,10 +2122,12 @@ struct ExtensionTests {
         check(
             "a killed exec child never runs the rest of its script",
             !FileManager.default.fileExists(atPath: marker.path))
+        // Signals reach only pids this runtime started: pid 0 and a made-up pid are both
+        // EPERM now, where an untracked-but-nonexistent pid used to report ESRCH.
         check(
-            "exec returns a live pid and process.kill guards Szcast itself",
+            "exec returns a live pid and process.kill reaches only its own children",
             recorder.trees.last?.activeRoot?.string("markdown")
-                == "true,failed,false,EPERM,ESRCH,ERR_UNKNOWN_SIGNAL",
+                == "true,failed,false,EPERM,EPERM,ERR_UNKNOWN_SIGNAL",
             recorder.trees.last?.activeRoot?.string("markdown") ?? "no tree")
         await runtime.stop(session: "sKill")
     }

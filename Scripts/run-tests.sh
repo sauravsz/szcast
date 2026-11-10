@@ -734,12 +734,14 @@ run ext-sign-in-test       $E/Service/ExtensionSignInSession.swift
 run ext-accessory-test     $E/Model/RenderNode.swift \
                            $E/Model/ExtensionPickerItem.swift \
                            $E/Model/ExtensionSearchAccessory.swift \
+                           Szcast/Platform/KeychainSecretStore.swift \
                            $E/Service/ExtensionStorage.swift
 run slow ext-test          -parse-as-library \
                            Tests/ext-menu-bar-test.swift \
                            Tests/ext-fetch-test.swift \
                            $E/Model/ExtensionLaunchError.swift \
                            $E/Model/ExtensionMenuBarSnapshot.swift \
+                           Szcast/Platform/KeychainSecretStore.swift \
                            $E/Service/ExtensionStorage.swift \
                            $E/Service/ExtensionMenuBarManager.swift \
                            $E/Model/ExtensionCommandMetadata.swift \

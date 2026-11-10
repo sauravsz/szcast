@@ -260,4 +260,10 @@ enum ExtensionAsyncProcess {
         entry.watchdog?.cancel()
         return result
     }
+
+    /// True only for a process this app started. `kill` uses it to refuse every other target,
+    /// so an extension cannot signal another app, a system agent, or a process group.
+    static func isTracked(_ pid: Int32) -> Bool {
+        uncollected.withLock { $0[pid] != nil }
+    }
 }

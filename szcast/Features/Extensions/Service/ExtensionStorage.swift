@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 
 /// One JSON file per extension: small, read whole at launch and written rarely.
@@ -11,11 +12,15 @@ final class ExtensionStorage {
         var accessoryValues: [String: String] = [:]
         /// Each command's `storeValue` form fields, as the JSON the runtime wrote.
         var formValues: [String: [String: String]] = [:]
-        /// Each OAuth provider's token set, as the JSON the runtime wrote.
+        /// Only ever populated by a store written before tokens moved to the Keychain. Decoded so
+        /// the migration can read it, then cleared, so credentials never stay on disk in the clear.
         var oauthTokens: [String: String] = [:]
+        /// Provider names whose tokens live in the Keychain. Names only — never the tokens.
+        var oauthProviders: [String] = []
 
         enum CodingKeys: String, CodingKey {
             case localStorage, caches, preferences, accessoryValues, formValues, oauthTokens
+            case oauthProviders
         }
 
         init() {}
@@ -36,6 +41,8 @@ final class ExtensionStorage {
                 try store.decodeIfPresent([String: [String: String]].self, forKey: .formValues) ?? [:]
             oauthTokens =
                 try store.decodeIfPresent([String: String].self, forKey: .oauthTokens) ?? [:]
+            oauthProviders =
+                try store.decodeIfPresent([String].self, forKey: .oauthProviders) ?? []
         }
     }
 
@@ -158,13 +165,58 @@ final class ExtensionStorage {
 
     // MARK: - OAuth tokens
 
+    /// Keychain-backed: a third-party refresh token is a credential, so it does not belong in the
+    /// plaintext store the rest of this file keeps.
     func oauthTokens(extension name: String, provider: String) -> String? {
-        store(for: name).oauthTokens[provider]
+        migrateTokensIfNeeded(extension: name)
+        return try? KeychainSecretStore.extensionOAuthTokens.secret(
+            for: Self.tokenAccount(extension: name, provider: provider))
     }
 
     /// `nil` signs the provider out.
     func setOAuthTokens(extension name: String, provider: String, tokens: String?) {
-        mutate(name) { $0.oauthTokens[provider] = tokens }
+        let account = Self.tokenAccount(extension: name, provider: provider)
+        guard let tokens else {
+            try? KeychainSecretStore.extensionOAuthTokens.removeSecret(for: account)
+            mutate(name) { store in
+                store.oauthProviders.removeAll { $0 == provider }
+            }
+            return
+        }
+        try? KeychainSecretStore.extensionOAuthTokens.setSecret(tokens, for: account)
+        // The names only, never the values: uninstalling needs to know what to delete.
+        mutate(name) { store in
+            if !store.oauthProviders.contains(provider) { store.oauthProviders.append(provider) }
+        }
+    }
+
+    /// A stable account for an extension/provider pair; the Keychain keys on a UUID.
+    private static func tokenAccount(extension name: String, provider: String) -> UUID {
+        // Deterministic across launches and channels, so the same pair always finds its token.
+        let input = Data("\(ExtensionCatalog.safeName(name))\u{1F}\(provider)".utf8)
+        var digest = Array(SHA256.hash(data: input))
+        // Version 8 (custom) with the RFC 4122 variant, so it reads as a real UUID.
+        digest[6] = (digest[6] & 0x0F) | 0x80
+        digest[8] = (digest[8] & 0x3F) | 0x80
+        return UUID(uuid: (
+            digest[0], digest[1], digest[2], digest[3], digest[4], digest[5], digest[6], digest[7],
+            digest[8], digest[9], digest[10], digest[11], digest[12], digest[13], digest[14],
+            digest[15]
+        ))
+    }
+
+    /// Moves any tokens a pre-Keychain store left on disk, then drops them from the file.
+    private func migrateTokensIfNeeded(extension name: String) {
+        var current = store(for: name)
+        guard !current.oauthTokens.isEmpty else { return }
+        for (provider, tokens) in current.oauthTokens {
+            try? KeychainSecretStore.extensionOAuthTokens.setSecret(
+                tokens, for: Self.tokenAccount(extension: name, provider: provider))
+        }
+        current.oauthTokens = [:]
+        stores[name] = current
+        dirty.insert(name)
+        scheduleFlush()
     }
 
     // MARK: - Preferences
@@ -207,6 +259,11 @@ final class ExtensionStorage {
     }
 
     func removeAll(extension name: String) {
+        // Tokens live in the Keychain now, so dropping the file is no longer enough.
+        for provider in store(for: name).oauthProviders {
+            try? KeychainSecretStore.extensionOAuthTokens.removeSecret(
+                for: Self.tokenAccount(extension: name, provider: provider))
+        }
         stores.removeValue(forKey: name)
         try? FileManager.default.removeItem(at: fileURL(for: name))
     }

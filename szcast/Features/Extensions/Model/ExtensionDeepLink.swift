@@ -33,9 +33,13 @@ struct ExtensionDeepLink: Sendable, Equatable {
         return manifestName.split(separator: "/").last?.lowercased() == extensionName.lowercased()
     }
 
+    /// Schemes `claims` accepts for Raycast interop. Any of them can be opened by a web page,
+    /// so they carry no trust: see the `launchType` handling in `route`.
+    static let interopSchemes: Set<String> = ["raycast", "com.raycast", "raycastinternal"]
+
     static func claims(_ url: URL) -> Bool {
         guard let scheme = url.scheme?.lowercased() else { return false }
-        return ["raycast", "szcast", "szcast-dev", "com.raycast", "raycastinternal"].contains(scheme)
+        return interopSchemes.contains(scheme) || ["szcast", "szcast-dev"].contains(scheme)
     }
 
     /// Reads back through `route(url:)`, owner-scoped names included; `scheme` is the channel's.
@@ -104,6 +108,11 @@ struct ExtensionDeepLink: Sendable, Equatable {
         guard !extensionName.isEmpty, !commandName.isEmpty else { return nil }
         var arguments: [String: String] = [:]
         var fallbackText: String?
+        // Only this channel's own scheme may ask for a background launch. Any web page can open
+        // `raycast://`, so honouring the parameter there would let a link start an installed
+        // command with no window and no user in front of it. Denying the interop schemes by name
+        // keeps this a pure function; anything else (this channel's own) is trusted.
+        let trustedSource = !Self.interopSchemes.contains(url.scheme?.lowercased() ?? "")
         var launchType = ExtensionLaunchType.userInitiated
         var launchContext: [String: RenderValue] = [:]
         for item in items {
@@ -113,7 +122,8 @@ struct ExtensionDeepLink: Sendable, Equatable {
             case "fallbacktext":
                 fallbackText = item.value
             case "launchtype", "launch_type":
-                launchType = item.value?.lowercased() == "background" ? .background : .userInitiated
+                guard trustedSource, item.value?.lowercased() == "background" else { continue }
+                launchType = .background
             case "context", "launchcontext":
                 if let raw = item.value { launchContext = parseContext(raw) }
             default:
