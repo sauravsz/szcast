@@ -133,6 +133,8 @@ struct RootPaletteView: View {
         case .extensionCommand:
             return ExtensionCommandScreen(
                 screen: extensionScreen, extensions: extensions, vm: vm, openActions: openActions)
+        case .focusTimer:
+            return FocusTimerScreen(coordinator: core.focusTimerCoordinator, core: core, vm: vm)
         }
     }
 

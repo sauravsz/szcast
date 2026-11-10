@@ -269,6 +269,8 @@ final class LauncherCoordinator {
         case .support:
             dismissPalette()
             core.supportCoordinator.showSupport()
+        case .focusTimer:
+            paletteCoordinator.togglePalette(mode: .focusTimer)
         case .quit:
             NSApp.terminate(nil)
         }

@@ -194,6 +194,18 @@ enum SettingsBackupCoverage {
         AppSettingsKey.notesFolder.rawValue:
             "Names a folder on this Mac; the one a backup lands on may not have it.",
         AppSettingsKey.settingsFileEnabled.rawValue:
-            "Lets a file on this Mac change its settings; an import must not hand that to another."
+            "Lets a file on this Mac change its settings; an import must not hand that to another.",
+        AppSettingsKey.soundEffectsEnabled.rawValue:
+            "Audio cues are a local preference on this Mac.",
+        AppSettingsKey.confettiEnabled.rawValue:
+            "Visual celebrations are a local preference on this Mac.",
+        AppSettingsKey.focusTimerWorkDuration.rawValue:
+            "Focus timer session duration is a local preference on this Mac.",
+        AppSettingsKey.focusTimerShortBreak.rawValue:
+            "Focus timer short break duration is a local preference on this Mac.",
+        AppSettingsKey.focusTimerLongBreak.rawValue:
+            "Focus timer long break duration is a local preference on this Mac.",
+        AppSettingsKey.focusTimerShowsInMenuBar.rawValue:
+            "Focus timer menu bar display is a local preference on this Mac."
     ]
 }

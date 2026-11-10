@@ -241,6 +241,10 @@ final class AppCore {
         scheme: AppURLScheme.current, settings: settings, hotKeys: hotKeys,
         paletteCoordinator: paletteCoordinator, settingsCoordinator: settingsCoordinator,
         core: self)
+    @ObservationIgnored private(set) lazy var sensoryCoordinator = SensoryCoordinator(settings: settings)
+    @ObservationIgnored private(set) lazy var focusTimerCoordinator = FocusTimerCoordinator(
+        settings: settings, sensory: sensoryCoordinator,
+        showMessage: { [unowned self] in self.showMessage($0, tone: $1) })
 
     @ObservationIgnored private lazy var windowController = PaletteWindowController(core: self)
     @ObservationIgnored private lazy var messageHUD = MessageHUDController(settings: settings)

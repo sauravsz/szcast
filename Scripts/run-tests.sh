@@ -938,6 +938,8 @@ run slow mcp-stdio-test    Szcast/Platform/ExecutableLocator.swift \
                            Szcast/Features/AI/Model/JSONValue.swift \
                            Szcast/Features/MCP/Model/*.swift \
                            Szcast/Features/MCP/Service/*.swift
+run focus-timer-test       szcast/Features/FocusTimer/Model/*.swift \
+                           szcast/Features/FocusTimer/Service/*.swift
 
 if [ "$emit_db" -eq 1 ]; then
     printf ']\n' >> "$DB"

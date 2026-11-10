@@ -47,6 +47,7 @@ enum CommandID: String, CaseIterable, Sendable {
     case settings = "command:settings"
     case about = "command:about"
     case support = "command:support"
+    case focusTimer = "command:focus-timer"
     case quit = "command:quit"
 
     static let defaultCompactBarCommands: [CommandID] = [
@@ -122,6 +123,7 @@ enum CommandID: String, CaseIterable, Sendable {
         case .settings: return "szcast Settings"
         case .about: return "About szcast"
         case .support: return "Support szcast"
+        case .focusTimer: return "Focus Timer"
         case .quit: return "Quit szcast"
         }
     }
@@ -172,6 +174,7 @@ enum CommandID: String, CaseIterable, Sendable {
         case .settings: return "gearshape"
         case .about: return "info.circle"
         case .support: return "heart"
+        case .focusTimer: return "timer"
         case .quit: return "power"
         }
     }
@@ -201,6 +204,7 @@ enum CommandID: String, CaseIterable, Sendable {
         switch self {
         case .quickAI: ["ai"]
         case .aiChat: ["chat"]
+        case .focusTimer: ["focus", "pomodoro", "timer"]
         default: []
         }
     }
@@ -212,6 +216,7 @@ enum CommandID: String, CaseIterable, Sendable {
         case .searchFiles: 70
         case .mySchedule: 60
         case .searchEmoji: 50
+        case .focusTimer: 45
         case .createQuicklink, .createSnippet: 30
         default: nil
         }

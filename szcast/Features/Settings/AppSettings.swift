@@ -678,6 +678,30 @@ final class AppSettings {
         didSet { defaults.set(allowedDeepLinks, forKey: Key.allowedDeepLinks.rawValue) }
     }
 
+    var soundEffectsEnabled: Bool {
+        didSet { defaults.set(soundEffectsEnabled, forKey: Key.soundEffectsEnabled.rawValue) }
+    }
+
+    var confettiEnabled: Bool {
+        didSet { defaults.set(confettiEnabled, forKey: Key.confettiEnabled.rawValue) }
+    }
+
+    var focusTimerWorkDuration: Int {
+        didSet { defaults.set(focusTimerWorkDuration, forKey: Key.focusTimerWorkDuration.rawValue) }
+    }
+
+    var focusTimerShortBreak: Int {
+        didSet { defaults.set(focusTimerShortBreak, forKey: Key.focusTimerShortBreak.rawValue) }
+    }
+
+    var focusTimerLongBreak: Int {
+        didSet { defaults.set(focusTimerLongBreak, forKey: Key.focusTimerLongBreak.rawValue) }
+    }
+
+    var focusTimerShowsInMenuBar: Bool {
+        didSet { defaults.set(focusTimerShowsInMenuBar, forKey: Key.focusTimerShowsInMenuBar.rawValue) }
+    }
+
     /// With no per-app list the bundle follows macOS's languages, so this runs before any lookup.
     static func pinLanguage() {
         UserDefaults.standard.set([storedLanguage.rawValue], forKey: Key.language.rawValue)
@@ -941,5 +965,20 @@ final class AppSettings {
         settingsFileEnabled = defaults.object(forKey: Key.settingsFileEnabled.rawValue) == nil
             || defaults.bool(forKey: Key.settingsFileEnabled.rawValue)
         allowedDeepLinks = defaults.stringArray(forKey: Key.allowedDeepLinks.rawValue) ?? []
+        soundEffectsEnabled =
+            defaults.object(forKey: Key.soundEffectsEnabled.rawValue) == nil
+            || defaults.bool(forKey: Key.soundEffectsEnabled.rawValue)
+        confettiEnabled =
+            defaults.object(forKey: Key.confettiEnabled.rawValue) == nil
+            || defaults.bool(forKey: Key.confettiEnabled.rawValue)
+        let workDuration = defaults.integer(forKey: Key.focusTimerWorkDuration.rawValue)
+        focusTimerWorkDuration = workDuration > 0 ? workDuration : 25
+        let shortBreak = defaults.integer(forKey: Key.focusTimerShortBreak.rawValue)
+        focusTimerShortBreak = shortBreak > 0 ? shortBreak : 5
+        let longBreak = defaults.integer(forKey: Key.focusTimerLongBreak.rawValue)
+        focusTimerLongBreak = longBreak > 0 ? longBreak : 15
+        focusTimerShowsInMenuBar =
+            defaults.object(forKey: Key.focusTimerShowsInMenuBar.rawValue) == nil
+            || defaults.bool(forKey: Key.focusTimerShowsInMenuBar.rawValue)
     }
 }

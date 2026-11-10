@@ -27,6 +27,12 @@ struct SzcastApp: App {
         } label: {
             CalendarMenuBarLabel(appName: appName)
         }
+
+        MenuBarExtra(isInserted: focusTimerMenuBarInsertion) {
+            FocusTimerMenuBarMenu()
+        } label: {
+            FocusTimerMenuBarLabel()
+        }
     }
 
     /// Read in `body` for Observation; SwiftUI echoes the binding back, so only a change writes.
@@ -64,6 +70,18 @@ struct SzcastApp: App {
     private var isCalendarMenuBarHiddenWhenEmpty: Bool {
         AppCore.shared.settings.calendarMenuBarHidesWhenEmpty
             && !AppCore.shared.calendarCoordinator.hasMenuBarEvent
+    }
+
+    private var focusTimerMenuBarInsertion: Binding<Bool> {
+        let coordinator = AppCore.shared.focusTimerCoordinator
+        let settings = AppCore.shared.settings
+        let isInserted = settings.focusTimerShowsInMenuBar && coordinator.isActive
+        return Binding(
+            get: { isInserted },
+            set: { inserted in
+                guard !inserted else { return }
+                settings.focusTimerShowsInMenuBar = false
+            })
     }
 
     /// Declared, not assigned to `NSApp.mainMenu`: SwiftUI rebuilds the menu on any scene change.

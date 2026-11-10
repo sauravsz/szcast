@@ -121,4 +121,10 @@ enum AppSettingsKey: String, CaseIterable {
     case supportReminders = "supportReminders"
     case settingsFileEnabled = "settingsFileEnabled"
     case allowedDeepLinks = "allowedDeepLinks"
+    case soundEffectsEnabled = "soundEffectsEnabled"
+    case confettiEnabled = "confettiEnabled"
+    case focusTimerWorkDuration = "focusTimerWorkDuration"
+    case focusTimerShortBreak = "focusTimerShortBreak"
+    case focusTimerLongBreak = "focusTimerLongBreak"
+    case focusTimerShowsInMenuBar = "focusTimerShowsInMenuBar"
 }

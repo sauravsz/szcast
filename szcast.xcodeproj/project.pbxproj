@@ -628,6 +628,14 @@
 		B17B6FE6F8DE23D815E3C5BB /* InstalledCLIProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = E08F20B0B823443E176F1566 /* InstalledCLIProvider.swift */; };
 		B2404EBFB52B8199DC2536F6 /* HotKeyBinding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85B00A698366E83C7352BC1E /* HotKeyBinding.swift */; };
 		B24D0E1A5C3F4A9B00DEFA02 /* ExtensionInstallPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3D5 /* ExtensionInstallPolicy.swift */; };
+		B24D0E1A5C3F4A9B00DEFA11 /* SensoryAudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3E1 /* SensoryAudioPlayer.swift */; };
+		B24D0E1A5C3F4A9B00DEFA12 /* ConfettiWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3E2 /* ConfettiWindowController.swift */; };
+		B24D0E1A5C3F4A9B00DEFA13 /* SensoryCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3E3 /* SensoryCoordinator.swift */; };
+		B24D0E1A5C3F4A9B00DEFA14 /* FocusTimerModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3E4 /* FocusTimerModel.swift */; };
+		B24D0E1A5C3F4A9B00DEFA15 /* FocusTimerEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3E5 /* FocusTimerEngine.swift */; };
+		B24D0E1A5C3F4A9B00DEFA16 /* FocusTimerCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3E6 /* FocusTimerCoordinator.swift */; };
+		B24D0E1A5C3F4A9B00DEFA17 /* FocusTimerMenuBarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3E7 /* FocusTimerMenuBarItem.swift */; };
+		B24D0E1A5C3F4A9B00DEFA18 /* FocusTimerScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3E8 /* FocusTimerScreen.swift */; };
 		B24D0E1A5C3F4A9B00DEFA01 /* DefaultHotKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3D4 /* DefaultHotKeys.swift */; };
 		B277075C16A5641C8F3E58C6 /* CameraAccess.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DD86B3ABBB71BC6EA116D85 /* CameraAccess.swift */; };
 		B32BBDF9B4D9705DAFFD11BF /* CalcHolidays.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAAAAB96B2F3061C9CC50978 /* CalcHolidays.swift */; };
@@ -1408,6 +1416,14 @@
 		858E08BB313EC330C2D5E50C /* LauncherCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LauncherCoordinator.swift; sourceTree = "<group>"; };
 		85B00A698366E83C7352BC1E /* HotKeyBinding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotKeyBinding.swift; sourceTree = "<group>"; };
 		85D0FA9B72E4C3D6A1B2C3D5 /* ExtensionInstallPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionInstallPolicy.swift; sourceTree = "<group>"; };
+		85D0FA9B72E4C3D6A1B2C3E1 /* SensoryAudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensoryAudioPlayer.swift; sourceTree = "<group>"; };
+		85D0FA9B72E4C3D6A1B2C3E2 /* ConfettiWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfettiWindowController.swift; sourceTree = "<group>"; };
+		85D0FA9B72E4C3D6A1B2C3E3 /* SensoryCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensoryCoordinator.swift; sourceTree = "<group>"; };
+		85D0FA9B72E4C3D6A1B2C3E4 /* FocusTimerModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusTimerModel.swift; sourceTree = "<group>"; };
+		85D0FA9B72E4C3D6A1B2C3E5 /* FocusTimerEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusTimerEngine.swift; sourceTree = "<group>"; };
+		85D0FA9B72E4C3D6A1B2C3E6 /* FocusTimerCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusTimerCoordinator.swift; sourceTree = "<group>"; };
+		85D0FA9B72E4C3D6A1B2C3E7 /* FocusTimerMenuBarItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusTimerMenuBarItem.swift; sourceTree = "<group>"; };
+		85D0FA9B72E4C3D6A1B2C3E8 /* FocusTimerScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusTimerScreen.swift; sourceTree = "<group>"; };
 		85D0FA9B72E4C3D6A1B2C3D4 /* DefaultHotKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultHotKeys.swift; sourceTree = "<group>"; };
 		85DAEE77ABAC4260C95F9AB5 /* AIProviderFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProviderFactory.swift; sourceTree = "<group>"; };
 		86545F54669A075FBDA5D1F1 /* CalculatorHistoryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalculatorHistoryScreen.swift; sourceTree = "<group>"; };
@@ -1831,6 +1847,68 @@
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		005F026A8F7D5E209B1CE932 /* FocusTimer */ = {
+			isa = PBXGroup;
+			children = (
+				005F026A8F7D5E209B1CE933 /* Model */,
+				005F026A8F7D5E209B1CE934 /* Service */,
+				005F026A8F7D5E209B1CE935 /* UI */,
+			);
+			path = FocusTimer;
+			sourceTree = "<group>";
+		};
+		005F026A8F7D5E209B1CE933 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				85D0FA9B72E4C3D6A1B2C3E4 /* FocusTimerModel.swift */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		005F026A8F7D5E209B1CE934 /* Service */ = {
+			isa = PBXGroup;
+			children = (
+				85D0FA9B72E4C3D6A1B2C3E5 /* FocusTimerEngine.swift */,
+			);
+			path = Service;
+			sourceTree = "<group>";
+		};
+		005F026A8F7D5E209B1CE935 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				85D0FA9B72E4C3D6A1B2C3E6 /* FocusTimerCoordinator.swift */,
+				85D0FA9B72E4C3D6A1B2C3E7 /* FocusTimerMenuBarItem.swift */,
+				85D0FA9B72E4C3D6A1B2C3E8 /* FocusTimerScreen.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		005F026A8F7D5E209B1CE931 /* Sensory */ = {
+			isa = PBXGroup;
+			children = (
+				005F026A8F7D5E209B1CE936 /* Service */,
+				005F026A8F7D5E209B1CE937 /* UI */,
+			);
+			path = Sensory;
+			sourceTree = "<group>";
+		};
+		005F026A8F7D5E209B1CE936 /* Service */ = {
+			isa = PBXGroup;
+			children = (
+				85D0FA9B72E4C3D6A1B2C3E1 /* SensoryAudioPlayer.swift */,
+			);
+			path = Service;
+			sourceTree = "<group>";
+		};
+		005F026A8F7D5E209B1CE937 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				85D0FA9B72E4C3D6A1B2C3E2 /* ConfettiWindowController.swift */,
+				85D0FA9B72E4C3D6A1B2C3E3 /* SensoryCoordinator.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
 		005F026A8F7D5E209B1CE917 /* Clipboard */ = {
 			isa = PBXGroup;
 			children = (
@@ -3102,6 +3180,7 @@
 				15CFCD6B1429C5F0944CBCC4 /* Emoji */,
 				8A16DA3DB6733A27E0DF4059 /* Extensions */,
 				C6A3AB65E150BE9AFAF0EC2E /* FileSearch */,
+				005F026A8F7D5E209B1CE932 /* FocusTimer */,
 				3B3C887C1093082A211134ED /* HotKeys */,
 				7DE06EE636C14E50EE172D9E /* Launcher */,
 				2B65B3B92DE2BF61841F46DD /* MCP */,
@@ -3110,6 +3189,7 @@
 				0ED457107377ECF8147C6B9D /* Onboarding */,
 				159D0342A9846C10226BF6F7 /* QuickActions */,
 				60DCE6A46E636364E5C3B5B4 /* Quicklinks */,
+				005F026A8F7D5E209B1CE931 /* Sensory */,
 				E3202F504002B7792FC50B2F /* Settings */,
 				7CD438390F8FA4B3C2AE5F28 /* Snippets */,
 				D301BB64789647AB76909F82 /* Support */,
@@ -4572,6 +4652,14 @@
 				507D6A26EA5451465B1BE5AF /* HotKeyAction.swift in Sources */,
 				B2404EBFB52B8199DC2536F6 /* HotKeyBinding.swift in Sources */,
 				B24D0E1A5C3F4A9B00DEFA02 /* ExtensionInstallPolicy.swift in Sources */,
+				B24D0E1A5C3F4A9B00DEFA11 /* SensoryAudioPlayer.swift in Sources */,
+				B24D0E1A5C3F4A9B00DEFA12 /* ConfettiWindowController.swift in Sources */,
+				B24D0E1A5C3F4A9B00DEFA13 /* SensoryCoordinator.swift in Sources */,
+				B24D0E1A5C3F4A9B00DEFA14 /* FocusTimerModel.swift in Sources */,
+				B24D0E1A5C3F4A9B00DEFA15 /* FocusTimerEngine.swift in Sources */,
+				B24D0E1A5C3F4A9B00DEFA16 /* FocusTimerCoordinator.swift in Sources */,
+				B24D0E1A5C3F4A9B00DEFA17 /* FocusTimerMenuBarItem.swift in Sources */,
+				B24D0E1A5C3F4A9B00DEFA18 /* FocusTimerScreen.swift in Sources */,
 				B24D0E1A5C3F4A9B00DEFA01 /* DefaultHotKeys.swift in Sources */,
 				ACD8CAE659B1C49EC8652576 /* HotKeyCenter.swift in Sources */,
 				CC9A286B77E32C22B21A22BE /* HotKeyManager.swift in Sources */,
