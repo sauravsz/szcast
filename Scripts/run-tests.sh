@@ -163,6 +163,7 @@ run launcher-settings-file-test \
                            Szcast/Features/HotKeys/Service/HotKeySettingsFile.swift \
                            Szcast/Features/HotKeys/Service/KeyShortcut.swift \
                            Szcast/Features/HotKeys/Model/HotKeyAction.swift \
+                           Szcast/Features/WindowManagement/Model/WindowCommand.swift \
                            Szcast/Features/HotKeys/Model/HotKeyBinding.swift \
                            Szcast/Features/HotKeys/Model/HotKeySpelling.swift \
                            Szcast/Features/HotKeys/Model/DoubleTapModifier.swift \
@@ -174,7 +175,6 @@ run launcher-settings-file-test \
                            Szcast/Features/Quicklinks/Model/Quicklink.swift \
                            Szcast/Features/Quicklinks/Model/QuicklinkDestination.swift \
                            Szcast/Features/SystemActions/Model/SystemAction.swift \
-                           Szcast/Features/WindowManagement/Model/WindowCommand.swift \
                            Szcast/Features/Snippets/Model/Snippet.swift \
                            Szcast/Platform/LocalizedResource.swift
 run apple-shortcut-test    Szcast/Features/AppleShortcuts/Model/*.swift
@@ -679,7 +679,8 @@ run dictation-key-test     Szcast/Features/HotKeys/Model/HIDKeyMapping.swift \
                            Szcast/Platform/NotificationToken.swift \
                            Tests/hyper-key-fixtures.swift \
                            Tests/dictation-key-fixtures.swift
-run hotkey-dispatch-test   Szcast/Features/HotKeys/Model/DoubleTapModifier.swift \
+run hotkey-dispatch-test   Szcast/Features/HotKeys/Model/DefaultHotKeys.swift \
+                           Szcast/Features/HotKeys/Model/DoubleTapModifier.swift \
                            Szcast/Features/HotKeys/Model/ModifierKey.swift \
                            Szcast/Features/HotKeys/Model/HotKeyBinding.swift \
                            Szcast/Features/HotKeys/Model/HyperKey.swift \

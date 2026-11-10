@@ -119,10 +119,10 @@ enum CommandID: String, CaseIterable, Sendable {
         case .importSettings: return "Import Backup"
         case .importFromRaycast: return "Import from Raycast"
         case .checkForUpdates: return "Check for Updates"
-        case .settings: return "Szcast Settings"
-        case .about: return "About Szcast"
-        case .support: return "Support Szcast"
-        case .quit: return "Quit Szcast"
+        case .settings: return "szcast Settings"
+        case .about: return "About szcast"
+        case .support: return "Support szcast"
+        case .quit: return "Quit szcast"
         }
     }
 

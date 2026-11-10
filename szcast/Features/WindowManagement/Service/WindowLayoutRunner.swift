@@ -87,7 +87,7 @@ enum WindowLayoutRunner {
         return (entries, frontmostEntryID)
     }
 
-    /// Nil when Szcast itself is frontmost, as it is when capturing from Settings.
+    /// Nil when szcast itself is frontmost, as it is when capturing from Settings.
     private static func focusedWindowHandle(in snapshot: WindowInventory.Snapshot) -> Int? {
         guard let app = NSWorkspace.shared.frontmostApplication,
             let focused = AXWindowAccess.element(

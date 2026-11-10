@@ -195,7 +195,7 @@ final class WindowMover {
         if catalogued.kind == .fullscreen {
             let entering = !focused.surface.isFullScreen
             guard requestFullScreen(entering, on: focused.surface) != nil else { return false }
-            // The size chain is moot, but the pre-Szcast frame is still the Restore target.
+            // The size chain is moot, but the pre-szcast frame is still the Restore target.
             memory.forgetCycle(key: focused.key, isFullScreen: entering)
             return true
         }

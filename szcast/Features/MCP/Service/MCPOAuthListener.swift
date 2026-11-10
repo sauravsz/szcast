@@ -119,7 +119,7 @@ final class MCPOAuthListener {
         let page =
             outcome == nil
             ? String(localized: "Invalid sign-in response.")
-            : String(localized: "Return to Szcast. You can close this tab.")
+            : String(localized: "Return to szcast. You can close this tab.")
         let response =
             "HTTP/1.1 \(status)\r\nContent-Type: text/html; charset=utf-8\r\n"
             + "Cache-Control: no-store\r\nContent-Security-Policy: default-src 'none'\r\n"

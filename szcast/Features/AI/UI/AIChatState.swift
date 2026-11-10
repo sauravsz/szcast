@@ -421,7 +421,7 @@ enum ChatAttachmentRefusal: Equatable, Sendable {
         case .textTooLong:
             let limit = AIAttachmentBudget.maxInlinedTextBytes / 1_024
             return String(localized: "That text file is too big to attach — \(limit) KB is the limit.")
-        case .undecodable: return String(localized: "That file isn't text Szcast can read.")
+        case .undecodable: return String(localized: "That file isn't text szcast can read.")
         case .unreadable: return String(localized: "That file could not be read.")
         case .unsupported(let ext):
             return String(localized: "Can't attach .\(ext) files — only images, PDFs and text.")

@@ -159,7 +159,7 @@ final class UpdateCoordinator {
                     String(localized: "\(Bundle.main.appDisplayName) is up to date"))
             } else {
                 core.showMessage(
-                    String(localized: "Szcast could not reach GitHub."), tone: .danger)
+                    String(localized: "szcast could not reach GitHub."), tone: .danger)
             }
         }
     }

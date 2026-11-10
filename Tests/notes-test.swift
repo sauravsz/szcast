@@ -61,7 +61,7 @@ struct NotesTests {
         try Data("external".utf8).write(to: stable.fileURL(for: untitled.id), options: .atomic)
         try stable.save(id: untitled.id, source: source)
         check(
-            "Szcast is the only writer, so a save replaces whatever is on disk",
+            "szcast is the only writer, so a save replaces whatever is on disk",
             try stable.load(untitled.id).source == source)
 
         let plan = try stable.create(title: "Plan")

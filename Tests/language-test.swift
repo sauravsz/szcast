@@ -84,7 +84,7 @@ struct LanguageTests {
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/usr/bin/xcrun")
             process.arguments = [
-                "xcstringstool", "compile", "Szcast/Resources/\(catalog).xcstrings",
+                "xcstringstool", "compile", "szcast/Resources/\(catalog).xcstrings",
                 "--output-directory", root.path
             ]
             try process.run()
@@ -171,7 +171,7 @@ struct LanguageTests {
                 reordered.contains(size) && reordered.contains("2") && !reordered.contains("%@"))
             let privacy = bundle.localizedString(
                 forKey: "NSCameraUsageDescription", value: nil, table: "InfoPlist")
-            check("\(code) camera privacy prompt loads", privacy.contains("Szcast"))
+            check("\(code) camera privacy prompt loads", privacy.contains("szcast"))
 
             if code == "en" || code == "fr" {
                 for (key, french) in [

@@ -17,19 +17,19 @@ enum UpdateFailure: LocalizedError, Equatable {
         case .extractFailed(let detail):
             return String(localized: "The downloaded archive could not be expanded. \(detail)")
         case .noAppInArchive:
-            return String(localized: "The downloaded archive does not contain Szcast.")
+            return String(localized: "The downloaded archive does not contain szcast.")
         case .quarantined:
             return String(
-                localized: "macOS quarantined the downloaded app and Szcast could not clear the flag.")
+                localized: "macOS quarantined the downloaded app and szcast could not clear the flag.")
         case .bundleMismatch:
-            return String(localized: "The downloaded app is not this build of Szcast.")
+            return String(localized: "The downloaded app is not this build of szcast.")
         case .identityMismatch:
             return String(
                 localized: "The downloaded app is not signed by the identity this copy was signed with.")
         case .versionMismatch(let expected, let found):
             return String(localized: "The downloaded app is version \(found), not \(expected).")
         case .replaceFailed(let detail):
-            return String(localized: "Szcast could not be replaced. \(detail)")
+            return String(localized: "szcast could not be replaced. \(detail)")
         }
     }
 

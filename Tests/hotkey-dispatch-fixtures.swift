@@ -2,6 +2,8 @@ import Foundation
 
 enum CommandID: String, CaseIterable, Sendable {
     case sample
+    /// Named so DefaultHotKeys compiles against the stub; no behaviour attaches to it.
+    case searchSnippets
     var name: String { rawValue }
     var hotKeyAction: HotKeyAction? { .command(self) }
 }
@@ -13,7 +15,10 @@ enum SystemActionCatalog {
     static func action(id: SystemAction.ID) -> SystemAction { SystemAction(name: id.rawValue) }
 }
 struct WindowCommand {
-    enum ID: String, CaseIterable, Sendable { case sample }
+    enum ID: String, CaseIterable, Sendable {
+        case sample
+        case leftHalf, rightHalf, maximize, reasonableSize
+    }
     let name: String
 }
 enum WindowCommandCatalog {

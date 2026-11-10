@@ -48,10 +48,10 @@ final class MCPCoordinator {
         manager.reconcile(ownServers)
     }
 
-    /// What Szcast runs itself; Codex and Claude start their own copy of every local server.
+    /// What szcast runs itself; Codex and Claude start their own copy of every local server.
     private var ownServers: [MCPServer] {
         let cliRoute = core.aiChatCoordinator.everyChatRunsItsOwnTools
-        return store.enabledServers.filter { $0.runsInSzcast(whileCLIRouteSelected: cliRoute) }
+        return store.enabledServers.filter { $0.runsInszcast(whileCLIRouteSelected: cliRoute) }
     }
 
     var slugs: Set<String> {
@@ -81,7 +81,7 @@ final class MCPCoordinator {
             .map(\.aiTool)
     }
 
-    /// The same list for a CLI route; it starts its own copies, so Szcast's need not be ready.
+    /// The same list for a CLI route; it starts its own copies, so szcast's need not be ready.
     func toolServers(scopedTo slug: String?) async -> [AIToolServer] {
         guard isActive else { return [] }
         let secrets = MCPSecretStore()
@@ -209,7 +209,7 @@ final class MCPCoordinator {
             title: String(localized: "Let \(server.title) run its tools?"),
             message: String(
                 localized: """
-                    The model wants to call \u{201C}\(tool)\u{201D}. Szcast did not write this \
+                    The model wants to call \u{201C}\(tool)\u{201D}. szcast did not write this \
                     server and cannot vouch for what it does.
                     """),
             symbol: "wrench.and.screwdriver",

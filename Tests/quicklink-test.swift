@@ -86,7 +86,7 @@ struct QuicklinkTests {
             "a tilde expands against the injected home")
         expect(detect("~") == .path(home), "a bare tilde is the home directory")
         expect(
-            detect("  ~/Projects/Szcast  ") == .path("\(home)/Projects/Szcast"),
+            detect("  ~/Projects/szcast  ") == .path("\(home)/Projects/szcast"),
             "surrounding whitespace is trimmed before detection")
         expect(
             detect("file:///Users/x/notes.md") == .path("/Users/x/notes.md"),

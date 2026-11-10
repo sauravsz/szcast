@@ -78,7 +78,7 @@ func setExtensionsEnabled(_ enabled: Bool) {
 Nothing prompts per extension, per command, or per capability. Critically, background/menu-bar commands run on a timer (`ExtensionRefreshPolicy.minimumInterval`, 10 s floor for menu-bar) with no user present, so an installed extension can exfiltrate files and the clipboard on a schedule after a single "Enable extensions?" click months earlier.
 
 This contradicts `SECURITY.md`:
-> "Szcast is offline by default and every networked feature is consent-gated. A path that reaches the network without consent, or survives consent being withdrawn, is high severity."
+> "szcast is offline by default and every networked feature is consent-gated. A path that reaches the network without consent, or survives consent being withdrawn, is high severity."
 
 **Why it matters:** installing or refreshing any store/GitHub extension is equivalent to granting that extension full user-account code execution and unattended network access. "Extension installed" and "extension trusted with ~/.ssh, Keychain-adjacent files, and the clipboard" are conflated into one click.
 **Fix:** add a per-extension capability manifest (fs roots, spawn, network hosts) enforced in `dispatch(api:…)`/`ExtensionFetcher`, prompting on first use of each capability, and deny `fetch`/`spawn` for `.background` launches unless explicitly granted.
@@ -129,7 +129,7 @@ guard pid > 0 || pid < -1, pid != getpid(), pid != -getpgrp() else {
 }
 guard Darwin.kill(pid, signal) == 0 else {
 ```
-The guard excludes only Szcast's own pid and process group. Any other pid — the user's editor, a security agent, another app — is signalable with `SIGKILL`, from an unattended background command.
+The guard excludes only szcast's own pid and process group. Any other pid — the user's editor, a security agent, another app — is signalable with `SIGKILL`, from an unattended background command.
 
 **Why it matters:** a malicious extension can terminate AV/EDR agents, backup daemons, or `WindowServer`-adjacent helpers as a precursor to F-1 abuse, without any prompt.
 
@@ -168,7 +168,7 @@ and `isExecutablePayload` (`:172-185`) treats a `#!` shebang **or any Mach-O mag
     <string>com.raycast</string>
 </array>
 ```
-Any app, web page, or malicious document can therefore drive Szcast by opening `raycast://…`, not just `szcast://`.
+Any app, web page, or malicious document can therefore drive szcast by opening `raycast://…`, not just `szcast://`.
 
 The built-in parser and gate are sound: `DeepLink.link` rejects `/` and `.`/`..` in note names, requires a UUID for chat, and refuses the `extensions` host (`DeepLink.swift:68-77`); unknown rows are rejected before consent (`DeepLinkCoordinator.swift:150`); input-bearing keys include the query so an "Always Allow" never covers different arguments (`DeepLinkConsentPolicy.swift:11-16`); the consent dialog defaults to Cancel (`DeepLinkCoordinator.swift:245-249`).
 
@@ -181,7 +181,7 @@ Two residual gaps:
 
 **Scheme claims: kept, by product decision.** `raycast` and `com.raycast` stay in
 `CFBundleURLSchemes`, because clicking a Raycast store link is how a user installs an extension into
-Szcast; unregistering them broke that path outright. What made the claim dangerous was never the
+szcast; unregistering them broke that path outright. What made the claim dangerous was never the
 reachability, it was the escalation behind it — a link that chose `.background` started an installed
 command with no window and nobody watching. That is closed above, so the reachable surface is now:
 
@@ -252,7 +252,7 @@ behaviour is unchanged; the literal stops claiming world-writable and survives a
 - **Updater privilege level** — no helper, no `SMJobBless`, no root: `UpdateInstaller.install` performs `FileManager.replaceItemAt` in the user's own bundle directory after a writability precheck (`UpdateInstaller.swift:44-48, 77-95`), and re-verifies the exact code hash immediately before the swap (`:84-86`). Extraction uses `/usr/bin/ditto -x -k` into a private staging dir (`:113-125`), and the staged app must match bundle ID and version (`:128-148`). Zip-slip content outside the staging directory is not independently checked, but is constrained by `ditto`'s archive handling — `[INFERENCE]`.
 - **Deep-link parser validation** — `settings` rejects slashes, `note` rejects `/`, `.`, `..`, `chat` requires a UUID, `window-size` requires named fields; unknown entries and non-existent rows are refused before any prompt (`DeepLink.swift:68-77`, `DeepLinkCoordinator.swift:150, 164-169`); consent defaults to Cancel and drops concurrent links.
 - **Extension `open()` file flags** — masked to an allowlist, `O_CLOEXEC` always added, `O_EXLOCK` excluded deliberately (`ExtensionNodeShims.swift:11-13, 232-234`); a 256-handle cap (`:227`) bounds descriptor exhaustion.
-- **Entitlements** — `szcast/Szcast.entitlements` is minimal and each key is justified in-file: no `app-sandbox` (needed for a launcher), `allow-jit` (JavaScriptCore), `automation.apple-events`, camera, audio-input, calendars. No `com.apple.security.cs.disable-library-validation`, no `get-task-allow`.
+- **Entitlements** — `szcast/szcast.entitlements` is minimal and each key is justified in-file: no `app-sandbox` (needed for a launcher), `allow-jit` (JavaScriptCore), `automation.apple-events`, camera, audio-input, calendars. No `com.apple.security.cs.disable-library-validation`, no `get-task-allow`.
 
 ---
 
@@ -287,7 +287,7 @@ Coverage gaps §4 closed by direct inspection:
 
 3. **Signing settings — `get-task-allow` absent, hardened runtime ON.**
    `szcast.xcodeproj/project.pbxproj:5291` → `ENABLE_HARDENED_RUNTIME = YES`; `CODE_SIGN_IDENTITY`
-   is `"Szcast Self-Signed"` (self-signed, expected for a personal fork) in both Debug and
+   is `"szcast Self-Signed"` (self-signed, expected for a personal fork) in both Debug and
    Release configurations. `get-task-allow` appears nowhere in the project. No debug
    entitlement is wired into Release.
 
@@ -316,7 +316,7 @@ Coverage gaps §4 closed by direct inspection:
    form `…?launchType=background` starts an installed extension command in background mode
    unprompted. Fix alongside the existing M-5 fix: reject or force-normalise the
    `launchType` parameter at the `ExtensionDeepLink` parse site (ignore the URL's value and
-   always use `.userInitiated` for non-Szcast-source links) and stop claiming the
+   always use `.userInitiated` for non-szcast-source links) and stop claiming the
    `raycast` / `com.raycast` URL schemes if interop doesn't need them.
 
 **Revised severity:** with §4.6 confirmed, the top items are H-1 (unattended exec) and
@@ -340,7 +340,7 @@ Closed in this round, with the test that now pins each one:
 | **OAuth tokens** | Moved to a dedicated Keychain scope, with a migration that clears the plaintext copy | — (needs a live Keychain) |
 
 Two tests encoded the *old*, vulnerable behaviour and were rewritten rather than kept:
-`ext-test`'s "deeplink reads fallback text and background launch" and "process.kill guards Szcast
+`ext-test`'s "deeplink reads fallback text and background launch" and "process.kill guards szcast
 itself". Both asserted exactly the defect being fixed.
 
 ### Still open

@@ -5,7 +5,7 @@ private enum TooltipLabel {
     case keyCaps([String])
 }
 
-/// A hover label in Szcast's own vocabulary, replacing a system `.help()` tooltip.
+/// A hover label in szcast's own vocabulary, replacing a system `.help()` tooltip.
 private struct TooltipModifier: ViewModifier {
     let label: TooltipLabel?
     let alignment: HorizontalAlignment

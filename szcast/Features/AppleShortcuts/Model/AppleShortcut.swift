@@ -1,6 +1,6 @@
 import Foundation
 
-/// A shortcut the Shortcuts app owns; Szcast holds only what it needs to find and run it.
+/// A shortcut the Shortcuts app owns; szcast holds only what it needs to find and run it.
 struct AppleShortcut: Hashable, Identifiable, Sendable {
     static let entryIDPrefix = "apple-shortcut:"
     static let sfSymbol = "square.2.layers.3d"

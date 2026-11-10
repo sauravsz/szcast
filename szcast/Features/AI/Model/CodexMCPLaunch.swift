@@ -1,11 +1,11 @@
 import Foundation
 
-/// Szcast's servers as `codex app-server` launch overrides; nothing reaches `~/.codex`.
+/// szcast's servers as `codex app-server` launch overrides; nothing reaches `~/.codex`.
 enum CodexMCPLaunch {
-    /// Codex's name for a Szcast server; `-c` merges into a same-named table of the reader's.
+    /// Codex's name for a szcast server; `-c` merges into a same-named table of the reader's.
     static func serverName(for handle: String) -> String { serverPrefix + handle }
 
-    /// The handle behind a name Codex reports, or `nil` for a server that is not Szcast's.
+    /// The handle behind a name Codex reports, or `nil` for a server that is not szcast's.
     static func handle(ofServer name: String) -> String? {
         guard name.hasPrefix(serverPrefix), name.count > serverPrefix.count else { return nil }
         return String(name.dropFirst(serverPrefix.count))
@@ -34,7 +34,7 @@ enum CodexMCPLaunch {
         servers.map { serverName(for: $0.handle) }.first { foreignNames.contains($0) }
     }
 
-    /// `-c` pairs for Szcast's servers, and every one of the reader's own, disabled by name.
+    /// `-c` pairs for szcast's servers, and every one of the reader's own, disabled by name.
     static func arguments(servers: [AIToolServer], disabling foreignNames: [String]) -> [String] {
         var arguments: [String] = []
         for name in foreignNames {
@@ -43,7 +43,7 @@ enum CodexMCPLaunch {
         for (index, server) in servers.enumerated() {
             let key = "mcp_servers.\(serverName(for: server.handle))"
             arguments += ["-c", "\(key).enabled=true"]
-            // Codex runs a tool its server calls read-only unasked; trust is Szcast's call.
+            // Codex runs a tool its server calls read-only unasked; trust is szcast's call.
             arguments += ["-c", "\(key).default_tools_approval_mode=\(quoted("prompt"))"]
             switch server.transport {
             case .command(let path, let commandArguments, let environment):
@@ -162,7 +162,7 @@ enum CodexMCPLaunch {
     }
 }
 
-/// The one server request Szcast answers, whether an MCP tool call may run; all else is declined.
+/// The one server request szcast answers, whether an MCP tool call may run; all else is declined.
 struct CodexElicitation: Equatable, Sendable {
     /// What the reply says. `persist` is never sent: only Settings may change a standing decision.
     enum Action: String, Sendable {

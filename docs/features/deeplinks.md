@@ -2,7 +2,7 @@
 
 Every launcher row that can take a hotkey can also be run by URL, and so can a note, a saved AI chat
 and a one-off window size. Karabiner-Elements, a Shortcut, a script, a Stream Deck or a web page can
-drive Szcast without a chord of its own:
+drive szcast without a chord of its own:
 
 ```sh
 open -g "szcast://command/clipboard-history"
@@ -141,10 +141,10 @@ row's fields, as a hotkey with no selection does. Any other target ignores its i
 ## Consent
 
 `DeepLinkConsentPolicy.requiresConsent(_:input:)` decides. **A link from outside asks first when it
-carries input, or when its target acts outside Szcast.** The second half is an exhaustive switch,
+carries input, or when its target acts outside szcast.** The second half is an exhaustive switch,
 so a new command fails to build until it is classed:
 
-- **Never asks without input**: anything that only opens a Szcast screen or editor — search
+- **Never asks without input**: anything that only opens a szcast screen or editor — search
   screens, Settings, notes, chats, the create commands, Quick AI.
 - **Always asks**: window commands and sizes, layouts, rooms, system actions, quicklinks, snippets,
   custom commands, Apple Shortcuts, custom Quick Actions, the AI text actions, Paste Sequentially,
@@ -167,8 +167,8 @@ Destructive system actions still ask their own question after it. One question s
 link that arrives meanwhile is logged and dropped. The gate is checked again after the answer, so a
 feature turned off during the question still wins.
 
-A link Szcast opens itself — a quicklink whose link is the channel's own scheme — runs in-process
-with `source: .szcast`. It never asks, because the reader chose it in Szcast. It never goes
+A link szcast opens itself — a quicklink whose link is the channel's own scheme — runs in-process
+with `source: .szcast`. It never asks, because the reader chose it in szcast. It never goes
 through LaunchServices either.
 
 ## Copy Deeplink
@@ -181,9 +181,9 @@ through LaunchServices either.
 
 ## Focus
 
-A plain `open` (without `-g`) activates Szcast before the link arrives. Szcast is an accessory
+A plain `open` (without `-g`) activates szcast before the link arrives. szcast is an accessory
 app, so it does not take the menu bar, and the menu-bar owner is still the app the reader was in.
-`FrontmostApp.current` returns that app when Szcast itself is frontmost with no window of its own
+`FrontmostApp.current` returns that app when szcast itself is frontmost with no window of its own
 in key. `PaletteCoordinator.targetApp`, `WindowTarget.current()` and the palette's record of the app
 it covered all use it, so a window command, or a paste from a palette a link opened, reaches the
 right app. Pasting with the palette closed still needs the target app active, so snippets and Paste
@@ -193,7 +193,7 @@ Sequentially want `open -g`.
 
 ```json
 {
-  "description": "Hyper+V opens Szcast clipboard history",
+  "description": "Hyper+V opens szcast clipboard history",
   "manipulators": [
     {
       "type": "basic",

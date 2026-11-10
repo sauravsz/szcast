@@ -1,6 +1,6 @@
 import Foundation
 
-/// macOS's own languages; `Locale.preferredLanguages` reads Szcast's own language instead.
+/// macOS's own languages; `Locale.preferredLanguages` reads szcast's own language instead.
 enum SystemLanguages {
     static var preferred: [String] {
         let global = UserDefaults.standard.persistentDomain(forName: UserDefaults.globalDomain)

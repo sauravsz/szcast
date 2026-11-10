@@ -594,7 +594,7 @@ final class ExtensionNodeShims: @unchecked Sendable {
     /// A pipe holds 64 KB, so a larger input written before the child reads it would never finish.
     private func feed(_ input: Data, to stdin: Pipe) {
         let writer = stdin.fileHandleForWriting
-        // A child that exits without reading everything must fail the write, not SIGPIPE Szcast.
+        // A child that exits without reading everything must fail the write, not SIGPIPE szcast.
         _ = fcntl(writer.fileDescriptor, F_SETNOSIGPIPE, 1)
         DispatchQueue.global(qos: .userInitiated).async {
             try? writer.write(contentsOf: input)

@@ -656,7 +656,7 @@ final class AIChatCoordinator {
             toolServers: toolServers, toolSession: toolSession)
     }
 
-    /// Szcast runs a local server itself only while some live chat's route cannot.
+    /// szcast runs a local server itself only while some live chat's route cannot.
     var everyChatRunsItsOwnTools: Bool {
         chats.live.allSatisfy { model(for: $0)?.runsItsOwnTools == true }
     }
@@ -784,7 +784,7 @@ struct ChatContextReport: Equatable {
     let webSearch: Bool
     let toolServers: Int
 
-    /// The model's own window when the route reported one; otherwise Szcast's history budget.
+    /// The model's own window when the route reported one; otherwise szcast's history budget.
     var fill: Double {
         if let tokens = usage?.contextTokens, let window = usage?.contextWindow, window > 0 {
             return Double(tokens) / Double(window)

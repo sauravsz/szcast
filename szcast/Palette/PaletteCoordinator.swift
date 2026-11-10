@@ -10,7 +10,7 @@ final class PaletteCoordinator {
     private let menuSearch: MenuSearchSession
     private let windowSwitch: WindowSwitchSession
     private let windowController: PaletteWindowController
-    /// Features whose launcher rows are read from outside Szcast re-read them on each open.
+    /// Features whose launcher rows are read from outside szcast re-read them on each open.
     var onLauncherShown: (() -> Void)?
     /// Screens that snapshot other apps re-read them on every open, a restored one included.
     var onScreenOpening: ((PaletteMode) -> Void)?

@@ -24,7 +24,7 @@ enum MCPOAuth {
             case .clientRequired:
                 return String(
                     localized: """
-                        Enter a registered client ID. This server cannot register Szcast \
+                        Enter a registered client ID. This server cannot register szcast \
                         automatically.
                         """)
             case .issuerChanged:

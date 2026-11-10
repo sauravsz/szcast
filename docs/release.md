@@ -3,7 +3,7 @@
 How a build reaches a user. The local development loop is in [development.md](development.md);
 the signing identity itself is in [signing.md](signing.md).
 
-> **This fork releases by hand.** Releases are self-signed with `Szcast Self-Signed` and are **not
+> **This fork releases by hand.** Releases are self-signed with `szcast Self-Signed` and are **not
 > notarized**, so there is no Developer ID chain: users right-click → Open once. The sections below
 > describing the CI workflow, notarization and the `universal` job document the upstream pipeline —
 > `release.yml` is kept intact but **cannot run** without a Developer ID certificate and an App Store
@@ -13,23 +13,23 @@ the signing identity itself is in [signing.md](signing.md).
 ## Packaging a DMG locally
 
 ```sh
-./Scripts/build-dmg.sh            # -> build/Szcast-<version>.dmg (version from project.yml)
-./Scripts/build-dmg.sh 0.5.7      # -> build/Szcast-0.5.7.dmg
+./Scripts/build-dmg.sh            # -> build/szcast-<version>.dmg (version from project.yml)
+./Scripts/build-dmg.sh 0.5.7      # -> build/szcast-0.5.7.dmg
 ```
 
-It builds a Release `Szcast.app` signed with `Szcast Self-Signed` and packs it with an
+It builds a Release `szcast.app` signed with `szcast Self-Signed` and packs it with an
 `/Applications` symlink. Official per-channel releases are built by CI, below.
 
 ## Signing & Gatekeeper
 
 CI releases are signed with the team's Developer ID, notarized and stapled, so a downloaded DMG
 opens without a Gatekeeper warning. Local builds, `build-dmg.sh` included, keep signing with
-`Szcast Self-Signed` and are never notarized. Full details in [signing.md](signing.md).
+`szcast Self-Signed` and are never notarized. Full details in [signing.md](signing.md).
 
 ## How the in-app updater consumes a release
 
-Every release publishes three assets from one build: `Szcast-<version>.dmg`, which people download
-by hand, `Szcast-<version>.zip`, which the in-app updater installs, and `Szcast-<version>.zip.sig`,
+Every release publishes three assets from one build: `szcast-<version>.dmg`, which people download
+by hand, `szcast-<version>.zip`, which the in-app updater installs, and `szcast-<version>.zip.sig`,
 the zip's signature by the release key. The zip is produced with
 `ditto -c -k --keepParent --sequesterRsrc` — the only zip that leaves the code signature verifiable,
 which matters because the updater refuses any bundle it cannot prove is ours.
@@ -61,8 +61,8 @@ There is no CI workflow and no automated reviewer, so the whole bar in
 `.github/workflows/release.yml` builds and publishes a DMG from GitHub Actions, no local machine
 needed. Run it from the **Actions** tab (`Release` → **Run workflow**) and pick:
 
-- **channel** — `beta` or `stable`. Each builds a distinct app (`Szcast Beta.app` / `Szcast.app`)
-  with its own bundle id, alongside the local `Szcast Dev.app`. Beta gets an auto-incrementing
+- **channel** — `beta` or `stable`. Each builds a distinct app (`szcast Beta.app` / `szcast.app`)
+  with its own bundle id, alongside the local `szcast Dev.app`. Beta gets an auto-incrementing
   `-beta.N` suffix (`N` = the Actions run number) so re-running never collides; stable ships the
   version as-is.
 - **version** — base semver, e.g. `0.2.0`.
@@ -78,10 +78,10 @@ the site reads the latest version and the [changelog](https://szcast.dev/changel
 build time.
 
 A stable run then fans out to a second job, `universal` (present in the workflow, not used here), which rebuilds the same commit with
-`ARCHS="arm64 x86_64"` and attaches `Szcast-Universal-<version>.dmg` / `.zip` to the release the
+`ARCHS="arm64 x86_64"` and attaches `szcast-Universal-<version>.dmg` / `.zip` to the release the
 first job created, then bumps `szcast-universal`. macOS 26 is the last release that boots on Intel,
 and those Macs need both slices. Both jobs pin `ARCHS` explicitly and assert the slices on _every_
-shipping binary — the app, `ClipboardTextHelper`, `FileIndexHelper` and `Szcast Dictation`:
+shipping binary — the app, `ClipboardTextHelper`, `FileIndexHelper` and `szcast Dictation`:
 trusting `ARCHS_STANDARD` is what shipped a thin arm64 build to Intel users once already, and it
 also keeps the Apple silicon download from silently gaining a slice it never needs. A thin helper
 inside a universal app is the quiet form of the same bug: the app boots on Intel and only clipboard
@@ -130,5 +130,5 @@ pings `@everyone`.
 ### Homebrew
 
 None. This fork publishes no cask and maintains no tap: releases are self-signed, so installing means
-dragging `Szcast.app` out of the DMG. `release.yml` still carries an `Update Homebrew cask` step from
+dragging `szcast.app` out of the DMG. `release.yml` still carries an `Update Homebrew cask` step from
 upstream; it exits early unless `HOMEBREW_TAP_TOKEN` is set, and that tap does not exist.

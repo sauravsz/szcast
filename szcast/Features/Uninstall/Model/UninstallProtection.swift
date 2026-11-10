@@ -55,13 +55,13 @@ enum UninstallProtection: String, Hashable, Sendable, CaseIterable {
         case .needsFullDiskAccess:
             return String(
                 localized: """
-                    Needs Full Disk Access, which Szcast doesn’t request. \
+                    Needs Full Disk Access, which szcast doesn’t request. \
                     Grant it in System Settings › Privacy & Security to include this item.
                     """)
         case .parentNotWritable:
             return String(
                 localized: """
-                    Its enclosing folder isn’t writable by you, and Szcast never asks for an \
+                    Its enclosing folder isn’t writable by you, and szcast never asks for an \
                     administrator password.
                     """)
         case .notWritable:

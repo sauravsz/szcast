@@ -272,7 +272,7 @@ final class ModifierTapMonitor: HealthCheckable {
         else {
             // Even a listen-only tap needs Accessibility; the health timer retries until granted.
             if !loggedTapFailure {
-                NSLog("Szcast: Failed to create modifier event tap")
+                NSLog("szcast: Failed to create modifier event tap")
                 loggedTapFailure = true
             }
             needsAccessibility = true

@@ -105,7 +105,7 @@ extension SettingsRow where Icon == EmptyView {
             trailing: trailing)
     }
 
-    /// A fixed row a search result lands on, so its title is always Szcast's own text.
+    /// A fixed row a search result lands on, so its title is always szcast's own text.
     init(
         title: LocalizedStringResource, subtitle: String? = nil, subtitleLineLimit: Int = 1,
         alignment: VerticalAlignment = .center, anchor: SettingsAnchor,

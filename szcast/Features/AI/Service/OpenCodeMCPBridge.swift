@@ -179,7 +179,7 @@ final class OpenCodeMCPBridge {
                 ? requested : "2025-06-18"
             result = .object([
                 "protocolVersion": .string(version), "capabilities": .object(["tools": .object([:])]),
-                "serverInfo": .object(["name": .string("Szcast"), "version": .string("1")])
+                "serverInfo": .object(["name": .string("szcast"), "version": .string("1")])
             ])
         case "ping":
             result = .object([:])

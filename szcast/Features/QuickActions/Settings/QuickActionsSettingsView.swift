@@ -309,7 +309,7 @@ struct QuickActionsSettingsView: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
                 SettingsEditorHeader(
                     title: "Customize \(action.title)",
-                    subtitle: "Tell Szcast how you want \(action.title) to handle your selected text."
+                    subtitle: "Tell szcast how you want \(action.title) to handle your selected text."
                 )
 
                 TextEditor(text: $instructions)

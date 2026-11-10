@@ -26,7 +26,7 @@ enum AIAttachmentPolicy {
         "log", "conf", "plist", "patch", "diff"
     ]
 
-    /// Nil for anything Szcast will not attach, which the composer refuses by name.
+    /// Nil for anything szcast will not attach, which the composer refuses by name.
     static func kind(forFileName name: String) -> Kind? {
         let ext = (name as NSString).pathExtension.lowercased()
         if imageExtensions.contains(ext) { return .image }

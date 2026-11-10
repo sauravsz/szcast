@@ -13,7 +13,7 @@ final class DictationCapture {
             switch self {
             case .microphoneUnavailable: String(localized: "No microphone is available.")
             case .microphoneDenied:
-                String(localized: "Allow Szcast to use the microphone in System Settings.")
+                String(localized: "Allow szcast to use the microphone in System Settings.")
             case .captureUnavailable: String(localized: "Couldn't start recording from this microphone.")
             }
         }

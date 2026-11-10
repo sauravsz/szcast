@@ -396,7 +396,7 @@ rows land in the half-open interval `(minY, maxY]`: the topmost row is exactly `
 excludes, while that same value is the `minY` of the display stacked above. `contains` would therefore
 hand a pointer parked at the top of one display to its neighbour. `NSMouseInRect` exists for this.
 
-## The placeholder is Szcast's, not the field's
+## The placeholder is szcast's, not the field's
 
 The search field is a SwiftUI `TextField` with **no `prompt`**; `RootPaletteView` draws the
 placeholder itself as a leading-aligned background `Text`.

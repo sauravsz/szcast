@@ -1,6 +1,6 @@
 # Backup
 
-Export and import of Szcast's own data as a single `.szcast` file, plus the entry point for
+Export and import of szcast's own data as a single `.szcast` file, plus the entry point for
 importing a Raycast export. The feature lives in `Features/Backup/`.
 
 A backup carries five independently selectable categories, ticked on export and again on import:
@@ -54,7 +54,7 @@ A backup carries five independently selectable categories, ticked on export and 
 | `Service/BackupApplier.swift` | Staging → stores, returning a per-category summary |
 | `Service/BackupActions.swift` | The effectful half: file pickers, the archive calls, dialogs, the settings-file switch |
 | `Service/RaycastDecoder.swift` | Container recognition, decrypt and decode |
-| `Service/RaycastImportReader.swift` | Raycast → Szcast field mapping |
+| `Service/RaycastImportReader.swift` | Raycast → szcast field mapping |
 | `Service/Scrypt.swift`, `Platform/Compression/Zlib.swift` | The crypto and decompression primitives |
 | `Settings/BackupCategorySelection.swift` | The category checkboxes, on both halves of the pane |
 | `Settings/BackupSettingsView.swift` | The pane, which also holds the [settings file](settings-file.md) switch |
@@ -138,6 +138,6 @@ Per category:
 An `id` never travels with a clip: `items.id` is `UNIQUE`, so a re-import minting fresh identities is
 what keeps a second pass from silently failing its inserts. Same reasoning as `QuicklinkArchive.merge`.
 
-The old flat `Szcast-Settings-*.json` export is gone rather than deprecated, and nothing reads it.
+The old flat `szcast-Settings-*.json` export is gone rather than deprecated, and nothing reads it.
 
 Raycast import is documented separately in [raycast-import.md](raycast-import.md).

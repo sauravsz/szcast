@@ -54,7 +54,7 @@ enum Permissions {
         switch EKEventStore.authorizationStatus(for: .event) {
         case .fullAccess: return .granted
         case .notDetermined: return .notDetermined
-        // Write-only is the same as nothing here: Szcast only ever reads.
+        // Write-only is the same as nothing here: szcast only ever reads.
         default: return .denied
         }
     }

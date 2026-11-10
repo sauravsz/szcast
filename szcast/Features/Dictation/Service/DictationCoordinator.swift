@@ -74,7 +74,7 @@ final class DictationCoordinator {
             guard !Task.isCancelled else { return }
             guard granted else {
                 showMessage(
-                    String(localized: "Allow Szcast to use the microphone in System Settings"), .danger)
+                    String(localized: "Allow szcast to use the microphone in System Settings"), .danger)
                 return
             }
             settings.dictationEnabled = true

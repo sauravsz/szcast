@@ -8,7 +8,7 @@ struct UninstallTests {
 
     static let home = "/Users/tester"
     static let ownBundleID = "com.sauravsz.szcast"
-    static let ownBundleURL = URL(fileURLWithPath: "/Applications/Szcast.app")
+    static let ownBundleURL = URL(fileURLWithPath: "/Applications/szcast.app")
     static let recentDocuments =
         "Application Support/com.apple.sharedfilelist/"
         + "com.apple.LSSharedFileList.ApplicationRecentDocuments"
@@ -305,20 +305,20 @@ struct UninstallTests {
     static func testIdentityRefusal() {
         let byID = UninstallTarget(
             bundleURL: URL(fileURLWithPath: "/Applications/Somewhere Else.app"),
-            bundleID: "com.sauravsz.szcast", displayName: "Szcast", bundleName: nil)
+            bundleID: "com.sauravsz.szcast", displayName: "szcast", bundleName: nil)
         expect(
             UninstallIdentity.make(
                 target: byID, otherAppNames: [], ownBundleID: ownBundleID,
                 ownBundleURL: ownBundleURL) == nil,
-            "Szcast refuses to plan its own uninstall by bundle ID")
+            "szcast refuses to plan its own uninstall by bundle ID")
 
         let dev = UninstallTarget(
-            bundleURL: URL(fileURLWithPath: "/Applications/Szcast Dev.app"),
-            bundleID: "com.sauravsz.szcast.dev", displayName: "Szcast Dev", bundleName: nil)
+            bundleURL: URL(fileURLWithPath: "/Applications/szcast Dev.app"),
+            bundleID: "com.sauravsz.szcast.dev", displayName: "szcast Dev", bundleName: nil)
         expect(
             UninstallIdentity.make(
                 target: dev, otherAppNames: [], ownBundleID: "com.sauravsz.szcast.dev",
-                ownBundleURL: URL(fileURLWithPath: "/Applications/Szcast Dev.app")) == nil,
+                ownBundleURL: URL(fileURLWithPath: "/Applications/szcast Dev.app")) == nil,
             "the Dev channel refuses itself too — the check is against the running identity")
         expect(
             UninstallIdentity.make(

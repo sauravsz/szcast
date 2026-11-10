@@ -9,7 +9,7 @@ final class OnboardingCoordinator {
     init(core: AppCore) {
         self.core = core
         window = AppWindowController(
-            title: String(localized: "Welcome to Szcast"), contentSize: OnboardingView.initialSize,
+            title: String(localized: "Welcome to szcast"), contentSize: OnboardingView.initialSize,
             activation: nil)
     }
 

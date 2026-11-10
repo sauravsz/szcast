@@ -55,7 +55,7 @@ struct InstalledAILaunch: Equatable, Sendable {
         return .executable(URL(fileURLWithPath: expanded))
     }
 
-    /// What a launch inherits: the app's variables under the reader's, minus those Szcast sets.
+    /// What a launch inherits: the app's variables under the reader's, minus those szcast sets.
     func inherited(
         for kind: InstalledAIKind,
         base: [String: String] = ProcessInfo.processInfo.environment
@@ -93,7 +93,7 @@ extension InstalledAIKind {
         }
     }
 
-    /// `NO_COLOR` keeps output parseable; `TC_MCP_` names carry Szcast's MCP secrets to Codex.
+    /// `NO_COLOR` keeps output parseable; `TC_MCP_` names carry szcast's MCP secrets to Codex.
     func isManagedVariable(_ name: String) -> Bool {
         name == "NO_COLOR" || name.hasPrefix("TC_MCP_") || managedEnvironment[name] != nil
     }
@@ -103,7 +103,7 @@ extension InstalledAIKind {
     /// A trailing `*` deny drops every tool from the request, not just refuses the call.
     private static let openCodeConfiguration = """
         {"share":"disabled","snapshots":false,"agents":{"\(openCodeAgent)":{"system":\
-        "You are generating text inside Szcast. Use only the conversation in this request.",\
+        "You are generating text inside szcast. Use only the conversation in this request.",\
         "permissions":[{"action":"*","resource":"*","effect":"deny"}]}}}
         """
 }

@@ -15,7 +15,7 @@ enum UninstallScanner {
         var errorDescription: String? {
             switch self {
             case .refused:
-                return String(localized: "Szcast can’t uninstall this app.")
+                return String(localized: "szcast can’t uninstall this app.")
             }
         }
     }

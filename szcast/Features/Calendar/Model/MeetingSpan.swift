@@ -1,6 +1,6 @@
 import Foundation
 
-/// The days Szcast reads, today included, so the query and every sentence naming it agree.
+/// The days szcast reads, today included, so the query and every sentence naming it agree.
 enum MeetingSpan: Int, CaseIterable, Identifiable, Sendable {
     case today = 1
     case todayAndTomorrow = 2

@@ -7,7 +7,7 @@ struct SymbolCategory: Identifiable, Hashable, Sendable {
 
     static let suggested = SymbolCategory(id: "szcast.suggested", title: String(localized: "Suggested"))
     static let all = SymbolCategory(id: "szcast.all", title: String(localized: "All Symbols"))
-    static let bundled = SymbolCategory(id: "szcast.bundled", title: "Szcast")
+    static let bundled = SymbolCategory(id: "szcast.bundled", title: "szcast")
 }
 
 /// Read from `CoreGlyphs.bundle` at runtime; every read is optional, with a curated fallback.

@@ -119,17 +119,17 @@ final class CalendarCoordinator {
     private var consentMessage: String {
         switch settings.calendarSpan {
         case .today:
-            String(localized: "Szcast reads today's events to find join links. Nothing leaves this Mac.")
+            String(localized: "szcast reads today's events to find join links. Nothing leaves this Mac.")
         case .todayAndTomorrow:
             String(
                 localized: """
-                    Szcast reads today's and tomorrow's events to find join links. \
+                    szcast reads today's and tomorrow's events to find join links. \
                     Nothing leaves this Mac.
                     """)
         case .nextSevenDays:
             String(
                 localized: """
-                    Szcast reads the next 7 days' events to find join links. Nothing leaves this Mac.
+                    szcast reads the next 7 days' events to find join links. Nothing leaves this Mac.
                     """)
         }
     }

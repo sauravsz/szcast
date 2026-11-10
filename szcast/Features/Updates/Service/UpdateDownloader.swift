@@ -46,7 +46,7 @@ enum UpdateDownloader {
 
     private static func request(_ url: URL) -> URLRequest {
         var request = URLRequest(url: url)
-        request.setValue("Szcast", forHTTPHeaderField: "User-Agent")
+        request.setValue("szcast", forHTTPHeaderField: "User-Agent")
         return request
     }
 }

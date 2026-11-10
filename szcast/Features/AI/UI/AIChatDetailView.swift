@@ -323,7 +323,7 @@ extension View {
         modifier(ComposerControlChrome())
     }
 
-    /// A stock menu with Szcast's own face, so its hover and sizes match the rest of the row.
+    /// A stock menu with szcast's own face, so its hover and sizes match the rest of the row.
     fileprivate func composerMenu() -> some View {
         menuStyle(.button)
             .buttonStyle(.plain)
@@ -674,7 +674,7 @@ private struct ContextRing: View {
     }
 }
 
-/// Szcast's own card, never a popover: the tokens the chat holds, then what the next turn sends.
+/// szcast's own card, never a popover: the tokens the chat holds, then what the next turn sends.
 private struct ContextCard: View {
     let report: ChatContextReport
 

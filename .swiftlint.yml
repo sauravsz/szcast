@@ -1,12 +1,12 @@
 included:
-  - Szcast
+  - szcast
   - Tests
 
 excluded:
-  - Szcast/DesignSystem/Scrolling/EdgeDissolve.swift
-  - Szcast/DesignSystem/Scrolling/ThinScrollbar.swift
-  - Szcast/Features/Emoji/Model/EmojiData.generated.swift
-  - Szcast/Features/Calculator/Model/CurrencyData.generated.swift
+  - szcast/DesignSystem/Scrolling/EdgeDissolve.swift
+  - szcast/DesignSystem/Scrolling/ThinScrollbar.swift
+  - szcast/Features/Emoji/Model/EmojiData.generated.swift
+  - szcast/Features/Calculator/Model/CurrencyData.generated.swift
 
 disabled_rules:
   - todo                                      # tracked in issues, not by the linter

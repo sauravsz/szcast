@@ -52,7 +52,7 @@ final class ExtensionCoordinator {
                     message: String(
                         localized: """
                             Extensions are third-party JavaScript, run on this Mac. A running command \
-                            holds a JavaScript engine in memory until you leave it — expect Szcast \
+                            holds a JavaScript engine in memory until you leave it — expect szcast \
                             to use noticeably more RAM while one is open.
                             """),
                     symbol: "puzzlepiece.extension", confirmTitle: String(localized: "Enable"),

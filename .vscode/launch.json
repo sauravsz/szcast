@@ -7,10 +7,10 @@
       // -derivedDataPath used by the build task.
       "type": "swift",
       "request": "launch",
-      "name": "Run Szcast Dev (bundled .app)",
-      "program": "${workspaceFolder}/build/DerivedData/Build/Products/Debug/Szcast Dev.app/Contents/MacOS/Szcast Dev",
+      "name": "Run szcast Dev (bundled .app)",
+      "program": "${workspaceFolder}/build/DerivedData/Build/Products/Debug/szcast Dev.app/Contents/MacOS/szcast Dev",
       "cwd": "${workspaceFolder}",
-      "preLaunchTask": "Build Szcast.app (debug)"
+      "preLaunchTask": "Build szcast.app (debug)"
     }
   ]
 }

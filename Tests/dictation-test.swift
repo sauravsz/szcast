@@ -28,8 +28,8 @@ struct DictationTest {
             "application")
         check(
             DictationTextFormatter.format(
-                "Szcast", context: Context(before: "Use", after: "again"),
-                adaptCapitalization: false), " Szcast ")
+                "szcast", context: Context(before: "Use", after: "again"),
+                adaptCapitalization: false), " szcast ")
         check(
             DictationTextFormatter.format(
                 "world", context: Context(before: "Hello.", after: ""),

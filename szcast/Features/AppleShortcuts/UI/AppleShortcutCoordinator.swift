@@ -73,7 +73,7 @@ final class AppleShortcutCoordinator {
         }
     }
 
-    /// Frees what a deleted shortcut held, including one deleted while Szcast wasn't running.
+    /// Frees what a deleted shortcut held, including one deleted while szcast wasn't running.
     private func removeReferences(toShortcutsMissingFrom live: [AppleShortcut]) {
         let keys =
             Array(aliases.aliases.keys) + favorites.keys + visibility.hiddenItemKeys

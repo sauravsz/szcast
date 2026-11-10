@@ -100,7 +100,7 @@ struct FileSearchScreen: PaletteScreen {
                 detail: String(
                     localized: """
                         File Search indexes your whole disk. Press ↵ to open Privacy & Security, \
-                        then turn on Szcast under Full Disk Access.
+                        then turn on szcast under Full Disk Access.
                         """),
                 systemImage: "lock.shield")
         } else if !indexer.hasIndex, case .building(let items) = indexer.status {

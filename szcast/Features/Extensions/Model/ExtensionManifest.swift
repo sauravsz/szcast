@@ -116,7 +116,7 @@ enum ExtensionPreferenceValue: Sendable, Hashable {
                 CFGetTypeID(value) == CFBooleanGetTypeID()
                 ? .bool(value.boolValue) : .number(value.doubleValue)
         case let value as [String: Any]:
-            // Platform-keyed default; Szcast is macOS-only.
+            // Platform-keyed default; szcast is macOS-only.
             guard let macOS = value["macOS"] else { return nil }
             self.init(manifestDefault: macOS)
         default:
@@ -190,7 +190,7 @@ struct ExtensionCommand: Sendable, Hashable, Identifiable {
     }
 }
 
-/// A Raycast extension's `package.json`, reduced to what Szcast uses.
+/// A Raycast extension's `package.json`, reduced to what szcast uses.
 struct ExtensionManifest: Sendable, Hashable {
     let name: String
     let title: String

@@ -26,8 +26,8 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>Raycast and Szcast URL Scheme</string>
-			<!-- `raycast` is claimed so a Raycast store link opens Szcast's install panel.
+			<string>Raycast and szcast URL Scheme</string>
+			<!-- `raycast` is claimed so a Raycast store link opens szcast's install panel.
 			     The escalation that made this risky is closed in the parser: a URL can no
 			     longer request `launchType=background` (ExtensionDeepLink.route), so a link
 			     only ever reaches a confirmation panel or a foreground command. -->
@@ -48,7 +48,7 @@
 			<key>UTTypeIdentifier</key>
 			<string>com.sauravsz.szcast.backup</string>
 			<key>UTTypeDescription</key>
-			<string>Szcast Backup</string>
+			<string>szcast Backup</string>
 			<key>UTTypeConformsTo</key>
 			<array>
 				<string>public.data</string>
@@ -70,19 +70,19 @@
 	<key>NSAutoFillRequiresTextContentTypeForOneTimeCodeOnMac</key>
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>Szcast uses automation to perform system actions you explicitly run.</string>
+	<string>szcast uses automation to perform system actions you explicitly run.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Szcast shows a camera preview so you can check yourself, and take a photo to the clipboard.</string>
+	<string>szcast shows a camera preview so you can check yourself, and take a photo to the clipboard.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Szcast records audio only while you use Dictation, to transcribe it on your Mac.</string>
+	<string>szcast records audio only while you use Dictation, to transcribe it on your Mac.</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
-	<string>Szcast accesses your events to show your schedule and let you join meetings.</string>
+	<string>szcast accesses your events to show your schedule and let you join meetings.</string>
 	<key>NSRemindersFullAccessUsageDescription</key>
-	<string>Szcast lets extensions you run read and edit your reminders.</string>
+	<string>szcast lets extensions you run read and edit your reminders.</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>Szcast uses Bluetooth access only when you run the Toggle Bluetooth action.</string>
+	<string>szcast uses Bluetooth access only when you run the Toggle Bluetooth action.</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Szcast</string>
+	<string>szcast</string>
 	<key>SzcastUpdatePublicKey</key>
 	<string>IwtZDpObVvUn0+fexjf+7U8fV/w50jcdQqRhp1iBvac=</string>
 </dict>

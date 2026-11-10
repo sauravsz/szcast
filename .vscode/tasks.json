@@ -9,9 +9,9 @@
       // database from it — that's what keeps cross-file symbols resolving in VS Code as you
       // add and rename files. pipefail preserves the xcodebuild exit code so a failed build
       // still blocks F5 / the run step.
-      "label": "Build Szcast.app (debug)",
+      "label": "Build szcast.app (debug)",
       "type": "shell",
-      "command": "bash -c 'set -o pipefail; xcodebuild -project Szcast.xcodeproj -scheme Szcast -configuration Debug -derivedDataPath build/DerivedData build 2>&1 | tee \"${TMPDIR:-/tmp}/szcast-build.log\"; ec=$?; ./Scripts/sync-lsp.sh \"${TMPDIR:-/tmp}/szcast-build.log\" >/dev/null 2>&1 || true; exit $ec'",
+      "command": "bash -c 'set -o pipefail; xcodebuild -project szcast.xcodeproj -scheme szcast -configuration Debug -derivedDataPath build/DerivedData build 2>&1 | tee \"${TMPDIR:-/tmp}/szcast-build.log\"; ec=$?; ./Scripts/sync-lsp.sh \"${TMPDIR:-/tmp}/szcast-build.log\" >/dev/null 2>&1 || true; exit $ec'",
       "options": {
         "cwd": "${workspaceFolder}",
         "env": { "DEVELOPER_DIR": "/Applications/Xcode.app/Contents/Developer" }
@@ -21,11 +21,11 @@
     },
     {
       // Rebuild, then relaunch the menu-bar app. Default build task (⌘⇧B).
-      "label": "Build & Run Szcast (debug)",
+      "label": "Build & Run szcast (debug)",
       "type": "shell",
-      "command": "killall 'Szcast Dev' 2>/dev/null; open 'build/DerivedData/Build/Products/Debug/Szcast Dev.app'",
+      "command": "killall 'szcast Dev' 2>/dev/null; open 'build/DerivedData/Build/Products/Debug/szcast Dev.app'",
       "options": { "cwd": "${workspaceFolder}" },
-      "dependsOn": "Build Szcast.app (debug)",
+      "dependsOn": "Build szcast.app (debug)",
       "group": { "kind": "build", "isDefault": true },
       "problemMatcher": []
     },

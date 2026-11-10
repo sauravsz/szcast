@@ -65,7 +65,7 @@ final class CalendarStore {
         details = nil
     }
 
-    /// Szcast's own consent dialog has already been accepted by the time this runs.
+    /// szcast's own consent dialog has already been accepted by the time this runs.
     func requestAccess() async -> Bool {
         let granted = await Permissions.requestCalendarAccess()
         refreshAccess()

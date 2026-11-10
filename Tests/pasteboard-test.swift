@@ -1,6 +1,6 @@
 // Standalone test for clipboard capture and paste, compiling the real sources rather than copies.
 // Every case drives `NSPasteboard.withUniqueName()`: writing to `.general` would land in the
-// reader's own running Szcast as a genuine copy.
+// reader's own running szcast as a genuine copy.
 import AppKit
 
 @main
@@ -33,7 +33,7 @@ struct PasteboardTests {
     /// One reader, every flavour: a board naming a file must never fall through to its name.
     static func everyFileFlavourIsRead() {
         withScratch { dir in
-            let file = dir.appendingPathComponent("Szcast-Settings-2026-08-20.json")
+            let file = dir.appendingPathComponent("szcast-Settings-2026-08-20.json")
             try? Data("{}".utf8).write(to: file)
 
             // Finder's real shape: one item carrying the URL and the display name together.
@@ -65,7 +65,7 @@ struct PasteboardTests {
 
             let text = board()
             text.declareTypes([.string], owner: nil)
-            text.setString("Szcast-Settings-2026-08-20.json", forType: .string)
+            text.setString("szcast-Settings-2026-08-20.json", forType: .string)
             expect(
                 PasteboardFiles.urls(on: text).isEmpty,
                 "a bare file name is text, not a file")

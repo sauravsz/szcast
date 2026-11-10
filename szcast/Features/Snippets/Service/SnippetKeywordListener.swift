@@ -194,7 +194,7 @@ final class SnippetKeywordListener: HealthCheckable {
         policy.reset()
     }
 
-    /// A keystroke Szcast did not synthesize means the caret is the reader's again, not ours.
+    /// A keystroke szcast did not synthesize means the caret is the reader's again, not ours.
     func userActivity() {
         guard !isPromptingForArguments else { return }
         matchTask?.cancel()
@@ -273,7 +273,7 @@ final class SnippetKeywordListener: HealthCheckable {
         guard tapController.install(listener: self) else {
             if !loggedTapFailure {
                 if logsTapFailures {
-                    NSLog("Szcast: Failed to create snippet keyword event tap")
+                    NSLog("szcast: Failed to create snippet keyword event tap")
                 }
                 loggedTapFailure = true
             }

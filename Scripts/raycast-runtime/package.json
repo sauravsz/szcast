@@ -2,7 +2,7 @@
   "name": "szcast-raycast-runtime",
   "private": true,
   "version": "0.1.0",
-  "description": "Builds Szcast's embedded Raycast-extension JS runtime (React + reconciler + @raycast/api shim) into a single file consumed by JavaScriptCore.",
+  "description": "Builds szcast's embedded Raycast-extension JS runtime (React + reconciler + @raycast/api shim) into a single file consumed by JavaScriptCore.",
   "type": "module",
   "scripts": {
     "build": "node build.mjs"

@@ -1,7 +1,7 @@
 import CryptoKit
 import Foundation
 
-/// Szcast's own Ed25519 release key: the trust that survives a change of signing identity.
+/// szcast's own Ed25519 release key: the trust that survives a change of signing identity.
 enum UpdateSignature {
     private static let publicKeyInfoKey = "SzcastUpdatePublicKey"
 

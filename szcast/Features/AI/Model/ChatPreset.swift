@@ -62,8 +62,8 @@ enum ChatPresetError: Error, LocalizedError, Equatable {
         case .emptyName: return String(localized: "Give the preset a name.")
         case .emptyInstructions: return String(localized: "Tell the model what these chats are for.")
         case .invalidCharacter:
-            return String(localized: "The name contains a character Szcast can't store.")
-        case .storageUnavailable: return String(localized: "Szcast couldn't save to its presets file.")
+            return String(localized: "The name contains a character szcast can't store.")
+        case .storageUnavailable: return String(localized: "szcast couldn't save to its presets file.")
         }
     }
 }

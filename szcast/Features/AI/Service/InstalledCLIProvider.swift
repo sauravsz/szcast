@@ -23,12 +23,12 @@ struct InstalledCLIProvider: AIProvider {
 @MainActor
 private final class InstalledCLITurnRunner {
     private static let safetyInstructions = """
-        You are generating text inside Szcast. Do not invoke tools, read files, inspect the \
+        You are generating text inside szcast. Do not invoke tools, read files, inspect the \
         environment, access external resources, or modify anything. Use only the conversation and \
         instructions in this request.
         """
     private static let toolSafetyInstructions = """
-        You are generating text inside Szcast. The only tools you may use are the MCP tools \
+        You are generating text inside szcast. The only tools you may use are the MCP tools \
         supplied with this request, and you may use them for anything they offer. Do not run \
         commands, read files, inspect the environment, access external resources, or modify \
         anything except through them.
@@ -157,7 +157,7 @@ private final class InstalledCLITurnRunner {
         } catch {
             continuation.finish(
                 throwing: AIProviderError.unavailable(
-                    String(localized: "Szcast could not prepare its private AI workspace.")))
+                    String(localized: "szcast could not prepare its private AI workspace.")))
             return
         }
 
@@ -176,7 +176,7 @@ private final class InstalledCLITurnRunner {
                 activeServers = []
                 continuation.finish(
                     throwing: AIProviderError.unavailable(
-                        String(localized: "Szcast could not write its private MCP configuration.")))
+                        String(localized: "szcast could not write its private MCP configuration.")))
                 return
             }
             configURL = url
@@ -191,7 +191,7 @@ private final class InstalledCLITurnRunner {
                 try? FileManager.default.removeItem(at: url)
                 continuation.finish(
                     throwing: AIProviderError.unavailable(
-                        String(localized: "Szcast could not write its private AI prompt.")))
+                        String(localized: "szcast could not write its private AI prompt.")))
                 return
             }
             grokPrompt = url
@@ -204,7 +204,7 @@ private final class InstalledCLITurnRunner {
             } catch {
                 continuation.finish(
                     throwing: AIProviderError.unavailable(
-                        String(localized: "Szcast could not write its private image attachments.")))
+                        String(localized: "szcast could not write its private image attachments.")))
                 return
             }
             files += attachments
@@ -296,7 +296,7 @@ private final class InstalledCLITurnRunner {
         self.continuation = continuation
         guard kind != .grok else { return }
         input = stdin.fileHandleForWriting
-        // A child that exits before reading must fail the write, not SIGPIPE Szcast.
+        // A child that exits before reading must fail the write, not SIGPIPE szcast.
         _ = fcntl(stdin.fileHandleForWriting.fileDescriptor, F_SETNOSIGPIPE, 1)
         guard kind == .claude else {
             write(Data(prompt.utf8), closing: true)
@@ -304,7 +304,7 @@ private final class InstalledCLITurnRunner {
         }
         // Framed as JSON, so a picture rides beside the text as a content block.
         guard let line = ClaudeControlProtocol.userMessage(prompt, images: images) else {
-            fail(String(localized: "Szcast could not frame the request for \(kind.title)."))
+            fail(String(localized: "szcast could not frame the request for \(kind.title)."))
             return
         }
         // A tool loop answers on the same pipe, so an armed turn keeps stdin open for it.
@@ -407,7 +407,7 @@ private final class InstalledCLITurnRunner {
                 "--agent", InstalledAIKind.openCodeAgent,
                 "--model", effort.map { model + "#" + $0 } ?? model,
                 // A set title spares the turn a second model call to name its session.
-                "--title", "Szcast"
+                "--title", "szcast"
             ] + attachments.flatMap { ["--file", $0.path] }
         case .grok:
             var result = [
@@ -506,7 +506,7 @@ private final class InstalledCLITurnRunner {
             return
         }
         if let id = frame.unsupportedRequestID {
-            let refusal = "Szcast does not answer this request."
+            let refusal = "szcast does not answer this request."
             if let line = ClaudeControlProtocol.error(to: id, message: refusal) {
                 write(line, closing: false)
             }

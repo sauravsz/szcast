@@ -855,7 +855,7 @@ merging them last so a symbol both feeds quote takes the coin feed's own price. 
 `convert(_:from:to:)` cross-rates fiat against crypto with no special case anywhere downstream.
 
 > **Third-party dependency, accepted.** Both requests go to **`tinycast.dev`**, the upstream
-> project's server — Szcast does not host a rates service. The calculator's FX is therefore
+> project's server — szcast does not host a rates service. The calculator's FX is therefore
 > dependent on an endpoint this project does not control: if `tinycast.dev` is retired, renamed,
 > or rate-limited, fiat and crypto conversions stop updating and the last cached snapshot is
 > served until it ages out. Nothing else in the app talks to that host. Replacing it means
@@ -876,7 +876,7 @@ that test, and it is sound only because a partial snapshot is never persisted.
 The table is cached at `~/Library/Caches/<bundle-id>/currency-rates.json` and refreshed every 24h.
 The feed republishes about once a day, so a tighter interval would cost requests without returning
 newer numbers. Age is measured from the persisted `fetchedAt`, not from launch, so relaunching
-Szcast never re-fetches a snapshot that is still fresh — a cold start with a same-day cache makes
+szcast never re-fetches a snapshot that is still fresh — a cold start with a same-day cache makes
 zero requests. Offline, the last snapshot keeps answering; with no snapshot at all the card says so
 rather than guessing, and a currency the feed doesn't quote reports `No exchange rate for <CODE>.`
 A money answer sets `CalcResult.isCurrency`, so its card shows when the snapshot was fetched and a

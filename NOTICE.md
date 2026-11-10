@@ -1,11 +1,11 @@
 # Third-party notices
 
-Szcast is licensed under the GNU Affero General Public License v3 — see [LICENSE](LICENSE). It
+szcast is licensed under the GNU Affero General Public License v3 — see [LICENSE](LICENSE). It
 also redistributes the third-party material recorded below, under the terms stated for each.
 
 ## Dictation model resources
 
-Szcast's dictation code uses Apple's frameworks only. No speech model is bundled with the app.
+szcast's dictation code uses Apple's frameworks only. No speech model is bundled with the app.
 Optional downloads use Moondream's Parakeet Ultra and Redux, derived from NVIDIA Parakeet
 (CC BY 4.0), and Qwen3-ASR (Apache 2.0).
 Parakeet Core ML conversions are provided by FluidInference; Qwen conversions by UniMocha.
@@ -223,15 +223,15 @@ Qwen's tokenizer resources come from Qwen/Qwen3-ASR-0.6B. The Apache 2.0 licence
    limitations under the License.
 ```
 
-## Brand marks — `Szcast/Assets.xcassets/AIBrand*.imageset`
+## Brand marks — `szcast/Assets.xcassets/AIBrand*.imageset`
 
 Sixteen monochrome template SVGs, ~300 B–2 KB each, drawn beside a model's name in the model
 picker and the chat header, and beside a provider in Settings, so a route is recognisable at a
 glance.
 
-Every mark is the trademark of the company it identifies. Szcast uses them only to name that
+Every mark is the trademark of the company it identifies. szcast uses them only to name that
 company's own models inside its own UI. No affiliation, sponsorship or endorsement is implied, and
-none of these companies has reviewed or approved Szcast.
+none of these companies has reviewed or approved szcast.
 
 ### Simple Icons — thirteen marks
 
@@ -241,7 +241,7 @@ none of these companies has reviewed or approved Szcast.
 The Simple Icons **project** is released under CC0 1.0 Universal. Its own disclaimer is explicit
 that this does not extend to every mark the project carries: the icons depict third-party brands
 whose trademarks stay with their owners, and the absence of licence data for a given icon does not
-imply the icon is unlicensed. Anyone redistributing Szcast, or reusing these files from it,
+imply the icon is unlicensed. Anyone redistributing szcast, or reusing these files from it,
 should read the disclaimer and satisfy themselves about the brands involved:
 <https://github.com/simple-icons/simple-icons/blob/develop/DISCLAIMER.md>.
 
@@ -312,13 +312,13 @@ licence. The room model, the layout and grid engines, arrangement reading, windo
 parking and its ledger, the pass that walks into a room, and the animated layout preview all
 follow that project. Every adapted file says so on its first line, with a link to the licence:
 
-- `Szcast/Features/WindowManagement/Model/`: `Room.swift`, `RoomWindow.swift`,
+- `szcast/Features/WindowManagement/Model/`: `Room.swift`, `RoomWindow.swift`,
   `RoomLayoutKind.swift`, `RoomLayoutEngine.swift`, `RoomGrid.swift`, `RoomArrangement.swift`,
   `RoomWindowMatcher.swift`, `RoomParking.swift`, `RoomParkingLedger.swift`, `RoomPlan.swift` and
   `RoomMinimumSizeStore.swift`
-- `Szcast/Features/WindowManagement/Service/`: `RoomRunner.swift`, `RoomWindowSweep.swift`, and
+- `szcast/Features/WindowManagement/Service/`: `RoomRunner.swift`, `RoomWindowSweep.swift`, and
   the window-number lookup in `AXWindowAccess.swift`
-- `Szcast/Features/WindowManagement/UI/`: `RoomCoordinator.swift`, `RoomsScreen.swift`,
+- `szcast/Features/WindowManagement/UI/`: `RoomCoordinator.swift`, `RoomsScreen.swift`,
   `RoomPickerScreen.swift`, `RoomPreviewController.swift` and `RoomPreviewView.swift`
 - `Tests/window-room-test.swift`, whose cases follow Rooms' own tests
 
@@ -351,15 +351,15 @@ SOFTWARE.
 ## File Search — the disk index
 
 Search Files' index follows the design of **fsearch** by Noah Dunnagan,
-<https://github.com/noahdunnagan/fsearch>, which is MIT licensed. Szcast's implementation is its
+<https://github.com/noahdunnagan/fsearch>, which is MIT licensed. szcast's implementation is its
 own Swift, but its architecture follows that project: the `getattrlistbulk` crawl, the
 block-ordered index with interned names, folder-only fields and parents taken from block starts,
 live updates from FSEvents as a dead-entry bitset plus an overlay, and building the index out of
 process so its memory is returned. The files that follow it:
 
-- `Szcast/Features/FileSearch/Service/`: `FileIndexCrawler.swift`, `FileIndexSnapshot.swift`,
+- `szcast/Features/FileSearch/Service/`: `FileIndexCrawler.swift`, `FileIndexSnapshot.swift`,
   `FileIndex.swift`, `FileSystemWatcher.swift` and `FileIndexer.swift`
-- `Szcast/Features/FileSearch/Helper/FileIndexHelper.swift`
+- `szcast/Features/FileSearch/Helper/FileIndexHelper.swift`
 
 Its licence notice:
 

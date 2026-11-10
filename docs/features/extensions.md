@@ -1,6 +1,6 @@
 # Raycast extensions
 
-Szcast runs Raycast extensions: the same `package.json` + prebuilt CommonJS bundles Raycast itself
+szcast runs Raycast extensions: the same `package.json` + prebuilt CommonJS bundles Raycast itself
 produces, rendered natively into the palette. No Electron, no browser, no Node.js.
 
 - [How it works](#how-it-works) · [The JS runtime](#the-js-runtime) ·
@@ -44,7 +44,7 @@ produces, rendered natively into the palette. No Electron, no browser, no Node.j
 ## How it works
 
 A Raycast extension command is a **prebuilt CommonJS file** that keeps `react`,
-`react/jsx-runtime`, `@raycast/api` and the Node built-ins external. Szcast supplies those and
+`react/jsx-runtime`, `@raycast/api` and the Node built-ins external. szcast supplies those and
 resolves any third-party packages shipped under `node_modules/`, then renders the React tree:
 
 ```
@@ -87,8 +87,8 @@ timers, `fetch`, `URL`, `URLSearchParams`, `Blob`/`File`/`FormData`, `DOMExcepti
 
 ## The JS runtime
 
-`Szcast/Resources/RaycastRuntime.generated.js` (~200 KB minified) is **generated and committed**, the
-same arrangement as `EmojiData.generated.swift`: building Szcast never needs Node. Sources live in
+`szcast/Resources/RaycastRuntime.generated.js` (~200 KB minified) is **generated and committed**, the
+same arrangement as `EmojiData.generated.swift`: building szcast never needs Node. Sources live in
 [`Scripts/raycast-runtime/`](../../Scripts/raycast-runtime):
 
 | File                                             | What it is                                                                                                             |
@@ -122,7 +122,7 @@ than shared-memory coordination. If native shared buffers are available, both gl
 
 ## The Swift host
 
-`Szcast/Features/Extensions/`, split the same way as every other feature:
+`szcast/Features/Extensions/`, split the same way as every other feature:
 
 | File                                          | Role                                                                                                       |
 | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
@@ -259,7 +259,7 @@ screens hold (see [palette.md](palette.md)).
   `ExtensionSearchAccessoryButton` at the header's trailing edge and drop `ExtensionPickerList` as one
   of the palette's `OpenMenu` cases, so the arrows, ↵, Escape and the click-away come from the one menu
   path and no second key handler exists to disagree with it. `PaletteFilterAction` routes ⌘P, so a
-  command's own dropdown answers before Szcast's clipboard filter can. The list is
+  command's own dropdown answers before szcast's clipboard filter can. The list is
   `listWidth` (240) rather than a form picker's field width: it hangs off a chip, not a field.
   Its native search field sits above the choices and uses the palette menu's fuzzy matcher.
   **Swift owns the selection** — the runtime keeps `makeSearchDropdown` hook-free so an extension may
@@ -490,7 +490,7 @@ Settings → Extensions offers four routes, under **Install New**:
 2. **Install from GitHub** — builds one extension from its source on this Mac. See below.
 3. **Import from Raycast** — copies the already-built bundles out of a local Raycast. Nothing is
    compiled, so no Node, npm or network is involved. The pane also scans whenever it opens, and says
-   so when Raycast has something Szcast doesn't — installing in Raycast otherwise leaves no trace
+   so when Raycast has something szcast doesn't — installing in Raycast otherwise leaves no trace
    here. **Both channels are searched**: `~/.config/raycast` and `~/.config/raycast-x`, the latter
    being Raycast Beta v2. Checking only the first reported "no Raycast install" to every Beta user,
    whose stable directory is present but empty. The same extension in both is offered once.
@@ -612,7 +612,7 @@ global Show in launcher switch, or this extension's — because the ranker never
 
 ## Deeplinks
 
-Szcast registers `raycast`, `com.raycast` and its own scheme to receive extension links. The own
+szcast registers `raycast`, `com.raycast` and its own scheme to receive extension links. The own
 scheme is `szcast`, or `szcast-dev` in Debug; `ExtensionDeepLink.claims` accepts both, and Copy
 Deeplink builds an extension row's link in the running channel's scheme. An installed Raycast
 competes for its schemes, and macOS chooses which app receives a link.
@@ -699,7 +699,7 @@ interval floor instead of sixty.
 
 **`raycast://` URLs** — extensions address Raycast by scheme; the most common is a bare
 `open("raycast://")` to bring the window back after something stole focus (1Password's auth flow does
-this). `ExtensionHostBridge` keeps those inside Szcast: `raycast://extensions/<author>/<extension>/<command>`
+this). `ExtensionHostBridge` keeps those inside szcast: `raycast://extensions/<author>/<extension>/<command>`
 runs that command when it's installed, anything else reopens the palette. Handing them to the workspace
 would launch Raycast itself.
 
@@ -761,7 +761,7 @@ than waiting for room on its readable side, so only a transform nobody reads fro
 
 `url.fileURLToPath` decodes percent-escapes the way Node does on darwin, so an asset path carrying a
 space resolves to a file the image loader can open, and it rejects an encoded separator or a non-local
-host rather than returning a wrong path. Node's `windows` override is absent: Szcast only runs on
+host rather than returning a wrong path. Node's `windows` override is absent: szcast only runs on
 macOS, so drive-letter and UNC output would be unreachable. `url.pathToFileURL` escapes `?` and `#`
 so a filename holding either survives the round trip.
 
@@ -859,7 +859,7 @@ extensions / 114 of 147 view commands** boot and render. `Scripts/raycast-runtim
 cd Scripts/raycast-runtime
 pnpm install
 node gen-enums.mjs        # only after bumping the @raycast/api devDependency
-node build.mjs            # → Szcast/Resources/RaycastRuntime.generated.js (commit it)
+node build.mjs            # → szcast/Resources/RaycastRuntime.generated.js (commit it)
 node build.mjs --dev       # unminified, React in development mode (better error messages)
 ```
 

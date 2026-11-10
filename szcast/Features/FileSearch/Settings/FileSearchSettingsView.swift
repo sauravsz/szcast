@@ -16,7 +16,7 @@ struct FileSearchSettingsView: View {
                 showsIcon: true,
                 showsHeader: false,
                 footer: """
-                    Tip: type a space at the start of Szcast's search — then your query — to jump \
+                    Tip: type a space at the start of szcast's search — then your query — to jump \
                     straight to this screen. The space is a shortcut, not part of the search, and \
                     Escape returns you to the launcher. It works with File Search on regardless of \
                     the switch above: that switch only adds a Files section to ordinary results.
@@ -61,7 +61,7 @@ private struct FileSearchAccessSection: View {
             } label: {
                 VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
                     SettingsRowTitle(.fileSearchFullDiskAccess, "Full Disk Access")
-                    Text(granted ? "Szcast can index every folder." : "File Search can’t index without it.")
+                    Text(granted ? "szcast can index every folder." : "File Search can’t index without it.")
                         .foregroundStyle(.secondary)
                 }
             }
@@ -73,8 +73,8 @@ private struct FileSearchAccessSection: View {
                     """
                     File Search reads your disk directly to build a private index on this Mac. \
                     In System Settings › Privacy & Security › Full Disk Access, turn on \
-                    Szcast. If it isn’t listed, click + and choose Szcast from \
-                    Applications. If access still shows as required, quit and reopen Szcast.
+                    szcast. If it isn’t listed, click + and choose szcast from \
+                    Applications. If access still shows as required, quit and reopen szcast.
                     """
                 )
                 .font(.caption)
@@ -307,7 +307,7 @@ private func chooseFolders(message: String) -> [URL]? {
     panel.allowsMultipleSelection = true
     panel.prompt = String(localized: "Add")
     panel.message = message
-    // Szcast is an accessory app, so the panel opens behind the frontmost app without this.
+    // szcast is an accessory app, so the panel opens behind the frontmost app without this.
     NSApp.activate()
     guard panel.runModal() == .OK else { return nil }
     return panel.urls

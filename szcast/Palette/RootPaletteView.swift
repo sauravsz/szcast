@@ -228,10 +228,10 @@ struct RootPaletteView: View {
                         openURL(url)
                     }
                 },
-                PopoverMenuItem(title: String(localized: "About Szcast"), systemImage: "info.circle") {
+                PopoverMenuItem(title: String(localized: "About szcast"), systemImage: "info.circle") {
                     core.settingsCoordinator.showAbout()
                 },
-                PopoverMenuItem(title: String(localized: "Support Szcast"), systemImage: "heart") {
+                PopoverMenuItem(title: String(localized: "Support szcast"), systemImage: "heart") {
                     core.supportCoordinator.showSupport()
                 },
                 PopoverMenuItem(

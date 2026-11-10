@@ -1,6 +1,6 @@
 # Architecture
 
-How Szcast is wired together. Per-feature internals live in [features/](README.md#features);
+How szcast is wired together. Per-feature internals live in [features/](README.md#features);
 conventions for writing new code live in [standards.md](standards.md).
 
 ## The layering
@@ -122,14 +122,14 @@ handed an input path and answers with bounded text down a pipe. Its `thumbnail` 
 clipboard's downscaled image copies, so a full-size decode stays out of the app unless that fails.
 
 Dictation similarly runs its model adapters in a bundled helper, with bounded in-memory audio and
-text over pipes. The coordinator keeps microphone capture, UI and insertion in Szcast; the model
+text over pipes. The coordinator keeps microphone capture, UI and insertion in szcast; the model
 store starts the helper on demand and reaps it after the selected idle delay or a model switch.
 `AppCore` owns the audio ducker and starts volume recovery on every launch, even when Dictation is off.
 
 ## Entry points and windows
 
 `SzcastLaunch` (`@main`) pins the interface language, then runs `SzcastApp`, which declares
-only two `MenuBarExtra` scenes — Szcast's own item and the
+only two `MenuBarExtra` scenes — szcast's own item and the
 calendar's, each inserted by one preference and independent of the other; everything else visible is
 driven imperatively from AppKit. Extension menu extras are dynamic `NSStatusItem`s owned entirely by
 `Features/Extensions/`, through `ExtensionManager`, with no scene or lifecycle wiring in the core.
@@ -227,7 +227,7 @@ The folder layout is the layering above, made navigable — one folder per featu
 everything that feature owns.
 
 ```
-Szcast/
+szcast/
   App/              @main, AppDelegate, AppCore — the composition root
   DesignSystem/     Theme (the token source), KeyCapChip, Tooltip, SymbolImage,
                     GlassEffectView, PopoverMenu, SettingsComponents, Scrolling/, Interaction/

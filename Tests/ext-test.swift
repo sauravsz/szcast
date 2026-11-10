@@ -104,10 +104,10 @@ struct ExtensionTests {
     static func runtimeURL() -> URL {
         let candidates = [
             URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-                .appendingPathComponent("Szcast/Resources/RaycastRuntime.generated.js"),
+                .appendingPathComponent("szcast/Resources/RaycastRuntime.generated.js"),
             URL(fileURLWithPath: #filePath)
                 .deletingLastPathComponent().deletingLastPathComponent()
-                .appendingPathComponent("Szcast/Resources/RaycastRuntime.generated.js")
+                .appendingPathComponent("szcast/Resources/RaycastRuntime.generated.js")
         ]
         return candidates.first { FileManager.default.fileExists(atPath: $0.path) } ?? candidates[0]
     }
@@ -947,7 +947,7 @@ struct ExtensionTests {
             ExtensionDeepLink.route(url: installURL) == install)
         check("store Install is never parsed as a command", ExtensionDeepLink.parse(url: installURL) == nil)
         check(
-            "store Install accepts the Szcast scheme",
+            "store Install accepts the szcast scheme",
             ExtensionDeepLink.route(
                 url: URL(string: "szcast://extensions/linear/linear?source=webstore")!) == install)
         check(
@@ -1235,7 +1235,7 @@ struct ExtensionTests {
                 try { callback(); return "none"; } catch (error) { return error.message; }
               };
               const filePaths = [
-                fileURLToPath("file:///Applications/Szcast%20Beta.app"),
+                fileURLToPath("file:///Applications/szcast%20Beta.app"),
                 fileURLToPath(pathToFileURL("/tmp/a#b.png")),
                 pathToFileURL("/tmp/My Image.png").href,
                 errorCode(() => fileURLToPath("file:///tmp/a%2Fb")),
@@ -1356,7 +1356,7 @@ struct ExtensionTests {
             "fileURLToPath decodes a path and rejects an unusable URL",
             ExtensionAccessoriesView_labelForTest(
                 screen.items.first?.node.array("accessories").dropFirst(2).first)
-                == "/Applications/Szcast Beta.app\n/tmp/a#b.png\n"
+                == "/Applications/szcast Beta.app\n/tmp/a#b.png\n"
                 + "file:///tmp/My%20Image.png\n"
                 + "ERR_INVALID_FILE_URL_PATH\nERR_INVALID_FILE_URL_HOST\n"
                 + "ERR_INVALID_URL_SCHEME",

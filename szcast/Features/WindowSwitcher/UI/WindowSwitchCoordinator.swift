@@ -139,7 +139,7 @@ final class WindowSwitchCoordinator {
 
     private func reportPermissionFailure() async {
         let openSettings = await core.reportFailure(
-            title: String(localized: "Szcast Needs Accessibility Access"),
+            title: String(localized: "szcast Needs Accessibility Access"),
             message: String(localized: "Switching windows reads and raises other apps' windows."),
             symbol: "macwindow.on.rectangle", recovery: String(localized: "Open Settings"))
         if openSettings { Permissions.openAccessibilitySettings() }

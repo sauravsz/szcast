@@ -84,7 +84,7 @@ final class HyperKeyManager: HealthCheckable {
             secureInput: secureInput.report())
     }
 
-    /// Read on demand: another app taking the key over leaves nothing for Szcast to observe.
+    /// Read on demand: another app taking the key over leaves nothing for szcast to observe.
     func takeover() -> HyperKeyDiagnostics.Takeover? {
         guard status == .active else { return nil }
         let keyboards = remapper.overriddenKeyboardNames
@@ -151,7 +151,7 @@ final class HyperKeyManager: HealthCheckable {
 
     private var otherInstanceName: String {
         instanceLock.holder().flatMap { NSRunningApplication(processIdentifier: $0)?.localizedName }
-            ?? "Szcast"
+            ?? "szcast"
     }
 
     /// That press latched Caps Lock on a keyboard that lost the remap, so undo it once repaired.

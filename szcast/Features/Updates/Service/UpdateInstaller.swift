@@ -119,7 +119,7 @@ struct UpdateInstaller: Sendable {
         guard result.succeeded else { throw UpdateFailure.extractFailed(result.tail) }
         let contents = try? FileManager.default.contentsOfDirectory(
             at: directory, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles])
-        // Named for its channel — "Szcast Beta.app", not "Szcast.app".
+        // Named for its channel — "szcast Beta.app", not "szcast.app".
         guard let app = contents?.first(where: { $0.pathExtension == "app" }) else {
             throw UpdateFailure.noAppInArchive
         }

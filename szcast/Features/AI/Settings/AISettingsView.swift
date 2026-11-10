@@ -193,14 +193,14 @@ struct AISettingsView: View {
         return Section {
             Toggle(isOn: $settings.systemPromptEnabled) {
                 SettingsRowTitle(.aiSystemPrompt, "Send a system prompt")
-                Text("Off also skips Szcast's own prompt.")
+                Text("Off also skips szcast's own prompt.")
             }
             SystemPromptEditor(text: $settings.systemPrompt)
                 .settingsEnabled(settings.systemPromptEnabled)
         } header: {
             SettingsSectionHeader(.aiSystemPrompt)
         } footer: {
-            Text("Sent before every message, after Szcast's own. Both are billed each turn.")
+            Text("Sent before every message, after szcast's own. Both are billed each turn.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

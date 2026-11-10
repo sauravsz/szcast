@@ -17,7 +17,7 @@ compilation of its 2-bit weights; Ultra's encoder and both variants' decoder/joi
 ## Invariants
 
 - `AppCore` owns the model store and coordinator. The microphone session, panel and focused target
-  belong only to `DictationCoordinator`; no recording starts merely by launching Szcast or opening
+  belong only to `DictationCoordinator`; no recording starts merely by launching szcast or opening
   Settings.
 - The enable switch is consent. It explains microphone and Accessibility access before enabling,
   and, like every Dictation preference, is excluded from backups so importing settings cannot arm
@@ -68,8 +68,8 @@ compilation of its 2-bit weights; Ultra's encoder and both variants' decoder/joi
   plays at full volume before the microphone closes and a headset switches back. Ducking is device-wide, so
   media at full volume can mask the start cue. Through speakers a cue can reach the recording; it is
   not removed.
-- The microphone, waveform, permissions and insertion stay in Szcast. Model loading, audio
-  features and decoding run in `Szcast Dictation` (`Szcast Dev Dictation` in Debug), started
+- The microphone, waveform, permissions and insertion stay in szcast. Model loading, audio
+  features and decoding run in `szcast Dictation` (`szcast Dev Dictation` in Debug), started
   only for transcription. Main-app state never retains Core ML models or imports the adapters.
   The helper is an embedded accessory app with no bundled icon, Dock item or windows.
 - Core ML models live under this build's bundle-ID cache. After one minute idle by default, the

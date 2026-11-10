@@ -1,4 +1,4 @@
-# Szcast
+# szcast
 
 A native macOS menu-bar launcher: fuzzy app launcher, global and per-app hotkeys, a text/image
 clipboard history, an inline calculator, a floating note, snippets, quicklinks, window management
@@ -8,7 +8,7 @@ dependencies.
 
 ## Posture: modern-first, always
 
-**Szcast supports macOS 26 and later, with macOS 27 strongly preferred.** Swift 6+ with complete
+**szcast supports macOS 26 and later, with macOS 27 strongly preferred.** Swift 6+ with complete
 strict concurrency is required. Prefer the latest Swift patterns and modern Apple APIs.
 
 Prefer current APIs and language features:
@@ -28,7 +28,7 @@ Prefer current APIs and language features:
   and CI. Use direct availability checks where macOS 27+ APIs require them to preserve macOS 26 support.
 - **No compatibility layers, legacy workarounds or obsolete patterns.** No support below macOS 26 or
   speculative fallbacks. Keep the implementation direct. Migration code lives only in
-  `Szcast/Migrations/` and is deleted after one stable release ([migrations.md](docs/migrations.md)).
+  `szcast/Migrations/` and is deleted after one stable release ([migrations.md](docs/migrations.md)).
 
 Carbon is a deliberate capability-gap dependency rather than inertia: nothing modern registers a
 system-wide chord, and HIToolbox's TIS APIs remain the public input-source mechanism. Full reasoning in
@@ -38,13 +38,13 @@ system-wide chord, and HIToolbox's TIS APIs remain the public input-source mecha
 
 | Folder                   | Holds                                                                                   |
 | ------------------------ | --------------------------------------------------------------------------------------- |
-| `Szcast/App/`          | `@main`, `AppDelegate`, `AppCore` — the composition root                                |
-| `Szcast/DesignSystem/` | shared visual primitives; `Theme.swift` is the only design-token source                 |
-| `Szcast/Platform/`     | system shims: `Permissions`, `AppPaths`, `Signposts`, `NotificationToken`, …            |
-| `Szcast/Palette/`      | the palette shell: panel, window controller, `RootPaletteView`, `PaletteScreen`         |
-| `Szcast/Windows/`      | the non-palette AppKit surfaces: `Dialog/`, `HUD/`, `About/`, `AppWindowController`     |
-| `Szcast/Features/`     | one folder per feature; larger ones split `Model/` `Service/` `UI/` `Settings/`         |
-| `Szcast/Migrations/`   | one-shot repairs of state an older release left behind, each deleted after one release  |
+| `szcast/App/`          | `@main`, `AppDelegate`, `AppCore` — the composition root                                |
+| `szcast/DesignSystem/` | shared visual primitives; `Theme.swift` is the only design-token source                 |
+| `szcast/Platform/`     | system shims: `Permissions`, `AppPaths`, `Signposts`, `NotificationToken`, …            |
+| `szcast/Palette/`      | the palette shell: panel, window controller, `RootPaletteView`, `PaletteScreen`         |
+| `szcast/Windows/`      | the non-palette AppKit surfaces: `Dialog/`, `HUD/`, `About/`, `AppWindowController`     |
+| `szcast/Features/`     | one folder per feature; larger ones split `Model/` `Service/` `UI/` `Settings/`         |
+| `szcast/Migrations/`   | one-shot repairs of state an older release left behind, each deleted after one release  |
 | `Tests/`                 | the standalone harnesses — one Swift file each, no XCTest target                        |
 | `Scripts/`               | every executable script: test runner, data generators, packaging, linting, editor setup |
 
@@ -82,7 +82,7 @@ feature's doc, under its own `## Invariants`.
   the forced-dark build shipped, restated rather than re-derived. Retune a light branch freely — change
   a dark one only when the task is to change Dark. `AppAppearance` drives `NSApp.appearance`, and
   `.system` maps to `nil` so AppKit follows macOS on its own.
-- **Szcast presents its own dialogs — never `NSAlert` or a system popover.** A question
+- **szcast presents its own dialogs — never `NSAlert` or a system popover.** A question
   goes through `DialogController`, a report through a HUD via `HUDPresenter`. The Settings window is
   the one exception: a stock titled window, its panes ask with SwiftUI's `confirmationDialog` or
   `alert`, which present as a sheet on it.
@@ -134,10 +134,10 @@ feature's doc, under its own `## Invariants`.
   constant or type instead. Cap 100 characters, delete rather than update, and never comment a change
   you just made. Nothing lints this; get it right the first time.
   Full rules: [standards.md#comments](docs/standards.md#comments).
-- **Debug builds are their own channel** — `Szcast Dev.app` / `com.sauravsz.szcast.dev` — so a local run
+- **Debug builds are their own channel** — `szcast Dev.app` / `com.sauravsz.szcast.dev` — so a local run
   never shares prefs, caches, TCC grants or the login item with an installed copy. Anything newly
   persisted must stay keyed by `Bundle.main.bundleIdentifier`.
-- **XcodeGen owns the project.** `Szcast.xcodeproj` is committed but generated from `project.yml`;
+- **XcodeGen owns the project.** `szcast.xcodeproj` is committed but generated from `project.yml`;
   after editing it, run `xcodegen generate` and commit both. No SwiftPM, and never `Bundle.module`.
 
 ## Before you finish
@@ -147,5 +147,5 @@ Each item is explained in [testing.md](docs/testing.md#definition-of-done).
 - `./Scripts/run-tests.sh` passes.
 - The Debug build compiles with **no new warnings**.
 - `./Scripts/lint.sh` is clean.
-- `grep -rln 'import AppKit\|import SwiftUI\|import Cocoa' Szcast/Features/*/Model/` returns nothing.
+- `grep -rln 'import AppKit\|import SwiftUI\|import Cocoa' szcast/Features/*/Model/` returns nothing.
 - Any doc your change made wrong is fixed in the same commit.

@@ -98,7 +98,7 @@ struct MCPStdioTests {
         await connection.start()
         expect(
             connection.status.isReady,
-            "a server asking Szcast for something is declined without derailing the handshake")
+            "a server asking szcast for something is declined without derailing the handshake")
         connection.stop()
     }
 

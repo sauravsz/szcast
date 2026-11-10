@@ -24,9 +24,9 @@ settings:
       SZCAST_BUNDLE_IDENTIFIER: com.sauravsz.szcast.dev
       # Its own scheme too, so a link never lands in whichever channel macOS happens to pick.
       SZCAST_URL_SCHEME: szcast-dev
-      DICTATION_EXECUTABLE_NAME: Szcast Dev Dictation
+      DICTATION_EXECUTABLE_NAME: szcast Dev Dictation
     Release:
-      DICTATION_EXECUTABLE_NAME: Szcast Dictation
+      DICTATION_EXECUTABLE_NAME: szcast Dictation
       # Release-only: library validation refuses Debug's `.debug.dylib`, whose team never matches.
       ENABLE_HARDENED_RUNTIME: YES
       # Strip the shipped binary (dSYM is still generated first) and drop unused code.
@@ -96,7 +96,7 @@ targets:
       configs:
         # Debug is its own channel, so a local build never corrupts the installed app's state.
         Debug:
-          PRODUCT_NAME: Szcast Dev
+          PRODUCT_NAME: szcast Dev
 
   ClipboardTextHelper:
     type: tool

@@ -46,7 +46,7 @@ return `OSStatus` synchronously, preserving event order and hold-to-talk release
 - **The private HID SPI lives in `Platform/HIDEventSystem.swift` alone**, resolved at runtime, so a
   macOS without it degrades the Hyper Key to `.remapUnavailable` instead of crashing.
 - **`KeyboardRemapper` only ever removes the Hyper Key's own entries**, tracked in its recovery journal,
-  so another tool's mapping for another key always survives Szcast turning the Hyper Key off.
+  so another tool's mapping for another key always survives szcast turning the Hyper Key off.
 - **A raw Caps Lock is never read as Hyper.** Its latch carries no release, so treating one as a press
   leaves the chord on every keystroke until the next press.
 - **`HyperKeyTap`'s callback never waits on the main actor.** Every keystroke on the Mac passes through
@@ -71,7 +71,7 @@ System Settings panes use `boundPaneBundleIDs`; custom commands, quicklinks, win
 and custom window sizes use their stable UUIDs in `boundCustomCommandIDs`, `boundQuicklinkIDs`,
 `boundWindowLayoutIDs`, `boundWindowRoomIDs` and `boundCustomWindowSizeIDs`. Those five are the per-item case — unlike a fixed catalog, there is no `allCases` to walk — so each needs an index for `start()`
 to re-register from
-and to prune bindings whose record was deleted while Szcast wasn't running. That prune is why
+and to prune bindings whose record was deleted while szcast wasn't running. That prune is why
 `QuicklinkStore` loads at launch even when the feature is off
 (see [quicklinks.md](quicklinks.md#hotkeys)).
 Apple Shortcuts keep the same kind of index in `boundAppleShortcutIDs`, pruned not at launch but after
@@ -81,7 +81,7 @@ the first successful read of the library, since a failed read looks exactly like
 Snippets index `StoredSnippet.ID`, the file's path, in `boundSnippetIDs`. The store runs only while
 the feature is on, so they are swept not at launch but on every snapshot, by
 `removeSnippetBindings`; a file that fails to parse still counts, since it is mid-edit rather than
-gone. A rename outside Szcast or a new Snippets Folder therefore drops the shortcut, and none
+gone. A rename outside szcast or a new Snippets Folder therefore drops the shortcut, and none
 travels in a backup, where an imported snippet lands at a new path
 (see [snippets.md](snippets.md#shortcuts)).
 
@@ -198,7 +198,7 @@ Monitoring.
 
 `HyperKeyManager.apply()` is the one funnel. Settings, sleep, lock, session switches, blocking apps
 and the system notifications under [Lifecycle](#lifecycle) all call it, and it converges on what the
-settings ask for: no key is `.off`, a running blocker or another Szcast process holding the key is
+settings ask for: no key is `.off`, a running blocker or another szcast process holding the key is
 `.blocked`, a pause reason is `.paused`, a refused remap is `.remapUnavailable`; missing grants report
 `.needsAccessibility`. The input engine must install before a HID mapping is changed, so a missing
 permission leaves the physical key usable.
@@ -230,7 +230,7 @@ installed or repaired.
 `KeyboardRemapper` writes through `HIDEventSystem`, the private IOKit SPI `hidutil` itself drives. It is
 bound with `dlsym` in `Platform/HIDEventSystem.swift`, the only file that touches it, so a macOS that
 drops a symbol reports `.remapUnavailable` instead of crashing. Each keyboard's original Caps Lock
-mapping is preserved. A matching entry already placed by another tool is left unowned; Szcast only
+mapping is preserved. A matching entry already placed by another tool is left unowned; szcast only
 restores an original while the keyboard still carries its own installed mapping. Entries for other
 keys and later replacements by other tools survive teardown. A keyboard that rejects the write is
 skipped and stays plain Caps Lock; only every connected keyboard rejecting it reports
@@ -314,7 +314,7 @@ machine for it.
   Changing Keys** — other apps' modifying keyboard taps from `CGGetEventTapList` — where one averaging
   50 ms or more per event is marked slow, since it delays all typing. Those taps are listed, never
   acted on: most are benign.
-- **Another Szcast.** Release and Dev builds would each remap the key and rewrite every event.
+- **Another szcast.** Release and Dev builds would each remap the key and rewrite every event.
   `RemapInstanceLock` holds an `flock` on `com.sauravsz.szcast.hyper-key.lock` in the shared temporary
   directory while a key is live and during recovery cleanup. The kernel drops it when its holder
   exits, so no record goes stale. The holder writes its pid so the refused process can name it in the
@@ -352,10 +352,10 @@ Carbon hotkeys still fire inside Secure Input, and both remedies are built on th
   `HotKeyManager.setSecureInputEquivalents` registers every Hyper combo again as ⌃ plus its key
   (`KeyShortcut.secureInputEquivalent(of:)`), rebuilt with the bindings and dropped when Secure Input
   ends. The Carbon event's device flags select Right Control without querying mutable keyboard state.
-  Left Control never triggers Hyper. An existing Szcast Control binding shares the registration and
+  Left Control never triggers Hyper. An existing szcast Control binding shares the registration and
   still runs from Left Control; Dictation receives the release for whichever action began the press.
   Rebuilding or pausing registrations cancels an outstanding hold. Carbon reserves these Control
-  combinations during Secure Input even when Left Control has no Szcast binding.
+  combinations during Secure Input even when Left Control has no szcast binding.
 
 The tap still sees a modifier's `flagsChanged` inside Secure Input, but never the key pressed between
 them. So **Quick Press never fires there**: every quick Hyper combo would read as a lone press and

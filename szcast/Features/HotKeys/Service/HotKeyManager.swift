@@ -108,6 +108,7 @@ final class HotKeyManager {
         }
         prune(key: boundQuickActionKey, live: quickActionIDs) { .quickAction(id: $0) }
         // After the prunes, so a dropped record can't survive in memory this session.
+        seedDefaultsIfNeeded()
         for action in candidateActions { bindings[action] = storedBinding(for: action) }
         revision &+= 1
 
@@ -170,7 +171,7 @@ final class HotKeyManager {
         }
     }
 
-    /// Covers a file deleted or renamed outside Szcast, which no Settings row is left to clear.
+    /// Covers a file deleted or renamed outside szcast, which no Settings row is left to clear.
     func removeSnippetBindings(keeping liveIDs: Set<StoredSnippet.ID>) {
         for id in boundSnippetIDs where !liveIDs.contains(id) {
             let action = HotKeyAction.snippet(id: id)
@@ -180,6 +181,21 @@ final class HotKeyManager {
     }
 
     func binding(for action: HotKeyAction) -> HotKeyBinding? { bindings[action] }
+
+    /// One-time seed, so a fresh install ships with working chords instead of an empty recorder.
+    /// A key that already holds a value means the seed ran, so a cleared binding stays cleared.
+    private func seedDefaultsIfNeeded() {
+        guard !defaults.bool(forKey: Self.seededDefaultsKey) else { return }
+        defaults.set(true, forKey: Self.seededDefaultsKey)
+        for (action, binding) in DefaultHotKeys.bindings where storedBinding(for: action) == nil {
+            guard let data = try? encoder.encode(binding),
+                let json = String(data: data, encoding: .utf8)
+            else { continue }
+            defaults.set(json, forKey: action.defaultsKey)
+        }
+    }
+
+    private static let seededDefaultsKey = "szcastHotKeyDefaultsSeeded"
 
     private func storedBinding(for action: HotKeyAction) -> HotKeyBinding? {
         guard
@@ -462,7 +478,7 @@ final class HotKeyManager {
         defaults.set(Array(set), forKey: key)
     }
 
-    /// Drops bindings whose item is gone, deleted while Szcast wasn't running.
+    /// Drops bindings whose item is gone, deleted while szcast wasn't running.
     private func prune(key: String, live: Set<UUID>, action: (UUID) -> HotKeyAction) {
         let stored = Set(boundIDs(key: key))
         for id in stored.subtracting(live) {

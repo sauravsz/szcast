@@ -1,11 +1,11 @@
 import Foundation
 
-/// A server a CLI route's own client runs, as `AITool` is a tool for the loop Szcast runs.
+/// A server a CLI route's own client runs, as `AITool` is a tool for the loop szcast runs.
 struct AIToolServer: Equatable, Sendable {
     enum Transport: Equatable, Sendable {
         /// A local process. The values travel in the child's environment, never on its argv.
         case command(path: String, arguments: [String], environment: [String: String])
-        /// A remote endpoint. An empty value sends no header, as Szcast's own transport does.
+        /// A remote endpoint. An empty value sends no header, as szcast's own transport does.
         case url(String, headerName: String, headerValue: String)
     }
 
@@ -15,13 +15,13 @@ struct AIToolServer: Equatable, Sendable {
     let transport: Transport
 }
 
-/// One call a route's own client is asking permission for, named the way Szcast addresses it.
+/// One call a route's own client is asking permission for, named the way szcast addresses it.
 struct AIToolServerCall: Equatable, Sendable {
     let handle: String
     let tool: String
 }
 
-/// How a route whose own client runs the tool loop reaches Szcast's servers and its reader.
+/// How a route whose own client runs the tool loop reaches szcast's servers and its reader.
 struct AIToolServerSession: Sendable {
     let servers: @Sendable () async -> [AIToolServer]
     let consent: @Sendable (AIToolServerCall) async -> Bool

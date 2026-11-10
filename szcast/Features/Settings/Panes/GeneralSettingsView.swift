@@ -156,7 +156,7 @@ struct GeneralSettingsView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Szcast will relearn your preferred results as you use the launcher.")
+            Text("szcast will relearn your preferred results as you use the launcher.")
         }
         .onAppear(perform: refreshInputSources)
         .onReceive(

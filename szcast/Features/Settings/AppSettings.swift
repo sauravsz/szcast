@@ -215,7 +215,7 @@ final class AppSettings {
         didSet { defaults.set(escapeKeyBehavior.rawValue, forKey: Key.escapeKeyBehavior.rawValue) }
     }
 
-    /// Follow macOS, or pin Szcast to one appearance. Applied by `AppCore.applyAppearance()`.
+    /// Follow macOS, or pin szcast to one appearance. Applied by `AppCore.applyAppearance()`.
     var appearance: AppAppearance {
         didSet { defaults.set(appearance.rawValue, forKey: Key.appearance.rawValue) }
     }
@@ -409,7 +409,7 @@ final class AppSettings {
         didSet { defaults.set(notesFolder, forKey: Key.notesFolder.rawValue) }
     }
 
-    /// Off by default: connecting a server is consent to run code Szcast did not write.
+    /// Off by default: connecting a server is consent to run code szcast did not write.
     var mcpEnabled: Bool {
         didSet { defaults.set(mcpEnabled, forKey: Key.mcpEnabled.rawValue) }
     }
@@ -434,7 +434,7 @@ final class AppSettings {
         didSet { defaults.set(snippetsEnabled, forKey: Key.snippetsEnabled.rawValue) }
     }
 
-    /// Off out of the box: on means Szcast may read a selection anywhere and type over it.
+    /// Off out of the box: on means szcast may read a selection anywhere and type over it.
     var quickActionsEnabled: Bool {
         didSet { defaults.set(quickActionsEnabled, forKey: Key.quickActionsEnabled.rawValue) }
     }
@@ -482,7 +482,7 @@ final class AppSettings {
         }
     }
 
-    /// For a toolchain Szcast doesn't know — mise or Nix shims are the common case.
+    /// For a toolchain szcast doesn't know — mise or Nix shims are the common case.
     var extensionCustomSearchPaths: [String] {
         didSet {
             defaults.set(
@@ -692,12 +692,15 @@ final class AppSettings {
     }
 
     init() {
-        // The only feature switch that defaults on, so absence has to outrank a stored `false`.
+        // Every feature switch defaults on, so absence has to outrank a stored `false`.
+        // `defaults.object(forKey:) == nil` is how each one tells "never set" from "set to off".
         clipboardEnabled =
             defaults.object(forKey: Key.clipboardEnabled.rawValue) == nil
             || defaults.bool(forKey: Key.clipboardEnabled.rawValue)
         // `integer(forKey:)` returns 0 when unset, which no case matches.
-        clipboardTextSearchEnabled = defaults.bool(forKey: Key.clipboardTextSearchEnabled.rawValue)
+        clipboardTextSearchEnabled =
+            defaults.object(forKey: Key.clipboardTextSearchEnabled.rawValue) == nil
+            || defaults.bool(forKey: Key.clipboardTextSearchEnabled.rawValue)
         clipboardRetention =
             ClipboardRetention(rawValue: defaults.integer(forKey: Key.clipboardRetention.rawValue))
             ?? .threeMonths
@@ -717,7 +720,7 @@ final class AppSettings {
             || defaults.bool(forKey: Key.automaticallyCheckForUpdates.rawValue)
         hyperKey =
             defaults.string(forKey: Key.hyperKey.rawValue).flatMap(HyperKeyPhysicalKey.init)
-            ?? .none
+            ?? .capsLock
         // Defaults to true, so absence must be distinguished from a stored `false`.
         hyperKeyIncludesShift =
             defaults.object(forKey: Key.hyperKeyIncludesShift.rawValue) == nil
@@ -726,8 +729,9 @@ final class AppSettings {
             defaults.string(forKey: Key.hyperKeyQuickPress.rawValue)
             .flatMap(HyperKeyQuickPress.init)
             ?? .none
-        hyperKeySecureInputCompatibility = defaults.bool(
-            forKey: Key.hyperKeySecureInputCompatibility.rawValue)
+        hyperKeySecureInputCompatibility =
+            defaults.object(forKey: Key.hyperKeySecureInputCompatibility.rawValue) == nil
+            || defaults.bool(forKey: Key.hyperKeySecureInputCompatibility.rawValue)
         emojiSkinTone =
             defaults.string(forKey: Key.emojiSkinTone.rawValue).flatMap(EmojiSkinTone.init) ?? .none
         emojiGridColumns =
@@ -776,7 +780,8 @@ final class AppSettings {
             as? [String: [Double]] ?? [:]
         paletteExpandedCenterDisplays =
             Set(defaults.stringArray(forKey: Key.paletteExpandedCenterDisplays.rawValue) ?? [])
-        fileSearchEnabled = defaults.bool(forKey: Key.fileSearchEnabled.rawValue)
+        fileSearchEnabled = defaults.object(forKey: Key.fileSearchEnabled.rawValue) == nil
+            || defaults.bool(forKey: Key.fileSearchEnabled.rawValue)
         // Unset seeds home; a stored empty array is a cleared list that searches nothing.
         fileSearchScopes =
             defaults.stringArray(forKey: Key.fileSearchScopes.rawValue)
@@ -785,9 +790,12 @@ final class AppSettings {
             defaults.stringArray(forKey: Key.fileSearchIgnorePatterns.rawValue) ?? []
         fileSearchRemovedDefaultPatterns =
             defaults.stringArray(forKey: Key.fileSearchRemovedDefaultPatterns.rawValue) ?? []
-        fileSearchShowInLauncher = defaults.bool(forKey: Key.fileSearchShowInLauncher.rawValue)
-        notesEnabled = defaults.bool(forKey: Key.notesEnabled.rawValue)
-        dictationEnabled = defaults.bool(forKey: Key.dictationEnabled.rawValue)
+        fileSearchShowInLauncher = defaults.object(forKey: Key.fileSearchShowInLauncher.rawValue) == nil
+            || defaults.bool(forKey: Key.fileSearchShowInLauncher.rawValue)
+        notesEnabled = defaults.object(forKey: Key.notesEnabled.rawValue) == nil
+            || defaults.bool(forKey: Key.notesEnabled.rawValue)
+        dictationEnabled = defaults.object(forKey: Key.dictationEnabled.rawValue) == nil
+            || defaults.bool(forKey: Key.dictationEnabled.rawValue)
         dictationMode =
             defaults.string(forKey: Key.dictationMode.rawValue)
             .flatMap(DictationMode.init) ?? .toggle
@@ -820,21 +828,27 @@ final class AppSettings {
             || defaults.bool(forKey: Key.notesShowsFormattingBar.rawValue)
         notesShowsInMenuBar = defaults.bool(forKey: Key.notesShowsInMenuBar.rawValue)
         notesFolder = defaults.string(forKey: Key.notesFolder.rawValue)
-        aiEnabled = defaults.bool(forKey: Key.aiEnabled.rawValue)
-        mcpEnabled = defaults.bool(forKey: Key.mcpEnabled.rawValue)
-        customCommandsEnabled = defaults.bool(forKey: Key.customCommandsEnabled.rawValue)
+        aiEnabled = defaults.object(forKey: Key.aiEnabled.rawValue) == nil
+            || defaults.bool(forKey: Key.aiEnabled.rawValue)
+        mcpEnabled = defaults.object(forKey: Key.mcpEnabled.rawValue) == nil
+            || defaults.bool(forKey: Key.mcpEnabled.rawValue)
+        customCommandsEnabled = defaults.object(forKey: Key.customCommandsEnabled.rawValue) == nil
+            || defaults.bool(forKey: Key.customCommandsEnabled.rawValue)
         // These default on, so absence must be distinguished from a stored `false`.
         customCommandsShowInLauncher =
             defaults.object(forKey: Key.customCommandsShowInLauncher.rawValue) == nil
             || defaults.bool(forKey: Key.customCommandsShowInLauncher.rawValue)
-        snippetsEnabled = defaults.bool(forKey: Key.snippetsEnabled.rawValue)
-        quickActionsEnabled = defaults.bool(forKey: Key.quickActionsEnabled.rawValue)
+        snippetsEnabled = defaults.object(forKey: Key.snippetsEnabled.rawValue) == nil
+            || defaults.bool(forKey: Key.snippetsEnabled.rawValue)
+        quickActionsEnabled = defaults.object(forKey: Key.quickActionsEnabled.rawValue) == nil
+            || defaults.bool(forKey: Key.quickActionsEnabled.rawValue)
         snippetsShowInLauncher =
             defaults.object(forKey: Key.snippetsShowInLauncher.rawValue) == nil
             || defaults.bool(forKey: Key.snippetsShowInLauncher.rawValue)
         snippetsFolder = defaults.string(forKey: Key.snippetsFolder.rawValue)
         // Opt-in, unlike its siblings: until it is asked for, nothing about extensions is loaded.
-        extensionsEnabled = defaults.bool(forKey: Key.extensionsEnabled.rawValue)
+        extensionsEnabled = defaults.object(forKey: Key.extensionsEnabled.rawValue) == nil
+            || defaults.bool(forKey: Key.extensionsEnabled.rawValue)
         extensionsShowInLauncher =
             defaults.object(forKey: Key.extensionsShowInLauncher.rawValue) == nil
             || defaults.bool(forKey: Key.extensionsShowInLauncher.rawValue)
@@ -844,7 +858,8 @@ final class AppSettings {
         extensionCustomSearchPaths =
             defaults.stringArray(forKey: Key.extensionCustomSearchPaths.rawValue) ?? []
         // Opt-in, like extensions: until it is asked for, EventKit is never loaded.
-        calendarEnabled = defaults.bool(forKey: Key.calendarEnabled.rawValue)
+        calendarEnabled = defaults.object(forKey: Key.calendarEnabled.rawValue) == nil
+            || defaults.bool(forKey: Key.calendarEnabled.rawValue)
         calendarShowInLauncher =
             defaults.object(forKey: Key.calendarShowInLauncher.rawValue) == nil
             || defaults.bool(forKey: Key.calendarShowInLauncher.rawValue)
@@ -881,11 +896,13 @@ final class AppSettings {
             defaults.object(forKey: Key.hideCurrentEvent.rawValue)
             .flatMap { $0 as? Int }
             .flatMap(HideCurrentEvent.init(rawValue:)) ?? .dontHide
-        navigationEnabled = defaults.bool(forKey: Key.navigationEnabled.rawValue)
+        navigationEnabled = defaults.object(forKey: Key.navigationEnabled.rawValue) == nil
+            || defaults.bool(forKey: Key.navigationEnabled.rawValue)
         menuSearchDisabledApps =
             defaults.stringArray(forKey: Key.menuSearchDisabledApps.rawValue) ?? []
         menuSearchShowsAppleMenu = defaults.bool(forKey: Key.menuSearchShowsAppleMenu.rawValue)
-        windowManagementEnabled = defaults.bool(forKey: Key.windowManagementEnabled.rawValue)
+        windowManagementEnabled = defaults.object(forKey: Key.windowManagementEnabled.rawValue) == nil
+            || defaults.bool(forKey: Key.windowManagementEnabled.rawValue)
         windowManagementShowInLauncher =
             defaults.object(forKey: Key.windowManagementShowInLauncher.rawValue) == nil
             || defaults.bool(forKey: Key.windowManagementShowInLauncher.rawValue)
@@ -905,11 +922,13 @@ final class AppSettings {
         windowRoomsShowInLauncher =
             defaults.object(forKey: Key.windowRoomsShowInLauncher.rawValue) == nil
             || defaults.bool(forKey: Key.windowRoomsShowInLauncher.rawValue)
-        quicklinksEnabled = defaults.bool(forKey: Key.quicklinksEnabled.rawValue)
+        quicklinksEnabled = defaults.object(forKey: Key.quicklinksEnabled.rawValue) == nil
+            || defaults.bool(forKey: Key.quicklinksEnabled.rawValue)
         quicklinksShowInLauncher =
             defaults.object(forKey: Key.quicklinksShowInLauncher.rawValue) == nil
             || defaults.bool(forKey: Key.quicklinksShowInLauncher.rawValue)
-        appleShortcutsEnabled = defaults.bool(forKey: Key.appleShortcutsEnabled.rawValue)
+        appleShortcutsEnabled = defaults.object(forKey: Key.appleShortcutsEnabled.rawValue) == nil
+            || defaults.bool(forKey: Key.appleShortcutsEnabled.rawValue)
         quicklinkOpensNewWindow = defaults.bool(forKey: Key.quicklinkOpensNewWindow.rawValue)
         quicklinkPassesSelectedText = defaults.bool(
             forKey: Key.quicklinkPassesSelectedText.rawValue)
@@ -919,7 +938,8 @@ final class AppSettings {
         supportRemindersEnabled =
             defaults.object(forKey: Key.supportReminders.rawValue) == nil
             || defaults.bool(forKey: Key.supportReminders.rawValue)
-        settingsFileEnabled = defaults.bool(forKey: Key.settingsFileEnabled.rawValue)
+        settingsFileEnabled = defaults.object(forKey: Key.settingsFileEnabled.rawValue) == nil
+            || defaults.bool(forKey: Key.settingsFileEnabled.rawValue)
         allowedDeepLinks = defaults.stringArray(forKey: Key.allowedDeepLinks.rawValue) ?? []
     }
 }

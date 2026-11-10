@@ -27,7 +27,7 @@ enum DeepLinkConsentPolicy {
         return (entryID, input)
     }
 
-    /// Opening a Szcast screen is harmless; acting outside Szcast is not.
+    /// Opening a szcast screen is harmless; acting outside szcast is not.
     static func requiresConsent(_ action: HotKeyAction) -> Bool {
         switch action {
         case .command(let id):

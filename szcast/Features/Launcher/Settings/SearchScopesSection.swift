@@ -50,7 +50,7 @@ struct SearchScopesSection: View {
         panel.allowsMultipleSelection = true
         panel.prompt = String(localized: "Add")
         panel.message = String(localized: "Choose folders or applications to include in the launcher.")
-        // Szcast is an accessory app, so the panel opens behind the frontmost app without this.
+        // szcast is an accessory app, so the panel opens behind the frontmost app without this.
         NSApp.activate(ignoringOtherApps: true)
         guard panel.runModal() == .OK else { return }
         settings.searchScopes = SearchScopes.normalize(

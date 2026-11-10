@@ -1,6 +1,6 @@
 import Foundation
 
-/// Szcast's servers as Claude's own MCP configuration: a file, since argv shows in `ps`.
+/// szcast's servers as Claude's own MCP configuration: a file, since argv shows in `ps`.
 enum ClaudeMCPLaunch {
     static let toolPrefix = "mcp__"
     /// Per turn, so a second turn never overwrites or deletes a live turn's configuration.
@@ -56,7 +56,7 @@ enum ClaudeMCPLaunch {
         return text
     }
 
-    /// `mcp__<handle>__<tool>` back to Szcast's pair; a handle never holds `_`, a tool may.
+    /// `mcp__<handle>__<tool>` back to szcast's pair; a handle never holds `_`, a tool may.
     static func route(_ wireName: String) -> AIToolServerCall? {
         guard wireName.hasPrefix(toolPrefix) else { return nil }
         let rest = wireName.dropFirst(toolPrefix.count)

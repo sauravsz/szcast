@@ -123,7 +123,7 @@ struct AboutView: View {
     }
 
     private var footer: some View {
-        Text("© 2026 Abue Ammar · Szcast is a fork of Tinycast · Released under AGPL-3.0")
+        Text("© 2026 Abue Ammar · szcast is a fork of Tinycast · Released under AGPL-3.0")
             .font(.caption2)
             .foregroundStyle(.tertiary)
     }

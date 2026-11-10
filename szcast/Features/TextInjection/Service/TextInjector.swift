@@ -158,7 +158,7 @@ final class TextInjector {
         }
     }
 
-    /// A hotkey's target comes from `frontmostApplication`, which can be Szcast itself.
+    /// A hotkey's target comes from `frontmostApplication`, which can be szcast itself.
     private func targetAcceptsInjection(_ targetApp: NSRunningApplication?) -> Bool {
         guard let targetApp,
             !targetApp.isTerminated,

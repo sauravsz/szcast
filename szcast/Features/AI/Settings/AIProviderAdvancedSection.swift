@@ -131,7 +131,7 @@ struct AIProviderAdvancedSection: View {
                     """)
         }
         if kind.isManagedVariable(name) {
-            return String(localized: "Szcast sets \(name) itself, so this value is not used.")
+            return String(localized: "szcast sets \(name) itself, so this value is not used.")
         }
         return nil
     }
@@ -183,7 +183,7 @@ struct AIProviderAdvancedSection: View {
             ?? FileManager.default.homeDirectoryForCurrentUser
         guard
             let url = ExecutablePicker.choose(
-                message: String(localized: "Choose the \(kind.command) command Szcast should run."),
+                message: String(localized: "Choose the \(kind.command) command szcast should run."),
                 startingAt: start)
         else { return }
         path = (url.path as NSString).abbreviatingWithTildeInPath

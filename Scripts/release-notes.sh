@@ -10,7 +10,7 @@ CHANNEL="${CHANNEL:?CHANNEL is required (beta|stable)}"
 TAG="${TAG:?TAG is required, e.g. v0.9.13-beta.61}"
 SHA="${SHA:-$(git rev-parse HEAD)}"
 VERSION="${VERSION:-${TAG#v}}"
-DISPLAY_NAME="${DISPLAY_NAME:-Szcast}"
+DISPLAY_NAME="${DISPLAY_NAME:-szcast}"
 BUNDLE_ID="${BUNDLE_ID:-com.sauravsz.szcast}"
 CASK="${CASK:-szcast}"
 

@@ -1,11 +1,11 @@
 import AppKit
 
-/// The app an action is for: a link that activates accessory Szcast leaves it the menu bar.
+/// The app an action is for: a link that activates accessory szcast leaves it the menu bar.
 @MainActor
 enum FrontmostApp {
     static var current: NSRunningApplication? {
         let workspace = NSWorkspace.shared
-        // With a window of ours in key, the reader is in Szcast, not wherever the menu bar is.
+        // With a window of ours in key, the reader is in szcast, not wherever the menu bar is.
         guard let frontmost = workspace.frontmostApplication,
             frontmost.processIdentifier == NSRunningApplication.current.processIdentifier,
             NSApp.keyWindow == nil

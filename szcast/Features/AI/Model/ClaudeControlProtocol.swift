@@ -2,7 +2,7 @@ import Foundation
 
 /// Claude's consent channel: the Agent SDK's undocumented wire format, kept to this one type.
 enum ClaudeControlProtocol {
-    /// One call the CLI is holding open until Szcast answers.
+    /// One call the CLI is holding open until szcast answers.
     struct Request: Equatable, Sendable {
         let id: String
         let call: AIToolServerCall
@@ -10,7 +10,7 @@ enum ClaudeControlProtocol {
         let input: JSONValue
     }
 
-    /// `nil` for every frame that is not a tool question on one of Szcast's servers.
+    /// `nil` for every frame that is not a tool question on one of szcast's servers.
     static func request(_ object: [String: Any]) -> Request? {
         guard object["type"] as? String == "control_request",
             let id = object["request_id"] as? String,

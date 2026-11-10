@@ -101,7 +101,7 @@ final class AppCore {
                 title: String(localized: "Enable Dictation?"),
                 message: String(
                     localized: """
-                        Szcast needs microphone access for dictation and Accessibility to paste into \
+                        szcast needs microphone access for dictation and Accessibility to paste into \
                         other apps. Audio is processed on this Mac.
                         """),
                 symbol: "waveform", confirmTitle: String(localized: "Continue"), tone: .neutral,
@@ -471,12 +471,12 @@ final class AppCore {
     private func reportInstall(_ report: UpdateCheckStore.InstallReport?) {
         switch report {
         case .installed(let version):
-            showMessage(String(localized: "Updated to Szcast \(version.description)"))
+            showMessage(String(localized: "Updated to szcast \(version.description)"))
         case .notInstalled(let version):
             showMessage(
                 String(
                     localized: """
-                        Szcast \(version.description) could not be installed. \
+                        szcast \(version.description) could not be installed. \
                         Check for updates to try again.
                         """),
                 tone: .danger)
@@ -828,8 +828,8 @@ final class AppCore {
         Task {
             guard
                 await confirm(
-                    title: String(localized: "Relaunch Szcast?"),
-                    message: String(localized: "The new language applies after Szcast relaunches."),
+                    title: String(localized: "Relaunch szcast?"),
+                    message: String(localized: "The new language applies after szcast relaunches."),
                     symbol: "globe", confirmTitle: String(localized: "Relaunch"), tone: .neutral,
                     confirmRole: .standard, dismissTitle: String(localized: "Later")),
                 isLanguagePending
@@ -870,7 +870,7 @@ final class AppCore {
         }
     }
 
-    /// A chat route that runs its own MCP client decides which servers Szcast runs itself.
+    /// A chat route that runs its own MCP client decides which servers szcast runs itself.
     private func trackChatRoute() {
         let runsOwnTools = withObservationTracking {
             aiChatCoordinator.everyChatRunsItsOwnTools

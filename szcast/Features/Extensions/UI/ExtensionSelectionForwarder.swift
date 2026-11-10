@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-/// Keeps the extension's item-id selection in sync with Szcast's flat palette index.
+/// Keeps the extension's item-id selection in sync with szcast's flat palette index.
 struct ExtensionSelectionForwarder: ViewModifier {
     let screen: ExtensionScreen
     let selection: Int

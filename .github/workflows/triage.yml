@@ -21,7 +21,7 @@ jobs:
         with:
           script: |
             const body = [
-              "Thanks for opening this! Szcast stays small and focused, so new features are chosen",
+              "Thanks for opening this! szcast stays small and focused, so new features are chosen",
               "carefully and smaller conveniences are usually closed.",
               "",
               "> [!TIP]",

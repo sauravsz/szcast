@@ -197,7 +197,7 @@ final class QuicklinkCoordinator {
         core.showMessage(
             Permissions.isAccessibilityTrusted()
                 ? String(localized: "Couldn’t get the selected text")
-                : String(localized: "Allow Szcast to use Accessibility in System Settings"),
+                : String(localized: "Allow szcast to use Accessibility in System Settings"),
             tone: .danger)
     }
 
@@ -216,7 +216,7 @@ final class QuicklinkCoordinator {
         _ quicklink: Quicklink, link: String, forcingDefaultApp: Bool
     ) {
         if windowController.isVisible { paletteCoordinator.hidePalette(restoreFocus: false) }
-        // Szcast's own link stays in-process: chosen here, so it never asks or steals focus.
+        // szcast's own link stays in-process: chosen here, so it never asks or steals focus.
         if let url = URL(string: link), core.deepLinkCoordinator.handles(url) {
             return core.deepLinkCoordinator.open(url, source: .szcast)
         }
@@ -432,7 +432,7 @@ final class QuicklinkCoordinator {
                 symbol: Quicklink.sfSymbol, tone: .neutral)
             return
         }
-        guard let url = BackupActions.chooseSaveLocation(named: "Szcast-Quicklinks") else {
+        guard let url = BackupActions.chooseSaveLocation(named: "szcast-Quicklinks") else {
             return
         }
         do {

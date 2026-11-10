@@ -14,7 +14,7 @@ enum OpenCodeMCPLaunch {
             "share": "disabled", "snapshots": false,
             "agents": [
                 InstalledAIKind.openCodeAgent: [
-                    "system": "You are generating text inside Szcast. Use only the supplied MCP tools.",
+                    "system": "You are generating text inside szcast. Use only the supplied MCP tools.",
                     "permissions": permissions
                 ]
             ],

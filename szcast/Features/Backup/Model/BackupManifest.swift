@@ -26,11 +26,11 @@ enum BackupFormatError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .unreadable:
-            return String(localized: "This file isn't a Szcast backup, or it's damaged.")
+            return String(localized: "This file isn't a szcast backup, or it's damaged.")
         case .unsupportedFormat(let found):
             return String(
                 localized: """
-                    This backup was made by a different version of Szcast (format \(found), \
+                    This backup was made by a different version of szcast (format \(found), \
                     expected \(BackupManifest.currentFormat)). Export again from the Mac that has \
                     your setup.
                     """)

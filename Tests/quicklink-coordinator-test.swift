@@ -50,7 +50,7 @@ struct QuicklinkCoordinatorTests {
         fixture.coordinator.openQuicklink(id: fixture.link.id)
         try await Task.sleep(for: .milliseconds(1))
         expect(
-            fixture.core.messages == ["Allow Szcast to use Accessibility in System Settings"],
+            fixture.core.messages == ["Allow szcast to use Accessibility in System Settings"],
             "without Accessibility the failure names the permission")
     }
 
@@ -223,12 +223,12 @@ struct QuicklinkCoordinatorTests {
         let fixture = try Fixture(link: "szcast://command/search-files?fallbackText={argument}")
         defer { fixture.cleanUp() }
         fixture.coordinator.openQuicklink(id: fixture.link.id, values: ["Argument": "~/Downloads"])
-        expect(QuicklinkLauncher.opened.isEmpty, "Szcast's own link never leaves the process")
+        expect(QuicklinkLauncher.opened.isEmpty, "szcast's own link never leaves the process")
         expect(
             fixture.core.deepLinkCoordinator.opened.map(\.0.absoluteString)
                 == ["szcast://command/search-files?fallbackText=~%2FDownloads"]
                 && fixture.core.deepLinkCoordinator.opened.first?.1 == .szcast,
-            "it runs as a link Szcast chose, so it never asks")
+            "it runs as a link szcast chose, so it never asks")
     }
 
     static func copying() throws {

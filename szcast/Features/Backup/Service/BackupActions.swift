@@ -21,7 +21,7 @@ enum BackupActions {
         var missingImages: Int
     }
 
-    // MARK: - Szcast native (own file panels; dialogs come from `AppCore`)
+    // MARK: - szcast native (own file panels; dialogs come from `AppCore`)
 
     /// The shared save panel; an accessory app must activate first or it opens behind.
     static func chooseSaveLocation(named base: String, type: UTType = .json) -> URL? {
@@ -48,7 +48,7 @@ enum BackupActions {
         return panel.url
     }
 
-    // MARK: - Szcast backups
+    // MARK: - szcast backups
 
     /// Composes off-main, then seals — a clipboard history runs to gigabytes.
     static func exportBackup(
@@ -56,7 +56,7 @@ enum BackupActions {
     ) async throws
         -> BackupComposer.Result
     {
-        guard let destination = chooseSaveLocation(named: "Szcast", type: .szcastBackup) else {
+        guard let destination = chooseSaveLocation(named: "szcast", type: .szcastBackup) else {
             throw CancellationError()
         }
         let plan = BackupComposer.plan(categories, from: core)
@@ -256,7 +256,7 @@ enum BackupActions {
         String(localized: "Turn on Snippets in Settings to use their keywords.")
 
     /// Not everything an import applies settles in the running app, so say to relaunch.
-    private static let restartAfterImportText = String(localized: "Quit and reopen Szcast to finish.")
+    private static let restartAfterImportText = String(localized: "Quit and reopen szcast to finish.")
 
     static func raycastText(_ outcome: RaycastOutcome) -> String {
         var parts: [String] = []

@@ -50,7 +50,7 @@ struct ExtensionCommandView: View {
                     ExtensionFailureView(
                         message: String(
                             localized: """
-                                This command renders \(type), which Szcast doesn't support yet. See \
+                                This command renders \(type), which szcast doesn't support yet. See \
                                 docs/extensions.md.
                                 """))
                 }

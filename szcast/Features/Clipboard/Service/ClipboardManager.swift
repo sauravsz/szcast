@@ -88,7 +88,7 @@ final class ClipboardManager {
         poll()
     }
 
-    /// For a ⌘C Szcast sends itself, whose copy is read and restored but never recorded.
+    /// For a ⌘C szcast sends itself, whose copy is read and restored but never recorded.
     func pauseCapture() {
         prepareForSzcastPasteboardMutation()
         isCapturePaused = true

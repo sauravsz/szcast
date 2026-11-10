@@ -133,7 +133,7 @@ struct ChatComposerTextView: NSViewRepresentable {
     }
 }
 
-/// Szcast's own editor, so dictation, snippets and Quick Actions write into it in process.
+/// szcast's own editor, so dictation, snippets and Quick Actions write into it in process.
 final class ComposerTextView: NSTextView, InjectableTextView {
     var onDropFiles: (([URL]) -> Void)?
     var onFileDragTargeted: ((Bool) -> Void)?

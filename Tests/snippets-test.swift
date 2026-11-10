@@ -132,7 +132,7 @@ struct SnippetsTests {
             "Raycast import trims keywords and normalizes blanks",
             imported[0].keyword == "!email" && imported[2].keyword == nil)
         check(
-            "Raycast import uses safe Szcast defaults",
+            "Raycast import uses safe szcast defaults",
             imported.allSatisfy { $0.isEnabled && !$0.showsConfirmation })
     }
 
@@ -605,7 +605,7 @@ struct SnippetsTests {
                 try? Data(text.utf8).write(to: fileURL, options: .atomic)
             }))
         var boundaryEdit = boundaryRecord.snippet
-        boundaryEdit.text = "Szcast edit"
+        boundaryEdit.text = "szcast edit"
         do {
             _ = try racingRepository.save(
                 boundaryEdit,
@@ -943,7 +943,7 @@ struct SnippetsTests {
                 && restoredItems?[0].data(forType: customType) == Data([0, 1, 2, 3])
                 && restoredItems?[1].data(forType: secondType) == Data([4, 5, 6]))
         check(
-            "pasteboard restoration leaves no Szcast marker on the restored clipboard",
+            "pasteboard restoration leaves no szcast marker on the restored clipboard",
             restoredItems?.allSatisfy {
                 !$0.types.contains(ClipboardManager.internalType)
             } == true)
@@ -1470,7 +1470,7 @@ struct SnippetsTests {
             "a template that reads only the clipboard declares no arguments",
             SnippetTemplateEngine.declaredArguments(in: "https://x.dev/?q={clipboard}").isEmpty)
 
-        // Raycast's snippet spelling resolves like Szcast's.
+        // Raycast's snippet spelling resolves like szcast's.
         let child = record("/tmp/ph-child.md", Snippet(name: "Child", text: "nested"))
         let byName = record("/tmp/ph-name.md", Snippet(name: "ByName", text: "{snippet name=\"Child\"}"))
         let byColon = record("/tmp/ph-colon.md", Snippet(name: "ByColon", text: "{snippet:Child}"))
@@ -1675,7 +1675,7 @@ struct SnippetsTests {
             hasCommandOrControl: false,
             isResetKey: false,
             isDeleteBackward: false)
-        check("synthetic Szcast events are classified as ignored", syntheticInput == .ignored)
+        check("synthetic szcast events are classified as ignored", syntheticInput == .ignored)
         _ = policy.process(.text("!du"), at: base.addingTimeInterval(2))
         _ = policy.process(syntheticInput, at: base.addingTimeInterval(2.5))
         let afterSynthetic = policy.process(.text("p"), at: base.addingTimeInterval(3))
@@ -1887,7 +1887,7 @@ struct SnippetsTests {
             eventUserData: 123,
             secureEventInputEnabled: false)
         check(
-            "real user input invalidates pending automatic delivery while Szcast events do not",
+            "real user input invalidates pending automatic delivery while szcast events do not",
             activityCount == 1)
 
         listener.isPromptingForArguments = true

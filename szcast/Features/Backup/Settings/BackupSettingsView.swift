@@ -184,7 +184,7 @@ struct BackupSettingsView: View {
 
     private var backupFileSubtitle: String {
         guard let name = backupFile?.lastPathComponent else {
-            return String(localized: "A .szcast file exported from Szcast.")
+            return String(localized: "A .szcast file exported from szcast.")
         }
         return openedManifest == nil ? String(localized: "\(name) — couldn't be read") : name
     }

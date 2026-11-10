@@ -39,7 +39,7 @@ struct LocalizedResourceTests {
         let compile = Process()
         compile.executableURL = URL(fileURLWithPath: "/usr/bin/xcrun")
         compile.arguments = [
-            "xcstringstool", "compile", "Szcast/Resources/Localizable.xcstrings",
+            "xcstringstool", "compile", "szcast/Resources/Localizable.xcstrings",
             "--output-directory", root.path
         ]
         try compile.run()
@@ -71,7 +71,7 @@ struct LocalizedResourceTests {
         let name = "Notes"
         var resources: [(label: String, resource: LocalizedStringResource)] = [
             ("a translated key", "Cancel"),
-            ("a key the catalog lacks", "Szcast harness key"),
+            ("a key the catalog lacks", "szcast harness key"),
             (
                 "a contextual key",
                 LocalizedStringResource("apple-shortcuts-section", defaultValue: "Shortcuts")

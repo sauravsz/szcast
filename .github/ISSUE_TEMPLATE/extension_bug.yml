@@ -1,12 +1,12 @@
 name: Extension Bug
-description: A Raycast extension misbehaves inside Szcast
+description: A Raycast extension misbehaves inside szcast
 title: "[Extension]: "
 labels: ["bug", "extension"]
 body:
   - type: markdown
     attributes:
       value: |
-        **Read this first.** Szcast runs Raycast extensions in its own runtime — a different system,
+        **Read this first.** szcast runs Raycast extensions in its own runtime — a different system,
         not Raycast. An extension that reaches for something only Raycast has cannot be made to work
         here, and the issue is closed as `wontfix`:
 
@@ -14,12 +14,12 @@ body:
         - the Raycast browser extension (`BrowserExtension`)
         - Raycast's `WindowManagement` service
         - Raycast Pro, cloud sync, accounts or teams
-        - an OS permission or entitlement Szcast doesn't hold
+        - an OS permission or entitlement szcast doesn't hold
         - Raycast-internal APIs, private modules and unpublished behaviour
 
         The full list of gaps is in
         [docs/features/extensions.md](https://github.com/sauravsz/szcast/blob/main/docs/features/extensions.md#what-isnt-supported-yet).
-        A missing API that Szcast *could* reasonably implement is worth reporting. "It works in
+        A missing API that szcast *could* reasonably implement is worth reporting. "It works in
         Raycast" on its own is not.
   - type: checkboxes
     id: existing-search
@@ -67,7 +67,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: Szcast version + channel
+      label: szcast version + channel
       placeholder: 0.1.0 stable
     validations:
       required: true

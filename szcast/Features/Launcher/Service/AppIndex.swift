@@ -797,7 +797,7 @@ final class AppIndex {
         return ordered
     }
 
-    /// Meetings keep their own card, AI is never pushed, and Szcast opening itself goes nowhere.
+    /// Meetings keep their own card, AI is never pushed, and szcast opening itself goes nowhere.
     private func suggestions(
         from entries: [AppEntry], usage: LauncherRankingStore.Snapshot, hotKeys: HotKeyManager
     ) -> [AppEntry] {

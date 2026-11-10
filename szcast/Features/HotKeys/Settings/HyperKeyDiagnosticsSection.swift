@@ -139,7 +139,7 @@ struct HyperKeyDiagnosticsSection: View {
     private func describe(_ secureInput: HyperKeyDiagnostics.SecureInput) -> String {
         var sentences = [
             diagnostics.secureInputCompatibilityActive
-                ? String(localized: "Szcast's Hyper shortcuts use Right Control while Secure Input is on.")
+                ? String(localized: "szcast's Hyper shortcuts use Right Control while Secure Input is on.")
                 : String(localized: "Key presses can't reach the Hyper Key while Secure Input is on.")
         ]
         if !secureInput.likelyOwners.isEmpty {

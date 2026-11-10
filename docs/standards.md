@@ -1,6 +1,6 @@
 # Engineering standards
 
-How code in Szcast is written. This is **guidance** — it describes what the codebase already looks
+How code in szcast is written. This is **guidance** — it describes what the codebase already looks
 like so that new code reads like it was there all along, and a good reason to depart from it is a good
 reason. What is actually checked is the bar in
 [testing.md](testing.md#definition-of-done); the rules that may not be broken at all are the
@@ -10,7 +10,7 @@ When this document and the code disagree, the code is probably right and this fi
 
 ## Posture
 
-Szcast supports macOS 26 and later, with macOS 27 strongly preferred. Swift 6+ with complete strict
+szcast supports macOS 26 and later, with macOS 27 strongly preferred. Swift 6+ with complete strict
 concurrency is required. Prefer the latest Swift patterns and modern Apple APIs, following
 [`AGENTS.md`](../AGENTS.md#posture-modern-first-always).
 
@@ -41,7 +41,7 @@ cross an asynchronous actor boundary.
 
 Full detail in [architecture.md](architecture.md); the rules a new feature has to satisfy:
 
-- **One folder per feature** under `Szcast/Features/<Name>/`, holding everything that feature owns —
+- **One folder per feature** under `szcast/Features/<Name>/`, holding everything that feature owns —
   its model, its services, its views and its own Settings panes.
 - A larger feature splits into `Model/` (pure), `Service/` (effects), `UI/` (views and the feature's
   coordinator) and `Settings/` (its panes). A small one stays flat. Split when the flat folder stops being
@@ -241,8 +241,8 @@ need saying explicitly. Adding it as the view is written costs a line; retrofitt
 
 ## Localization
 
-Szcast ships English plus German, Spanish, French, Japanese, Korean, Portuguese, Russian and
-Simplified Chinese. Every string lives in `Szcast/Resources/Localizable.xcstrings`, keyed by its
+szcast ships English plus German, Spanish, French, Japanese, Korean, Portuguese, Russian and
+Simplified Chinese. Every string lives in `szcast/Resources/Localizable.xcstrings`, keyed by its
 English source text; the compiler extracts the keys, and `./Scripts/sync-strings.sh` writes them into
 the catalog (Xcode's own build does the same in the IDE). The six privacy prompts live in
 `InfoPlist.xcstrings`, keyed by their `Info.plist` key.
@@ -267,11 +267,11 @@ the catalog (Xcode's own build does the same in the IDE). The six privacy prompt
 - **Never localized**: anything from macOS, the user or an extension — app and pane names, user
   content, everything a Raycast extension supplies or receives — and persisted formats, identifiers,
   log text, prompts sent to a model, and what the calculator parses.
-- **Szcast's own command names are translated and stay findable in English**: `CommandID`,
+- **szcast's own command names are translated and stay findable in English**: `CommandID`,
   `SystemAction` and `WindowCommand` keep their English source as `englishName`, which the launcher
   indexes as an alternate title.
 
-On a fresh installation, Szcast selects the Mac's primary language if supported, otherwise English,
+On a fresh installation, szcast selects the Mac's primary language if supported, otherwise English,
 and saves that choice before any localization lookup. It does not keep following the Mac's language.
 Settings › General › Language writes the same per-app `AppleLanguages` key as System Settings ›
 Language & Region › Applications, and it applies on relaunch. An empty or unshipped stored list still

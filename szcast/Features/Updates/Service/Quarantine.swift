@@ -1,6 +1,6 @@
 import Foundation
 
-/// A guard, not a routine step: an archive Szcast fetched itself is not quarantined.
+/// A guard, not a routine step: an archive szcast fetched itself is not quarantined.
 enum Quarantine {
     private static let attribute = "com.apple.quarantine"
 

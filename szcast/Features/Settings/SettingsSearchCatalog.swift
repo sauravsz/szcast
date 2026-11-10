@@ -557,7 +557,7 @@ enum SettingsSearchCatalog {
             pane: .calendar,
             keywords: ["meetings", "events", "zoom", "join", "schedule"]),
         .init(
-            .calendarCalendar, "Join meetings from Szcast",
+            .calendarCalendar, "Join meetings from szcast",
             keywords: ["zoom", "meet", "teams", "permission"]),
         .init(
             .calendarCalendar, "Upcoming meetings in launcher",

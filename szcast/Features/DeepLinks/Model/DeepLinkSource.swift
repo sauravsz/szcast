@@ -1,6 +1,6 @@
 import Foundation
 
-/// Where a link came from. One Szcast opened itself, from a quicklink, was chosen here.
+/// Where a link came from. One szcast opened itself, from a quicklink, was chosen here.
 enum DeepLinkSource: Sendable {
     case outside
     case szcast

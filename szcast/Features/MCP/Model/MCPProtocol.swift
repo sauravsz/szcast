@@ -28,12 +28,12 @@ enum MCPProtocol {
         return try encode(object, newlineTerminated: newlineTerminated)
     }
 
-    /// Szcast exposes nothing back, so a server request is always declined the same way.
+    /// szcast exposes nothing back, so a server request is always declined the same way.
     static func decline(id: JSONValue, newlineTerminated: Bool = false) throws -> Data {
         try encode(
             [
                 "jsonrpc": "2.0", "id": id.jsonObject,
-                "error": ["code": -32_601, "message": "Szcast exposes no MCP capabilities."]
+                "error": ["code": -32_601, "message": "szcast exposes no MCP capabilities."]
             ],
             newlineTerminated: newlineTerminated)
     }

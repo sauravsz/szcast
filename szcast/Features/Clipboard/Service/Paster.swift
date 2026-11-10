@@ -2,7 +2,7 @@ import AppKit
 import Carbon.HIToolbox
 
 enum Paster {
-    /// Stamped on Szcast's own synthetic keystrokes so the snippet keyword tap can skip them.
+    /// Stamped on szcast's own synthetic keystrokes so the snippet keyword tap can skip them.
     static let szcastEventTag: Int64 = 0x54494E59
 
     /// Covers the gap between `activate()` returning and the target app accepting a keystroke.

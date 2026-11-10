@@ -21,7 +21,7 @@ enum AIProviderFailure {
             statusLine(status, retryAfter: retryAfter), said: providerMessage(in: body), secrets: secrets)
     }
 
-    /// The provider's words go under the line, never in its place: the line is Szcast's own.
+    /// The provider's words go under the line, never in its place: the line is szcast's own.
     static func described(_ line: String, said: String?, secrets: [String]) -> String {
         guard let said = said.flatMap(sentence) else { return line }
         return "\(line)\n\n\(kept(said, secrets: secrets))"

@@ -125,7 +125,7 @@ final class DeepLinkCoordinator {
     // MARK: - Running
 
     private func reportUnknownLink() {
-        core.showMessage(String(localized: "Szcast can’t open this link"), tone: .danger)
+        core.showMessage(String(localized: "szcast can’t open this link"), tone: .danger)
     }
 
     /// The gate hotkeys use, reported rather than silent: a link has no other way to say no.
@@ -231,10 +231,10 @@ final class DeepLinkCoordinator {
     private func askConsent(name: String, input: DeepLinkInput) async -> ConsentChoice {
         let message =
             input.isEmpty
-            ? String(localized: "An app or web page asked Szcast to run this. Allow only links you trust.")
+            ? String(localized: "An app or web page asked szcast to run this. Allow only links you trust.")
             : String(
                 localized: """
-                    An app or web page asked Szcast to run this with “\(input.summary)”. \
+                    An app or web page asked szcast to run this with “\(input.summary)”. \
                     Allow only links you trust.
                     """)
         let answer = await core.choose(

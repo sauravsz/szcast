@@ -147,7 +147,7 @@ struct AIConnection: Codable, Equatable, Identifiable, Sendable {
     func capabilities(for model: String) -> AIModelCapabilities {
         AIModelCapabilities(
             images: provider != .openRouter || visionModels.contains(model),
-            // Only the two shapes whose bodies Szcast writes; a gateway bills the upload first.
+            // Only the two shapes whose bodies szcast writes; a gateway bills the upload first.
             documents: provider == .openAI || provider == .anthropic,
             webSearch: provider == .openRouter, tools: true)
     }
@@ -168,7 +168,7 @@ struct AIModelCapabilities: Equatable, Sendable {
         images: true, documents: false, webSearch: true, tools: false)
     static let codex = AIModelCapabilities(
         images: true, documents: false, webSearch: true, tools: true)
-    /// Pictures ride in its stream-json input; its own client runs Szcast's MCP servers.
+    /// Pictures ride in its stream-json input; its own client runs szcast's MCP servers.
     static let claudeCommand = AIModelCapabilities(
         images: true, documents: false, webSearch: false, tools: true)
     /// The on-device model is text-only and reaches nothing, so it offers none of the three.
@@ -209,7 +209,7 @@ enum AIModelSelection: Codable, Equatable, Hashable, Sendable {
     case cursor(model: String, effort: String?)
     case api(connection: UUID, model: String, effort: String?)
 
-    /// The routes whose own client is the MCP client, handed servers rather than Szcast's loop.
+    /// The routes whose own client is the MCP client, handed servers rather than szcast's loop.
     var runsItsOwnTools: Bool {
         switch self {
         case .codex, .claude: return true

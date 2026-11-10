@@ -1,6 +1,6 @@
 # Testing and verification
 
-How to check that a change holds up. Szcast has no XCTest target and no UI tests: the automated half
+How to check that a change holds up. szcast has no XCTest target and no UI tests: the automated half
 is a set of standalone harnesses, and the manual half is the sweep at the bottom of this file.
 
 ## Definition of done
@@ -11,7 +11,7 @@ The mechanical bar, in one place so it cannot drift. All five pass before a chan
 | --- | --- |
 | The harnesses | `./Scripts/run-tests.sh` |
 | Lint, settings search, translations and migrations | `./Scripts/lint.sh` |
-| Pure-layer purity | `grep -rln 'import AppKit\|import SwiftUI\|import Cocoa' Szcast/Features/*/Model/` |
+| Pure-layer purity | `grep -rln 'import AppKit\|import SwiftUI\|import Cocoa' szcast/Features/*/Model/` |
 | A clean build | `xcodebuild … -configuration Debug CODE_SIGNING_ALLOWED=NO`, zero **new** warnings |
 | Docs still true | any doc your change made wrong, fixed in the same commit |
 
@@ -80,7 +80,7 @@ assertion, and it is the more important one.
 
 A harness also runs in your own login session against the real system, with no sandbox and no fixture
 world, so it must never mutate state the machine shares with the apps you use. `NSPasteboard.general`
-is the trap: a running Szcast records every write to it as a genuine copy, so a fixture left there
+is the trap: a running szcast records every write to it as a genuine copy, so a fixture left there
 lands in clipboard history looking like something the user copied. `notes-editor-test` seeded one on
 every run from #232 onward by calling the native `copy:`/`cut:`/`paste:` actions; it now drives the
 `writeSelection(to:types:)` and `readSelection(from:)` primitives those actions delegate to, against
@@ -193,7 +193,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `opencode-mcp-test` | OpenCode's per-turn MCP bridge and installed CLI launch, authentication, scoped catalog, consent dispatch, serial calls, result budgets and cancellation |
 | `apple-intelligence-test` | On-device status, snapshot deltas, transcript assembly and error mapping; real generation is opt-in |
 | `syntax-highlight-test` | `AI/Model/SyntaxGrammar.swift`, `SyntaxHighlighter.swift`, `SyntaxStructuredLexers.swift` — every grammar's tokens, language aliases, the size limit and streaming prefixes |
-| `mcp-test` | `MCP/Model/` and `MCPSettingsStore` — JSON-RPC framing, handles, tool names, output flattening, trust, `@server` addressing, the shape a vendor CLI is handed, and which servers Szcast leaves to that CLI |
+| `mcp-test` | `MCP/Model/` and `MCPSettingsStore` — JSON-RPC framing, handles, tool names, output flattening, trust, `@server` addressing, the shape a vendor CLI is handed, and which servers szcast leaves to that CLI |
 | `mcp-stdio-test` | `MCP/Service/` against a stub server — handshake, listing, calling, and every way one can go away |
 | `mcp-oauth-test` | OAuth parsing, RFC 7636 PKCE, discovery and resource binding, loopback callback validation/cancellation, dynamic registration, supplied client credentials and their token-endpoint authentication, Keychain token rotation, concurrent refresh, the wider margin for a token lent to a CLI, redirects and one-retry 401 handling |
 
@@ -217,7 +217,7 @@ same commit with the reason in the message.
 The layering rule reduces to one grep, and it must return nothing:
 
 ```sh
-grep -rln 'import AppKit\|import SwiftUI\|import Cocoa' Szcast/Features/*/Model/
+grep -rln 'import AppKit\|import SwiftUI\|import Cocoa' szcast/Features/*/Model/
 ```
 
 Beyond the imports, the injected-environment half is not mechanically checkable, so it is worth an eye
@@ -238,11 +238,11 @@ A clean build is part of the bar; nothing builds the app for you, so this is on 
 
 ```sh
 xcodegen generate                 # only after editing project.yml
-xcodebuild build -project Szcast.xcodeproj -scheme Szcast -configuration Debug \
+xcodebuild build -project szcast.xcodeproj -scheme szcast -configuration Debug \
   CODE_SIGNING_ALLOWED=NO
-xcodebuild build -project Szcast.xcodeproj -scheme Szcast -configuration Release \
+xcodebuild build -project szcast.xcodeproj -scheme szcast -configuration Release \
   CODE_SIGNING_ALLOWED=NO
-find ~/Library/Developer/Xcode/DerivedData -name "Szcast*.app" -maxdepth 6 -print -quit
+find ~/Library/Developer/Xcode/DerivedData -name "szcast*.app" -maxdepth 6 -print -quit
 ```
 
 - Zero **new** warnings. Pre-existing ones are not your problem; new ones are.
@@ -286,10 +286,10 @@ Run the file-index benchmark separately from the deterministic harnesses. With n
 them:
 
 ```sh
-swiftc -O -wmo -swift-version 6 Szcast/Features/FileSearch/Model/*.swift \
-    Szcast/Features/FileSearch/Service/FileIndex.swift \
-    Szcast/Features/FileSearch/Service/FileIndexSnapshot.swift \
-    Szcast/Features/FileSearch/Service/FileIndexCrawler.swift \
+swiftc -O -wmo -swift-version 6 szcast/Features/FileSearch/Model/*.swift \
+    szcast/Features/FileSearch/Service/FileIndex.swift \
+    szcast/Features/FileSearch/Service/FileIndexSnapshot.swift \
+    szcast/Features/FileSearch/Service/FileIndexCrawler.swift \
     Tests/file-search-performance.swift -o /tmp/file-search-performance
 /tmp/file-search-performance
 ```
@@ -300,7 +300,7 @@ The calculator benchmark is deterministic — an injected clock, calendar and ra
 timing harness rather than an assertion one, and stays out of `run-tests.sh` for that reason:
 
 ```sh
-swiftc -O -swift-version 6 Szcast/Features/Calculator/Model/*.swift \
+swiftc -O -swift-version 6 szcast/Features/Calculator/Model/*.swift \
     Tests/calc-performance.swift -o /tmp/calc-performance
 /tmp/calc-performance          # µs per query, by grammar
 /tmp/calc-performance --probe  # every answer as JSON, to diff two builds
@@ -318,9 +318,9 @@ the attachment path against the bounded reader it now delegates to. Compare thre
 per build with identical `-O` settings:
 
 ```sh
-swiftc -O -swift-version 6 Szcast/Platform/PasteboardFiles.swift \
-    Szcast/Features/Clipboard/Model/{ClipboardStore,ClipboardFilter,ClipboardFileKind,ColorValue,ColorFormat,ColorSpaces}.swift \
-    Szcast/Features/Clipboard/Service/ClipboardManager.swift \
+swiftc -O -swift-version 6 szcast/Platform/PasteboardFiles.swift \
+    szcast/Features/Clipboard/Model/{ClipboardStore,ClipboardFilter,ClipboardFileKind,ColorValue,ColorFormat,ColorSpaces}.swift \
+    szcast/Features/Clipboard/Service/ClipboardManager.swift \
     Tests/clipboard-file-performance.swift -o /tmp/clipboard-file-performance
 /tmp/clipboard-file-performance
 ```
@@ -335,10 +335,10 @@ helper must sit at `Contents/Helpers` beside the benchmark:
 ```sh
 D=/tmp/clipboard-thumbnail-performance; mkdir -p $D/Contents/Helpers
 swiftc -O -swift-version 6 -parse-as-library \
-    Szcast/Features/Clipboard/Service/{ClipboardTextExtractor,ClipboardTextHelper}.swift \
+    szcast/Features/Clipboard/Service/{ClipboardTextExtractor,ClipboardTextHelper}.swift \
     -o $D/Contents/Helpers/ClipboardTextHelper
-swiftc -O -swift-version 6 Szcast/Platform/ProcessExit.swift \
-    Szcast/Platform/Images/{ImageThumbnail,ImageDerivative,ThumbnailCache}.swift \
+swiftc -O -swift-version 6 szcast/Platform/ProcessExit.swift \
+    szcast/Platform/Images/{ImageThumbnail,ImageDerivative,ThumbnailCache}.swift \
     Tests/clipboard-thumbnail-performance.swift -o $D/clipboard-thumbnail-performance
 $D/clipboard-thumbnail-performance /tmp/ctp --fixtures
 $D/clipboard-thumbnail-performance /tmp/ctp --original
@@ -351,9 +351,9 @@ missing from its own top five results, and `--languages fr,ja` loads those keywo
 from the repo root):
 
 ```sh
-swiftc -O -swift-version 6 Szcast/Features/Emoji/Model/{EmojiCatalog,EmojiData.generated}.swift \
-    Szcast/Features/Emoji/Service/{EmojiIndex,FrequentEmojiStore}.swift \
-    Szcast/Features/Launcher/Model/SearchRelevance.swift Szcast/Platform/{AppPaths,Memo}.swift \
+swiftc -O -swift-version 6 szcast/Features/Emoji/Model/{EmojiCatalog,EmojiData.generated}.swift \
+    szcast/Features/Emoji/Service/{EmojiIndex,FrequentEmojiStore}.swift \
+    szcast/Features/Launcher/Model/SearchRelevance.swift szcast/Platform/{AppPaths,Memo}.swift \
     Tests/emoji-search-performance.swift -o /tmp/emoji-search-performance
 /tmp/emoji-search-performance --names
 /tmp/emoji-search-performance --languages fr,ja
@@ -369,10 +369,10 @@ keystroke. Inside `didChange`, near the top of the note, the read does that layo
 2 ms:
 
 ```sh
-N=Szcast/Features/Notes
-swiftc -O -swift-version 6 Szcast/Platform/{Signposts,Appearance,NotificationToken}.swift \
-    Szcast/DesignSystem/{Theme,InterfaceMetrics}.swift \
-    Szcast/Features/TextInjection/Service/InjectableTextView.swift \
+N=szcast/Features/Notes
+swiftc -O -swift-version 6 szcast/Platform/{Signposts,Appearance,NotificationToken}.swift \
+    szcast/DesignSystem/{Theme,InterfaceMetrics}.swift \
+    szcast/Features/TextInjection/Service/InjectableTextView.swift \
     $N/Model/{NoteDocument,NoteMarkdown,NoteMarkdownParser,NoteInlineScanner}.swift \
     $N/Model/{NoteEditPlan,NoteEditAction,NoteFormatting,NoteMarkdownEditing,NoteRevealPolicy}.swift \
     $N/UI/{NoteMarkdownTypography,NoteBlockDecoration,NoteMarkdownStyler,NoteMarkdownRenderer}.swift \
@@ -421,7 +421,7 @@ There is no UI test suite, so this is it. Run the core sweep for any change that
 run the scoped section for whatever feature you touched. Budget about five minutes plus three per
 section.
 
-Run against the **Debug channel** (`Szcast Dev.app`, `com.sauravsz.szcast.dev`). It has its own prefs,
+Run against the **Debug channel** (`szcast Dev.app`, `com.sauravsz.szcast.dev`). It has its own prefs,
 caches, TCC grants and login item, so this cannot disturb an installed copy.
 
 ### Core
@@ -495,7 +495,7 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - Footer menus are about 30pt wider; their row hover keeps the shared 10pt menu-row corner
 - Tab toggles launcher ↔ clipboard; bare Backspace on an empty query backs out of a sub-screen
 - Launching an app focuses it; escaping the palette returns focus to the app you came from
-- Paste from clipboard history lands in that app, not in Szcast
+- Paste from clipboard history lands in that app, not in szcast
 - No flash, flicker or reflow on open, and row metrics unchanged
 
 ### Clipboard
@@ -508,7 +508,7 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - With enough pins to fill the list, opening it — the first show after launch too — highlights the
   newest clip, centred with pins above; clearing a query or the filter lands there again
 - ⌃X deletes the selected entry and ⌃⇧X clears the history, from the list and from an open ⌘K menu
-- ⌃⇧X asks first, through Szcast's own dialog; Cancel and Esc both leave every entry in place
+- ⌃⇧X asks first, through szcast's own dialog; Cancel and Esc both leave every entry in place
 - ↵ pastes into the previous app; ⌥↵ pastes without closing the palette
 - ⌃⌘↵ pastes as plain text: a text entry as typed, a file entry as its path rather than the file
 - Default action ▸ Paste as Plain Text: ↵ pastes plain, ⌃⌘↵ pastes, ⌘↵ still copies; an image
@@ -562,7 +562,7 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
   input-source switching on, a short press switches sources only while Caps Lock is off
 - Right Command as Hyper with Left Command held keeps the chord; Left Shift as Hyper with Include
   Shift off sends ⌃⌥⇧⌘K when Right Shift is held with K
-- Run Szcast Dev next to Szcast: the second reads Blocked and names the first; quitting the
+- Run szcast Dev next to szcast: the second reads Blocked and names the first; quitting the
   first hands the Hyper Key over without a relaunch
 - Revoke Accessibility while Hyper is live: the key goes back to normal. Grant it again: Hyper
   returns within a couple of seconds without a relaunch
@@ -578,10 +578,10 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
   Compatibility: a Hyper shortcut now fires there, and Diagnostics… names the Secure Input holder
 - With Secure Input held, record Hyper+J with and without Secure Input Compatibility: both save ✦J,
   never F18 or ⌃J, and a quick Hyper+J leaves Caps Lock off
-- Quit Szcast: Caps Lock types capitals again on every keyboard, the built-in one included
+- Quit szcast: Caps Lock types capitals again on every keyboard, the built-in one included
 - 🎤 records in a recorder and fires its binding; unbound, it starts macOS Dictation again
 - With Karabiner-Elements running and Caps Lock left alone there, Hyper with Caps Lock still works;
-  quit Szcast and Karabiner's own remaps keep working. Remap Caps Lock in Karabiner instead:
+  quit szcast and Karabiner's own remaps keep working. Remap Caps Lock in Karabiner instead:
   Diagnostics… reports a Karabiner conflict
 - Every binding survives quit and relaunch
 - `Enable Commands` off leaves every pane-owned command listed, searchable and firing — Notes,
@@ -626,7 +626,7 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - A row's hotkey runs it with the palette closed; switching the feature off silences it
 - Unchecking a row hides it from search, and its hotkey still fires
 - Deleting a shortcut in Shortcuts frees its alias and hotkey on the next launcher open
-- A shortcut that fails shows Szcast's dialog with the tool's error
+- A shortcut that fails shows szcast's dialog with the tool's error
 
 ### File Search
 
@@ -634,7 +634,7 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - Without Full Disk Access the pane shows **Required** with the hint, the palette says so, and ↵ and the
   button both open Privacy & Security › Full Disk Access; granting it starts a build with no relaunch
 - The first build shows a rising item count in Settings and the palette, then a final count and date;
-  Activity Monitor shows the helper's memory, and Szcast's own footprint is back at its baseline after
+  Activity Monitor shows the helper's memory, and szcast's own footprint is back at its baseline after
 - Enabling in Settings exposes Search Files immediately; it persists across relaunch and backup import
 - Disabling during a query cancels it, returns the open screen to the launcher and deletes the index
 - File Search and Quicklinks remain independently visible in all four enabled/disabled combinations
@@ -682,7 +682,7 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
   autosave — in the browse list; naming it replaces that, and clearing the name brings it back
 - Inline rename updates the Markdown filename without changing source, and starts from that filename
   even where the row shows a derived title; collisions receive a suffix
-- Delete confirms through Szcast, moves the file to Trash, and selecting another note never loses an
+- Delete confirms through szcast, moves the file to Trash, and selecting another note never loses an
   unsaved edit
 - An existing `Floating Note.md` appears as an ordinary note without conversion
 - A note using every construct renders in Dark and Light: sized headings, emphasis, strikethrough,
@@ -765,7 +765,7 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - Dragging the title bar moves the window and dragging an edge resizes it; both survive relaunch
 - Clicking another app leaves the panel visible; Escape, Command-W, and the red light hide it
 - Command-Q does nothing anywhere; with Settings in front, Command-W closes Settings
-- Hiding restores the previous external app or Szcast window
+- Hiding restores the previous external app or szcast window
 - Open Notes Folder opens Finder with the active Markdown file selected, or the folder with no note
 - Hide a saved checklist, reset its boxes in another editor, and reopen: the boxes match the file
 - Reopen an unchanged note: Undo still works; an external content change starts fresh history
@@ -817,7 +817,7 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - Two upcoming meetings with titles in reverse alphabetical order appear earliest first in the
   launcher's Meetings section and the `Meetings` category listing, even after opening the later one
 - Import a backup taken with Calendar on: it comes back **off**, and no calendar toggle travels
-- Calendar in Menu Bar on Disabled: the calendar item is gone and Szcast's own item is unaffected;
+- Calendar in Menu Bar on Disabled: the calendar item is gone and szcast's own item is unaffected;
   turning `Show in menu bar` off leaves an enabled calendar item in place, and both off leaves neither
 - On Meeting Title with Show Upcoming Events at 5 minutes, the title and countdown appear at T-5 and
   step on the minute boundary, not on a keystroke
@@ -913,9 +913,9 @@ Debug answers `szcast-dev://`; use that scheme for every link below.
 - The note switcher's link button, and Copy Deeplink in the AI Chat sidebar and window menu, copy a
   link that reopens that note or chat; a renamed note's old link reports the missing file
 - `open -g` each copied link with the palette closed: it runs what the row's shortcut runs
-- Quit Szcast, then `open -g` a command link: the app starts and runs it
+- Quit szcast, then `open -g` a command link: the app starts and runs it
 - Open a window command's link with a plain `open` (no `-g`): after the question, it moves the
-  window of the app you were in, not Szcast
+  window of the app you were in, not szcast
 - Open a command's link twice: it toggles, as its shortcut does. Turn the feature off: the link shows
   a HUD naming it and runs nothing
 - Hide a command from launcher search: its link still runs. Open a mistyped link, or a quicklink

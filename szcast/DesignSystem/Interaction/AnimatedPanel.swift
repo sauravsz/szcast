@@ -1,6 +1,6 @@
 import AppKit
 
-/// A panel that opens and closes with AppKit's document-window animation while Szcast animates.
+/// A panel that opens and closes with AppKit's document-window animation while szcast animates.
 @MainActor
 protocol AnimatedPanel: NSPanel {}
 

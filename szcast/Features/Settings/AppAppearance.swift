@@ -1,6 +1,6 @@
 import AppKit
 
-/// Which appearance Szcast renders in; an unset key reads as `.system`.
+/// Which appearance szcast renders in; an unset key reads as `.system`.
 enum AppAppearance: String, CaseIterable, Identifiable, Sendable {
     case system
     case light

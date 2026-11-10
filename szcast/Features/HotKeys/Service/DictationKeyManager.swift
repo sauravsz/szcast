@@ -1,6 +1,6 @@
 import AppKit
 
-/// Lends 🎤 to Szcast as F20. See docs/features/hotkeys.md#the-dictation-key.
+/// Lends 🎤 to szcast as F20. See docs/features/hotkeys.md#the-dictation-key.
 @MainActor
 final class DictationKeyManager: HealthCheckable {
     var onProblem: ((String) -> Void)?

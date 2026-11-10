@@ -12,7 +12,7 @@ enum FolderPicker {
         panel.prompt = String(localized: "Use Folder")
         panel.message = message
         panel.directoryURL = directory
-        // Szcast is an accessory app, so the panel opens behind the frontmost app without this.
+        // szcast is an accessory app, so the panel opens behind the frontmost app without this.
         NSApp.activate(ignoringOtherApps: true)
         guard panel.runModal() == .OK else { return nil }
         return panel.url

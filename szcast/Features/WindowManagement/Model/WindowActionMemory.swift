@@ -1,10 +1,10 @@
 import CoreGraphics
 import Foundation
 
-/// What Szcast remembers per moved window. docs/features/window-management.md#cycling-and-restore
+/// What szcast remembers per moved window. docs/features/window-management.md#cycling-and-restore
 struct WindowActionMemory<Key: Hashable> {
     struct Record: Equatable, Sendable {
-        /// Where the window was before Szcast first touched it.
+        /// Where the window was before szcast first touched it.
         var restoreFrame: CGRect
         /// Restore re-enters native fullscreen instead of placing `restoreFrame`.
         var restoresFullScreen: Bool

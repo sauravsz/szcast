@@ -1,4 +1,4 @@
-# What Szcast Won't Do
+# What szcast Won't Do
 
 Some requests get a "no" on purpose. This page lists those choices, so you know what to expect
 before you ask.
@@ -8,7 +8,7 @@ discussion.
 
 ## Why we say no
 
-**Szcast is not a copy of Raycast.** We don't add a feature only because Raycast has it. If
+**szcast is not a copy of Raycast.** We don't add a feature only because Raycast has it. If
 Raycast already does what you need, it may be the better app for you, and that's fine.
 
 **Simple, light and fast comes first.** Each new option makes the app heavier and harder to keep
@@ -23,12 +23,12 @@ launchers. We accept that to keep the app simple.
 
 ## Mac, languages and updates
 
-- **Older macOS (Sonoma, Sequoia).** Szcast needs macOS 26 or later. Support for old versions made
+- **Older macOS (Sonoma, Sequoia).** szcast needs macOS 26 or later. Support for old versions made
   the app slower on new Macs. Old builds stay in past releases. The last Sequoia build is 0.9.7.
   ([#1611](https://github.com/sauravsz/szcast/issues/1611), [#517](https://github.com/sauravsz/szcast/issues/517))
-- **Windows or Linux.** Szcast is Mac only. It uses Apple tools that don't run on other systems.
+- **Windows or Linux.** szcast is Mac only. It uses Apple tools that don't run on other systems.
   ([#637](https://github.com/sauravsz/szcast/issues/637), [#720](https://github.com/sauravsz/szcast/issues/720))
-- **More app languages.** Szcast comes in English plus eight languages. That list is final for now. We may add one more
+- **More app languages.** szcast comes in English plus eight languages. That list is final for now. We may add one more
   language later, but not soon.
   ([#148](https://github.com/sauravsz/szcast/issues/148))
 - **A beta switch in the regular app.** Stable and beta stay separate until at least version 1.0.
@@ -47,10 +47,10 @@ launchers. We accept that to keep the app simple.
   of the keyword behind. New input-method reports are closed as not planned.
   **Instead:** the community fork [szcast-cn](https://github.com/conversun/szcast-cn).
   ([#990](https://github.com/sauravsz/szcast/issues/990), [#851](https://github.com/sauravsz/szcast/issues/851), [#1203](https://github.com/sauravsz/szcast/issues/1203), [#1580](https://github.com/sauravsz/szcast/issues/1580), [#1555](https://github.com/sauravsz/szcast/issues/1555))
-- **More cases for Chinese app names.** Szcast finds an app by its Chinese name, and matches
+- **More cases for Chinese app names.** szcast finds an app by its Chinese name, and matches
   pinyin too. It works when your Mac uses Simplified or Traditional Chinese with any region, for
   example Simplified Chinese with the US or Hong Kong region. If an app has no name in your
-  language, Szcast uses its English name. **That is every case we support, and we won't add
+  language, szcast uses its English name. **That is every case we support, and we won't add
   more.** New reports about Chinese app names are closed as not planned.
   **⚠️ If these cases keep breaking, we may remove translated app names and show English names
   only.** **Instead:** add the Chinese name as an alias in Settings → Applications.
@@ -99,7 +99,7 @@ launchers. We accept that to keep the app simple.
 - **Open images in Preview.** **Instead:** use Show in Finder. ([#1328](https://github.com/sauravsz/szcast/issues/1328))
 - **Link previews or website icons.** ([#1330](https://github.com/sauravsz/szcast/issues/1330), [#747](https://github.com/sauravsz/szcast/issues/747))
 - **Keep a pasted item where it was.** A pasted item always moves to the top. ([#1577](https://github.com/sauravsz/szcast/issues/1577))
-- **Copy without closing Szcast.** ([#1215](https://github.com/sauravsz/szcast/issues/1215))
+- **Copy without closing szcast.** ([#1215](https://github.com/sauravsz/szcast/issues/1215))
 - **A global shortcut for paste as plain text.** It lives inside Clipboard History (⌃⌘↵). ([#1172](https://github.com/sauravsz/szcast/issues/1172))
 - **Fuzzy search.** ([#953](https://github.com/sauravsz/szcast/issues/953))
 - **Type "img" to filter.** **Instead:** press ⌘P to filter by type. ([#403](https://github.com/sauravsz/szcast/issues/403), [#1248](https://github.com/sauravsz/szcast/issues/1248))
@@ -125,7 +125,7 @@ launchers. We accept that to keep the app simple.
 
 ## Window management
 
-Szcast is an all-in-one launcher, not a full window manager. Its window tools are finished.
+szcast is an all-in-one launcher, not a full window manager. Its window tools are finished.
 
 - **Custom snap cycles (like Loop), edge-anchored sizes, or step-by-step undo.** ([#1223](https://github.com/sauravsz/szcast/issues/1223), [#1630](https://github.com/sauravsz/szcast/issues/1630))
 - **Move a window without resizing it.** It caused odd side effects. ([#1511](https://github.com/sauravsz/szcast/issues/1511))
@@ -154,24 +154,24 @@ Szcast is an all-in-one launcher, not a full window manager. Its window tools ar
   ([#1356](https://github.com/sauravsz/szcast/issues/1356))
 - **More command-line AI tools (like Pi Coding Agent).** Providers can block these tools at any
   time, so they may stop working. ([#929](https://github.com/sauravsz/szcast/issues/929), [#1610](https://github.com/sauravsz/szcast/issues/1610))
-- **Voice control, screen reading, or AI command suggestions.** Szcast won't become a Siri-style
+- **Voice control, screen reading, or AI command suggestions.** szcast won't become a Siri-style
   assistant. ([#1550](https://github.com/sauravsz/szcast/issues/1550), [#1151](https://github.com/sauravsz/szcast/issues/1151), [#1145](https://github.com/sauravsz/szcast/issues/1145))
 - **AI-powered "smart" search.** Search stays fast and on-device. ([#1574](https://github.com/sauravsz/szcast/issues/1574), [#1528](https://github.com/sauravsz/szcast/issues/1528), [#1114](https://github.com/sauravsz/szcast/issues/1114))
 - **Old Raycast AI chats on import.** Raycast doesn't share that data. ([#1286](https://github.com/sauravsz/szcast/issues/1286))
 - **Quick Action results inside the palette, or a preview that stays open.** **Instead:** copy the
   result with its copy button. ([#1360](https://github.com/sauravsz/szcast/issues/1360), [#1023](https://github.com/sauravsz/szcast/issues/1023))
 - **A proxy setting.** ([#430](https://github.com/sauravsz/szcast/issues/430))
-- **Your own dictation models or a personal word list.** Szcast is not a dictation app.
+- **Your own dictation models or a personal word list.** szcast is not a dictation app.
   ([#1529](https://github.com/sauravsz/szcast/issues/1529), [#1332](https://github.com/sauravsz/szcast/issues/1332))
 
 ## Raycast extensions
 
-- **Full Raycast compatibility.** Szcast runs about 80% of what Raycast extensions use, and **that
-  work has stopped.** Some extensions won't work, or will look a bit different. Szcast's own
-  shortcuts (like Tab) win over an extension's. Our future is native Szcast extensions.
+- **Full Raycast compatibility.** szcast runs about 80% of what Raycast extensions use, and **that
+  work has stopped.** Some extensions won't work, or will look a bit different. szcast's own
+  shortcuts (like Tab) win over an extension's. Our future is native szcast extensions.
   ([#1592](https://github.com/sauravsz/szcast/issues/1592), [#1585](https://github.com/sauravsz/szcast/issues/1585), [#1557](https://github.com/sauravsz/szcast/issues/1557), [#1561](https://github.com/sauravsz/szcast/issues/1561), [#1541](https://github.com/sauravsz/szcast/issues/1541), [#1520](https://github.com/sauravsz/szcast/issues/1520), [#1495](https://github.com/sauravsz/szcast/issues/1495), [#1452](https://github.com/sauravsz/szcast/issues/1452), [#1341](https://github.com/sauravsz/szcast/issues/1341), [#1129](https://github.com/sauravsz/szcast/issues/1129), [#976](https://github.com/sauravsz/szcast/issues/976), [#672](https://github.com/sauravsz/szcast/issues/672), [#664](https://github.com/sauravsz/szcast/issues/664), [#660](https://github.com/sauravsz/szcast/issues/660),
   [#1121](https://github.com/sauravsz/szcast/issues/1121), [#1200](https://github.com/sauravsz/szcast/issues/1200), [#1397](https://github.com/sauravsz/szcast/issues/1397))
-- **Let extensions use Szcast's AI.** ([#1462](https://github.com/sauravsz/szcast/issues/1462))
+- **Let extensions use szcast's AI.** ([#1462](https://github.com/sauravsz/szcast/issues/1462))
 - **⚠️ Locking extensions down.** An extension can do anything you can do on your Mac. **Install only
   extensions you trust.** ([#946](https://github.com/sauravsz/szcast/issues/946))
 
@@ -232,8 +232,8 @@ These are on hold, not ruled out.
 ## Before you open a request
 
 1. Check this page first.
-2. Ask yourself: does it keep Szcast simple, light and fast?
+2. Ask yourself: does it keep szcast simple, light and fast?
 3. If Raycast already does it well, Raycast may suit you better.
-4. Want it anyway? Fork Szcast and make it yours.
+4. Want it anyway? Fork szcast and make it yours.
 
 Thank you for your ideas and your understanding.

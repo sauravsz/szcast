@@ -25,7 +25,7 @@
   <img src="docs/screenshot.jpg" alt="szcast command palette">
 </p>
 
-Szcast is a keyboard-first launcher for macOS: a command palette, file and menu search, clipboard
+szcast is a keyboard-first launcher for macOS: a command palette, file and menu search, clipboard
 history, snippets, window management, notes, dictation, and a calculator. Built with SwiftUI and
 AppKit — no dependencies, no Electron, no telemetry. It runs Raycast extensions, too.
 
@@ -47,7 +47,7 @@ Three changes to the palette, on top of upstream:
 ## Install
 
 Download the DMG from [Releases](https://github.com/sauravsz/szcast/releases/latest), open it, and
-drag **Szcast** into `/Applications`.
+drag **szcast** into `/Applications`.
 
 The build is **self-signed, not notarized**: right-click → **Open** on first launch and macOS will
 not ask again. macOS 26 or newer, Apple silicon. There is no Homebrew cask.
@@ -59,26 +59,26 @@ Requirements: macOS 26 or newer and Xcode 27 (Swift 6, macOS 26 SDK).
 ```sh
 git clone https://github.com/sauravsz/szcast.git
 cd szcast
-open szcast.xcodeproj    # scheme: Szcast, then ⌘R
+open szcast.xcodeproj    # scheme: szcast, then ⌘R
 ```
 
 Or from the terminal:
 
 ```sh
-xcodebuild -project szcast.xcodeproj -scheme Szcast -configuration Release \
+xcodebuild -project szcast.xcodeproj -scheme szcast -configuration Release \
   -derivedDataPath build/DerivedData build
 ```
 
-The Debug configuration builds **Szcast Dev** (`com.sauravsz.szcast.dev`), so it runs side by side
+The Debug configuration builds **szcast Dev** (`com.sauravsz.szcast.dev`), so it runs side by side
 with a release install. Release builds are `com.sauravsz.szcast`.
 
 ### Local DMG
 
 ```sh
-./Scripts/build-dmg.sh          # → build/Szcast-<version>.dmg
+./Scripts/build-dmg.sh          # → build/szcast-<version>.dmg
 ```
 
-The script signs with the **Szcast Self-Signed** identity, so macOS keeps your Accessibility grant
+The script signs with the **szcast Self-Signed** identity, so macOS keeps your Accessibility grant
 across rebuilds. Create that identity once — [docs/signing.md](docs/signing.md) §1. Without it, every
 rebuild resets your privacy permissions.
 
@@ -111,7 +111,7 @@ Feature requests and fixes are welcome in [this repo's issues](https://github.co
 
 ## License
 
-Szcast is a fork of [Tinycast](https://github.com/abue-ammar/tinycast) by Abue Ammar, and is
+szcast is a fork of [Tinycast](https://github.com/abue-ammar/tinycast) by Abue Ammar, and is
 licensed under the [GNU AGPL v3](LICENSE). Original copyright © 2026 Abue Ammar; third-party
 material is recorded in [NOTICE.md](NOTICE.md). No affiliation with or endorsement by the
 upstream author is implied.

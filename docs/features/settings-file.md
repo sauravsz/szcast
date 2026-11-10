@@ -1,6 +1,6 @@
 # Settings file
 
-An opt-in mirror of Szcast's preferences, the launcher's items and all of window management in
+An opt-in mirror of szcast's preferences, the launcher's items and all of window management in
 `~/.config/szcast/settings.json`, switched on in **Settings → Backup → Settings File**. `UserDefaults`
 stays the store; the file follows it, and an edit made to the file applies at once. The machinery lives
 in `Features/Settings/` (`Model/`, `Service/`, `SettingsFileSchema.swift`), the launcher's part in
@@ -20,7 +20,7 @@ in `Features/Settings/` (`Model/`, `Service/`, `SettingsFileSchema.swift`), the 
   every launch, until a change made in the app rewrites the file. See [migrations.md](../migrations.md).
 - **`SettingsFileSchema`'s switch is exhaustive.** A new `SettingsFileKey` case fails to build until it
   is bound to a property.
-- **A bad edit never costs a setting.** A key the file leaves out keeps its value; a value Szcast
+- **A bad edit never costs a setting.** A key the file leaves out keeps its value; a value szcast
   can't use keeps the current one and is reported; an unknown key is reported and ignored; invalid JSON
   applies nothing. An invalid record in a list is skipped and reported, and the rest still apply. A
   record's field left out or of the wrong type keeps its value, and `null` clears it.

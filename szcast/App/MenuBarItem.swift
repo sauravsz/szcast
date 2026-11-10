@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Szcast's own menu-bar item. It carries no feature state, so no feature can hide or reshape it.
+/// szcast's own menu-bar item. It carries no feature state, so no feature can hide or reshape it.
 struct MenuBarLabel: View {
     let appName: String
 

@@ -18,7 +18,7 @@ fi
 
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
-ZIP="Szcast-${TAG#v}.zip"
+ZIP="szcast-${TAG#v}.zip"
 gh release download "$TAG" --pattern "$ZIP" --dir "$WORK"
 ditto -x -k "$WORK/$ZIP" "$WORK/expanded"
 OLD="$(find "$WORK/expanded" -maxdepth 1 -name '*.app' | head -n1)"

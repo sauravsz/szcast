@@ -358,7 +358,7 @@ enum SystemActionRunner {
             throw SystemActionFailure(
                 String(
                     localized: """
-                        Allow Szcast to control your Mac in Accessibility settings, then try again.
+                        Allow szcast to control your Mac in Accessibility settings, then try again.
                         """),
                 settings: .accessibility)
         }
@@ -479,7 +479,7 @@ enum SystemActionRunner {
             throw SystemActionFailure(
                 String(
                     localized: """
-                        Allow Szcast to control your Mac in Accessibility settings, then try again.
+                        Allow szcast to control your Mac in Accessibility settings, then try again.
                         """),
                 settings: .accessibility)
         }
@@ -497,7 +497,7 @@ enum SystemActionRunner {
                 throw SystemActionFailure(
                     String(
                         localized: """
-                            This version of Notification Center exposes no dismiss control Szcast can use.
+                            This version of Notification Center exposes no dismiss control szcast can use.
                             """))
             }
             let result = AXUIElementPerformAction(notification, action as CFString)
@@ -579,7 +579,7 @@ enum SystemActionRunner {
             if getPower() == requested { return requested == 1 }
         }
         throw SystemActionFailure(
-            String(localized: "Bluetooth did not change state. Check Szcast’s Bluetooth permission."),
+            String(localized: "Bluetooth did not change state. Check szcast’s Bluetooth permission."),
             settings: .bluetooth)
     }
 
@@ -609,7 +609,7 @@ enum SystemActionRunner {
                 throw SystemActionFailure(
                     String(
                         localized: """
-                            Allow Szcast to control the requested app in Automation settings, \
+                            Allow szcast to control the requested app in Automation settings, \
                             then try again.
                             """),
                     settings: .automation)

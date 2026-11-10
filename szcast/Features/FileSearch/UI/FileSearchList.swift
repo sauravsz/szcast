@@ -81,7 +81,7 @@ struct FileSearchRow: View {
         return .clear
     }
 
-    /// A folder is named by where it sits: half the hits are some `src` or `Szcast`.
+    /// A folder is named by where it sits: half the hits are some `src` or `szcast`.
     private var label: Text {
         guard !showsLocation, result.isDirectory, !result.parentName.isEmpty else {
             return Text(result.name)

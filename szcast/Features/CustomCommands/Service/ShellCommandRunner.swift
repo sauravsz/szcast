@@ -101,7 +101,7 @@ enum ShellCommandRunner {
         process.executableURL = URL(fileURLWithPath: shell)
         process.arguments = launch.arguments
         process.currentDirectoryURL = URL(fileURLWithPath: launch.directory)
-        // Lets a shell config skip slow sections when Szcast is the caller.
+        // Lets a shell config skip slow sections when szcast is the caller.
         process.environment = ProcessInfo.processInfo.environment.merging(["SZCAST": "1"]) { _, new in
             new
         }

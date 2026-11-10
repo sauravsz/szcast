@@ -87,7 +87,7 @@ struct OnboardingView: View {
 
     private var title: String {
         switch step {
-        case 0: String(localized: "Welcome to Szcast")
+        case 0: String(localized: "Welcome to szcast")
         case 1: String(localized: "Enable Pasting")
         case 2: String(localized: "Import from Raycast")
         default: String(localized: "You're all set")
@@ -97,7 +97,7 @@ struct OnboardingView: View {
     private var subtitle: Text {
         switch step {
         case 0: Text("Set a shortcut to summon the launcher from anywhere.")
-        case 1: Text("Let Szcast paste items back into the app you were using.")
+        case 1: Text("Let szcast paste items back into the app you were using.")
         case 2: Text("Bring your shortcuts, favorites, and clipboard history along.")
         default: readyMessage
         }
@@ -121,9 +121,9 @@ struct OnboardingView: View {
 
     private var readyMessage: Text {
         if let caps = hotKeys.binding(for: .togglePalette)?.keycaps {
-            return Text("Press \(KeyCapChip.inlineText(caps)) anytime to start using Szcast.")
+            return Text("Press \(KeyCapChip.inlineText(caps)) anytime to start using szcast.")
         }
-        return Text("Szcast is ready. Set a shortcut in Settings to summon it.")
+        return Text("szcast is ready. Set a shortcut in Settings to summon it.")
     }
 
     // MARK: - Step content
@@ -144,7 +144,7 @@ struct OnboardingView: View {
             OnboardingCard {
                 OnboardingRow(
                     title: String(localized: "onboarding-open-launcher", defaultValue: "App Launcher"),
-                    subtitle: String(localized: "Press this shortcut to open Szcast."),
+                    subtitle: String(localized: "Press this shortcut to open szcast."),
                     systemImage: "magnifyingglass", tint: .blue
                 ) {
                     ShortcutRecorder(action: .togglePalette)
@@ -152,7 +152,7 @@ struct OnboardingView: View {
                 OnboardingDivider()
                 OnboardingRow(
                     title: String(localized: "Launch at login"),
-                    subtitle: String(localized: "Start Szcast automatically when you log in."),
+                    subtitle: String(localized: "Start szcast automatically when you log in."),
                     systemImage: "power", tint: .green
                 ) {
                     Toggle("", isOn: $settings.launchAtLogin)

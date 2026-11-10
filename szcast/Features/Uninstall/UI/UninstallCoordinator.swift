@@ -115,7 +115,7 @@ final class UninstallCoordinator {
                 title: String(localized: "Couldn’t Open Get Info"),
                 message: String(
                     localized: """
-                        Allow Szcast to control Finder in System Settings › Privacy & Security \
+                        Allow szcast to control Finder in System Settings › Privacy & Security \
                         › Automation, then try again.
                         """),
                 symbol: "info.circle", tone: .danger)

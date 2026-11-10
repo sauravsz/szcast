@@ -138,7 +138,7 @@ enum InstalledAIProbe {
             })
     }
 
-    /// A child that exits before reading must fail the write, not SIGPIPE Szcast.
+    /// A child that exits before reading must fail the write, not SIGPIPE szcast.
     nonisolated private static func write(_ data: Data, to pipe: Pipe, closing: Bool) {
         _ = fcntl(pipe.fileHandleForWriting.fileDescriptor, F_SETNOSIGPIPE, 1)
         try? pipe.fileHandleForWriting.write(contentsOf: data)

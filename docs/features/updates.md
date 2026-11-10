@@ -1,14 +1,14 @@
 # Updates
 
-By default, Szcast checks GitHub Releases once a day and offers the newest release for its own
+By default, szcast checks GitHub Releases once a day and offers the newest release for its own
 channel in a pill in the palette, then installs it at the next relaunch or quit. There is no Sparkle
 and no appcast: the release feed the website already reads is the feed the app reads.
 
 ## Invariants
 
-- **Szcast installs its own updates, and Homebrew stays out of the way.** Every cask declares
+- **szcast installs its own updates, and Homebrew stays out of the way.** Every cask declares
   `auto_updates true`, which is Homebrew's own flag for an app that manages its own version. `brew
-update && brew upgrade` therefore skips Szcast entirely — it is never reported outdated, never
+update && brew upgrade` therefore skips szcast entirely — it is never reported outdated, never
   re-downloaded, and a self-updated copy is never trashed or rolled back. `brew install`, `brew
 uninstall` and `brew list` keep working unchanged.
 - **The archive is a zip, never the DMG.** A zip expands with `ditto`; a DMG would have to be mounted,
@@ -19,7 +19,7 @@ uninstall` and `brew list` keep working unchanged.
   thin build would install and then refuse to launch; Apple silicon prefers the thin zip and falls
   back to universal.
 - **A downloaded update is never quarantined.** macOS sets that flag for sandboxed downloaders and
-  for apps that opt in with `LSFileQuarantineEnabled`, and Szcast is neither. `Quarantine` checks
+  for apps that opt in with `LSFileQuarantineEnabled`, and szcast is neither. `Quarantine` checks
   anyway, and an app that still carries the flag is refused rather than installed.
 - **Two independent trust roots, either of which may change alone.** A downloaded bundle is trusted
   when its seal passes strict validation, nested helpers included, _and_ either its zip carries a
@@ -34,7 +34,7 @@ uninstall` and `brew list` keep working unchanged.
   at all, and does not advertise the command.
 - **Nothing is installed unless every check passes.** Bundle id, version and signature are all checked
   on the expanded copy, and the running app survives any failure untouched.
-- **The swap waits for quit.** A verified update stays staged until Szcast quits, by Relaunch or
+- **The swap waits for quit.** A verified update stays staged until szcast quits, by Relaunch or
   any other way, so no old code ever loads a resource or helper from the new bundle.
 - **Only the exact bytes verified are installed.** Any process can write to Caches while the update
   waits, so the swap re-runs the trust check and requires the code-directory hash recorded at
@@ -128,7 +128,7 @@ One route, whatever the install came from:
 1. Stream the zip into `~/Library/Caches/<bundle-id>/Updates/`, with real byte progress and a Cancel
    that actually aborts the transfer, then fetch its `.sig` and check it against the release key.
 2. `ditto -x -k` it into a staging folder, and take whatever `.app` lands there — the bundle is named
-   for its channel, so it is `Szcast Beta.app` on beta.
+   for its channel, so it is `szcast Beta.app` on beta.
 3. Check quarantine natively; clear it if somehow present, and refuse the update if it survives.
 4. Verify the bundle id, the version, and that the code signature is valid and proves the bundle is
    ours — through the release key, or through the running copy's own designated requirement — and
@@ -136,13 +136,13 @@ One route, whatever the install came from:
 5. Offer Relaunch. At quit, by Relaunch or otherwise, the staged bundle is checked again against
    that hash, so a copy changed since staging is discarded, and `FileManager.replaceItemAt` swaps
    it in. The staging folder is on the same volume as `/Applications`, which is what lets this be
-   atomic. A copy Szcast cannot write is reported before the download starts, not worked around;
+   atomic. A copy szcast cannot write is reported before the download starts, not worked around;
    there is no privileged helper.
 6. Relaunch spawns a detached waiter that reopens the app once this process exits — `open` on a
    bundle id that is still running would only re-activate the instance on its way out.
 
 A successful install records its version as `installedVersion`. The first launch running that
-version takes it and shows an "Updated to Szcast <version>" HUD, whether it came from Relaunch or a
+version takes it and shows an "Updated to szcast <version>" HUD, whether it came from Relaunch or a
 later quit and reopen. A launch of an older version shows that the update could not be installed,
 since the swap at quit has no window to report in. A newer version only clears it, so a brew or DMG
 install never reports.
@@ -153,8 +153,8 @@ setting, clipboard entry, note or snippet is affected by an update, by `brew upg
 ## Releasing into it
 
 `.github/workflows/release.yml` publishes two assets from one build: the DMG people download by hand
-and the cask installs, and `Szcast-<version>.zip` for the updater. A stable run adds a
-`Szcast-Universal-<version>` pair from its `universal` job, uploaded second so the thin zip stays
+and the cask installs, and `szcast-<version>.zip` for the updater. A stable run adds a
+`szcast-Universal-<version>` pair from its `universal` job, uploaded second so the thin zip stays
 first in the asset list — builds predating architecture-aware selection take whichever comes first.
 The zip is made with
 

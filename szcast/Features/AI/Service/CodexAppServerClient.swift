@@ -180,7 +180,7 @@ final class CodexAppServerClient {
             throw ClientError.launchFailed(
                 String(
                     localized: """
-                        Szcast could not read which MCP servers your Codex configuration runs, so it \
+                        szcast could not read which MCP servers your Codex configuration runs, so it \
                         could not keep them out of the chat. Run \u{201C}codex mcp list\u{201D} in \
                         Terminal to see why.
                         """))
@@ -190,7 +190,7 @@ final class CodexAppServerClient {
             throw ClientError.launchFailed(
                 String(
                     localized: """
-                        Your Codex MCP server \u{201C}\(name)\u{201D} cannot be kept out of a Szcast \
+                        Your Codex MCP server \u{201C}\(name)\u{201D} cannot be kept out of a szcast \
                         chat, because a dot or an equals sign in its name cannot be addressed. Rename it \
                         in your Codex configuration.
                         """))
@@ -200,7 +200,7 @@ final class CodexAppServerClient {
                 String(
                     localized: """
                         Your Codex configuration has its own MCP server named \u{201C}\(taken)\u{201D}. \
-                        Rename it to use this Szcast server with Codex.
+                        Rename it to use this szcast server with Codex.
                         """))
         }
         let process = Process()
@@ -245,7 +245,7 @@ final class CodexAppServerClient {
         }
         self.process = process
         processID = launchID
-        // A server that dies mid-write must fail the write, not SIGPIPE Szcast.
+        // A server that dies mid-write must fail the write, not SIGPIPE szcast.
         _ = fcntl(stdin.fileHandleForWriting.fileDescriptor, F_SETNOSIGPIPE, 1)
         input = CodexInputWriter(stdin.fileHandleForWriting)
         self.toolServers = toolServers
@@ -257,7 +257,7 @@ final class CodexAppServerClient {
                 params: [
                     "clientInfo": [
                         "name": "szcast",
-                        "title": "Szcast",
+                        "title": "szcast",
                         "version": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
                             ?? "0"
                     ],
@@ -410,12 +410,12 @@ final class CodexAppServerClient {
         case "tool/requestUserInput":
             result = ["answers": [:]]
         case "mcpServer/elicitation/request":
-            // A form, or a call on a turn that armed nothing: neither is a question Szcast asks.
+            // A form, or a call on a turn that armed nothing: neither is a question szcast asks.
             result = ["action": CodexElicitation.Action.decline.rawValue]
         default:
             _ = try? send(
                 CodexAppServerProtocol.errorResponse(
-                    id: id, message: "Szcast does not expose Codex tools."))
+                    id: id, message: "szcast does not expose Codex tools."))
             return
         }
         _ = try? send(CodexAppServerProtocol.response(id: id, result: result))

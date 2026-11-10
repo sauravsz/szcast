@@ -203,7 +203,7 @@ struct AIProviderTests {
         switchedOffRoutesLeaveTheDefault()
         installedOverridesPersistAndResolve()
         aFailedKeychainReadIsNeverSavedOver()
-        aLaunchInheritsTheReadersVariablesNotSzcastsOwn()
+        aLaunchInheritsTheReadersVariablesNotszcastsOwn()
         subscriptionSelectionsReconcile()
         onDeviceSelectionsRoundTripAndLead()
         conversationSettingsPersistAndDecide()
@@ -348,7 +348,7 @@ struct AIProviderTests {
         expect(
             AIModelSelection.codex(model: "gpt", effort: nil).runsItsOwnTools
                 && AIModelSelection.claude(model: "sonnet", effort: nil).runsItsOwnTools,
-            "and they are the routes Szcast never wraps in its own loop")
+            "and they are the routes szcast never wraps in its own loop")
         expect(
             !AIModelSelection.grok(model: "grok", effort: nil).runsItsOwnTools
                 && !AIModelSelection.cursor(model: "auto", effort: nil).runsItsOwnTools
@@ -356,7 +356,7 @@ struct AIProviderTests {
                 && !AIModelSelection.appleIntelligence.runsItsOwnTools
                 && !AIModelSelection.api(connection: UUID(), model: "m", effort: nil)
                     .runsItsOwnTools,
-            "every other route either runs Szcast's loop or has nothing to call")
+            "every other route either runs szcast's loop or has nothing to call")
 
         expect(
             AIRequest(messages: []).tools.isEmpty,
@@ -704,7 +704,7 @@ struct AIProviderTests {
         for (provider, endpoint) in expected {
             let query = try? AIModelDiscovery.query(
                 provider: provider, baseURL: URL(string: provider.defaultBaseURL)!,
-                apiKey: "secret", appTitle: "Szcast")
+                apiKey: "secret", appTitle: "szcast")
             expect(
                 query?.request.url?.absoluteString == endpoint,
                 "\(provider.title) resolves its model catalog endpoint")
@@ -712,35 +712,35 @@ struct AIProviderTests {
 
         let anthropic = try? AIModelDiscovery.query(
             provider: .anthropic, baseURL: URL(string: "https://api.anthropic.com")!,
-            apiKey: "secret", appTitle: "Szcast"
+            apiKey: "secret", appTitle: "szcast"
         ).request
         expect(
             anthropic?.value(forHTTPHeaderField: "x-api-key") == "secret",
             "Anthropic model discovery uses x-api-key authentication")
         let gemini = try? AIModelDiscovery.query(
             provider: .gemini, baseURL: URL(string: AIProviderKind.gemini.defaultBaseURL)!,
-            apiKey: "secret", appTitle: "Szcast"
+            apiKey: "secret", appTitle: "szcast"
         ).request
         expect(
             gemini?.value(forHTTPHeaderField: "x-goog-api-key") == "secret",
             "Gemini model discovery uses native API-key authentication")
         let openAI = try? AIModelDiscovery.query(
             provider: .openAI, baseURL: URL(string: AIProviderKind.openAI.defaultBaseURL)!,
-            apiKey: "secret", appTitle: "Szcast"
+            apiKey: "secret", appTitle: "szcast"
         ).request
         expect(
             openAI?.value(forHTTPHeaderField: "Authorization") == "Bearer secret",
             "OpenAI-compatible discovery uses bearer authentication")
         let local = try? AIModelDiscovery.query(
             provider: .openAICompatible, baseURL: URL(string: "http://localhost:11434/")!,
-            apiKey: "", appTitle: "Szcast"
+            apiKey: "", appTitle: "szcast"
         ).request
         expect(
             local?.url?.absoluteString == "http://localhost:11434/models",
             "a root endpoint appends one model path separator")
         let headerOnly = try? AIModelDiscovery.query(
             provider: .anthropic, baseURL: URL(string: "https://gateway.example.com")!,
-            apiKey: "", appTitle: "Szcast",
+            apiKey: "", appTitle: "szcast",
             headers: ["anthropic-version": "2024-01-01", "X-Tenant": "acme"]
         ).request
         expect(
@@ -1468,7 +1468,7 @@ struct AIProviderTests {
         expect(
             pagedError as? AIProviderError
                 == .responseFailed("The provider stopped the response with an error."),
-            "a mid-stream error that is only an HTML page says so in Szcast's own words")
+            "a mid-stream error that is only an HTML page says so in szcast's own words")
 
         var bracketed = AIStreamDecoder(shape: .openAICompatible)
         let prose =
@@ -1987,7 +1987,7 @@ struct AIProviderTests {
             "a launch that cannot read the values starts without them")
     }
 
-    static func aLaunchInheritsTheReadersVariablesNotSzcastsOwn() {
+    static func aLaunchInheritsTheReadersVariablesNotszcastsOwn() {
         let launch = InstalledAILaunch(
             environment: [
                 "PATH": "/reader/bin", "HTTPS_PROXY": "proxy", "NO_COLOR": "0",
@@ -2002,7 +2002,7 @@ struct AIProviderTests {
         expect(
             inherited["OPENCODE_CONFIG_CONTENT"] == nil && inherited["TC_MCP_0_0"] == nil
                 && inherited["NO_COLOR"] == "1" && inherited["1BAD"] == nil,
-            "but never one Szcast sets itself, nor one that is not a variable name")
+            "but never one szcast sets itself, nor one that is not a variable name")
         expect(
             launch.inherited(for: .claude, base: [:])["OPENCODE_CONFIG_CONTENT"] == "{}",
             "a name only another tool reserves is an ordinary variable here")
@@ -2275,7 +2275,7 @@ struct AIProviderTests {
                 && !arguments.contains {
                     $0.hasPrefix("mcp_servers.files.") && !$0.hasSuffix("=false")
                 },
-            "since Szcast's go by names of their own, which no table of the reader's merges into")
+            "since szcast's go by names of their own, which no table of the reader's merges into")
         expect(
             arguments.contains(#"mcp_servers.szcast-files.command="/bin/sh""#)
                 && arguments.contains(Self.renamingArguments),
@@ -2343,7 +2343,7 @@ struct AIProviderTests {
             CodexMCPLaunch.handle(ofServer: "szcast-files") == "files"
                 && CodexMCPLaunch.handle(ofServer: "files") == nil
                 && CodexMCPLaunch.handle(ofServer: "szcast-") == nil,
-            "a name Codex reports maps back to a handle only when it is one of Szcast's")
+            "a name Codex reports maps back to a handle only when it is one of szcast's")
         expect(
             CodexMCPLaunch.takenName(servers: [stdio], foreignNames: ["szcast-files"])
                 == "szcast-files"
@@ -2527,7 +2527,7 @@ struct AIProviderTests {
                 && (linear["headers"] as? [String: String]) == [
                     "Authorization": "Bearer tok-123"
                 ],
-            "a remote one carries the header Szcast would have sent itself")
+            "a remote one carries the header szcast would have sent itself")
 
         let bare = ClaudeMCPLaunch.configuration(servers: [
             AIToolServer(
@@ -2546,7 +2546,7 @@ struct AIProviderTests {
                 && arguments.contains("--permission-prompt-tool")
                 && arguments.contains("stdio")
                 && value(after: "--max-turns", in: arguments) == "25",
-            "the flags name the file, route consent to Szcast and cap the turn")
+            "the flags name the file, route consent to szcast and cap the turn")
         let uncapped = ClaudeMCPLaunch.arguments(
             configurationPath: "/tmp/m.json", handles: ["files"], rounds: nil)
         expect(
@@ -2626,7 +2626,7 @@ struct AIProviderTests {
         "tool_name":"mcp__files__read","input":{"path":"/tmp"}}}
         """
 
-    /// The consent channel is the SDK's undocumented one; this is all of it Szcast speaks.
+    /// The consent channel is the SDK's undocumented one; this is all of it szcast speaks.
     static func claudeControlFramesAnswerOneTool() {
         let frame =
             (try? JSONSerialization.jsonObject(with: Data(Self.canUseToolFrame.utf8)))
@@ -2677,7 +2677,7 @@ struct AIProviderTests {
             ClaudeControlProtocol.request(other) == nil
                 && ClaudeControlProtocol.unsupportedRequestID(other) == "r2"
                 && ClaudeControlProtocol.unsupportedRequestID(frame) == nil,
-            "a subtype Szcast does not know is no tool question, yet it is still answered")
+            "a subtype szcast does not know is no tool question, yet it is still answered")
         let error =
             ClaudeControlProtocol.error(to: "r2", message: "no")
             .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }

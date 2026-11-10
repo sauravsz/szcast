@@ -60,7 +60,7 @@ final class HotKeySettingsFile {
                 issues.append(
                     .invalidEntry(
                         key,
-                        String(localized: "\(item.label): “\(text)” isn't a shortcut Szcast can bind")))
+                        String(localized: "\(item.label): “\(text)” isn't a shortcut szcast can bind")))
                 continue
             }
             guard binding != current else { continue }

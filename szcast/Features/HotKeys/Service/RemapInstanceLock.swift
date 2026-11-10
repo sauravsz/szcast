@@ -1,6 +1,6 @@
 import Foundation
 
-/// Lets one Szcast process — release or Dev — drive a key remap; the kernel frees it on exit.
+/// Lets one szcast process — release or Dev — drive a key remap; the kernel frees it on exit.
 @MainActor
 final class RemapInstanceLock {
     private let url: URL

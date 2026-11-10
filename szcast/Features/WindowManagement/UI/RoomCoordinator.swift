@@ -86,7 +86,7 @@ final class RoomCoordinator {
         inTurn { [ledger] in RoomRunner.returnParkedWindows(ledger: ledger) }
     }
 
-    /// Synchronous, so no window is left off-screen once Szcast is gone.
+    /// Synchronous, so no window is left off-screen once szcast is gone.
     func prepareForTermination() {
         work?.cancel()
         work = nil
@@ -538,7 +538,7 @@ final class RoomCoordinator {
 
     private func reportPermissionFailure() async {
         let openSettings = await core.reportFailure(
-            title: String(localized: "Szcast Needs Accessibility Access"),
+            title: String(localized: "szcast Needs Accessibility Access"),
             message: String(localized: "Rooms move and hide other apps' windows."),
             symbol: Room.sfSymbol, recovery: String(localized: "Open Settings"))
         if openSettings { Permissions.openAccessibilitySettings() }

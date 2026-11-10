@@ -264,7 +264,7 @@ final class InstalledAIManager {
                         phase: .failed(
                             String(
                                 localized: """
-                                    Szcast needs OpenCode 2. Update OpenCode, then Check Again.
+                                    szcast needs OpenCode 2. Update OpenCode, then Check Again.
                                     """)),
                         version: version, executable: executable)
                 )

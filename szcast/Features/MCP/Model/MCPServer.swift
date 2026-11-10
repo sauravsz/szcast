@@ -1,6 +1,6 @@
 import Foundation
 
-/// How Szcast reaches a server. Secrets are never here — only the names that address them.
+/// How szcast reaches a server. Secrets are never here — only the names that address them.
 enum MCPTransportKind: Codable, Equatable, Hashable, Sendable {
     case http(url: String, headerName: String)
     case stdio(command: String, arguments: [String], environmentKeys: [String])
@@ -92,7 +92,7 @@ struct MCPServer: Codable, Equatable, Identifiable, Sendable {
     }
 
     /// A CLI route starts its own copy of a local server, so one here would only run it twice.
-    func runsInSzcast(whileCLIRouteSelected cliRoute: Bool) -> Bool {
+    func runsInszcast(whileCLIRouteSelected cliRoute: Bool) -> Bool {
         guard cliRoute, case .stdio = transport else { return true }
         return false
     }

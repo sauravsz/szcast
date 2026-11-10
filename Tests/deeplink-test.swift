@@ -148,7 +148,7 @@ struct DeepLinkTests {
         expect(
             DeepLink.url(forEntryID: "extension:demo/search", scheme: scheme) == nil,
             "extension commands keep their own link")
-        expect(parse("raycast://command/clipboard-history") == nil, "built-in links are Szcast's alone")
+        expect(parse("raycast://command/clipboard-history") == nil, "built-in links are szcast's alone")
         expect(
             parse("szcast-dev://command/clipboard-history") == nil,
             "another channel's scheme is not this build's")
@@ -363,7 +363,7 @@ struct DeepLinkTests {
     static func consentChecks() {
         expect(
             !DeepLinkConsentPolicy.requiresConsent(.command(.clipboardHistory)),
-            "opening a Szcast screen runs without asking")
+            "opening a szcast screen runs without asking")
         expect(
             !DeepLinkConsentPolicy.requiresConsent(.command(.createQuicklink)),
             "a create editor saves nothing on its own, so it runs without asking")
