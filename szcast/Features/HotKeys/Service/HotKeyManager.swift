@@ -184,7 +184,7 @@ final class HotKeyManager {
 
     /// One-time seed, so a fresh install ships with working chords instead of an empty recorder.
     /// A key that already holds a value means the seed ran, so a cleared binding stays cleared.
-    private func seedDefaultsIfNeeded() {
+    func seedDefaultsIfNeeded() {
         guard !defaults.bool(forKey: Self.seededDefaultsKey) else { return }
         var seeded = 0
         // Through `setBinding`, so the seed takes the same path a recorded chord does: indexed,

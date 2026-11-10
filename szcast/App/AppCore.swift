@@ -414,6 +414,9 @@ final class AppCore {
                 // After the first scan, so the file's apps and panes have entries to match.
                 if settings.settingsFileEnabled, settingsFile == nil {
                     startSettingsFile(importing: true)
+                    // The import may have cleared bindings the file has no opinion about; seeding
+                    // afterwards means the shipped chords survive a first-run settings.json.
+                    hotKeys.seedDefaultsIfNeeded()
                 } else if let launcherSettingsFile {
                     reportSettingsFileIssues(launcherSettingsFile.applyInstalled())
                 }
