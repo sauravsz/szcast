@@ -432,6 +432,9 @@ struct RootPaletteView: View {
                     let term = FileSearchQuery.spaceTerm(vm.query),
                     settings.fileSearchEnabled
                 {
+                    // The space is a marker, not text: clearing it keeps the back step from
+                    // restoring a space-prefixed query and re-entering at once.
+                    vm.query = ""
                     core.fileSearchCoordinator.show(query: term)
                     return
                 }
