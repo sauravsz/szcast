@@ -26,12 +26,10 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>Raycast and Szcast URL Scheme</string>
+			<string>Szcast URL Scheme</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>raycast</string>
 				<string>$(SZCAST_URL_SCHEME)</string>
-				<string>com.raycast</string>
 			</array>
 		</dict>
 	</array>

@@ -8,17 +8,24 @@ struct KeychainSecretStore: Sendable {
     }
 
     private let service: String
+    /// Set only for scopes that hold model credentials: macOS then requires the user's presence.
+    private let requiresUserPresence: Bool
 
     /// Every scope the app stores under, named here so the whole keychain surface is one list.
-    static let aiAPIKeys = KeychainSecretStore(scope: "ai-api-keys")
+    /// Model credentials ask for presence, so a background process cannot read them silently.
+    static let aiAPIKeys = KeychainSecretStore(scope: "ai-api-keys", requiresUserPresence: true)
     static let aiRequestHeaders = KeychainSecretStore(scope: "ai-request-headers")
     static let mcpSecrets = KeychainSecretStore(scope: "mcp-secrets")
     static let installedAIEnvironment = KeychainSecretStore(scope: "installed-ai-environment")
     /// Third-party OAuth tokens, one JSON item per extension/provider pair.
     static let extensionOAuthTokens = KeychainSecretStore(scope: "extension-oauth-tokens")
 
-    init(scope: String, bundleIdentifier: String? = Bundle.main.bundleIdentifier) {
+    init(
+        scope: String, requiresUserPresence: Bool = false,
+        bundleIdentifier: String? = Bundle.main.bundleIdentifier
+    ) {
         service = "\(bundleIdentifier ?? "com.sauravsz.szcast").\(scope)"
+        self.requiresUserPresence = requiresUserPresence
     }
 
     func secret(for account: UUID) throws -> String? {
@@ -52,7 +59,16 @@ struct KeychainSecretStore: Sendable {
             addition[kSecValueData as String] = data
             // Without this the item inherits the legacy default, readable whenever the file is
             // unlocked; after-first-unlock is the strongest class a background helper can use.
-            addition[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+            if requiresUserPresence,
+                let access = SecAccessControlCreateWithFlags(
+                    nil, kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
+                    .userPresence, nil)
+            {
+                addition[kSecAttrAccessControl as String] = access
+            } else {
+                addition[kSecAttrAccessible as String] =
+                    kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+            }
             let addStatus = SecItemAdd(addition as CFDictionary, nil)
             guard addStatus == errSecSuccess else { throw StoreError.keychain(addStatus) }
         } else if status != errSecSuccess {
@@ -76,10 +92,14 @@ struct KeychainSecretStore: Sendable {
         }
     }
 
-    /// One JSON item per account; a failed read throws, a garbled item reads as none.
+    /// One JSON item per account. A failed read throws, and so does a garbled item: reporting
+    /// "no values" would turn corruption into silent credential loss.
     func values(for account: UUID) throws -> [String: String] {
         guard let stored = try secret(for: account) else { return [:] }
-        return (try? JSONDecoder().decode([String: String].self, from: Data(stored.utf8))) ?? [:]
+        guard let data = stored.data(using: .utf8),
+            let decoded = try? JSONDecoder().decode([String: String].self, from: data)
+        else { throw StoreError.invalidEncoding }
+        return decoded
     }
 
     func setValues(_ values: [String: String], for account: UUID) throws {

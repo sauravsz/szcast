@@ -367,7 +367,16 @@ final class ExtensionNodeShims: @unchecked Sendable {
             guard fileManager.fileExists(atPath: target) else {
                 throw ShimError.noEntry(target, "chmod")
             }
-            try fileManager.setAttributes([.posixPermissions: mode], ofItemAtPath: target)
+            // No group/other write and no setuid/setgid/sticky: an extension may mark its own
+            // helper runnable, not hand another account — or a planted file — a way in.
+            let requested = mode.intValue & 0o777
+            let permitted = requested & 0o755
+            guard requested == permitted else {
+                throw ShimError.failed(
+                    "chmod EPERM: modes with group/other write or set-id bits are refused", "EPERM")
+            }
+            try fileManager.setAttributes(
+                [.posixPermissions: permitted], ofItemAtPath: target)
             return nil
 
         case "mkdtemp":

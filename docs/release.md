@@ -3,6 +3,13 @@
 How a build reaches a user. The local development loop is in [development.md](development.md);
 the signing identity itself is in [signing.md](signing.md).
 
+> **This fork releases by hand.** Releases are self-signed with `Szcast Self-Signed` and are **not
+> notarized**, so there is no Developer ID chain: users right-click → Open once. The sections below
+> describing the CI workflow, notarization and the `universal` job document the upstream pipeline —
+> `release.yml` is kept intact but **cannot run** without a Developer ID certificate and an App Store
+> Connect key, and it fails loudly at its first signing step. Everything up to and including
+> "Packaging a DMG locally" is what actually applies here. `v1.0.0` was produced that way.
+
 ## Packaging a DMG locally
 
 ```sh

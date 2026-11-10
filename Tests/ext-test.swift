@@ -1014,17 +1014,17 @@ struct ExtensionTests {
         check(
             "deeplink reads fallback text",
             full?.fallbackText == "hello")
-        // A web page can open `raycast://`, so a foreign scheme may not ask for a background run.
+        // Nobody can open a URL scheme on us and get a windowless run out of it, whoever they are.
         check(
             "a raycast:// link cannot force a background launch",
             full?.launchType == .userInitiated, String(describing: full?.launchType))
-        let trusted = ExtensionDeepLink.parse(
+        let ours = ExtensionDeepLink.parse(
             url: URL(
                 string: "szcast://extensions/demo/search?fallbackText=hello&launchType=background"
             )!)
         check(
-            "this channel's own scheme may ask for a background launch",
-            trusted?.launchType == .background, String(describing: trusted?.launchType))
+            "our own scheme cannot either",
+            ours?.launchType == .userInitiated, String(describing: ours?.launchType))
 
         let expectedContext: [String: RenderValue] = [
             "id": .string("note-1"), "pinned": .bool(true), "tags": .array([.string("a")])

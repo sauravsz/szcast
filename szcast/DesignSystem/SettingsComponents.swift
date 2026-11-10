@@ -304,6 +304,8 @@ struct FeatureSwitchSection: View {
     @Binding var showsInLauncher: Bool
     var showsIcon = false
     var showsHeader = true
+    /// Optional line under both switches, for a behaviour the toggles do not make obvious.
+    var footer: LocalizedStringResource?
 
     var body: some View {
         if showsHeader {
@@ -329,6 +331,12 @@ struct FeatureSwitchSection: View {
                 .settingsEnabled(isEnabled)
         } header: {
             if showsHeader { SettingsSectionHeader(anchor) }
+        } footer: {
+            if let footer {
+                Text(footer)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 }

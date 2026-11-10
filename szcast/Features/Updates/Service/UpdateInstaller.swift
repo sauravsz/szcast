@@ -103,8 +103,9 @@ struct UpdateInstaller: Sendable {
             signature = try await UpdateDownloader.data(from: signatureURL)
         } catch {
             try Task.checkCancellation()
+            // Not `.public`: a URL and a network error in the unified log is free reconnaissance.
             Self.logger.error(
-                "Fetching the update signature failed: \(error.localizedDescription, privacy: .public)")
+                "Fetching the update signature failed: \(error.localizedDescription, privacy: .private)")
             return false
         }
         return UpdateSignature.isSigned(archive, by: signature)

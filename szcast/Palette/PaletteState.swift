@@ -153,7 +153,8 @@ final class PaletteState {
     }
 
     /// Long enough that ⌘↵ or ⌘K never flashes the numbering, short enough to feel like a reveal.
-    private static let commandHoldDelay = Duration.milliseconds(400)
+    /// 150 ms: a chord completes well inside it, and a deliberate ⌘ hold shows digits immediately.
+    private static let commandHoldDelay = Duration.milliseconds(150)
 
     /// U+0001 can't appear in an entry id or an argument name, so the halves stay unambiguous.
     nonisolated static func argumentKey(_ entryID: String, _ name: String) -> String {

@@ -14,7 +14,13 @@ struct FileSearchSettingsView: View {
                 isEnabled: $settings.fileSearchEnabled,
                 showsInLauncher: $settings.fileSearchShowInLauncher,
                 showsIcon: true,
-                showsHeader: false)
+                showsHeader: false,
+                footer: """
+                    Tip: type a space at the start of Szcast's search — then your query — to jump \
+                    straight to this screen. The space is a shortcut, not part of the search, and \
+                    Escape returns you to the launcher. It works with File Search on regardless of \
+                    the switch above: that switch only adds a Files section to ordinary results.
+                    """)
 
             FileSearchAccessSection()
             FileSearchIndexSection()

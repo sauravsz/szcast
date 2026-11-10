@@ -2,6 +2,12 @@ name: Release
 
 run-name: "Szcast ${{ inputs.version }} · ${{ inputs.channel }} #${{ github.run_number }}"
 
+# NOT USABLE ON THIS FORK YET. Every step below assumes a Developer ID certificate and an App Store
+# Connect key in the `release` environment; neither is configured, so the job fails at
+# `Import signing certificate`. It is kept intact so enablement is a matter of setting the secrets
+# documented in docs/signing.md — releases are currently built and signed locally, see
+# docs/release.md. Nothing here produces a notarized or Homebrew-installable artifact.
+
 # Beta builds get an auto-incrementing suffix so re-running never collides.
 on:
   workflow_dispatch:
@@ -78,7 +84,13 @@ jobs:
         env:
           P12_BASE64: ${{ secrets.DEVELOPER_ID_P12_BASE64 }}
           P12_PASSWORD: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
-        run: ./Scripts/import-signing-identity.sh
+        run: |
+          if [ -z "${P12_BASE64}" ]; then
+            echo "::error::DEVELOPER_ID_P12_BASE64 is not set. This fork has no Developer ID, so CI"
+            echo "::error::cannot sign or notarize. Build locally instead — docs/release.md."
+            exit 1
+          fi
+          ./Scripts/import-signing-identity.sh
 
       - name: Build app
         env:

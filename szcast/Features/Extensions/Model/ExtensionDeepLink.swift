@@ -33,13 +33,19 @@ struct ExtensionDeepLink: Sendable, Equatable {
         return manifestName.split(separator: "/").last?.lowercased() == extensionName.lowercased()
     }
 
-    /// Schemes `claims` accepts for Raycast interop. Any of them can be opened by a web page,
-    /// so they carry no trust: see the `launchType` handling in `route`.
+    /// Schemes this parser understands. `raycast://` is still **parsed** so a pasted link or an
+    /// install flow works, but it is no longer registered in `CFBundleURLSchemes`: macOS only
+    /// hands us a scheme we claim, so a web page opening `raycast://` now reaches Raycast or
+    /// nothing. Registration is the gate; parsing alone cannot be driven by a third party.
+    /// Literal rather than `AppURLScheme.current`, so the parser stays pure and testable.
+    static let ownSchemes: Set<String> = ["szcast", "szcast-dev"]
     static let interopSchemes: Set<String> = ["raycast", "com.raycast", "raycastinternal"]
 
     static func claims(_ url: URL) -> Bool {
-        guard let scheme = url.scheme?.lowercased() else { return false }
-        return interopSchemes.contains(scheme) || ["szcast", "szcast-dev"].contains(scheme)
+        guard let scheme = url.scheme?.lowercased(),
+            ownSchemes.contains(scheme) || interopSchemes.contains(scheme)
+        else { return false }
+        return (url.host?.isEmpty == false) || !url.pathComponents.isEmpty
     }
 
     /// Reads back through `route(url:)`, owner-scoped names included; `scheme` is the channel's.
@@ -108,12 +114,10 @@ struct ExtensionDeepLink: Sendable, Equatable {
         guard !extensionName.isEmpty, !commandName.isEmpty else { return nil }
         var arguments: [String: String] = [:]
         var fallbackText: String?
-        // Only this channel's own scheme may ask for a background launch. Any web page can open
-        // `raycast://`, so honouring the parameter there would let a link start an installed
-        // command with no window and no user in front of it. Denying the interop schemes by name
-        // keeps this a pure function; anything else (this channel's own) is trusted.
-        let trustedSource = !Self.interopSchemes.contains(url.scheme?.lowercased() ?? "")
-        var launchType = ExtensionLaunchType.userInitiated
+        // A link never chooses a background launch. Only the host does — a scheduled menu-bar
+        // refresh — because anyone can open a URL scheme, and a link that starts an installed
+        // command with no window and nobody watching is exactly the escalation to refuse here.
+        let launchType = ExtensionLaunchType.userInitiated
         var launchContext: [String: RenderValue] = [:]
         for item in items {
             switch item.name.lowercased() {
@@ -122,8 +126,8 @@ struct ExtensionDeepLink: Sendable, Equatable {
             case "fallbacktext":
                 fallbackText = item.value
             case "launchtype", "launch_type":
-                guard trustedSource, item.value?.lowercased() == "background" else { continue }
-                launchType = .background
+                // Recognised and ignored: the parameter is in Raycast's format, not in our trust model.
+                break
             case "context", "launchcontext":
                 if let raw = item.value { launchContext = parseContext(raw) }
             default:

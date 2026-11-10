@@ -179,7 +179,17 @@ Two residual gaps:
 **Why it matters:** claiming another product's scheme enlarges the attack surface to any `raycast://` link ever clicked; the `note`/`chat` consent exemption is an unauthenticated read/inspect primitive.
 **Resolution (partial).** `ExtensionDeepLink` now honours `launchType=background` **only** when the URL's scheme is this channel's own (`AppURLScheme.current`). A `raycast://…?launchType=background` link is downgraded to `.userInitiated`, so a web page can no longer start an installed command with no window and nobody in front of it. Verified live before the change: the parameter was read straight from the query and passed into `run(...)` behind only the global extensions switch.
 
-Still open: `raycast`/`com.raycast` remain in `CFBundleURLSchemes`, and `.note`/`.chat` still skip consent. Both are deliberate for now — dropping the schemes breaks Raycast interop, and the note/chat exemption is a usability choice — but they should be revisited before a store listing.
+**Scheme claims: FIXED 2026-11-10.** `raycast`, `com.raycast` and `raycastinternal` are gone from
+`CFBundleURLSchemes`; only `$(SZCAST_URL_SCHEME)` is registered. Registration is what made the surface
+reachable — macOS hands an app only the schemes it claims — so a web page opening `raycast://` now
+reaches Raycast or nothing. The **parser** still accepts those schemes, so a pasted link or the store
+install flow keeps working; that is input validation, not reachability.
+
+`launchType` is now ignored outright rather than downgraded: a link never chooses a background launch,
+whatever scheme it arrives on. Only the host schedules those.
+
+Still open: `.note`/`.chat` still skip consent — an unauthenticated read/inspect primitive a page can
+use to probe which note names exist.
 
 ---
 
@@ -317,7 +327,7 @@ Closed in this round, with the test that now pins each one:
 | **M-4** | `restoreExecutablePermissions` runs at install only, never from `scan()` | `ext-cleanup-test` |
 | **M-5** (half) | A foreign scheme cannot request `launchType=background` | `ext-test`: `raycast://…?launchType=background` → `.userInitiated`, `szcast://` → `.background` |
 | **L-6** | New Keychain items use `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly` | — (attribute inspection only) |
-| **L-7** (half) | `mkdir` literal is `0755`, not `0777` | — |
+| **L-7** | `mkdir` asks `0755`; `chmod` refuses group/other write and set-id bits | — |
 | **OAuth tokens** | Moved to a dedicated Keychain scope, with a migration that clears the plaintext copy | — (needs a live Keychain) |
 
 Two tests encoded the *old*, vulnerable behaviour and were rewritten rather than kept:
@@ -331,6 +341,15 @@ per-extension consent are all still absent: an installed extension still has unr
 access, unrestricted `fetch`, and can still spawn `/bin/sh -c` with the inherited environment. M-3,
 M-4 and the `kill` restriction reduce the blast radius without changing that.
 
-Also open: `raycast`/`com.raycast` remain claimed (M-5); `.note`/`.chat` still skip consent; `chmod`
-still takes arbitrary modes (L-7); no `SecAccessControl` per item (L-6); `UpdateInstaller` still logs
-fetch failures at `.public`; and `fetch`/WebSocket have no host allowlist (§4.5).
+Also open: `.note`/`.chat` still skip consent, and `fetch`/WebSocket still have no host allowlist
+(§4.5).
+
+Closed after the first round, same day:
+
+| Item | Change |
+| --- | --- |
+| **M-5** (rest) | `raycast`/`com.raycast`/`raycastinternal` dropped from `CFBundleURLSchemes`; the parser still reads them for pasted links, but macOS no longer hands us those schemes |
+| **M-5** (`launchType`) | Now ignored outright: a link never chooses a background launch, whichever scheme it arrives on |
+| **L-6** (rest) | `ai-api-keys` items carry a `SecAccessControl` with `.userPresence`; `values(for:)` throws on a corrupt item instead of reporting none |
+| **L-7** (rest) | `chmod` refuses `0o777`-style modes and set-id bits |
+| **`isReleaseSigned` log** | Failure line is `.private`, so a URL and network error no longer land in the public log |
