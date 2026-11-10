@@ -29,4 +29,10 @@ Fork of [Tinycast](https://github.com/abue-ammar/tinycast) by Abue Ammar, rename
 - **Default Fallbacks & Quicklinks Configuration** (`d069227`): Established default fallback order (`DefaultFallbacks.order`) and disabled set (`DefaultFallbacks.disabled`) matching user profile: enabled top 3 (Brave Search, ChatGPT Web Search, Brave Ask) with all others (commands and secondary search engines) disabled by default. Added `DefaultQuicklinks` seeding on first run.
 
 
+## Active State & Next Steps
+- **Active State**: Local `main` branch has all Phase 1 (Focus Timer & Sensory), Phase 2 (Live Web Search with Tavily/Exa/Jina), and Default Fallbacks features verified and committed. Zero uncommitted changes. All 117 tests pass. Debug build succeeded.
+- **Immediate Next Steps**:
+  1. Evaluate local semantic/vector search vs SQLite FTS/Spotlight if desired.
+  2. Push commits to `origin/main` and prepare release build only when user explicitly confirms.
+
 Attribution: AGPL-3.0. Copyright © 2026 Abue Ammar in LICENSE; NOTICE.md keeps third-party material. Fork of Tinycast; no affiliation implied.
