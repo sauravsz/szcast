@@ -31,25 +31,25 @@ AppKit — no dependencies, no Electron, no telemetry. It runs Raycast extension
 
 [Explore all features →](docs/features/)
 
-## Launcher touches in this build
+## Install
 
-Three changes to the palette, on top of upstream:
+Download the DMG from [Releases](https://github.com/sauravsz/szcast/releases/latest), open it, and
+drag **szcast** into `/Applications`. Right-click → **Open** on first launch: the build is
+self-signed rather than notarized, so macOS asks once. macOS 26 or newer, Apple silicon. There is no
+Homebrew cask.
 
-- **Space opens file search.** Type a space at the start of root search and the file search screen
-  opens, Alfred-style, with the rest of the line already in its field. Escape walks back to the
-  launcher with a clean field. Needs File Search enabled; it ignores the *Show in launcher* toggle,
-  because the space is the explicit intent.
-- **⌘1…⌘0 activates the Nth visible row.** Hold ⌘ and the first ten rows swap their kind label for
-  the digit that activates them. On a blank query the digits launch pinned favourites by position
-  instead. Rows past the tenth carry no chord.
-- **File rows carry an icon.** A document or folder glyph in place of the word.
+## What this build changes
 
-## Defaults in this build
+Everything is on out of the box, and the palette has three shortcuts upstream does not.
 
-Every feature switch starts **on**. A fresh install also arrives with:
+| | |
+| --- | --- |
+| **Space** | In root search, a leading space opens the file search screen with the rest of the line already in its field. Escape returns to the launcher with a clean field. Needs File Search enabled; it ignores *Show in launcher*, because the space is the explicit intent. |
+| **⌘1…⌘0** | Activates the Nth visible row. Hold ⌘ and the first ten rows swap their kind label for their digit; on a blank query the digits launch pinned favourites by position instead. |
+| **File rows** | Carry a document or folder glyph rather than the word. |
 
-- **Hyper key = Caps Lock**, with **Include Shift** and **Secure Input compatibility** enabled, so
-  Hyper is ⌃⌥⇧⌘.
+**Every feature switch defaults on**, and a fresh install arrives with Hyper armed — Caps Lock, with
+*Include Shift* and *Secure input compatibility* on, so Hyper is ⌃⌥⇧⌘:
 
 | Chord | Action |
 | --- | --- |
@@ -59,15 +59,7 @@ Every feature switch starts **on**. A fresh install also arrives with:
 | Hyper + **I** | Window: maximise |
 | Hyper + **K** | Window: reasonable size |
 
-Bindings are seeded once, as ordinary bindings — clear one and it stays cleared.
-
-## Install
-
-Download the DMG from [Releases](https://github.com/sauravsz/szcast/releases/latest), open it, and
-drag **szcast** into `/Applications`.
-
-The build is **self-signed, not notarized**: right-click → **Open** on first launch and macOS will
-not ask again. macOS 26 or newer, Apple silicon. There is no Homebrew cask.
+Chords are seeded once as ordinary bindings, so clearing one in Settings keeps it cleared.
 
 ## Build from source
 
@@ -76,18 +68,19 @@ Requirements: macOS 26 or newer and Xcode 27 (Swift 6, macOS 26 SDK).
 ```sh
 git clone https://github.com/sauravsz/szcast.git
 cd szcast
-open szcast.xcodeproj    # scheme: szcast, then ⌘R
+open szcast.xcodeproj    # scheme: Szcast, then ⌘R
 ```
 
 Or from the terminal:
 
 ```sh
-xcodebuild -project szcast.xcodeproj -scheme szcast -configuration Release \
+xcodebuild -project szcast.xcodeproj -scheme Szcast -configuration Release \
   -derivedDataPath build/DerivedData build
 ```
 
-The Debug configuration builds **szcast Dev** (`com.sauravsz.szcast.dev`), so it runs side by side
-with a release install. Release builds are `com.sauravsz.szcast`.
+Debug builds install as **szcast Dev** (`com.sauravsz.szcast.dev`), side by side with a release;
+release builds are `com.sauravsz.szcast`. The Xcode scheme and the `Szcast Self-Signed` signing
+identity keep their capitalisation — renaming either drops your Accessibility grant on every rebuild.
 
 ### Local DMG
 
@@ -95,9 +88,9 @@ with a release install. Release builds are `com.sauravsz.szcast`.
 ./Scripts/build-dmg.sh          # → build/szcast-<version>.dmg
 ```
 
-The script signs with the **szcast Self-Signed** identity, so macOS keeps your Accessibility grant
-across rebuilds. Create that identity once — [docs/signing.md](docs/signing.md) §1. Without it, every
-rebuild resets your privacy permissions.
+It signs with **Szcast Self-Signed** so macOS keeps your Accessibility grant across rebuilds. Create
+that identity once — [docs/signing.md](docs/signing.md) §1. Without it every rebuild resets your
+privacy permissions.
 
 ### Tests
 
@@ -113,14 +106,16 @@ See [docs/testing.md](docs/testing.md).
 - **The site is static.** `site/` is plain HTML, deployed to
   [szcast.vercel.app](https://szcast.vercel.app) on every push to `main`. No build step.
 - **Self-update has a key but no feed.** The build carries the release verification key, so a signed
-  update is checked against a key this project owns — but no update feed is published, so nothing
-  installs over itself. [docs/features/updates.md](docs/features/updates.md).
+  update is checked against a key this project owns — but no feed is published, so nothing installs
+  over itself. [docs/features/updates.md](docs/features/updates.md).
 - **Exchange rates come from `tinycast.dev`**, the upstream project's server, not one this repo
   controls. If it goes away, conversions stop updating and the last cached snapshot is served until
   it ages out. [docs/features/calculator.md](docs/features/calculator.md).
-- **CI cannot cut a release yet.** The Release workflow needs a Developer ID certificate and
-  notarization secrets that are not configured; `v1.0.0` was built and signed locally instead.
-  [docs/signing.md](docs/signing.md) §2.
+- **CI cannot cut a release.** `release.yml` needs a Developer ID certificate and notarization
+  secrets this fork does not have, and fails loudly at its first signing step. Releases are built and
+  signed locally instead. [docs/release.md](docs/release.md).
+- **Extension `fetch` has no host allowlist** and there is no per-extension consent beyond the
+  one-time switch. Known, documented as H-1 in [docs/SECURITY-AUDIT.md](docs/SECURITY-AUDIT.md).
 
 ## Contributing
 
@@ -130,5 +125,5 @@ Feature requests and fixes are welcome in [this repo's issues](https://github.co
 
 szcast is a fork of [Tinycast](https://github.com/abue-ammar/tinycast) by Abue Ammar, and is
 licensed under the [GNU AGPL v3](LICENSE). Original copyright © 2026 Abue Ammar; third-party
-material is recorded in [NOTICE.md](NOTICE.md). No affiliation with or endorsement by the
-upstream author is implied.
+material is recorded in [NOTICE.md](NOTICE.md). No affiliation with or endorsement by the upstream
+author is implied.
