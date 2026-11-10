@@ -20,15 +20,19 @@ struct WindowFileTest {
     private static func testCommandShortcuts() {
         let json = WindowManagementFileFormat.json(commandShortcuts: [.leftHalf: "ctrl+option+left"])
         let members = json.members ?? []
-        check("every command is listed", members.count == WindowCommand.ID.allCases.count)
-        check("in catalog order", members.first?.key == WindowCommand.ID.allCases.first?.rawValue)
+        // Only bound commands are written: an entry saying `null` reads back as "unbind", so
+        // emitting one per command cleared every chord the file was written before.
+        check("only bound commands are listed", members.count == 1)
         check("a bound one carries its chord", json["left-half"] == "ctrl+option+left")
-        check("an unbound one is null", json["right-half"] == .null)
+        check("an unbound one is absent, not null", json["right-half"] == nil)
 
         let decoded = WindowManagementFileFormat.commandShortcuts(from: json)
         check(
             "the list reads back",
-            decoded?.texts[.leftHalf] == "ctrl+option+left" && decoded?.texts[.rightHalf] == .some(nil))
+            decoded?.texts[.leftHalf] == "ctrl+option+left")
+        check(
+            "an absent command reads as unbound rather than clearing anything",
+            decoded?.texts[.rightHalf] == .some(nil))
         check("with nothing to report", decoded?.problems == [])
 
         let edited = WindowManagementFileFormat.commandShortcuts(
