@@ -44,6 +44,23 @@ Three changes to the palette, on top of upstream:
   instead. Rows past the tenth carry no chord.
 - **File rows carry an icon.** A document or folder glyph in place of the word.
 
+## Defaults in this build
+
+Every feature switch starts **on**. A fresh install also arrives with:
+
+- **Hyper key = Caps Lock**, with **Include Shift** and **Secure Input compatibility** enabled, so
+  Hyper is ⌃⌥⇧⌘.
+
+| Chord | Action |
+| --- | --- |
+| Hyper + **S** | Search Snippets |
+| Hyper + **J** | Window: left half |
+| Hyper + **L** | Window: right half |
+| Hyper + **I** | Window: maximise |
+| Hyper + **K** | Window: reasonable size |
+
+Bindings are seeded once, as ordinary bindings — clear one and it stays cleared.
+
 ## Install
 
 Download the DMG from [Releases](https://github.com/sauravsz/szcast/releases/latest), open it, and
