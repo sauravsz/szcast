@@ -82,8 +82,9 @@ See [docs/testing.md](docs/testing.md).
 - **Space opens file search** — a leading space in root search jumps straight to the file search
   screen, Alfred-style, with the term after the space already in the field. Needs File Search
   enabled; ignores the *Show in launcher* toggle.
-- **⌘1…⌘0 activates the Nth visible row** — hold ⌘ to see the digits on the first ten rows; with a
-  blank query they launch pinned favourites by position instead.
+- **⌘1…⌘0 activates the Nth visible row** — hold ⌘ and the first ten rows swap their kind label for
+  the digit that activates them; with a blank query the digits launch pinned favourites by position
+  instead.
 
 ## Contributing
 

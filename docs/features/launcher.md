@@ -757,8 +757,16 @@ the compact bar re-deriving an empty-query order of its own. The compact bar dra
 every slot still launches one.
 
 Once a query is typed nothing pins, so the digit goads whichever row is there: **⌘1…⌘0 is the
-Nth visible row**, Alfred style, both palette sizes. The first ten rows carry the digit by their
-flat index, carried on the `Row` case like a favorite's slot.
+Nth visible row**, Alfred style, both palette sizes. The sections are drawn grouped by kind, which is
+*not* the order the chords activate, so `LauncherList` numbers rows from the activation sequence —
+`pinnedFavorites`, then `results`, then files, then fallbacks — keyed by `Row.id`:
+
+```swift
+private var digitsByRowID: [String: Character]
+```
+
+A row past the tenth carries no chord. Deriving the numbers from the drawn order instead would
+print digits that activate a different row.
 Holding ⌘ swaps each numbered row's kind label for its chord. `PalettePanel` publishes the modifier
 into `PaletteState.commandHeld` from `.flagsChanged` and clears it in `resignKey` — not in `prepare`,
 which a re-show that preserves state skips entirely. The flag flips **400 ms after** the press, not

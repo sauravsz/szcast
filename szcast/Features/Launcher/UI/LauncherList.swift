@@ -71,31 +71,20 @@ struct LauncherList: View {
         /// Its own case, because only this header carries a gear.
         case fallbackHeader(String)
         case card(LeadCard)
-        case app(AppEntry, flatIndex: Int)
-        /// A favorite's `index` is its position in the store, which is also its flat number.
+        case app(AppEntry)
+        /// `index` names the row inside its section, so its tap lands on the right entry.
         case favorite(FavoritesStore.Item, index: Int)
-        /// `index` names the row inside its section; `flat` is the number the chord shows.
-        case file(FileSearchResult, index: Int, flat: Int)
-        case fallback(AppEntry, index: Int, flat: Int)
+        case file(FileSearchResult, index: Int)
+        case fallback(AppEntry, index: Int)
         var id: String {
             switch self {
             case .header(let title): return "header-" + title
             case .fallbackHeader: return "fallback-header"
             case .card(let card): return card.rowID
-            case .app(let app, _): return app.id
+            case .app(let app): return app.id
             case .favorite(let favorite, _): return favorite.id
-            case .file(let result, _, _): return "file-" + result.id
-            case .fallback(let app, _, _): return "fallback-" + app.id
-            }
-        }
-
-        /// The row's place among the launcher's numbered rows, skipping headers and the card.
-        var flatIndex: Int? {
-            switch self {
-            case .header, .fallbackHeader, .card: return nil
-            case .app(_, let flat): return flat
-            case .favorite(_, let index): return index
-            case .file(_, _, let flat), .fallback(_, _, let flat): return flat
+            case .file(let result, _): return "file-" + result.id
+            case .fallback(let app, _): return "fallback-" + app.id
             }
         }
     }
@@ -105,26 +94,34 @@ struct LauncherList: View {
         return selectedRowID != nil && selectedRowID == (favorites.first?.id ?? results.first?.id)
     }
 
-    private var fileRows: [Row] { fileRows(base: 0) }
+    /// Numbers each row the way ⌘1–⌘0 activates it: favorites, then results, files, fallbacks.
+    /// The sections are drawn grouped by kind, so a running counter would mislabel them.
+    private var digitsByRowID: [String: Character] {
+        let order =
+            favorites.map(\.id) + results.map(\.id)
+            + (files?.results ?? []).map { "file-" + $0.id }
+            + (fallbacks?.entries ?? []).map { "fallback-" + $0.id }
+        return Dictionary(
+            uniqueKeysWithValues: order.enumerated().compactMap { index, id in
+                FavoriteSlots.digit(at: index).map { (id, $0) }
+            })
+    }
 
-    private func fileRows(base: Int) -> [Row] {
+    private var fileRows: [Row] {
         guard let files else { return [] }
         return [.header(String(localized: "Files"))]
-            + files.results.enumerated().map { .file($1, index: $0, flat: base + $0) }
+            + files.results.enumerated().map { .file($1, index: $0) }
     }
 
     /// Every row the fallback section contributes, always after the results.
-    private var fallbackRows: [Row] { fallbackRows(base: 0) }
-
-    private func fallbackRows(base: Int) -> [Row] {
+    private var fallbackRows: [Row] {
         guard let fallbacks else { return [] }
         return [.fallbackHeader(fallbacks.title)]
-            + fallbacks.entries.enumerated().map { .fallback($1, index: $0, flat: base + $0) }
+            + fallbacks.entries.enumerated().map { .fallback($1, index: $0) }
     }
     private var rows: [Row] {
         var rows: [Row] = []
         if let card { rows = [.header(card.sectionTitle), .card(card)] }
-        var flat = 0
         let meetings = results.prefix(meetingCount)
         let suggestions = results.dropFirst(meetingCount).prefix(suggestionCount)
         let pinnedCount = meetingCount + suggestionCount
@@ -134,26 +131,21 @@ struct LauncherList: View {
         for app in rest { grouped[app.kind, default: []].append(app) }
         if !favorites.isEmpty {
             rows.append(.header(String(localized: "Favorites")))
-            rows.append(
-                contentsOf: favorites.enumerated().map {
-                    defer { flat += 1 }
-                    return .favorite($1, index: flat)
-                })
+            rows.append(contentsOf: favorites.enumerated().map { .favorite($1, index: $0) })
         }
         if !meetings.isEmpty {
             rows.append(.header(AppEntry.Kind.meeting.descriptor.sectionTitle.resolved()))
-            rows.append(
-                contentsOf: meetings.map { defer { flat += 1 }; return .app($0, flatIndex: flat) })
+            rows.append(contentsOf: meetings.map { .app($0) })
         }
         if !suggestions.isEmpty {
             rows.append(.header(String(localized: "Suggestions")))
-            rows.append(contentsOf: suggestions.map { defer { flat += 1 }; return .app($0, flatIndex: flat) })
+            rows.append(contentsOf: suggestions.map { .app($0) })
         }
         if !matches.isEmpty {
             rows.append(.header(String(localized: "Results")))
-            rows.append(contentsOf: matches.map { defer { flat += 1 }; return .app($0, flatIndex: flat) })
+            rows.append(contentsOf: matches.map { .app($0) })
         }
-        // Publication order, so rows match the flat index.
+        // Publication order, so the groups keep a stable reading order.
         let kinds: [AppEntry.Kind] = [
             .meeting, .application, .systemSettings, .extensionCommand, .quicklink, .appleShortcut,
             .snippet, .systemAction, .windowLayout, .windowRoom, .windowCommand, .customCommand,
@@ -162,20 +154,20 @@ struct LauncherList: View {
         for kind in kinds {
             guard let group = grouped[kind], !group.isEmpty else { continue }
             rows.append(.header(kind.descriptor.sectionTitle.resolved()))
-            rows.append(contentsOf: group.map { defer { flat += 1 }; return .app($0, flatIndex: flat) })
+            rows.append(contentsOf: group.map { .app($0) })
         }
-        // A missing kind would make every later row activate its neighbour: assert instead.
+        // A missing kind would drop a section: assert instead of silently rendering nothing.
         assert(
             grouped.keys.allSatisfy(kinds.contains),
             "kind missing from the launcher's section order: "
                 + grouped.keys.filter { !kinds.contains($0) }.map(\.rawValue).joined(separator: ", "))
-        // One sequence across every row, so ⌘1–⌘0 numbers the list the way it activates it.
-        return rows + fileRows(base: flat) + fallbackRows(base: flat + (files?.results.count ?? 0))
+        return rows + fileRows + fallbackRows
     }
 
 
     var body: some View {
         let rows = rows
+        let digits = digitsByRowID
         return Group {
             if results.isEmpty && favorites.isEmpty && card == nil && files == nil && fallbacks == nil {
                 EmptyResults(text: String(localized: "No apps found"))
@@ -199,12 +191,12 @@ struct LauncherList: View {
                                         .onRightClick(perform: onCardActions)
                                         .padding(.bottom, metrics.spacing.xs)
                                         .selectionFrame(cardSelected)
-                                case .app(let app, let flatIndex):
+                                case .app(let app):
                                     AppRow(
                                         app: app,
                                         selected: app.id == selectedRowID,
                                         running: runningApps.isRunning(app),
-                                        slot: FavoriteSlots.digit(at: flatIndex)
+                                        slot: digits[row.id]
                                     )
                                     .contentShape(Rectangle())
                                     .onRowTap(drag: drag(for: app)) { onActivate(app) }
@@ -216,11 +208,11 @@ struct LauncherList: View {
                                         .onRowTap(drag: drag(for: favorite)) { onActivateFavorite(index) }
                                         .onRightClick { onFavoriteActions(index) }
                                         .selectionFrame(favorite.id == selectedRowID)
-                                case .file(let result, let index, let flat):
+                                case .file(let result, let index):
                                     FileSearchRow(
                                         result: result, selected: row.id == selectedRowID,
                                         showsLocation: true,
-                                        slot: FavoriteSlots.digit(at: flat)
+                                        slot: digits[row.id]
                                     )
                                     .contentShape(Rectangle())
                                     .onRowTap(drag: result.rowDrag(dropped: onDropped)) {
@@ -228,10 +220,10 @@ struct LauncherList: View {
                                     }
                                     .onRightClick { files?.onActions(index) }
                                     .selectionFrame(row.id == selectedRowID)
-                                case .fallback(let app, let index, let flat):
+                                case .fallback(let app, let index):
                                     AppRow(
                                         app: app, selected: row.id == selectedRowID, running: false,
-                                        slot: FavoriteSlots.digit(at: flat)
+                                        slot: digits[row.id]
                                     )
                                     .contentShape(Rectangle())
                                     .onTapGesture { fallbacks?.onActivate(index) }
