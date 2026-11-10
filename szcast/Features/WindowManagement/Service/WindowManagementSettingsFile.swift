@@ -26,8 +26,10 @@ struct WindowManagementSettingsFile {
                 guard let decoded = WindowManagementFileFormat.commandShortcuts(from: json) else {
                     return [.invalidValue(key)]
                 }
-                let wanted = WindowCommand.ID.allCases.compactMap { id in
-                    decoded.texts[id].map { text in
+                // Only entries the file actually carries. A file written before a command had a
+                // shortcut omits it, and applying an omitted command would unbind it.
+                let wanted = decoded.texts.compactMap { id, text in
+                    text.map { text in
                         HotKeySettingsFile.Wanted(
                             action: .windowCommand(id: id), text: text, label: "“\(id.rawValue)”")
                     }

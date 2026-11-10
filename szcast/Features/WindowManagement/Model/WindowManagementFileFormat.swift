@@ -50,7 +50,10 @@ enum WindowManagementFileFormat {
         from json: SettingsFileJSON, wrongType: (String) -> String
     ) -> CommandTexts? {
         guard let members = json.members else { return nil }
-        var texts = Dictionary(uniqueKeysWithValues: WindowCommand.ID.allCases.map { ($0, String?.none) })
+        // Only keys the file names. An absent command means "leave it alone", which is different
+        // from an explicit `null` meaning "unbind it" — pre-filling every id with nil conflated
+        // the two, so importing an older file unbound every chord it predated.
+        var texts: [WindowCommand.ID: String?] = [:]
         var problems: [String] = []
         for member in members {
             guard let id = WindowCommand.ID(rawValue: member.key) else {
@@ -58,7 +61,7 @@ enum WindowManagementFileFormat {
                 continue
             }
             switch member.value {
-            case .null: continue
+            case .null: texts[id] = String?.none
             case .string(let text): texts[id] = text
             default:
                 texts.removeValue(forKey: id)

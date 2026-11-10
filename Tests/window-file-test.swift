@@ -30,9 +30,8 @@ struct WindowFileTest {
         check(
             "the list reads back",
             decoded?.texts[.leftHalf] == "ctrl+option+left")
-        check(
-            "an absent command reads as unbound rather than clearing anything",
-            decoded?.texts[.rightHalf] == .some(nil))
+        // Absent is not the same as null: a file that predates a chord must not unbind it.
+        check("an absent command is not in the texts", decoded?.texts[.rightHalf] == nil)
         check("with nothing to report", decoded?.problems == [])
 
         let edited = WindowManagementFileFormat.commandShortcuts(
@@ -40,7 +39,7 @@ struct WindowFileTest {
         check(
             "a number is not a chord, so that command keeps its own",
             edited?.texts.keys.contains(.leftHalf) == false)
-        check("one left out is unbound", edited?.texts[.rightHalf] == .some(nil))
+        check("one left out is untouched", edited?.texts[.rightHalf] == nil)
         check("both mistakes are reported", edited?.problems.count == 2)
         check("a list is not an object", WindowManagementFileFormat.commandShortcuts(from: .array([])) == nil)
     }
