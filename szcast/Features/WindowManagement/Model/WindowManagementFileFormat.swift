@@ -17,10 +17,14 @@ enum WindowManagementFileFormat {
     // MARK: - Command shortcuts
 
     /// Every command, unbound ones as `null`, so the file itself lists what can be bound.
+    /// Only bound commands are written. Emitting every id with `null` read back as "unbind this",
+    /// so a file written before a command had a shortcut cleared that shortcut on the next import.
     static func json(commandShortcuts: [WindowCommand.ID: String]) -> SettingsFileJSON {
         .object(
-            WindowCommand.ID.allCases.map { id in
-                SettingsFileJSON.Member(key: id.rawValue, value: text(commandShortcuts[id]))
+            WindowCommand.ID.allCases.compactMap { id in
+                commandShortcuts[id].map {
+                    SettingsFileJSON.Member(key: id.rawValue, value: .string($0))
+                }
             })
     }
 
