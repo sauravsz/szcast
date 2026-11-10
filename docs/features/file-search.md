@@ -281,13 +281,12 @@ keystroke and when the launcher becomes the mode, and `applyLauncherFiles` re-ru
 changes. `cancel()` returns early on an idle session, so with the section off a keystroke publishes
 nothing.
 
-Pressing a space before typing is the launcher's quick search: the space is a scope marker, not a
-search term, so ` space report` searches for `report`. Space mode answers with the file search on
-its own — it ignores the **Show in launcher** toggle, like `favorites` always — so the space
-prefix still widens when only the feature switch is on. The threshold drops to one character and
-the list stays capped at `launcherLimit`, in place after the app results. While scanning files,
-each file row's trailing label is a file-kind icon instead of the word, so the lane reads as
-files-first at a glance.
+Pressing a space in root search is the launcher's quick search: the space is a marker, not a
+search term, so ` report` opens **this screen** already narrowed to `report`. The marker never
+reaches the field, which is why Esc from here lands on the launcher with an empty query instead of
+re-entering. It needs `fileSearchEnabled` and ignores **Show in launcher** — the space is the
+explicit intent — so quick search still works when the ambient Files section is off. A query with
+no leading space stays in root search and leaves files to the section below.
 A Files row is not an `AppEntry`: no `Kind`, ranking, alias or Hide from Search. Files and folders
 can be favorited through ⌘K or ⇧⌘F in either screen; their saved paths join the launcher’s Favorites
 section, share its reordering and ⌘-digit slots, and survive relaunch and settings backups. Explicit
