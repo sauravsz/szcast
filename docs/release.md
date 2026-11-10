@@ -22,15 +22,14 @@ opens without a Gatekeeper warning. Local builds, `build-dmg.sh` included, keep 
 ## How the in-app updater consumes a release
 
 Every release publishes three assets from one build: `Szcast-<version>.dmg`, which people download
-by hand and which the cask installs, `Szcast-<version>.zip`, which the in-app updater installs, and
-`Szcast-<version>.zip.sig`, the zip's signature by the release key. The zip is produced with
+by hand, `Szcast-<version>.zip`, which the in-app updater installs, and `Szcast-<version>.zip.sig`,
+the zip's signature by the release key. The zip is produced with
 `ditto -c -k --keepParent --sequesterRsrc` — the only zip that leaves the code signature verifiable,
 which matters because the updater refuses any bundle it cannot prove is ours.
 
-A stable release publishes two more from the `universal` job, `Szcast-Universal-<version>.dmg` and
-`.zip`, built from the same commit at the same version and bundle id but with both slices. They are
-uploaded _after_ the thin pair, which keeps the thin zip first in the asset list so builds predating
-architecture-aware selection keep choosing it.
+This build ships **arm64 only**. There is no `universal` job: macOS 26 is the last release that boots
+on Intel, and the fork does not publish an Intel slice. `ReleaseFeed` still understands the
+`-Universal-` marker, so publishing one later needs no client change.
 
 Three things a release must keep true, or the updater skips it:
 
@@ -40,11 +39,10 @@ Three things a release must keep true, or the updater skips it:
   `prerelease` flag. A tag of any other shape is treated as mis-published and skipped.
 - **It is not a draft.**
 
-**Every cask declares `auto_updates true`.** That is Homebrew's flag for an app that manages its own
-version, and it is what keeps `brew update && brew upgrade` from fighting an app that updated itself:
-brew never reports Szcast outdated, never re-downloads it, and never rolls a self-updated copy back.
-Removing that line would reintroduce exactly those three problems. See
-[features/updates.md](features/updates.md).
+**There is no Homebrew cask.** Releases are self-signed and not notarized, so they are installed by
+dragging the app out of the DMG. A cask would need a notarized build to be worth having; see
+[signing.md](signing.md). The `Update Homebrew cask` step in `release.yml` is a no-op unless
+`HOMEBREW_TAP_TOKEN` is set, and that tap does not exist.
 
 ## Pull request review
 
@@ -72,7 +70,7 @@ it also announces the release on Discord. A stable run also dispatches the Websi
 the site reads the latest version and the [changelog](https://szcast.dev/changelog/) from GitHub at
 build time.
 
-A stable run then fans out to a second job, `universal`, which rebuilds the same commit with
+A stable run then fans out to a second job, `universal` (present in the workflow, not used here), which rebuilds the same commit with
 `ARCHS="arm64 x86_64"` and attaches `Szcast-Universal-<version>.dmg` / `.zip` to the release the
 first job created, then bumps `szcast-universal`. macOS 26 is the last release that boots on Intel,
 and those Macs need both slices. Both jobs pin `ARCHS` explicitly and assert the slices on _every_
@@ -116,28 +114,14 @@ Two details the script exists for:
   release therefore spans every beta since the last stable.
 - **The body is split by `<!-- szcast:install -->`.** Everything above it is the changelog;
   everything below is the install text, which only a download page needs. The website's changelog
-  cuts at that marker in `website/src/lib/changelog.ts`. Full PR URLs are shortened to `#304`, which
-  still autolinks on the web.
+  would cut at that marker. The site here is static (see `site/`), so nothing reads it yet. Full PR
+  URLs are shortened to `#304`, which still autolinks on the web.
 
 The Discord announcement carries the same changelog, truncated to fit Discord's component limit, and
 pings `@everyone`.
 
-### Homebrew casks
+### Homebrew
 
-`szcast` and `szcast@beta` are in [homebrew/cask](https://github.com/Homebrew/homebrew-cask),
-where Homebrew's autobump bot bumps each one after a release.
-
-`szcast-universal` is the only cask left in the
-[`homebrew-szcast`](https://github.com/sauravsz/homebrew-szcast) tap, and the `universal` job
-is the only job that touches it: its last step rewrites the cask's `version` + `sha256` and pushes.
-The tap's `tap_migrations.json` hands anyone who installed `szcast` or `szcast@beta` from the tap
-to homebrew/cask on `brew update`.
-
-The step needs a `HOMEBREW_TAP_TOKEN` repo secret — a fine-grained PAT with **Contents: read/write**
-on the tap repo. Without the secret the step logs a warning and skips; the release still publishes.
-The `sed` is anchored to `^  version` / `^  sha256`, so a cask's two-space indent on those lines is
-load-bearing.
-
-Both stable casks install `Szcast.app` under `com.sauravsz.szcast`, so `szcast-universal` declares
-`conflicts_with cask: "szcast"`. `szcast` requires `arch: :arm64`; `szcast-universal` installs
-on any Mac.
+None. This fork publishes no cask and maintains no tap: releases are self-signed, so installing means
+dragging `Szcast.app` out of the DMG. `release.yml` still carries an `Update Homebrew cask` step from
+upstream; it exits early unless `HOMEBREW_TAP_TOKEN` is set, and that tap does not exist.
