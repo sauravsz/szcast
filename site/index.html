@@ -39,6 +39,7 @@
     </header>
 
     <p class="badges" aria-label="badges">
+      <a href="https://github.com/sauravsz/szcast/releases/latest"><img alt="Latest release" src="https://shieldcn.dev/github/release/sauravsz/szcast.svg?variant=ghost&amp;font=geist-mono&amp;mode=light&amp;label=RELEASE&amp;logo=lu:Tag&amp;valueColor=2563EB" /></a>
       <img alt="macOS 26 or later" src="https://shieldcn.dev/badge/MACOS-26%2B.svg?variant=ghost&amp;font=geist-mono&amp;mode=light&amp;logo=apple" />
       <img alt="Swift 6" src="https://shieldcn.dev/badge/SWIFT-6.svg?variant=ghost&amp;font=geist-mono&amp;mode=light&amp;logo=swift&amp;valueColor=EA580C" />
       <a href="https://github.com/sauravsz/szcast/blob/main/LICENSE"><img alt="License: AGPL-3.0" src="https://shieldcn.dev/badge/LICENSE-AGPL--3.0.svg?variant=ghost&amp;font=geist-mono&amp;mode=light&amp;logo=lu:Scale" /></a>
@@ -49,6 +50,7 @@
     <div class="panel">
       <p>Built with SwiftUI and AppKit. No dependencies, no Electron, no telemetry. It runs your Raycast extensions, too.</p>
       <nav>
+        <a href="https://github.com/sauravsz/szcast/releases">Releases</a>
         <a href="#build">Build</a>
         <a href="https://github.com/sauravsz/szcast/tree/main/docs">Docs</a>
         <a href="https://github.com/sauravsz/szcast/issues">Support</a>
@@ -58,13 +60,21 @@
 
     <div class="cols">
       <div class="panel" id="build">
-        <h2>Build from source</h2>
+        <h2>Install</h2>
+        <p>Grab the DMG from <a href="https://github.com/sauravsz/szcast/releases/latest">Releases</a>,
+          open it, and drag <strong>Szcast</strong> into <code>/Applications</code>.</p>
+        <ul>
+          <li>The build is <strong>self-signed, not notarized</strong> — right-click → <strong>Open</strong>
+            the first time, and macOS will not ask again.</li>
+          <li>Requires macOS 26 or newer on Apple silicon.</li>
+          <li>No Homebrew cask yet.</li>
+        </ul>
+        <h2>Or build from source</h2>
         <p>Requires macOS 26 or newer and Xcode 27 (Swift 6, macOS 26 SDK).</p>
         <pre><code>git clone https://github.com/sauravsz/szcast.git
 cd szcast
 open szcast.xcodeproj    # scheme: Szcast, then ⌘R</code></pre>
         <ul>
-          <li>No binaries are published yet — you build the app locally.</li>
           <li>Debug builds install as <strong>Szcast Dev</strong>, side by side with a release build.</li>
           <li>Run the harnesses with <code>./Scripts/run-tests.sh</code>.</li>
         </ul>

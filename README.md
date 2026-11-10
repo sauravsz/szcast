@@ -28,9 +28,13 @@ Szcast is a keyboard-first launcher for macOS: a command palette, file and menu 
 history, snippets, window management, notes, dictation, and a calculator. Built with SwiftUI and
 AppKit — no dependencies, no Electron, no telemetry. It runs Raycast extensions, too.
 
-No binaries are published yet — build it from source.
-
 [Explore all features →](docs/features/)
+
+## Install
+
+Download the DMG from [Releases](https://github.com/sauravsz/szcast/releases/latest), open it, and
+drag **Szcast** into `/Applications`. The build is **self-signed, not notarized** — right-click →
+**Open** the first time. Requires macOS 26 or newer on Apple silicon. There is no Homebrew cask.
 
 ## Build from source
 
@@ -73,8 +77,9 @@ See [docs/testing.md](docs/testing.md).
 
 ## What's in the build
 
-- **Self-update disabled** — the build ships no update public key and no release stream exists, so
-  nothing can install over itself. [docs/features/updates.md](docs/features/updates.md).
+- **Self-update has a key but no feed** — the build carries the release verification key, so a
+  signed update can be checked against a key this project owns. There is no update feed published
+  yet, so nothing installs over itself. [docs/features/updates.md](docs/features/updates.md).
 - **Static site** — the project page is `site/`, deployed to
   [szcast.vercel.app](https://szcast.vercel.app) on every push to `main`.
 - **Rates come from `tinycast.dev`** — the calculator fetches exchange rates from
