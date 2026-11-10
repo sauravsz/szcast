@@ -349,11 +349,13 @@ run compact-bar-test       Szcast/Features/Launcher/Model/CompactBarSelection.sw
                            Szcast/Platform/LocalizedResource.swift
 run fallback-test          Szcast/Features/Launcher/Model/Fallback.swift \
                            Szcast/Features/Launcher/Model/CommandID.swift \
+                           Szcast/Features/Launcher/Model/DefaultFallbacks.swift \
                            Szcast/Features/HotKeys/Model/HotKeyAction.swift \
                            Szcast/Features/QuickActions/Model/QuickAction.swift \
                            Szcast/Features/QuickActions/Model/BuiltInQuickAction.swift \
                            Szcast/Features/QuickActions/Model/CustomQuickAction.swift \
                            Szcast/Features/Quicklinks/Model/Quicklink.swift \
+                           Szcast/Features/Quicklinks/Model/DefaultQuicklinks.swift \
                            Szcast/Features/Quicklinks/Model/QuicklinkDestination.swift \
                            Szcast/Features/SystemActions/Model/SystemAction.swift \
                            Szcast/Features/WindowManagement/Model/WindowCommand.swift \
@@ -566,12 +568,14 @@ run uninstall-test         Szcast/Features/Uninstall/Model/UninstallTarget.swift
                            Szcast/Features/Uninstall/Model/UninstallProtection.swift \
                            Szcast/Features/Uninstall/Model/UninstallPlan.swift
 run quicklink-test         Szcast/Features/Quicklinks/Model/Quicklink.swift \
+                           Szcast/Features/Quicklinks/Model/DefaultQuicklinks.swift \
                            Szcast/Features/Quicklinks/Model/QuicklinkDestination.swift \
                            Szcast/Features/Quicklinks/Model/QuicklinkStore.swift \
                            Szcast/Features/Quicklinks/Model/QuicklinkArchive.swift \
                            Szcast/Features/Quicklinks/Model/RaycastQuicklinkImport.swift \
                            Szcast/Features/Quicklinks/UI/QuicklinkEditorSession.swift
 run quicklink-coordinator-test Szcast/Features/Quicklinks/Model/Quicklink.swift \
+                           Szcast/Features/Quicklinks/Model/DefaultQuicklinks.swift \
                            Szcast/Features/Quicklinks/Model/QuicklinkDestination.swift \
                            Szcast/Features/Quicklinks/Model/QuicklinkStore.swift \
                            Szcast/Features/Quicklinks/Model/QuicklinkArchive.swift \

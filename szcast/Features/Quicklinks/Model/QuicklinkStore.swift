@@ -78,6 +78,20 @@ final class QuicklinkStore {
         Quicklink.id(fromEntryID: entryID).flatMap(quicklink)
     }
 
+    private static let seededDefaultsKey = "szcastQuicklinksSeededDefaults"
+
+    /// Seeds standard web search and fallback quicklinks on first run.
+    func seedDefaultsIfNeeded() {
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: Self.seededDefaultsKey) else { return }
+        for quicklink in DefaultQuicklinks.all {
+            if self.quicklink(id: quicklink.id) == nil && !quicklinks.contains(where: { $0.name == quicklink.name }) {
+                try? add(quicklink)
+            }
+        }
+        defaults.set(true, forKey: Self.seededDefaultsKey)
+    }
+
     // Takes a whole draft, so adding an option doesn't churn every call site.
     @discardableResult
     func add(_ draft: Quicklink) throws(QuicklinkError) -> Quicklink {

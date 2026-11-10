@@ -20,6 +20,7 @@ struct FallbackTests {
         ordering()
         headers()
         verbs()
+        defaults()
         print("\(passes) passed, \(failures) failed")
         if failures > 0 { exit(1) }
     }
@@ -122,5 +123,39 @@ struct FallbackTests {
         verbs.append(Fallback.quicklink(UUID()).openVerb)
         check("every fallback names its own action", verbs.allSatisfy { !$0.isEmpty })
         check("the verbs are distinct", Set(verbs).count == verbs.count, "got \(verbs)")
+    }
+
+    // MARK: - Defaults
+
+    static func defaults() {
+        check("default order has 10 entries", DefaultFallbacks.order.count == 10)
+        check(
+            "top 3 default fallbacks are the web search quicklinks",
+            DefaultFallbacks.order[0] == DefaultFallbacks.braveSearchID &&
+            DefaultFallbacks.order[1] == DefaultFallbacks.chatGPTWebSearchID &&
+            DefaultFallbacks.order[2] == DefaultFallbacks.braveAskID)
+        check("default disabled count is 7", DefaultFallbacks.disabled.count == 7)
+        check(
+            "top 3 are NOT disabled by default",
+            !DefaultFallbacks.disabled.contains(DefaultFallbacks.braveSearchID) &&
+            !DefaultFallbacks.disabled.contains(DefaultFallbacks.chatGPTWebSearchID) &&
+            !DefaultFallbacks.disabled.contains(DefaultFallbacks.braveAskID))
+        check(
+            "commands are disabled by default",
+            DefaultFallbacks.disabled.contains(CommandID.quickAI.rawValue) &&
+            DefaultFallbacks.disabled.contains(CommandID.searchFiles.rawValue) &&
+            DefaultFallbacks.disabled.contains(CommandID.runShellCommand.rawValue) &&
+            DefaultFallbacks.disabled.contains(CommandID.define.rawValue))
+        check(
+            "secondary quicklinks are disabled by default",
+            DefaultFallbacks.disabled.contains(DefaultFallbacks.alternativeToID) &&
+            DefaultFallbacks.disabled.contains(DefaultFallbacks.chatGPTID) &&
+            DefaultFallbacks.disabled.contains(DefaultFallbacks.perplexityID))
+
+        check("default quicklinks contains 6 items", DefaultQuicklinks.all.count == 6)
+        let names = DefaultQuicklinks.all.map(\.name)
+        check(
+            "contains Brave Search, ChatGPT Web Search, Brave Ask",
+            names.contains("Brave Search") && names.contains("ChatGPT Web Search") && names.contains("Brave Ask"))
     }
 }

@@ -639,6 +639,8 @@
 		B24D0E1A5C3F4A9B00DEFA21 /* WebSearchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3F1 /* WebSearchModel.swift */; };
 		B24D0E1A5C3F4A9B00DEFA22 /* WebSearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3F2 /* WebSearchService.swift */; };
 		B24D0E1A5C3F4A9B00DEFA23 /* WebSearchAIProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3F3 /* WebSearchAIProvider.swift */; };
+		B24D0E1A5C3F4A9B00DEFA24 /* DefaultQuicklinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3F4 /* DefaultQuicklinks.swift */; };
+		B24D0E1A5C3F4A9B00DEFA25 /* DefaultFallbacks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3F5 /* DefaultFallbacks.swift */; };
 		B24D0E1A5C3F4A9B00DEFA01 /* DefaultHotKeys.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85D0FA9B72E4C3D6A1B2C3D4 /* DefaultHotKeys.swift */; };
 		B277075C16A5641C8F3E58C6 /* CameraAccess.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DD86B3ABBB71BC6EA116D85 /* CameraAccess.swift */; };
 		B32BBDF9B4D9705DAFFD11BF /* CalcHolidays.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAAAAB96B2F3061C9CC50978 /* CalcHolidays.swift */; };
@@ -1430,6 +1432,8 @@
 		85D0FA9B72E4C3D6A1B2C3F1 /* WebSearchModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSearchModel.swift; sourceTree = "<group>"; };
 		85D0FA9B72E4C3D6A1B2C3F2 /* WebSearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSearchService.swift; sourceTree = "<group>"; };
 		85D0FA9B72E4C3D6A1B2C3F3 /* WebSearchAIProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSearchAIProvider.swift; sourceTree = "<group>"; };
+		85D0FA9B72E4C3D6A1B2C3F4 /* DefaultQuicklinks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultQuicklinks.swift; sourceTree = "<group>"; };
+		85D0FA9B72E4C3D6A1B2C3F5 /* DefaultFallbacks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultFallbacks.swift; sourceTree = "<group>"; };
 		85D0FA9B72E4C3D6A1B2C3D4 /* DefaultHotKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultHotKeys.swift; sourceTree = "<group>"; };
 		85DAEE77ABAC4260C95F9AB5 /* AIProviderFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProviderFactory.swift; sourceTree = "<group>"; };
 		86545F54669A075FBDA5D1F1 /* CalculatorHistoryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalculatorHistoryScreen.swift; sourceTree = "<group>"; };
@@ -2153,6 +2157,7 @@
 		189B711C4CA1495429DCE8C7 /* Model */ = {
 			isa = PBXGroup;
 			children = (
+				85D0FA9B72E4C3D6A1B2C3F4 /* DefaultQuicklinks.swift */,
 				3AA3385A84985A52E2DA3596 /* Quicklink.swift */,
 				F616D2EE62AEC6782E77364D /* QuicklinkArchive.swift */,
 				61FFFE3901140714D3A7BB4C /* QuicklinkDestination.swift */,
@@ -3889,6 +3894,7 @@
 				89FF27BDEEA4FA552CF28543 /* CompactBarSelection.swift */,
 				B07F172974DA662EBE25422E /* EntryNaming.swift */,
 				0437C802C1F3E33E8532A7E3 /* Fallback.swift */,
+				85D0FA9B72E4C3D6A1B2C3F5 /* DefaultFallbacks.swift */,
 				3FE591549F24AE554C13CD0C /* FavoriteSlots.swift */,
 				61E6281FF5542F200CFB17E1 /* LauncherFileFormat.swift */,
 				6C7717F4851345ED38592B1C /* LauncherMatch.swift */,
@@ -4672,6 +4678,8 @@
 				B24D0E1A5C3F4A9B00DEFA21 /* WebSearchModel.swift in Sources */,
 				B24D0E1A5C3F4A9B00DEFA22 /* WebSearchService.swift in Sources */,
 				B24D0E1A5C3F4A9B00DEFA23 /* WebSearchAIProvider.swift in Sources */,
+				B24D0E1A5C3F4A9B00DEFA24 /* DefaultQuicklinks.swift in Sources */,
+				B24D0E1A5C3F4A9B00DEFA25 /* DefaultFallbacks.swift in Sources */,
 				B24D0E1A5C3F4A9B00DEFA01 /* DefaultHotKeys.swift in Sources */,
 				ACD8CAE659B1C49EC8652576 /* HotKeyCenter.swift in Sources */,
 				CC9A286B77E32C22B21A22BE /* HotKeyManager.swift in Sources */,

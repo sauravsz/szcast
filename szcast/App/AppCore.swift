@@ -343,6 +343,7 @@ final class AppCore {
             }
             // Before `hotKeys.start` even when off: the prune reads it. docs/features/quicklinks.md
             quicklinks.load()
+            quicklinks.seedDefaultsIfNeeded()
             quicklinkCoordinator.applyQuicklinksPresence()
             appleShortcutCoordinator.applyPresence()
             paletteCoordinator.onLauncherShown = { [weak self] in

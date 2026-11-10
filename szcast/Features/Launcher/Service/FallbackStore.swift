@@ -11,8 +11,8 @@ final class FallbackStore {
     private(set) var disabledIDs: Set<String>
 
     init() {
-        orderedIDs = defaults.stringArray(forKey: orderKey) ?? []
-        disabledIDs = Set(defaults.stringArray(forKey: disabledKey) ?? [])
+        orderedIDs = defaults.stringArray(forKey: orderKey) ?? DefaultFallbacks.order
+        disabledIDs = defaults.stringArray(forKey: disabledKey).map(Set.init) ?? DefaultFallbacks.disabled
     }
 
     func ordered(_ available: [Fallback]) -> [Fallback] {
