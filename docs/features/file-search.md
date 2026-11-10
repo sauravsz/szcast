@@ -286,7 +286,9 @@ search term, so ` report` opens **this screen** already narrowed to `report`. Th
 reaches the field, which is why Esc from here lands on the launcher with an empty query instead of
 re-entering. It needs `fileSearchEnabled` and ignores **Show in launcher** — the space is the
 explicit intent — so quick search still works when the ambient Files section is off. A query with
-no leading space stays in root search and leaves files to the section below.
+no leading space stays in root search and leaves files to the section below. Quick search pushes this
+screen, so one Escape returns to the launcher — the walkback documented in
+[palette.md](palette.md) covers it without a special case.
 A Files row is not an `AppEntry`: no `Kind`, ranking, alias or Hide from Search. Files and folders
 can be favorited through ⌘K or ⇧⌘F in either screen; their saved paths join the launcher’s Favorites
 section, share its reordering and ⌘-digit slots, and survive relaunch and settings backups. Explicit
