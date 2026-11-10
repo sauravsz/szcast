@@ -4,7 +4,7 @@
 </h1>
 
 <p align="center">
-  A native macOS launcher for everyday productivity — my personal fork of Tinycast.
+  A native macOS launcher for everyday productivity.
 </p>
 
 <p align="center">
@@ -28,8 +28,7 @@ Szcast is a keyboard-first launcher for macOS: a command palette, file and menu 
 history, snippets, window management, notes, dictation, and a calculator. Built with SwiftUI and
 AppKit — no dependencies, no Electron, no telemetry. It runs Raycast extensions, too.
 
-This repo is my personal build. It is **not** an official Tinycast release, and no binaries are
-published here yet — you build it from source.
+No binaries are published yet — build it from source.
 
 [Explore all features →](docs/features/)
 
@@ -50,8 +49,8 @@ xcodebuild -project szcast.xcodeproj -scheme Szcast -configuration Release \
   -derivedDataPath build/DerivedData build
 ```
 
-The Debug configuration builds **Szcast Dev** (`com.sauravsz.szcast.dev`), so it runs side by side
-with a release install of Tinycast. Release builds are `com.sauravsz.szcast`.
+The Debug configuration builds **Szcast Dev** (`com.sauravsz.szcast.dev`) so it runs side by side
+with a release install. Release builds are `com.sauravsz.szcast`.
 
 ### Local DMG
 
@@ -72,27 +71,23 @@ every rebuild resets your privacy permissions.
 Each harness compiles the shipped sources it guards, so it needs Xcode, not just Command Line Tools.
 See [docs/testing.md](docs/testing.md).
 
-## What's in the fork
+## What's in the build
 
-- **Renamed end to end** — product, bundle identifiers (`com.sauravsz.szcast`, `.beta`, `.dev`),
-  URL schemes (`szcast`, `szcast-dev`), and the source tree.
 - **Self-update disabled** — the build ships no update public key and no release stream exists, so
   nothing can install over itself. [docs/features/updates.md](docs/features/updates.md).
-- **Upstream website removed** — this fork's page is the static site in `site/`, deployed to
+- **Static site** — the project page is `site/`, deployed to
   [szcast.vercel.app](https://szcast.vercel.app) on every push to `main`.
-- **Rates still come from upstream** — the calculator fetches exchange rates from
-  `tinycast.dev/api/v1/currencies`. Harmless, but it is a dependency on Abue's server.
-- **Space-prefix file search** — open the launcher and type a leading space (` demo`) to widen
-  results to files and folders with a one-character floor, Alfred-style. The space overrides the
-  *Show in launcher* toggle (still needs the file search itself on).
-- **⌘1…⌘0 activates the Nth visible row** — hold ⌘ to see the digits printed on the first ten
-  rows; with a blank query they still launch pinned favourites by position.
+- **Rates come from `tinycast.dev`** — the calculator fetches exchange rates from
+  `tinycast.dev/api/v1/currencies`.
+- **Space opens file search** — a leading space in root search jumps straight to the file search
+  screen, Alfred-style, with the term after the space already in the field. Needs File Search
+  enabled; ignores the *Show in launcher* toggle.
+- **⌘1…⌘0 activates the Nth visible row** — hold ⌘ to see the digits on the first ten rows; with a
+  blank query they launch pinned favourites by position instead.
 
 ## Contributing
 
-This is a personal fork, so I don't take feature requests here. Fixes and improvements belong
-upstream: [abue-ammar/tinycast](https://github.com/abue-ammar/tinycast).
-Report problems with *this* build in [this repo's issues](https://github.com/sauravsz/szcast/issues).
+Feature requests and fixes are welcome in [this repo's issues](https://github.com/sauravsz/szcast/issues).
 
 ## License
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Szcast — a native macOS launcher for everyday productivity. Lightweight and open source. A fork of Tinycast." />
+  <meta name="description" content="Szcast — a native macOS launcher for everyday productivity. Lightweight and open source." />
   <meta name="theme-color" content="#0b0b0f" />
   <title>szcast — native macOS launcher</title>
   <style>
@@ -39,7 +39,6 @@
     </header>
 
     <p class="badges" aria-label="badges">
-      <a href="https://github.com/sauravsz/szcast/releases/latest"><img alt="Latest release" src="https://shieldcn.dev/github/release/sauravsz/szcast.svg?variant=ghost&amp;font=geist-mono&amp;mode=light&amp;label=RELEASE&amp;logo=lu:Tag&amp;valueColor=2563EB" /></a>
       <img alt="macOS 26 or later" src="https://shieldcn.dev/badge/MACOS-26%2B.svg?variant=ghost&amp;font=geist-mono&amp;mode=light&amp;logo=apple" />
       <img alt="Swift 6" src="https://shieldcn.dev/badge/SWIFT-6.svg?variant=ghost&amp;font=geist-mono&amp;mode=light&amp;logo=swift&amp;valueColor=EA580C" />
       <a href="https://github.com/sauravsz/szcast/blob/main/LICENSE"><img alt="License: AGPL-3.0" src="https://shieldcn.dev/badge/LICENSE-AGPL--3.0.svg?variant=ghost&amp;font=geist-mono&amp;mode=light&amp;logo=lu:Scale" /></a>
@@ -50,7 +49,7 @@
     <div class="panel">
       <p>Built with SwiftUI and AppKit. No dependencies, no Electron, no telemetry. It runs your Raycast extensions, too.</p>
       <nav>
-        <a href="https://github.com/sauravsz/szcast/releases">Releases</a>
+        <a href="#build">Build</a>
         <a href="https://github.com/sauravsz/szcast/tree/main/docs">Docs</a>
         <a href="https://github.com/sauravsz/szcast/issues">Support</a>
         <a href="https://github.com/sauravsz/szcast">GitHub</a>
@@ -58,30 +57,41 @@
     </div>
 
     <div class="cols">
-      <div class="panel">
-        <h2>Install</h2>
-        <p>On an Apple silicon Mac with macOS 26 or newer:</p>
-        <pre><code>brew install --cask szcast
-brew install --cask szcast@beta</code></pre>
+      <div class="panel" id="build">
+        <h2>Build from source</h2>
+        <p>Requires macOS 26 or newer and Xcode 27 (Swift 6, macOS 26 SDK).</p>
+        <pre><code>git clone https://github.com/sauravsz/szcast.git
+cd szcast
+open szcast.xcodeproj    # scheme: Szcast, then ⌘R</code></pre>
         <ul>
-          <li><strong>DMG</strong>: notarized, from <a href="https://github.com/sauravsz/szcast/releases">Releases</a>. Drag <code>Szcast.app</code> to <code>/Applications</code>.</li>
-          <li><strong>Intel Mac</strong>: install from <a href="https://github.com/sauravsz/homebrew-szcast">Homebrew tap</a>.</li>
+          <li>No binaries are published yet — you build the app locally.</li>
+          <li>Debug builds install as <strong>Szcast Dev</strong>, side by side with a release build.</li>
+          <li>Run the harnesses with <code>./Scripts/run-tests.sh</code>.</li>
         </ul>
       </div>
       <div class="panel">
-        <h2>License &amp; attribution</h2>
-        <p>szcast is a personal fork of
-          <a href="https://github.com/abue-ammar/tinycast">Tinycast</a> by Abue Ammar,
-          under the GNU AGPL v3 license. Original copyright © 2026 Abue Ammar.
-          No affiliation or endorsement implied.</p>
-        <p><a href="https://github.com/sauravsz/szcast/blob/main/LICENSE">LICENSE</a> ·
-           <a href="https://github.com/sauravsz/szcast/blob/main/NOTICE.md">NOTICE</a></p>
+        <h2>Launcher touches</h2>
+        <ul>
+          <li><strong>Space</strong> in root search opens the file search screen, Alfred-style.</li>
+          <li><strong>⌘1…⌘0</strong> activates the Nth visible row; hold ⌘ to see the digits.</li>
+          <li>Self-update is disabled in this build — nothing installs over itself.</li>
+        </ul>
       </div>
+    </div>
+
+    <div class="panel">
+      <h2>License &amp; attribution</h2>
+      <p>szcast is a fork of
+        <a href="https://github.com/abue-ammar/tinycast">Tinycast</a> by Abue Ammar,
+        under the GNU AGPL v3 license. Original copyright © 2026 Abue Ammar.
+        No affiliation or endorsement implied.</p>
+      <p><a href="https://github.com/sauravsz/szcast/blob/main/LICENSE">LICENSE</a> ·
+         <a href="https://github.com/sauravsz/szcast/blob/main/NOTICE.md">NOTICE</a></p>
     </div>
 
     <footer>
       <p>szcast is free and stays free. AGPL-3.0 — see the repo for details.</p>
-      <p>Forked from <a href="https://github.com/abue-ammar/tinycast">abue-ammar/tinycast</a>. Hosted on <a href="https://github.com/sauravsz/szcast">GitHub</a>, deployed to Vercel.</p>
+      <p>Hosted on <a href="https://github.com/sauravsz/szcast">GitHub</a>, deployed to Vercel.</p>
     </footer>
   </div>
 </body>
