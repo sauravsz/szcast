@@ -361,7 +361,7 @@ final class ExtensionNodeShims: @unchecked Sendable {
 
         case "chmod":
             let target = try path(0)
-            guard let mode = arguments[safe: 1] as? NSNumber else {
+            guard let requested = arguments[safe: 1] as? NSNumber else {
                 throw ShimError.failed("fs.chmod needs a mode.", "EINVAL")
             }
             guard fileManager.fileExists(atPath: target) else {
@@ -369,14 +369,14 @@ final class ExtensionNodeShims: @unchecked Sendable {
             }
             // No group/other write and no setuid/setgid/sticky: an extension may mark its own
             // helper runnable, not hand another account — or a planted file — a way in.
-            let requested = mode.intValue & 0o777
-            let permitted = requested & 0o755
-            guard requested == permitted else {
+            // Compare the whole mode, not the masked one: `0o4000` masks to `0` and would
+            // otherwise silently leave the file unreadable instead of refusing the call.
+            let mode = requested.intValue
+            guard mode == (mode & 0o777), (mode & 0o755) == mode else {
                 throw ShimError.failed(
                     "chmod EPERM: modes with group/other write or set-id bits are refused", "EPERM")
             }
-            try fileManager.setAttributes(
-                [.posixPermissions: permitted], ofItemAtPath: target)
+            try fileManager.setAttributes([.posixPermissions: mode], ofItemAtPath: target)
             return nil
 
         case "mkdtemp":

@@ -8,24 +8,17 @@ struct KeychainSecretStore: Sendable {
     }
 
     private let service: String
-    /// Set only for scopes that hold model credentials: macOS then requires the user's presence.
-    private let requiresUserPresence: Bool
 
     /// Every scope the app stores under, named here so the whole keychain surface is one list.
-    /// Model credentials ask for presence, so a background process cannot read them silently.
-    static let aiAPIKeys = KeychainSecretStore(scope: "ai-api-keys", requiresUserPresence: true)
+    static let aiAPIKeys = KeychainSecretStore(scope: "ai-api-keys")
     static let aiRequestHeaders = KeychainSecretStore(scope: "ai-request-headers")
     static let mcpSecrets = KeychainSecretStore(scope: "mcp-secrets")
     static let installedAIEnvironment = KeychainSecretStore(scope: "installed-ai-environment")
     /// Third-party OAuth tokens, one JSON item per extension/provider pair.
     static let extensionOAuthTokens = KeychainSecretStore(scope: "extension-oauth-tokens")
 
-    init(
-        scope: String, requiresUserPresence: Bool = false,
-        bundleIdentifier: String? = Bundle.main.bundleIdentifier
-    ) {
+    init(scope: String, bundleIdentifier: String? = Bundle.main.bundleIdentifier) {
         service = "\(bundleIdentifier ?? "com.sauravsz.szcast").\(scope)"
-        self.requiresUserPresence = requiresUserPresence
     }
 
     func secret(for account: UUID) throws -> String? {
@@ -57,18 +50,10 @@ struct KeychainSecretStore: Sendable {
         if status == errSecItemNotFound {
             var addition = lookup
             addition[kSecValueData as String] = data
-            // Without this the item inherits the legacy default, readable whenever the file is
-            // unlocked; after-first-unlock is the strongest class a background helper can use.
-            if requiresUserPresence,
-                let access = SecAccessControlCreateWithFlags(
-                    nil, kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
-                    .userPresence, nil)
-            {
-                addition[kSecAttrAccessControl as String] = access
-            } else {
-                addition[kSecAttrAccessible as String] =
-                    kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-            }
+            // Not `.userPresence`: `AIProviderFactory.make` reads the key on every message, so a
+            // presence prompt there would fire per turn. After-first-unlock is the strongest class
+            // that still lets a background helper read its own config.
+            addition[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
             let addStatus = SecItemAdd(addition as CFDictionary, nil)
             guard addStatus == errSecSuccess else { throw StoreError.keychain(addStatus) }
         } else if status != errSecSuccess {

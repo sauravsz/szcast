@@ -350,6 +350,6 @@ Closed after the first round, same day:
 | --- | --- |
 | **M-5** (rest) | `raycast`/`com.raycast`/`raycastinternal` dropped from `CFBundleURLSchemes`; the parser still reads them for pasted links, but macOS no longer hands us those schemes |
 | **M-5** (`launchType`) | Now ignored outright: a link never chooses a background launch, whichever scheme it arrives on |
-| **L-6** (rest) | `ai-api-keys` items carry a `SecAccessControl` with `.userPresence`; `values(for:)` throws on a corrupt item instead of reporting none |
-| **L-7** (rest) | `chmod` refuses `0o777`-style modes and set-id bits |
+| **L-6** (part) | `values(for:)` throws on a corrupt item instead of reporting none. **`.userPresence` was tried and reverted:** `AIProviderFactory.make` reads the key on every message, so a presence prompt there would fire once per turn |
+| **L-7** (rest) | `chmod` refuses `0o777`-style modes and set-id bits, comparing the whole mode so `0o4000` is refused rather than silently masked to `0000` |
 | **`isReleaseSigned` log** | Failure line is `.private`, so a URL and network error no longer land in the public log |
