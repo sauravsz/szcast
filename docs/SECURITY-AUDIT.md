@@ -35,7 +35,7 @@ The Ed25519 release-verification key is **empty in the working tree** — see fi
 ## 2. Findings
 
 ### H-1 — Extension runtime gives arbitrary third-party JS unrestricted filesystem, process and network access with no per-extension capability gate
-**Severity: High** (violates the project's own stated threat model)
+**Severity: High** (violates the project's own stated threat model) — **OPEN. Not addressed.**
 
 The `fs` shim does no path confinement whatsoever — any absolute or `~` path is passed straight to Darwin:
 
