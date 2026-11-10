@@ -186,12 +186,18 @@ final class HotKeyManager {
     /// A key that already holds a value means the seed ran, so a cleared binding stays cleared.
     private func seedDefaultsIfNeeded() {
         guard !defaults.bool(forKey: Self.seededDefaultsKey) else { return }
-        defaults.set(true, forKey: Self.seededDefaultsKey)
+        var seeded = 0
         // Through `setBinding`, so the seed takes the same path a recorded chord does: indexed,
         // registered, and conflict-checked. Writing the JSON directly skipped all three.
         for (action, binding) in DefaultHotKeys.bindings where bindings[action] == nil {
             guard conflictOwner(of: binding, excluding: action) == nil else { continue }
             setBinding(binding, for: action)
+            seeded += 1
+        }
+        // Only after a pass that bound something: a run where nothing landed must retry next launch
+        // rather than mark the seed done and leave every chord unbound for good.
+        if seeded > 0 || DefaultHotKeys.bindings.allSatisfy({ bindings[$0.0] != nil }) {
+            defaults.set(true, forKey: Self.seededDefaultsKey)
         }
     }
 
