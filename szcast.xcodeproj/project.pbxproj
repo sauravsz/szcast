@@ -5111,6 +5111,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = szcast;
 				CODE_SIGN_ENTITLEMENTS = Szcast/Szcast.entitlements;
+				PRODUCT_NAME = szcast;
 				COMBINE_HIDPI_IMAGES = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",

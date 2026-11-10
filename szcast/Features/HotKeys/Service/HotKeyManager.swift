@@ -108,8 +108,8 @@ final class HotKeyManager {
         }
         prune(key: boundQuickActionKey, live: quickActionIDs) { .quickAction(id: $0) }
         // After the prunes, so a dropped record can't survive in memory this session.
-        seedDefaultsIfNeeded()
         for action in candidateActions { bindings[action] = storedBinding(for: action) }
+        seedDefaultsIfNeeded()
         revision &+= 1
 
         // `register` no-ops on an unbound item, so the fixed catalogs need no index of their own.
@@ -187,11 +187,11 @@ final class HotKeyManager {
     private func seedDefaultsIfNeeded() {
         guard !defaults.bool(forKey: Self.seededDefaultsKey) else { return }
         defaults.set(true, forKey: Self.seededDefaultsKey)
-        for (action, binding) in DefaultHotKeys.bindings where storedBinding(for: action) == nil {
-            guard let data = try? encoder.encode(binding),
-                let json = String(data: data, encoding: .utf8)
-            else { continue }
-            defaults.set(json, forKey: action.defaultsKey)
+        // Through `setBinding`, so the seed takes the same path a recorded chord does: indexed,
+        // registered, and conflict-checked. Writing the JSON directly skipped all three.
+        for (action, binding) in DefaultHotKeys.bindings where bindings[action] == nil {
+            guard conflictOwner(of: binding, excluding: action) == nil else { continue }
+            setBinding(binding, for: action)
         }
     }
 

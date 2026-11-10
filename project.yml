@@ -94,6 +94,9 @@ targets:
           - "$(inherited)"
           - "@executable_path/../Frameworks"
       configs:
+        # The product name is what macOS shows: `szcast`, not the target's capitalisation.
+        Release:
+          PRODUCT_NAME: szcast
         # Debug is its own channel, so a local build never corrupts the installed app's state.
         Debug:
           PRODUCT_NAME: szcast Dev
