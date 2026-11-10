@@ -55,6 +55,15 @@ environment deploys from `main` only, so a workflow pushed to any other branch c
 | `NOTARY_KEY_ID`, `NOTARY_ISSUER_ID` | that key's ID and its issuer ID                                                                 |
 | `UPDATE_SIGNING_KEY`                | the release key: an Ed25519 private key, base64, whose public half is `SzcastUpdatePublicKey` |
 
+> **Current state.** The release key exists and its public half is committed — `szcast/Info.plist`
+> carries `IwtZDpObVvUn0+fexjf+7U8fV/w50jcdQqRhp1iBvac=`, and `v1.0.0` ships with it. The private
+> half is **not** in this repo; set it as the `UPDATE_SIGNING_KEY` secret before running the Release
+> workflow, or `Scripts/package-release.sh` refuses to package. A build only trusts the key it
+> carries, so losing the private half means shipping one more release under the old key.
+>
+> No other secret in this table is configured yet, so the GitHub Release workflow cannot run;
+> `v1.0.0` was built, self-signed and uploaded from a local machine instead.
+
 Export the Developer ID identity alone — `security export -t identities` bundles every identity in
 the keychain. In Keychain Access, open **My Certificates**, select
 `Developer ID Application: … (YOUR_TEAM_ID)`, choose **File → Export Items…** and save a `.p12` with a

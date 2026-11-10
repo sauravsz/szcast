@@ -69,7 +69,7 @@ every rebuild resets your privacy permissions.
 ### Tests
 
 ```sh
-./Scripts/run-tests.sh          # 113 self-contained harnesses
+./Scripts/run-tests.sh          # 114 self-contained harnesses
 ```
 
 Each harness compiles the shipped sources it guards, so it needs Xcode, not just Command Line Tools.
