@@ -26,10 +26,16 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>Szcast URL Scheme</string>
+			<string>Raycast and Szcast URL Scheme</string>
+			<!-- `raycast` is claimed so a Raycast store link opens Szcast's install panel.
+			     The escalation that made this risky is closed in the parser: a URL can no
+			     longer request `launchType=background` (ExtensionDeepLink.route), so a link
+			     only ever reaches a confirmation panel or a foreground command. -->
 			<key>CFBundleURLSchemes</key>
 			<array>
+				<string>raycast</string>
 				<string>$(SZCAST_URL_SCHEME)</string>
+				<string>com.raycast</string>
 			</array>
 		</dict>
 	</array>

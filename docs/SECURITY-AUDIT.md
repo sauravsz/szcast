@@ -157,7 +157,7 @@ and `isExecutablePayload` (`:172-185`) treats a `#!` shebang **or any Mach-O mag
 ---
 
 ### M-5 — Deep-link surface is claimed under Raycast's own URL schemes
-**Severity: Medium** (exposure — input validation itself is good) — **`launchType` FIXED 2026-11-10; scheme claims open**
+**Severity: Medium** (exposure — input validation itself is good) — **`launchType` FIXED 2026-11-10; scheme claims kept deliberately**
 
 `szcast/Info.plist:20-28`
 ```xml
@@ -179,11 +179,20 @@ Two residual gaps:
 **Why it matters:** claiming another product's scheme enlarges the attack surface to any `raycast://` link ever clicked; the `note`/`chat` consent exemption is an unauthenticated read/inspect primitive.
 **Resolution (partial).** `ExtensionDeepLink` now honours `launchType=background` **only** when the URL's scheme is this channel's own (`AppURLScheme.current`). A `raycast://…?launchType=background` link is downgraded to `.userInitiated`, so a web page can no longer start an installed command with no window and nobody in front of it. Verified live before the change: the parameter was read straight from the query and passed into `run(...)` behind only the global extensions switch.
 
-**Scheme claims: FIXED 2026-11-10.** `raycast`, `com.raycast` and `raycastinternal` are gone from
-`CFBundleURLSchemes`; only `$(SZCAST_URL_SCHEME)` is registered. Registration is what made the surface
-reachable — macOS hands an app only the schemes it claims — so a web page opening `raycast://` now
-reaches Raycast or nothing. The **parser** still accepts those schemes, so a pasted link or the store
-install flow keeps working; that is input validation, not reachability.
+**Scheme claims: kept, by product decision.** `raycast` and `com.raycast` stay in
+`CFBundleURLSchemes`, because clicking a Raycast store link is how a user installs an extension into
+Szcast; unregistering them broke that path outright. What made the claim dangerous was never the
+reachability, it was the escalation behind it — a link that chose `.background` started an installed
+command with no window and nobody watching. That is closed above, so the reachable surface is now:
+
+- a `raycast://extensions/…?source=webstore` link opens the **Install Extension** confirmation panel
+  (`ExtensionStorePanel`), never a silent install;
+- a `raycast://extensions/<ext>/<command>` link runs that command, and only if extensions are enabled
+  and the command resolves to an installed extension;
+- `launchType=background` from a URL is ignored.
+
+The residual risk is unchanged in kind and smaller in degree: a page can open the install panel, and
+a command link runs a command the user already installed — the same authority a launcher row has.
 
 `launchType` is now ignored outright rather than downgraded: a link never chooses a background launch,
 whatever scheme it arrives on. Only the host schedules those.
@@ -348,7 +357,7 @@ Closed after the first round, same day:
 
 | Item | Change |
 | --- | --- |
-| **M-5** (rest) | `raycast`/`com.raycast`/`raycastinternal` dropped from `CFBundleURLSchemes`; the parser still reads them for pasted links, but macOS no longer hands us those schemes |
+| **M-5** (rest) | Scheme claims **kept** — dropping them broke store-link installs, and the escalation is closed at the parser instead |
 | **M-5** (`launchType`) | Now ignored outright: a link never chooses a background launch, whichever scheme it arrives on |
 | **L-6** (part) | `values(for:)` throws on a corrupt item instead of reporting none. **`.userPresence` was tried and reverted:** `AIProviderFactory.make` reads the key on every message, so a presence prompt there would fire once per turn |
 | **L-7** (rest) | `chmod` refuses `0o777`-style modes and set-id bits, comparing the whole mode so `0o4000` is refused rather than silently masked to `0000` |

@@ -42,14 +42,13 @@ Settings shortcut field; only the Settings window sets it.
   or a link opened at login before the first scan, still runs.
 - **A link that launches the app waits for `start`.** `AppCore.handleOpenURL` queues until every
   handler is wired, then runs the queue in order.
-- **The scheme is the channel's own.** Release registers `szcast://`, Debug `szcast-dev://`, set by
-  `SZCAST_URL_SCHEME` in `project.yml` and read through `AppURLScheme`. `raycast://` and
-  `com.raycast:` are **no longer in `CFBundleURLSchemes`**: macOS hands an app only the schemes it
-  claims, so a page opening `raycast://` reaches Raycast or nothing. `ExtensionDeepLink` still
-  *parses* those forms, which keeps a pasted link and the store install flow working — input
-  validation is not reachability.
+- **The scheme is the channel's own, and Raycast's are claimed for interop.** Release answers
+  `szcast://`, Debug `szcast-dev://`, set by `SZCAST_URL_SCHEME` in `project.yml` and read through
+  `AppURLScheme`. `raycast://` and `com.raycast:` are registered too, because clicking a Raycast
+  store link is how an extension gets installed here: it opens the **Install Extension** panel, not a
+  silent install. A command link only runs a command the user already installed.
 - **A link cannot ask for a background launch.** `launchType` in a URL is recognised and ignored;
-  only the host schedules background runs.
+  only the host schedules background runs. This is what makes the `raycast://` claim safe to keep.
 - **The built-in router never touches extension types.** `DeepLinkCoordinator.handles(_:)` leaves
   the `extensions` host and every Raycast scheme to the extension branch of
   `AppCore.handleOpenURL`. Copy Deeplink asks `ExtensionCoordinator.deepLink(forEntryID:arguments:)`
