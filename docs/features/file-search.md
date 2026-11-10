@@ -289,6 +289,12 @@ explicit intent — so quick search still works when the ambient Files section i
 no leading space stays in root search and leaves files to the section below. Quick search pushes this
 screen, so one Escape returns to the launcher — the walkback documented in
 [palette.md](palette.md) covers it without a special case.
+
+The shortcut is not discoverable from the launcher itself, so the settings pane explains it: the
+feature switch section carries a footer naming the space, saying it is a shortcut rather than part of
+the search, and noting that it works regardless of the **Show in launcher** switch. `FeatureSwitchSection`
+takes an optional `footer:` for exactly this — a line for behaviour the two toggles do not make
+obvious.
 A Files row is not an `AppEntry`: no `Kind`, ranking, alias or Hide from Search. Files and folders
 can be favorited through ⌘K or ⇧⌘F in either screen; their saved paths join the launcher’s Favorites
 section, share its reordering and ⌘-digit slots, and survive relaunch and settings backups. Explicit

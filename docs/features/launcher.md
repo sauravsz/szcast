@@ -769,9 +769,11 @@ A row past the tenth carries no chord. Deriving the numbers from the drawn order
 print digits that activate a different row.
 Holding ⌘ swaps each numbered row's kind label for its chord. `PalettePanel` publishes the modifier
 into `PaletteState.commandHeld` from `.flagsChanged` and clears it in `resignKey` — not in `prepare`,
-which a re-show that preserves state skips entirely. The flag flips **400 ms after** the press, not
+which a re-show that preserves state skips entirely. The flag flips **150 ms after** the press, not
 on it: every ⌘ chord in the palette starts as a ⌘ press, so revealing on the down edge flashed the
-numbering under ⌘↵ and ⌘K. `noteCommandHeld` schedules the reveal and any release cancels it, so a
+numbering under ⌘↵ and ⌘K. 150 ms keeps that protection — a chord's keystroke lands well inside it —
+while a deliberate ⌘ hold now lights the digits almost immediately, where the original 400 ms read as
+nothing happening. `noteCommandHeld` schedules the reveal and any release cancels it, so a
 chord's own tap never outlives its keystroke while a deliberate hold still lights every row. **`AppRow` observes that flag itself**: reading
 it any higher would attach it to `RootPaletteView`'s body and rebuild the whole palette on every ⌘
 press, where a row-level read re-runs only the handful of rows the `LazyVStack` has realized. The
