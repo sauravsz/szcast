@@ -35,8 +35,7 @@ AppKit — no dependencies, no Electron, no telemetry. It runs Raycast extension
 
 Download the DMG from [Releases](https://github.com/sauravsz/szcast/releases/latest), open it, and
 drag **szcast** into `/Applications`. Right-click → **Open** on first launch: the build is
-self-signed rather than notarized, so macOS asks once. macOS 26 or newer, Apple silicon. There is no
-Homebrew cask.
+self-signed rather than notarized, so macOS asks once. macOS 26 or newer, Apple silicon.
 
 ## What this build changes
 
@@ -103,19 +102,15 @@ See [docs/testing.md](docs/testing.md).
 
 ## What to know before you rely on it
 
-- **The site is static.** `site/` is plain HTML, deployed to
-  [szcast.vercel.app](https://szcast.vercel.app) on every push to `main`. No build step.
 - **Self-update has a key but no feed.** The build carries the release verification key, so a signed
   update is checked against a key this project owns — but no feed is published, so nothing installs
   over itself. [docs/features/updates.md](docs/features/updates.md).
 - **Exchange rates come from `tinycast.dev`**, the upstream project's server, not one this repo
   controls. If it goes away, conversions stop updating and the last cached snapshot is served until
   it ages out. [docs/features/calculator.md](docs/features/calculator.md).
-- **CI cannot cut a release.** `release.yml` needs a Developer ID certificate and notarization
-  secrets this fork does not have, and fails loudly at its first signing step. Releases are built and
-  signed locally instead. [docs/release.md](docs/release.md).
-- **Extension `fetch` has no host allowlist** and there is no per-extension consent beyond the
-  one-time switch. Known, documented as H-1 in [docs/SECURITY-AUDIT.md](docs/SECURITY-AUDIT.md).
+- **Installed extensions are trusted with your whole account.** Extension JavaScript can read and
+  write any file you can, fetch any URL, and spawn `/bin/sh`. The only prompt is one "Enable
+  extensions?" switch. See [docs/SECURITY-AUDIT.md](docs/SECURITY-AUDIT.md) — finding H-1.
 
 ## Contributing
 
