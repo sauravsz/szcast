@@ -71,19 +71,16 @@ struct FileSearchTests {
             FileSearchQuery.launcherResults("note", favorites: many, indexed: []).count
                 == FileSearchQuery.launcherLimit,
             "favorite matches respect the launcher section limit")
-        expect(FileSearchQuery.spaceScope("resume").term == "resume" && !FileSearchQuery.spaceScope("resume").isSpaceScoped,
-            "an unprefixed query is not space scoped")
-        expect(FileSearchQuery.spaceScope(" resume").term == "resume" && FileSearchQuery.spaceScope(" resume").isSpaceScoped,
-            "a leading space marks file scope and leaves the term untouched")
-        expect(FileSearchQuery.answersSpaceLauncher(" r"),
-            "one character is enough of a question in space mode")
-        expect(!FileSearchQuery.answersSpaceLauncher("resume"),
-            "an unprefixed query does not answer in space mode")
-        expect(!FileSearchQuery.answersSpaceLauncher("  "),
-            "a bare leading space is not a query yet")
         expect(
-            FileSearchQuery.launcherResults(" final", favorites: [folder, file], indexed: []) == [file],
-            "space mode filters favorite files by the term after the prefix")
+            FileSearchQuery.spaceTerm("resume") == nil,
+            "a query with no leading space is not a quick-search marker")
+        expect(
+            FileSearchQuery.spaceTerm(" resume") == "resume",
+            "a leading space yields the term after it, and the space never reaches the field")
+        expect(FileSearchQuery.spaceTerm(" ") == "", "a bare space carries an empty term")
+        expect(
+            !FileSearchQuery.answersLauncher(" re"),
+            "the launcher's own file section still needs three characters")
     }
     static func queryMatching() {
         expect(
