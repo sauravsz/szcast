@@ -44,6 +44,7 @@ szcast builds on Tinycast with new features, visual customizations, and sensible
 - **Rich Notes with Inline Images**: TextKit 2 image attachments with clipboard image paste, drag-and-drop, and dynamic Markdown reveal when the cursor rests on the line.
 - **Enhanced Snippets Management**: Folder and tag organization via YAML frontmatter, horizontal filter chips, snippet duplication (`⌘D`), and configurable default actions (Paste, Copy, or Copy & Paste).
 - **Curated Defaults and Quicklinks**: Fallback search seeded with Brave Search, ChatGPT Web Search, and Brave Ask; Hyper key (⌃⌥⇧⌘) pre-armed out of the box; Space quick-jump to file search; and ⌘1…⌘0 row activation shortcuts.
+- **Advanced Dictation Suite**: Ported capabilities from [EnviousWispr](https://github.com/saurabhav88/EnviousWispr) — shared model discovery across FluidAudio and EnviousWispr paths (immediate Nvidia Parakeet Ultra support), Superwhisper S1-mini offline AI polish with tone/structure/context control line prompting, model offloading with idle release intervals and Never offload option, spoken emoji conversion, spoken punctuation, filler word removal, media playback controls during recording (Continue, Lower, Mute, Pause with Apple Music and Spotify hooks), bottom-screen glass recording pill with live audio level meter, custom words dictionary with JSON import/export, 5 domain vocabulary packs (Tech, Medical, Legal, Brands, Names), self-learning dictionary corrections, and menu bar copy action.
 
 ## What to know before you rely on it
 
@@ -54,6 +55,8 @@ szcast builds on Tinycast with new features, visual customizations, and sensible
 ## Contributing
 
 szcast is built natively with Swift 6, SwiftUI, AppKit, TextKit 2, JavaScriptCore (for native Raycast extension execution), CryptoKit, SQLite, NSSound, and CoreAnimation.
+
+Special thanks and contribution credit to [EnviousWispr](https://github.com/saurabhav88/EnviousWispr) by saurabhav88 for the dictation architecture patterns, vocabulary packs, normalization routines, audio ducker concepts, and Superwhisper S1 prompting adapted into szcast's dictation engine.
 
 Feature requests, bug reports, and contributions are welcome in [this repo's issues](https://github.com/sauravsz/szcast/issues).
 
