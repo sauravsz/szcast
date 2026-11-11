@@ -149,6 +149,20 @@ struct DictationTest {
         store.addSnippet(keyword: "brb", expansion: "be right back")
         check(store.applySnippets("I will brb"), "I will be right back")
 
+        // Dictation Hotkey Presets
+        check(DictationHotkeyPreset.fn.binding == .globe ? "true" : "false", "true")
+        check(DictationHotkeyPreset.optionSpace.binding == DictationHotkeyPreset.optionSpaceBinding ? "true" : "false", "true")
+        check(DictationHotkeyPreset.controlSpace.binding == DictationHotkeyPreset.controlSpaceBinding ? "true" : "false", "true")
+        check(DictationHotkeyPreset.custom.binding == nil ? "true" : "false", "true")
+
+        check(DictationHotkeyPreset.preset(for: .globe).rawValue, "fn")
+        check(DictationHotkeyPreset.preset(for: DictationHotkeyPreset.optionSpaceBinding).rawValue, "option_space")
+        check(DictationHotkeyPreset.preset(for: DictationHotkeyPreset.controlSpaceBinding).rawValue, "control_space")
+        check(DictationHotkeyPreset.preset(for: nil).rawValue, "custom")
+
+        let customCombo = HotKeyBinding.combo(KeyShortcut(carbonKeyCode: 2, carbonModifiers: 256))
+        check(DictationHotkeyPreset.preset(for: customCombo).rawValue, "custom")
+
         check(DictationModel.redux.folderName, "parakeet-redux")
         check(DictationModel.ultra.folderName, "parakeet-ultra")
         check(DictationModel.redux.title, "Parakeet · Redux")

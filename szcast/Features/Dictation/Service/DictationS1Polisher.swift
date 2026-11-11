@@ -147,6 +147,7 @@ actor DictationS1Polisher {
             let messages: [Message]
             let temperature: Double
             let stream: Bool
+            let max_tokens: Int
         }
 
         struct ResponseBody: Decodable {
@@ -159,6 +160,7 @@ actor DictationS1Polisher {
             let choices: [Choice]
         }
 
+        let cap = max(64, min(512, userMessage.split(separator: " ").count * 4))
         let body = RequestBody(
             model: model,
             messages: [
@@ -166,7 +168,8 @@ actor DictationS1Polisher {
                 Message(role: "user", content: userMessage)
             ],
             temperature: 0.1,
-            stream: false
+            stream: false,
+            max_tokens: cap
         )
 
         var request = URLRequest(url: endpointURL)

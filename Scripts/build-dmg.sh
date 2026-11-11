@@ -22,8 +22,9 @@ xcodebuild -project Szcast.xcodeproj -scheme Szcast -configuration Release \
 APP="$DERIVED/Build/Products/Release/szcast.app"
 
 if [ -f "szcast/Resources/szcast.icns" ]; then
-    echo "▸ Injecting brand icon szcast.icns…"
+    echo "▸ Injecting brand icon szcast.icns and AppIcon.icns…"
     cp "szcast/Resources/szcast.icns" "$APP/Contents/Resources/szcast.icns"
+    cp "szcast/Resources/szcast.icns" "$APP/Contents/Resources/AppIcon.icns"
 fi
 
 if [ -d "szcast/Resources/Packs" ]; then

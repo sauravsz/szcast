@@ -1,5 +1,5 @@
 {
-  "fill": "automatic",
+  "fill": "none",
   "groups": [
     {
       "layers": [
@@ -7,15 +7,7 @@
           "image-name": "thunder.svg",
           "name": "thunder"
         }
-      ],
-      "shadow": {
-        "kind": "neutral",
-        "opacity": 0.5
-      },
-      "translucency": {
-        "enabled": true,
-        "value": 0.5
-      }
+      ]
     }
   ],
   "supported-platforms": {

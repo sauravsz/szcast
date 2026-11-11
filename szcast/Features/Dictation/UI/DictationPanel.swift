@@ -41,11 +41,16 @@ private struct DictationProcessingWave: View {
             let progress =
                 timeline.date.timeIntervalSince(startedAt)
                 .truncatingRemainder(dividingBy: 1.2) / 1.2
-            let center = (reduceMotion ? 0.5 : progress) * 28 - 4
-            DictationWaveform(
-                levels: (0..<DictationSpectrum.barCount).map { index in
-                    Float(max(0, 1 - abs(Double(index) - center) / 4))
-                }, processing: true)
+            let center = (reduceMotion ? 0.5 : progress) * 14 - 2
+            HStack(alignment: .center, spacing: 3) {
+                ForEach(0..<10, id: \.self) { index in
+                    let level = Float(max(0, 1 - abs(Double(index) - center) / 2.5))
+                    Capsule()
+                        .fill(Color.accentColor.opacity(0.4 + 0.6 * Double(level)))
+                        .frame(width: 2.5, height: max(3, 4 + 10 * CGFloat(level)))
+                }
+            }
+            .frame(width: 55, height: 16)
         }
     }
 }
@@ -71,20 +76,22 @@ private struct DictationPanelView: View {
                             .frame(width: 2.5, height: max(3, CGFloat(level) * 16))
                     }
                 }
-                .frame(height: 16)
+                .frame(width: 55, height: 16)
                 .animation(.easeOut(duration: 0.08), value: state.levels)
             } else {
                 DictationProcessingWave()
-                    .frame(width: 50)
+                    .frame(width: 55, height: 16)
             }
 
             Text(state.phase == .listening ? "Listening…" : "Transcribing…")
                 .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(Theme.Colors.textSecondary)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
-        .frame(minWidth: 170, minHeight: 36)
+        .frame(minWidth: 190, minHeight: 36)
         .glassEffect(.regular, in: .capsule)
         .overlay(
             Capsule()
@@ -96,7 +103,7 @@ private struct DictationPanelView: View {
 private final class DictationPanel: NSPanel, AnimatedPanel {
     init(content: NSView) {
         super.init(
-            contentRect: NSRect(origin: .zero, size: CGSize(width: 190, height: 40)),
+            contentRect: NSRect(origin: .zero, size: CGSize(width: 210, height: 40)),
             styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         contentView = content
         isOpaque = false
@@ -130,7 +137,7 @@ final class DictationPanelController {
             ?? DictationPanel(
                 content: NSHostingView(rootView: DictationPanelView(state: state).motionScope()))
         self.panel = panel
-        let pillSize = CGSize(width: 190, height: 40)
+        let pillSize = CGSize(width: 210, height: 40)
         panel.setFrameOrigin(
             NSPoint(
                 x: frame.midX - pillSize.width / 2,

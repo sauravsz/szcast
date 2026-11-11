@@ -119,10 +119,12 @@ final class DictationLlamaServerManager {
             "--host", "127.0.0.1",
             "--port", String(port),
             "-c", "2048",
+            "-ngl", "99",
             "-fa", "on",
             "--cache-type-k", "q8_0",
             "--cache-type-v", "q8_0",
-            "--reasoning", "off"
+            "--jinja",
+            "--chat-template-kwargs", "{\"enable_thinking\":false}"
         ]
 
         let pipe = Pipe()

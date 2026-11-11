@@ -16,6 +16,7 @@ enum DictationSettingsSection: String, CaseIterable, Identifiable {
 struct DictationSettingsView: View {
     @Environment(DictationCoordinator.self) private var coordinator
     @Environment(AppSettings.self) private var settings
+    @Environment(HotKeyManager.self) private var hotKeys
     @State private var selectedSection: DictationSettingsSection = .general
     @State private var microphones: [AVCaptureDevice] = []
     @State private var modelSize: Int64?
@@ -40,6 +41,21 @@ struct DictationSettingsView: View {
 
     // History search
     @State private var historySearchQuery = ""
+
+    private var dictationPresetBinding: Binding<DictationHotkeyPreset> {
+        Binding(
+            get: {
+                DictationHotkeyPreset.preset(for: hotKeys.binding(for: .dictation))
+            },
+            set: { newPreset in
+                if let binding = newPreset.binding {
+                    hotKeys.setBinding(binding, for: .dictation)
+                } else {
+                    hotKeys.recordingAction = .dictation
+                }
+            }
+        )
+    }
 
     var body: some View {
         @Bindable var settings = settings
@@ -172,10 +188,79 @@ struct DictationSettingsView: View {
                     Text("Hold to talk, or press once to start and again to stop.")
                 }
 
-                HStack {
+                Picker(selection: dictationPresetBinding) {
+                    ForEach(DictationHotkeyPreset.allCases) { preset in
+                        Text(preset.title).tag(preset)
+                    }
+                } label: {
                     SettingsRowTitle(.dictationCommands, "Shortcut")
+                    Text(dictationPresetBinding.wrappedValue.summary)
+                }
+
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: Theme.Spacing.xs) {
+                            SettingsRowTitle(.dictationCommands, dictationPresetBinding.wrappedValue == .custom ? "Custom Hotkey" : "Assigned Key")
+                            if coordinator.holdShortcutIssue != nil {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.orange)
+                                    .font(.caption)
+                            }
+                        }
+                        if let issue = coordinator.holdShortcutIssue {
+                            Text(issue)
+                                .font(.caption)
+                                .foregroundStyle(.orange)
+                        } else {
+                            Text("Click to record any custom hotkey or modifier.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                     Spacer()
                     ShortcutRecorder(action: .dictation)
+                }
+
+                HStack(spacing: Theme.Spacing.xs) {
+                    Text("Presets:")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Button {
+                        hotKeys.setBinding(DictationHotkeyPreset.fn.binding, for: .dictation)
+                    } label: {
+                        Text("Fn key")
+                            .font(.caption)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(dictationPresetBinding.wrappedValue == .fn ? .accentColor : .secondary)
+
+                    Button {
+                        hotKeys.setBinding(DictationHotkeyPreset.optionSpace.binding, for: .dictation)
+                    } label: {
+                        Text("⌥Space")
+                            .font(.caption)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(dictationPresetBinding.wrappedValue == .optionSpace ? .accentColor : .secondary)
+
+                    Button {
+                        hotKeys.setBinding(DictationHotkeyPreset.controlSpace.binding, for: .dictation)
+                    } label: {
+                        Text("⌃Space")
+                            .font(.caption)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(dictationPresetBinding.wrappedValue == .controlSpace ? .accentColor : .secondary)
+
+                    Button {
+                        hotKeys.recordingAction = .dictation
+                    } label: {
+                        Text("Record custom…")
+                            .font(.caption)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(dictationPresetBinding.wrappedValue == .custom ? .accentColor : .secondary)
                 }
 
                 Text("Press Escape anytime to cancel an active recording.")
