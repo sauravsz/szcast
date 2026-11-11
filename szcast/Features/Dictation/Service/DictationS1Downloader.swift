@@ -9,7 +9,8 @@ final class DictationS1Downloader {
         case checking
         case notInstalled
         case downloading(progress: Double, statusText: String)
-        case installed(modelName: String)
+        case installedDirect(path: String)
+        case installedOllama(modelName: String)
         case ollamaNotRunning
         case error(String)
     }
@@ -19,15 +20,19 @@ final class DictationS1Downloader {
     @ObservationIgnored private var pullTask: Task<Void, Never>?
 
     static let defaultModelID = "hf.co/superwhisper/s1-mini-gguf:Q4_K_M"
-    static let candidateRepositories = [
-        "hf.co/superwhisper/s1-mini-gguf:Q4_K_M",
-        "hf.co/superwhisper/s1-mini-gguf",
-        "superwhisper/s1-mini-gguf"
-    ]
     static let baseURL = URL(string: "http://localhost:11434")!
 
     var isInstalled: Bool {
-        if case .installed = status { return true }
+        switch status {
+        case .installedDirect, .installedOllama:
+            return true
+        default:
+            return false
+        }
+    }
+
+    var isDirectGGUF: Bool {
+        if case .installedDirect = status { return true }
         return false
     }
 
@@ -39,43 +44,120 @@ final class DictationS1Downloader {
     func checkStatus() async {
         if case .downloading = status { return }
         status = .checking
+
+        // 1. Direct local GGUF check (Default method)
+        if let ggufURL = DictationLlamaServerManager.resolveGGUFModel() {
+            installedModelName = ggufURL.path
+            status = .installedDirect(path: ggufURL.path)
+            return
+        }
+
+        // 2. Ollama check
         do {
             var request = URLRequest(url: Self.baseURL.appendingPathComponent("api/tags"))
-            request.timeoutInterval = 2.5
+            request.timeoutInterval = 1.5
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
-                status = .ollamaNotRunning
-                installedModelName = nil
-                return
-            }
-
-            struct TagsResponse: Decodable {
-                struct ModelItem: Decodable {
-                    let name: String
+            if let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) {
+                struct TagsResponse: Decodable {
+                    struct ModelItem: Decodable {
+                        let name: String
+                    }
+                    let models: [ModelItem]
                 }
-                let models: [ModelItem]
-            }
-
-            let decoded = try JSONDecoder().decode(TagsResponse.self, from: data)
-            if let match = decoded.models.first(where: { item in
-                let name = item.name.lowercased()
-                return name.contains("s1-mini") || name.contains("superwhisper/s1-mini-gguf")
-            }) {
-                installedModelName = match.name
-                status = .installed(modelName: match.name)
-            } else {
-                installedModelName = nil
-                status = .notInstalled
+                let decoded = try JSONDecoder().decode(TagsResponse.self, from: data)
+                if let match = decoded.models.first(where: { item in
+                    let name = item.name.lowercased()
+                    return name.contains("s1-mini") || name.contains("superwhisper/s1-mini-gguf")
+                }) {
+                    installedModelName = match.name
+                    status = .installedOllama(modelName: match.name)
+                    return
+                }
             }
         } catch {
-            status = .ollamaNotRunning
-            installedModelName = nil
+            // Ollama offline
+        }
+
+        installedModelName = nil
+        status = .notInstalled
+    }
+
+    /// Download s1-mini-1.0.gguf directly from Hugging Face (Default standalone method)
+    func download() {
+        downloadDirectGGUF()
+    }
+
+    func downloadDirectGGUF() {
+        cancelDownload()
+        status = .downloading(progress: 0.0, statusText: "Starting direct download from Hugging Face...")
+
+        pullTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                let destination = DictationLlamaServerManager.defaultDestinationURL()
+                try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+
+                var request = URLRequest(url: DictationLlamaServerManager.directHuggingFaceURL)
+                request.timeoutInterval = 1200.0
+
+                let (asyncBytes, response) = try await URLSession.shared.bytes(for: request)
+                guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+                    throw URLError(.badServerResponse)
+                }
+
+                let totalBytes = http.expectedContentLength > 0 ? http.expectedContentLength : 484_219_808
+                let tempURL = destination.deletingLastPathComponent().appendingPathComponent("s1-mini-\(UUID().uuidString).tmp")
+
+                FileManager.default.createFile(atPath: tempURL.path, contents: nil)
+                guard let fileHandle = try? FileHandle(forWritingTo: tempURL) else {
+                    throw NSError(domain: "DictationS1Download", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to open temporary file"])
+                }
+
+                var receivedBytes: Int64 = 0
+                var buffer = Data()
+                buffer.reserveCapacity(65536)
+
+                for try await byte in asyncBytes {
+                    try Task.checkCancellation()
+                    buffer.append(byte)
+                    if buffer.count >= 65536 {
+                        try fileHandle.write(contentsOf: buffer)
+                        receivedBytes += Int64(buffer.count)
+                        buffer.removeAll(keepingCapacity: true)
+
+                        let progress = Double(receivedBytes) / Double(totalBytes)
+                        let mbReceived = Double(receivedBytes) / (1024 * 1024)
+                        let mbTotal = Double(totalBytes) / (1024 * 1024)
+                        let text = String(format: "Downloading: %.1f MB / %.1f MB", mbReceived, mbTotal)
+                        self.status = .downloading(progress: progress, statusText: text)
+                    }
+                }
+
+                if !buffer.isEmpty {
+                    try fileHandle.write(contentsOf: buffer)
+                    receivedBytes += Int64(buffer.count)
+                }
+
+                try fileHandle.close()
+
+                if FileManager.default.fileExists(atPath: destination.path) {
+                    try FileManager.default.removeItem(at: destination)
+                }
+                try FileManager.default.moveItem(at: tempURL, to: destination)
+
+                await self.checkStatus()
+            } catch is CancellationError {
+                await self.checkStatus()
+            } catch {
+                self.status = .error(error.localizedDescription)
+            }
         }
     }
 
-    func download(model: String = DictationS1Downloader.defaultModelID) {
+    /// Pull model through local Ollama daemon
+    func downloadOllama(model: String = DictationS1Downloader.defaultModelID) {
         cancelDownload()
-        status = .downloading(progress: 0.0, statusText: "Starting download...")
+        status = .downloading(progress: 0.0, statusText: "Starting download in Ollama...")
 
         pullTask = Task { [weak self] in
             guard let self else { return }
@@ -120,7 +202,7 @@ final class DictationS1Downloader {
                     self.status = .downloading(progress: progress, statusText: statusText)
 
                     if statusText == "success" {
-                        self.status = .installed(modelName: model)
+                        self.status = .installedOllama(modelName: model)
                         self.installedModelName = model
                         break
                     }
@@ -138,16 +220,5 @@ final class DictationS1Downloader {
     func cancelDownload() {
         pullTask?.cancel()
         pullTask = nil
-    }
-
-    func deleteModel(_ name: String) async {
-        let deleteURL = Self.baseURL.appendingPathComponent("api/delete")
-        var request = URLRequest(url: deleteURL)
-        request.httpMethod = "DELETE"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        let body = ["model": name]
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        _ = try? await URLSession.shared.data(for: request)
-        await checkStatus()
     }
 }

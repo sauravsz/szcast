@@ -22,7 +22,7 @@ actor DictationS1Polisher {
     func polish(
         _ transcript: String,
         settings: DictationS1Settings,
-        endpointURL: URL = URL(string: "http://localhost:11434")!,
+        endpointURL: URL? = nil,
         model: String = "hf.co/superwhisper/s1-mini-gguf:Q4_K_M"
     ) async -> String {
         guard settings.enabled, !transcript.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
@@ -30,7 +30,23 @@ actor DictationS1Polisher {
         }
 
         let userMessage = "\(settings.controlLine)\n\(transcript)"
-        let baseURL = Self.normalizedBaseURL(endpointURL)
+
+        // Priority 1 (DEFAULT): Direct local s1-mini-1.0.gguf via embedded/managed llama-server
+        if let llamaServerURL = try? await DictationLlamaServerManager.shared.ensureRunning() {
+            let chatEndpoint = llamaServerURL.appendingPathComponent("v1/chat/completions")
+            if let output = try? await sendChatRequest(
+                model: "s1-mini",
+                systemPrompt: DictationS1Settings.systemPrompt,
+                userMessage: userMessage,
+                endpointURL: chatEndpoint
+            ) {
+                return output
+            }
+        }
+
+        // Priority 2: Local Ollama with S1-mini ChatML raw transport (or caller-specified endpointURL)
+        let targetURL = endpointURL ?? URL(string: "http://localhost:11434")!
+        let baseURL = Self.normalizedBaseURL(targetURL)
         let effectiveModel = await resolveModel(preferred: model, baseURL: baseURL)
 
         do {

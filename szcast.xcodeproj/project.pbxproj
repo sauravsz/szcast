@@ -17,6 +17,8 @@
 		FB22F118BC6395AA82BD8974 /* DictationHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16DDD06310C52049BD45EA67 /* DictationHistoryStore.swift */; };
 		800E5F59D62245AC021B8AB6 /* DictationS1Polisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CFEC211592A3BDA09B00F05 /* DictationS1Polisher.swift */; };
 		800E5F59D62245AC021B8AB7 /* DictationS1Downloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CFEC211592A3BDA09B00F06 /* DictationS1Downloader.swift */; };
+		800E5F59D62245AC021B8AB8 /* DictationLlamaServerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CFEC211592A3BDA09B00F07 /* DictationLlamaServerManager.swift */; };
+		800E5F59D62245AC021B8AB9 /* llama-server in Resources */ = {isa = PBXBuildFile; fileRef = 5CFEC211592A3BDA09B00F08 /* llama-server */; };
 		0047FE6A50E746CCF0FC6810 /* SystemActionRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AEDBB526AB2C0406D8226D5 /* SystemActionRunner.swift */; };
 		005B39EF22378D1736CE5805 /* TerminalLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EAA357A9F0317320CFAADF /* TerminalLogView.swift */; };
 		00BA80B95E15859F0FDA6F16 /* AppVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D4F22647E4E1BA19F0FC520 /* AppVersion.swift */; };
@@ -977,6 +979,8 @@
 		16DDD06310C52049BD45EA67 /* DictationHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationHistoryStore.swift; sourceTree = "<group>"; };
 		5CFEC211592A3BDA09B00F05 /* DictationS1Polisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationS1Polisher.swift; sourceTree = "<group>"; };
 		5CFEC211592A3BDA09B00F06 /* DictationS1Downloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationS1Downloader.swift; sourceTree = "<group>"; };
+		5CFEC211592A3BDA09B00F07 /* DictationLlamaServerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationLlamaServerManager.swift; sourceTree = "<group>"; };
+		5CFEC211592A3BDA09B00F08 /* llama-server */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = "llama-server"; sourceTree = "<group>"; };
 		00B475B5929CC0478EFAC7D8 /* UpdateFailure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateFailure.swift; sourceTree = "<group>"; };
 		00CF6A57ECFDA17248393EA8 /* RaycastScriptImport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaycastScriptImport.swift; sourceTree = "<group>"; };
 		00ECBD55353C83A7F4E93592 /* MCPSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPSettingsSection.swift; sourceTree = "<group>"; };
@@ -2363,6 +2367,7 @@
 				16DDD06310C52049BD45EA67 /* DictationHistoryStore.swift */,
 				5CFEC211592A3BDA09B00F05 /* DictationS1Polisher.swift */,
 				5CFEC211592A3BDA09B00F06 /* DictationS1Downloader.swift */,
+				5CFEC211592A3BDA09B00F07 /* DictationLlamaServerManager.swift */,
 				24386713685FB65FB46A5516 /* DictationAudioDucker.swift */,
 				11A888004906108239CDDCF1 /* DictationCapture.swift */,
 				F93DC82C8E2CFC89CBA7FC8E /* DictationCoordinator.swift */,
@@ -3509,6 +3514,7 @@
 			children = (
 				1D2472AA0A370E1D5A3C4025 /* EmojiKeywords */,
 				38BFF5870110FAA6C85E34D9 /* InfoPlist.xcstrings */,
+				5CFEC211592A3BDA09B00F08 /* llama-server */,
 				95C2F7AE05BF02E8465E426B /* Localizable.xcstrings */,
 				74284B4E771DA0B2869C914E /* RaycastRuntime.generated.js */,
 			);
@@ -4239,6 +4245,7 @@
 				6B3A9A37600C941DF38F9171 /* NOTICE.md in Resources */,
 				694B7E1A8C7C2D6DF26D3BF9 /* RaycastRuntime.generated.js in Resources */,
 				36784C964DB27B94A62EEAA3 /* szcast.icon in Resources */,
+				800E5F59D62245AC021B8AB9 /* llama-server in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4285,6 +4292,7 @@
 				FB22F118BC6395AA82BD8974 /* DictationHistoryStore.swift in Sources */,
 				800E5F59D62245AC021B8AB6 /* DictationS1Polisher.swift in Sources */,
 				800E5F59D62245AC021B8AB7 /* DictationS1Downloader.swift in Sources */,
+				800E5F59D62245AC021B8AB8 /* DictationLlamaServerManager.swift in Sources */,
 				56EB00CB2815CC268829C97B /* AIAttachmentPolicy.swift in Sources */,
 				7F22BD030E1D2A5DC43BABE9 /* AIBrand.swift in Sources */,
 				128AE908878AA0F96C928C9D /* AIChatCoordinator.swift in Sources */,

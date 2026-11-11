@@ -363,7 +363,7 @@ run fallback-test          Szcast/Features/Launcher/Model/Fallback.swift \
                            Szcast/Platform/LocalizedResource.swift
 run dictionary-test        Szcast/Features/Dictionary/Model/DictionaryEntry.swift \
                            Szcast/Features/Dictionary/Model/DictionaryMarkup.swift
-run dictation-test         Szcast/Features/Dictation/Model/DictationModel.swift Szcast/Features/Dictation/Model/DictationIdleRelease.swift Szcast/Features/Dictation/Model/DictationLanguage.swift Szcast/Features/Dictation/Model/DictationTextFormatter.swift Szcast/Features/Dictation/Model/DictationS1Settings.swift Szcast/Features/Dictation/Model/CustomWord.swift Szcast/Features/Dictation/Model/VocabularyPack.swift Szcast/Features/Dictation/Service/DictationS1Polisher.swift Szcast/Features/Dictation/Service/DictationS1Downloader.swift
+run dictation-test         Szcast/Features/Dictation/Model/DictationModel.swift Szcast/Features/Dictation/Model/DictationIdleRelease.swift Szcast/Features/Dictation/Model/DictationLanguage.swift Szcast/Features/Dictation/Model/DictationTextFormatter.swift Szcast/Features/Dictation/Model/DictationS1Settings.swift Szcast/Features/Dictation/Model/CustomWord.swift Szcast/Features/Dictation/Model/VocabularyPack.swift Szcast/Features/Dictation/Service/DictationS1Polisher.swift Szcast/Features/Dictation/Service/DictationS1Downloader.swift Szcast/Features/Dictation/Service/DictationLlamaServerManager.swift Szcast/Platform/AppPaths.swift
 run dictation-cue-test     Szcast/Features/Dictation/Service/DictationCueRunner.swift
 run dictation-field-test   Szcast/Features/Dictation/Model/DictationModel.swift \
                            Szcast/Features/Dictation/Model/DictationAudioChunks.swift \
@@ -382,6 +382,7 @@ run dictation-field-test   Szcast/Features/Dictation/Model/DictationModel.swift 
                            Szcast/Features/Dictation/Service/DictationHistoryStore.swift \
                            Szcast/Features/Dictation/Service/DictationS1Polisher.swift \
                            Szcast/Features/Dictation/Service/DictationS1Downloader.swift \
+                           Szcast/Features/Dictation/Service/DictationLlamaServerManager.swift \
                            Szcast/DesignSystem/ChatTypography.swift \
                            Szcast/Features/AI/UI/ChatComposerTextView.swift \
                            Szcast/Features/TextInjection/Service/*.swift \

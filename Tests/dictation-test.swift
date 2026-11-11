@@ -152,6 +152,16 @@ struct DictationTest {
 
         check(DictationS1Downloader.defaultModelID, "hf.co/superwhisper/s1-mini-gguf:Q4_K_M")
 
+        // S1-mini direct GGUF and llama-server manager verification
+        if let ggufModel = DictationLlamaServerManager.resolveGGUFModel() {
+            guard FileManager.default.fileExists(atPath: ggufModel.path) else {
+                fatalError("Resolved GGUF model path does not exist on disk")
+            }
+        }
+        guard DictationLlamaServerManager.defaultPort == 51143 else {
+            fatalError("Default port for llama-server should be 51143")
+        }
+
         print("Dictation text formatting passed")
     }
 }

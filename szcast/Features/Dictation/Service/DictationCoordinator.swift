@@ -427,6 +427,8 @@ final class DictationCoordinator {
         cueTask?.cancel()
         audioDucker.restoreImmediately()
         models.prepareForTermination()
+        s1Downloader.cancelDownload()
+        DictationLlamaServerManager.shared.stop()
     }
 
     private func reset(cancelTranscription: Bool = true) {

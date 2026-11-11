@@ -404,6 +404,48 @@ struct DictationSettingsView: View {
             }
             .padding(.vertical, 2)
 
+        case .installedDirect(let path):
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.green)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("S1-mini Direct Model Active (Default)")
+                        .font(.system(size: 12, weight: .medium))
+                    Text(path)
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+                Spacer()
+                Button("Refresh") {
+                    Task { await coordinator.s1Downloader.checkStatus() }
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+            .padding(.vertical, 2)
+
+        case .installedOllama(let modelName):
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.green)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("S1-mini Installed in Ollama")
+                        .font(.system(size: 12, weight: .medium))
+                    Text("\(modelName) (484 MB)")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                Button("Refresh") {
+                    Task { await coordinator.s1Downloader.checkStatus() }
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+            .padding(.vertical, 2)
+
         case .ollamaNotRunning:
             HStack(spacing: Theme.Spacing.sm) {
                 Image(systemName: "exclamationmark.triangle.fill")
@@ -424,26 +466,6 @@ struct DictationSettingsView: View {
             }
             .padding(.vertical, 2)
 
-        case .installed(let modelName):
-            HStack(spacing: Theme.Spacing.sm) {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(.green)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("S1-mini Installed & Ready")
-                        .font(.system(size: 12, weight: .medium))
-                    Text("\(modelName) (484 MB)")
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary)
-                }
-                Spacer()
-                Button("Refresh") {
-                    Task { await coordinator.s1Downloader.checkStatus() }
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-            }
-            .padding(.vertical, 2)
-
         case .notInstalled:
             HStack(spacing: Theme.Spacing.sm) {
                 Image(systemName: "arrow.down.circle")
@@ -451,13 +473,13 @@ struct DictationSettingsView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("S1-mini Model Not Downloaded")
                         .font(.system(size: 12, weight: .medium))
-                    Text("Download Superwhisper S1-mini (484 MB) into Ollama.")
+                    Text("Download standalone s1-mini-1.0.gguf (484 MB) for fast, offline speech normalization.")
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
                 }
                 Spacer()
                 Button {
-                    coordinator.s1Downloader.download()
+                    coordinator.s1Downloader.downloadDirectGGUF()
                 } label: {
                     Label("Download (484 MB)", systemImage: "arrow.down.circle")
                 }
@@ -504,7 +526,7 @@ struct DictationSettingsView: View {
                 }
                 Spacer()
                 Button("Retry") {
-                    coordinator.s1Downloader.download()
+                    coordinator.s1Downloader.downloadDirectGGUF()
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)

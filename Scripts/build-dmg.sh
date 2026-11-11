@@ -20,6 +20,13 @@ xcodebuild -project Szcast.xcodeproj -scheme Szcast -configuration Release \
     build
 
 APP="$DERIVED/Build/Products/Release/szcast.app"
+
+if [ -f "$APP/Contents/Resources/llama-server" ]; then
+    echo "▸ Signing bundled llama-server…"
+    codesign -f -s "$IDENTITY" --timestamp=none "$APP/Contents/Resources/llama-server"
+    codesign -f -s "$IDENTITY" --timestamp=none "$APP"
+fi
+
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")"
 DMG="build/szcast-${VERSION}.dmg"
 
