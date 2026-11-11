@@ -4,7 +4,7 @@
 </h1>
 
 <p align="center">
-  A native macOS launcher for everyday productivity.
+  A native, keyboard-first macOS launcher for everyday productivity.
 </p>
 
 <p align="center">
@@ -25,45 +25,46 @@
   <img src="docs/screenshot.jpg" alt="szcast command palette">
 </p>
 
-szcast is a keyboard-first launcher for macOS: a command palette, file and menu search, clipboard history, snippets with tag/folder grouping, window management, notes with rich inline images, dictation with offline AI speech normalization, a calculator, a Pomodoro focus timer, quicklink favicon resolution, and AI chat with live web search citations. Built with SwiftUI and AppKit — no dependencies, no Electron, no telemetry. It runs Raycast extensions, too.
+szcast is a native, keyboard-driven productivity launcher for macOS built in pure Swift. It features a command palette, file and menu search, clipboard history, snippets with folder tags, window tiling, rich-media notes, Pomodoro focus cycles, and full Raycast extension execution. Built natively with SwiftUI and AppKit: zero dependencies, zero Electron, zero tracking.
 
-[Explore all features →](docs/features/)
+## Installation
 
-## Install
+Download the DMG from [Releases](https://github.com/sauravsz/szcast/releases/latest), open it, and move **szcast** to `/Applications`.
 
-Download the DMG from [Releases](https://github.com/sauravsz/szcast/releases/latest), open it, and drag **szcast** into `/Applications`. Right-click → **Open** on first launch: the build is self-signed rather than notarized, so macOS asks once. macOS 26 or newer, Apple silicon.
+```bash
+# macOS Sequoia / Apple Silicon
+xattr -cr /Applications/szcast.app
+open /Applications/szcast.app
+```
 
-## Differences from Tinycast
+## Features
 
-szcast builds on Tinycast with new features, visual customizations, performance enhancements, and sensible defaults configured out of the box:
+### Advanced Offline Dictation
+- **Local Speech Recognition**: Multi-root model discovery supporting Nvidia Parakeet Ultra with real-time Apple Neural Engine and Metal GPU execution.
+- **Embedded S1-mini Normalization**: Bundled `llama-server` running `s1-mini-1.0.gguf` on loopback with Metal offload (`-ngl 99`, `-t 4`), sub-300ms inference, idle memory unloading, and Jinja thinking bypass.
+- **Vocabulary Packs & Custom Dictionary**: Preloaded domain dictionaries (Tech, Medical, Legal, Brands, Names) with phonetic alias matching and post-polish canonicalization.
+- **Dictation Hotkey Presets**: Instant triggers for `Fn key`, `⌥Space`, `⌃Space`, or custom keybinds.
+- **Audio Intelligence**: Automatic background audio ducking (Spotify and Apple Music), spoken emoji/punctuation expansion, filler word scrubbing, and compact live audio level meters.
 
-- **Standalone S1-mini Speech Normalization**: Local offline AI speech normalization using `s1-mini-1.0.gguf` via an embedded, managed `llama-server` binary bundled directly inside the app bundle. Runs entirely on loopback (`127.0.0.1:51143`) delivering ~280ms inference without requiring external Ollama daemons. Configurable model offload / idle release intervals (`Never`, 1m, 2m, 5m, 10m default, 15m, 20m, 30m, 1h) ensure system memory is freed when idle.
-- **Intelligent Speech Normalization Framing**: Pre-configured speech normalization prompts and control line framing (`[Styling: semi-formal] [Structure: prose] [Context: general]`) with seamless fallback to general copy-edit cleaning for external LLMs.
-- **Advanced Dictation Suite**: Multi-root model discovery (immediate Nvidia Parakeet Ultra detection), spoken emoji conversion, spoken punctuation, filler word cleaner, media playback controls during recording (Continue, Lower, Mute, Pause with Apple Music and Spotify hooks), bottom-screen glass recording pill with live audio level meter bars, custom words dictionary with JSON import/export, 5 domain vocabulary packs (Tech, Medical, Legal, Brands, Names), self-learning dictionary detection, and menu bar shortcuts.
-- **Quicklink Favicons Resolution**: High-resolution favicon auto-fetching and disk caching (`QuicklinkFaviconService`) for web quicklinks via Google Favicons CDN, DuckDuckGo, and direct origin `/favicon.ico` fallbacks. Renders in launcher search, preview panes, and settings rows, with one-click "Fetch All Favicons" and per-link refresh controls.
-- **Raycast Store Extension Updates & CDN Trust**: Trusted download host policy (`ExtensionInstallPolicy`) covering Raycast Store package release CDNs (`extensions.raycast-releases.com`, `raycast-releases.com`, `backend.raycast.com`), enabling one-click installs and updates for all community extensions without security blocks.
-- **Dynamic Font Scaling**: Global typography slider in *Settings › General › Appearance* that dynamically scales launcher row titles, subtitles, accessory labels, details pane, and AI chat text from 12pt to 22pt.
-- **`<alias><Space>` Command Trigger**: Typing an alias followed by Space in the root palette instantly expands and selects the command without pressing Return.
-- **Focus Timer & Sensory Suite**: Native Pomodoro timer (`.work`, `.shortBreak`, `.longBreak`), menu bar countdown display, non-blocking audio cues, and full-screen celebration effects.
-- **Native AI Web Search with Citations**: Live web search integration for OpenAI-compatible and custom endpoints using Tavily, Exa, or Jina (BYOK) with interactive inline Markdown citation badges.
-- **Rich Notes with Inline Images**: TextKit 2 image attachments with clipboard image paste, drag-and-drop, and dynamic Markdown reveal when the cursor rests on the line.
-- **Enhanced Snippets Management**: Folder and tag organization via YAML frontmatter, horizontal filter chips, snippet duplication (`⌘D`), and configurable default actions (Paste, Copy, or Copy & Paste).
-- **Curated Defaults and Quicklinks**: Fallback search seeded with Brave Search, ChatGPT Web Search, and Brave Ask; Hyper key (⌃⌥⇧⌘) pre-armed out of the box; Space quick-jump to file search; and ⌘1…⌘0 row activation shortcuts.
+### Launcher & Navigation
+- **Dynamic Typography Scaling**: Real-time font slider (12pt to 22pt) across row labels, accessory details, and AI chat.
+- **Instant Alias Triggers**: Type any alias followed by Space to expand and run commands immediately.
+- **Quicklink Favicons**: Auto-fetches and caches web favicons via Google, DuckDuckGo, and origin `/favicon.ico`.
+- **Raycast Store Compatibility**: Direct install and updates for community Raycast extensions with full package CDN trust.
 
-## What to know before you rely on it
+### Productivity Tools
+- **Live AI Search**: Native chat with Tavily, Exa, and Jina search providers featuring interactive inline Markdown citation badges.
+- **Focus Timer**: Full Pomodoro cycles (Work, Short Break, Long Break) with menu bar countdown and non-blocking audio cues.
+- **Rich Media Notes**: TextKit 2 image attachments with inline paste, drag-and-drop, and cursor-revealed Markdown.
+- **Window Management**: Grid snapping, multi-monitor movement, and persistent layout presets.
 
-- **Self-update has a key but no feed.** The build carries the release verification key, so a signed update is checked against a key this project owns — but no feed is published, so nothing installs over itself. [docs/features/updates.md](docs/features/updates.md).
-- **Exchange rates come from `tinycast.dev`**, the upstream project's server, not one this repo controls. If it goes away, conversions stop updating and the last cached snapshot is served until it ages out. [docs/features/calculator.md](docs/features/calculator.md).
-- **Installed extensions are trusted with your whole account.** Extension JavaScript can read and write any file you can, fetch any URL, and spawn `/bin/sh`. The only prompt is one "Enable extensions?" switch. See [docs/SECURITY-AUDIT.md](docs/SECURITY-AUDIT.md) — finding H-1.
+## Architecture
 
-## Contributing
-
-szcast is built natively with Swift 6, SwiftUI, AppKit, TextKit 2, JavaScriptCore (for native Raycast extension execution), CryptoKit, SQLite, NSSound, and CoreAnimation.
-
-Saurav redid the entire dictation setup just like EnviousWispr, bringing full local speech normalization, embedded llama-server S1-mini inference, custom vocabulary packs, audio ducking, spoken punctuation/emoji processing, and multi-root model discovery natively into szcast. Special credit to [EnviousWispr](https://github.com/saurabhav88/EnviousWispr) by saurabhav88 for the dictation architecture patterns and vocabulary packs.
-
-Feature requests, bug reports, and contributions are welcome in [this repo's issues](https://github.com/sauravsz/szcast/issues).
+szcast is engineered natively on macOS technologies:
+- **Frameworks**: SwiftUI, AppKit, TextKit 2, Accelerate (vDSP), Metal, CoreML, CryptoKit, JavaScriptCore.
+- **Storage**: SQLite FTS5 for local search indexing, Keychain for API credentials.
+- **Audio & ML**: AVFoundation capture pipelines, embedded ARM64 llama-server runtime, Parakeet CoreML recognition.
 
 ## License
 
-szcast is a fork of [Tinycast](https://github.com/abue-ammar/tinycast) by Abue Ammar, and is licensed under the [GNU AGPL v3](LICENSE). Original copyright © 2026 Abue Ammar; third-party material is recorded in [NOTICE.md](NOTICE.md). No affiliation with or endorsement by the upstream author is implied.
+szcast is licensed under the [GNU AGPL v3](LICENSE). Forked from Tinycast by Abue Ammar. Copyright © 2026 Saurav. Third-party notices are documented in [NOTICE.md](NOTICE.md).

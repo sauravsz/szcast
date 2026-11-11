@@ -160,7 +160,7 @@ actor DictationS1Polisher {
             let choices: [Choice]
         }
 
-        let cap = max(64, min(512, userMessage.split(separator: " ").count * 4))
+        let cap = max(32, min(384, userMessage.split(separator: " ").count * 3))
         let body = RequestBody(
             model: model,
             messages: [

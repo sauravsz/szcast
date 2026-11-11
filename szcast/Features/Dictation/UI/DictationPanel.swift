@@ -91,7 +91,7 @@ private struct DictationPanelView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
-        .frame(minWidth: 190, minHeight: 36)
+        .frame(width: 210, height: 38)
         .glassEffect(.regular, in: .capsule)
         .overlay(
             Capsule()

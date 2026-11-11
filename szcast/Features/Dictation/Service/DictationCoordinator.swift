@@ -85,6 +85,9 @@ final class DictationCoordinator {
             }
             settings.dictationEnabled = true
             if settings.dictationDestination.pastes { Permissions.ensureAccessibility() }
+            if settings.dictationS1Enabled {
+                DictationLlamaServerManager.shared.prewarm(idleRelease: settings.dictationS1IdleRelease)
+            }
         }
     }
 

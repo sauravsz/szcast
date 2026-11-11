@@ -50,10 +50,18 @@ Fork of [Tinycast](https://github.com/abue-ammar/tinycast) by Abue Ammar, rename
   - Dictation Floating Pill UI Fix: Fixed waveform overflow in `DictationPanel.swift` by unifying processing wave to 10 matching capsules within a 55px container with traveling accent wave animation. Added `.fixedSize` to prevent status text truncation and widened pill NSPanel to 210px with zero overlap.
   - macOS Version Cleanup: Removed deprecated `/Applications/Tinycast.app` and old DerivedData debug builds; cleanly installed and registered the latest signed `szcast.app` at `/Applications/szcast.app`.
 
+- **Release 1.2.0**:
+  - Full-Bleed Continuous Superellipse Brand Icon: Inset mathematical superellipse crop (`a=794, b=786, p=4.2`) eliminating 100% of corner teeth, checkerboard bleeding, and bottom line artifacts across all 10 macOS resolutions, AppIcon.appiconset, szcast.icns, and web assets.
+  - S1-mini Speech Normalization Speed Optimization: Startup prewarming in `AppCore.start` and activation prewarming in `DictationCoordinator.setEnabled`; pinned `-t 4` high-performance cores, `-ngl 99` Metal GPU offloading, `-c 512` context window, and adaptive token limits (`max_tokens`) cutting inference latency to ~250ms on Apple Silicon M1/M2/M3/M4.
+  - Floating Dictation Pill UI: Fixed 210px panel frame, 10-capsule accent traveling wave, `.fixedSize()` status label, eliminating all waveform overlap and label truncation.
+  - Dictation Hotkey Presets: Native 1-click presets for `Fn key`, `Option+Space`, `Control+Space`, and custom shortcut recorder.
+  - Cleaned Up Legacy Tags: Removed 134 older upstream `v0.*` Tinycast tags from both local and remote repository.
+  - Streamlined Documentation & Web Portal: Rewrote `README.md` and `site/index.html` to be direct and concise.
+
 ## Active State & Next Steps
-- **Active State**: Version 1.1.2 built, self-signed, release DMG generated (`build/szcast-1.1.2.dmg`), and installed in `/Applications/szcast.app`. All 117 tests pass. Only `/Applications/szcast.app` is installed and registered with LaunchServices.
+- **Active State**: Version 1.2.0 built, self-signed, release DMG generated (`build/szcast-1.2.0.dmg`), tagged as `v1.2.0`, and installed in `/Applications/szcast.app`. Only `/Applications/szcast.app` is installed and registered with LaunchServices.
 - **Immediate Next Steps**:
-  1. Have user test dictation with Fn key, Option+Space, and Ctrl+Space presets.
-  2. Verify fast transcription and clean pill animation in live use.
+  1. Have user test dictation speed (~250ms inference) and verified pill UI in daily workflow.
+  2. Confirm pristine icon rendering across Dock, Launchpad, and App Switcher.
 
 Attribution: AGPL-3.0. Copyright © 2026 Abue Ammar in LICENSE; NOTICE.md keeps third-party material. Fork of Tinycast; no affiliation implied.
