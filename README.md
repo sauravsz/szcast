@@ -26,7 +26,8 @@
 </p>
 
 szcast is a keyboard-first launcher for macOS: a command palette, file and menu search, clipboard
-history, snippets, window management, notes, dictation, and a calculator. Built with SwiftUI and
+history, snippets with tag/folder grouping, window management, notes with rich inline images, dictation,
+a calculator, a Pomodoro focus timer, and AI chat with live web search citations. Built with SwiftUI and
 AppKit — no dependencies, no Electron, no telemetry. It runs Raycast extensions, too.
 
 [Explore all features →](docs/features/)
@@ -39,13 +40,23 @@ self-signed rather than notarized, so macOS asks once. macOS 26 or newer, Apple 
 
 ## What this build changes
 
-Everything is on out of the box, and the palette has three shortcuts upstream does not.
+Everything is on out of the box, with sensory feedback, typography scaling, and palette shortcuts.
 
 | | |
 | --- | --- |
+| **`<alias><Space>`** | In root search, typing a command alias followed by Space immediately expands or selects the command without requiring Return. |
 | **Space** | In root search, a leading space opens the file search screen with the rest of the line already in its field. Escape returns to the launcher with a clean field. Needs File Search enabled; it ignores *Show in launcher*, because the space is the explicit intent. |
 | **⌘1…⌘0** | Activates the Nth visible row. Hold ⌘ and the first ten rows swap their kind label for their digit; on a blank query the digits launch pinned favourites by position instead. |
 | **File rows** | Carry a document or folder glyph rather than the word. |
+
+### Capabilities in szcast
+
+- **Focus Timer**: Pomodoro focus intervals, menu bar timer item, non-blocking audio cues, and celebration effects.
+- **Live AI Web Search**: Native client-side search orchestration with Tavily, Exa, and Jina (BYOK) providing live web context and Markdown citation badges.
+- **Customizable Font Scaling**: Adjustable typography slider in *Settings › General › Appearance* dynamically scaling launcher rows, detail panes, and AI chat text from 12pt to 22pt.
+- **Rich Inline Images in Notes**: TextKit 2 image attachments in note editing with clipboard paste, drag-and-drop, and automatic raw Markdown reveal when the cursor rests on the line.
+- **Snippets Suite**: Tag and folder organization with frontmatter, horizontal filter chips, snippet duplication (`⌘D`), and default actions (Paste, Copy, or Copy & Paste).
+- **Curated Fallback Search**: Out-of-the-box fallback search integration with Brave Search, ChatGPT Web Search, and Brave Ask.
 
 **Every feature switch defaults on**, and a fresh install arrives with Hyper armed — Caps Lock, with
 *Include Shift* and *Secure input compatibility* on, so Hyper is ⌃⌥⇧⌘:
@@ -94,7 +105,7 @@ privacy permissions.
 ### Tests
 
 ```sh
-./Scripts/run-tests.sh          # 114 self-contained harnesses
+./Scripts/run-tests.sh          # 117 self-contained harnesses
 ```
 
 Each harness compiles the shipped sources it guards, so it needs Xcode, not just Command Line Tools.
