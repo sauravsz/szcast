@@ -144,6 +144,24 @@ enum QuicklinkActionsMenu {
             ) {
                 core.quicklinkCoordinator.copyQuicklink(id: quicklink.id)
             })
+        if QuicklinkFaviconService.extractHost(from: quicklink.link) != nil {
+            items.append(
+                PopoverMenuItem(
+                    title: quicklink.iconPath != nil ? String(localized: "Refresh Favicon") : String(localized: "Fetch Favicon"),
+                    systemImage: "arrow.triangle.2.circlepath"
+                ) {
+                    core.quicklinkCoordinator.fetchFavicon(for: quicklink.id)
+                })
+            if quicklink.iconPath != nil {
+                items.append(
+                    PopoverMenuItem(
+                        title: String(localized: "Remove Favicon"),
+                        systemImage: "trash"
+                    ) {
+                        core.quicklinkCoordinator.removeFavicon(for: quicklink.id)
+                    })
+            }
+        }
         items.append(
             PopoverMenuItem(
                 title: String(localized: "Edit Quicklink"), systemImage: "pencil", startsSection: true,

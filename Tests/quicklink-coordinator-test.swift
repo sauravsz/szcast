@@ -398,6 +398,7 @@ final class AppSettings {
     var quicklinkPassesSelectedText = false
     var quicklinkOpensNewWindow = false
     var quicklinkConfirmsBeforeDelete = false
+    var quicklinkAutoFetchFavicons = true
     var interfaceSize = InterfaceSize()
 }
 

@@ -13,6 +13,8 @@ struct Quicklink: Codable, Hashable, Identifiable, Sendable {
     var openWithBundleID: String?
     /// SF Symbol override; nil takes the glyph the detected destination suggests.
     var iconSymbol: String?
+    /// Optional local file path to a cached website favicon or custom artwork.
+    var iconPath: String?
     /// Off keeps the row and everything attached to it, but nothing may offer or open it.
     var isEnabled: Bool
     var showsInRootSearch: Bool
@@ -22,14 +24,15 @@ struct Quicklink: Codable, Hashable, Identifiable, Sendable {
 
     init(
         id: UUID = UUID(), name: String, link: String, openWithBundleID: String? = nil,
-        iconSymbol: String? = nil, isEnabled: Bool = true, showsInRootSearch: Bool = true,
-        pinnedAt: Date? = nil, createdAt: Date = Date()
+        iconSymbol: String? = nil, iconPath: String? = nil, isEnabled: Bool = true,
+        showsInRootSearch: Bool = true, pinnedAt: Date? = nil, createdAt: Date = Date()
     ) {
         self.id = id
         self.name = name
         self.link = link
         self.openWithBundleID = openWithBundleID
         self.iconSymbol = iconSymbol
+        self.iconPath = iconPath
         self.isEnabled = isEnabled
         self.showsInRootSearch = showsInRootSearch
         self.pinnedAt = pinnedAt
@@ -66,7 +69,7 @@ struct Quicklink: Codable, Hashable, Identifiable, Sendable {
 
     // Hand-written, so an added field keeps old exports importable and imports stay minimal.
     private enum CodingKeys: String, CodingKey {
-        case id, name, link, openWithBundleID, iconSymbol, isEnabled, showsInRootSearch, pinnedAt
+        case id, name, link, openWithBundleID, iconSymbol, iconPath, isEnabled, showsInRootSearch, pinnedAt
         case createdAt
     }
 
@@ -77,6 +80,7 @@ struct Quicklink: Codable, Hashable, Identifiable, Sendable {
         link = try container.decode(String.self, forKey: .link)
         openWithBundleID = try container.decodeIfPresent(String.self, forKey: .openWithBundleID)
         iconSymbol = try container.decodeIfPresent(String.self, forKey: .iconSymbol)
+        iconPath = try container.decodeIfPresent(String.self, forKey: .iconPath)
         isEnabled = try container.decodeIfPresent(Bool.self, forKey: .isEnabled) ?? true
         showsInRootSearch =
             try container.decodeIfPresent(Bool.self, forKey: .showsInRootSearch) ?? true

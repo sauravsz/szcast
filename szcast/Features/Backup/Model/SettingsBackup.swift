@@ -81,6 +81,7 @@ struct SettingsBackup: Codable {
         var quicklinkOpensNewWindow: Bool?
         var quicklinkPassesSelectedText: Bool?
         var quicklinkConfirmsBeforeDelete: Bool?
+        var quicklinkAutoFetchFavicons: Bool?
         // Carried like quicklinks: running a shortcut the user built grants no permission class.
         var appleShortcutsEnabled: Bool?
         // `calendarEnabled` is absent: an import must not grant calendar access.
@@ -196,6 +197,7 @@ extension SettingsBackup {
             quicklinkOpensNewWindow: s.quicklinkOpensNewWindow,
             quicklinkPassesSelectedText: s.quicklinkPassesSelectedText,
             quicklinkConfirmsBeforeDelete: s.quicklinkConfirmsBeforeDelete,
+            quicklinkAutoFetchFavicons: s.quicklinkAutoFetchFavicons,
             appleShortcutsEnabled: s.appleShortcutsEnabled,
             calendarShowInLauncher: s.calendarShowInLauncher,
             calendarLauncherLimit: s.calendarLauncherLimit.rawValue,
@@ -550,6 +552,10 @@ extension SettingsBackup {
         }
         if let flag = s.quicklinkConfirmsBeforeDelete {
             settings.quicklinkConfirmsBeforeDelete = flag
+            count += 1
+        }
+        if let flag = s.quicklinkAutoFetchFavicons {
+            settings.quicklinkAutoFetchFavicons = flag
             count += 1
         }
         if let flag = s.calendarShowInLauncher {

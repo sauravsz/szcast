@@ -297,3 +297,15 @@ one turns the feature on — the switch grants no permission class.
 ```sh
 ./Scripts/run-tests.sh quicklink-test
 ```
+
+## Favicons & Artwork
+
+Quicklinks pointing to web destinations (`http:`, `https:`, or bare hostnames) can automatically fetch and display the destination website's high-resolution favicon:
+
+- **Resolver**: `QuicklinkFaviconService` extracts the host (stripping dynamic `{argument}` and other template placeholders), queries the Google Favicon Service (`sz=128`), and falls back to DuckDuckGo and direct `/favicon.ico` endpoints.
+- **Persistence**: Cached PNG icons are stored under `~/Library/Application Support/<bundle-id>/QuicklinkIcons/<uuid>.png` and referenced by `Quicklink.iconPath`.
+- **UI Integration**:
+  - The Quicklink editor offers a "Fetch Favicon" action in the icon menu, an inline action in the destination preview, and visual favicon artwork feedback.
+  - Quicklink rows in the launcher, Search Quicklinks list, and Settings draw the favicon via `EntryIcon.artwork`.
+  - Settings provides an automatic fetch toggle (`quicklinkAutoFetchFavicons`) and a one-click "Fetch All Favicons" button.
+

@@ -82,6 +82,15 @@ struct QuicklinkList: View {
     }
 }
 
+extension Quicklink {
+    var iconSource: EntryIcon {
+        if let iconPath, FileManager.default.fileExists(atPath: iconPath) {
+            return .artwork(path: iconPath, extent: IconCache.appIconExtent)
+        }
+        return .symbol(symbol)
+    }
+}
+
 private struct QuicklinkRow: View {
 
     @Environment(\.metrics) private var metrics
@@ -100,8 +109,7 @@ private struct QuicklinkRow: View {
     var body: some View {
         IconCache.observeStyle()
         return HStack(spacing: metrics.spacing.lg) {
-            Image(nsImage: IconCache.symbolIcon(named: quicklink.symbol))
-                .resizable()
+            EntryIconView(source: quicklink.iconSource)
                 .frame(width: metrics.size.resultRowIcon, height: metrics.size.resultRowIcon)
             VStack(alignment: .leading, spacing: metrics.spacing.xxs) {
                 Text(quicklink.name)
@@ -111,7 +119,7 @@ private struct QuicklinkRow: View {
                     .font(metrics.typography.rowTrailing)
                     .foregroundStyle(Theme.Colors.textTertiary)
                     .lineLimit(1)
-                    .truncationMode(.middle)
+                .truncationMode(.middle)
             }
             Spacer(minLength: metrics.spacing.lg)
             if !quicklink.showsInRootSearch {
@@ -145,9 +153,16 @@ struct QuicklinkPreview: View {
         if let quicklink {
             VStack(alignment: .leading, spacing: 0) {
                 Spacer(minLength: 0)
-                SymbolImage(name: quicklink.symbol, size: Self.glyphSize)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, metrics.spacing.xl)
+                if let iconPath = quicklink.iconPath, FileManager.default.fileExists(atPath: iconPath) {
+                    EntryIconView(source: .artwork(path: iconPath, extent: Self.glyphSize))
+                        .frame(width: Self.glyphSize, height: Self.glyphSize)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, metrics.spacing.xl)
+                } else {
+                    SymbolImage(name: quicklink.symbol, size: Self.glyphSize)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, metrics.spacing.xl)
+                }
                 Spacer(minLength: 0)
                 QuicklinkInfoSection(quicklink: quicklink)
             }

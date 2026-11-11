@@ -27,6 +27,7 @@
 		018324CD7AB1996821F4070D /* WindowMover.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F2ACA386B0BDC8E32E8107A /* WindowMover.swift */; };
 		02078711839BB179E9CF8FB1 /* RoomParkingLedger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32C3A8B972C60DB07F599840 /* RoomParkingLedger.swift */; };
 		02452CD187D25FD9CD3EF2CF /* QuicklinkLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B865FF16D3C395A8D509B94 /* QuicklinkLauncher.swift */; };
+		A1F400012D8C000100000002 /* QuicklinkFaviconService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F400012D8C000100000001 /* QuicklinkFaviconService.swift */; };
 		026EC0A6376B11C3C0797503 /* AIChatSplitViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA6A158B37AA1336D7FE9C32 /* AIChatSplitViewController.swift */; };
 		0288221BA580DFA8F5B116B7 /* ExtensionIconCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9F568F2F6EF857274F1A9D8 /* ExtensionIconCache.swift */; };
 		034473B26535154C38E22A28 /* FileIndexSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DE19D3AA2CC13A249DF4C92 /* FileIndexSnapshot.swift */; };
@@ -1073,6 +1074,7 @@
 		1AA26F487C06DC6F03F78B13 /* ExtensionAppearanceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionAppearanceStore.swift; sourceTree = "<group>"; };
 		1AE6A34F46D8970090CA0489 /* DictationMel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationMel.swift; sourceTree = "<group>"; };
 		1B865FF16D3C395A8D509B94 /* QuicklinkLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuicklinkLauncher.swift; sourceTree = "<group>"; };
+		A1F400012D8C000100000001 /* QuicklinkFaviconService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuicklinkFaviconService.swift; sourceTree = "<group>"; };
 		1C8F318681FA5313677A14DA /* InstalledAIProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstalledAIProbe.swift; sourceTree = "<group>"; };
 		1D2472AA0A370E1D5A3C4025 /* EmojiKeywords */ = {isa = PBXFileReference; lastKnownFileType = folder; name = EmojiKeywords; path = Szcast/Resources/EmojiKeywords; sourceTree = SOURCE_ROOT; };
 		1D85BC3DABE5D072E59B65EA /* MathFormula.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MathFormula.swift; sourceTree = "<group>"; };
@@ -3449,6 +3451,7 @@
 			isa = PBXGroup;
 			children = (
 				1B865FF16D3C395A8D509B94 /* QuicklinkLauncher.swift */,
+				A1F400012D8C000100000001 /* QuicklinkFaviconService.swift */,
 			);
 			path = Service;
 			sourceTree = "<group>";
@@ -4938,6 +4941,7 @@
 				521618AFB97EF261E83F4DB5 /* QuicklinkEditorSession.swift in Sources */,
 				48C7D4869365CDA0EB190FFF /* QuicklinkEditorView.swift in Sources */,
 				02452CD187D25FD9CD3EF2CF /* QuicklinkLauncher.swift in Sources */,
+				A1F400012D8C000100000002 /* QuicklinkFaviconService.swift in Sources */,
 				FB1D83A8BE027AC4F328D601 /* QuicklinkListScreen.swift in Sources */,
 				E58AB83C608F8BBF99EAEB7E /* QuicklinkListView.swift in Sources */,
 				74BE9E8319C8302EF525E6B2 /* QuicklinkStore.swift in Sources */,

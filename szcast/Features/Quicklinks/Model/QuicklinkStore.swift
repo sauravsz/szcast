@@ -24,7 +24,8 @@ final class QuicklinkStore {
           in_root_search INTEGER NOT NULL DEFAULT 1,
           pinned_at REAL,
           created_at REAL NOT NULL,
-          is_enabled INTEGER NOT NULL DEFAULT 1
+          is_enabled INTEGER NOT NULL DEFAULT 1,
+          icon_path TEXT
         );
         """
 
@@ -112,6 +113,9 @@ final class QuicklinkStore {
         sqlite3_reset(stmt)
         sqlite3_clear_bindings(stmt)
         guard status == SQLITE_DONE else { throw .storageUnavailable }
+        if let removed = quicklink(id: id), let path = removed.iconPath {
+            try? FileManager.default.removeItem(atPath: path)
+        }
         commit(quicklinks.filter { $0.id != id })
     }
 
@@ -137,11 +141,21 @@ final class QuicklinkStore {
     @discardableResult
     func duplicate(id: UUID) throws(QuicklinkError) -> Quicklink {
         guard let source = quicklink(id: id) else { throw .storageUnavailable }
+        let newID = UUID()
+        var newIconPath: String? = nil
+        if let sourcePath = source.iconPath, FileManager.default.fileExists(atPath: sourcePath) {
+            let sourceURL = URL(fileURLWithPath: sourcePath)
+            let destURL = sourceURL.deletingLastPathComponent().appendingPathComponent("\(newID.uuidString.lowercased()).png")
+            if (try? FileManager.default.copyItem(at: sourceURL, to: destURL)) != nil {
+                newIconPath = destURL.path
+            }
+        }
         return try add(
             Quicklink(
+                id: newID,
                 name: Self.uniqueName(basedOn: source.name, taken: quicklinks.map(\.name)),
                 link: source.link, openWithBundleID: source.openWithBundleID,
-                iconSymbol: source.iconSymbol, isEnabled: source.isEnabled,
+                iconSymbol: source.iconSymbol, iconPath: newIconPath, isEnabled: source.isEnabled,
                 showsInRootSearch: source.showsInRootSearch))
     }
 
@@ -202,6 +216,7 @@ final class QuicklinkStore {
             sqlite3_bind_null(stmt, 8)
         }
         sqlite3_bind_double(stmt, 9, value.createdAt.timeIntervalSince1970)
+        bind(stmt, 10, value.iconPath)
         let status = sqlite3_step(stmt)
         sqlite3_reset(stmt)
         sqlite3_clear_bindings(stmt)
@@ -231,6 +246,9 @@ final class QuicklinkStore {
         value.link = draft.link.trimmingCharacters(in: .whitespacesAndNewlines)
         value.iconSymbol =
             draft.iconSymbol?.trimmingCharacters(in: .whitespacesAndNewlines)
+            .nilIfEmpty
+        value.iconPath =
+            draft.iconPath?.trimmingCharacters(in: .whitespacesAndNewlines)
             .nilIfEmpty
         value.openWithBundleID =
             draft.openWithBundleID?
@@ -285,6 +303,9 @@ final class QuicklinkStore {
         sqlite3_exec(
             db, "ALTER TABLE quicklinks ADD COLUMN is_enabled INTEGER NOT NULL DEFAULT 1", nil, nil,
             nil)
+        sqlite3_exec(
+            db, "ALTER TABLE quicklinks ADD COLUMN icon_path TEXT", nil, nil,
+            nil)
         // After the schema, so a column added later can be indexed the same way.
         sqlite3_exec(
             db,
@@ -292,18 +313,19 @@ final class QuicklinkStore {
             nil, nil, nil)
         upsertStmt = prepare(
             """
-            INSERT INTO quicklinks(id, name, link, open_with, icon, is_enabled, in_root_search, pinned_at, created_at)
-            VALUES(?,?,?,?,?,?,?,?,?)
+            INSERT INTO quicklinks(id, name, link, open_with, icon, is_enabled, in_root_search, pinned_at, created_at, icon_path)
+            VALUES(?,?,?,?,?,?,?,?,?,?)
             ON CONFLICT(id) DO UPDATE SET
               name = excluded.name, link = excluded.link, open_with = excluded.open_with,
               icon = excluded.icon, is_enabled = excluded.is_enabled,
-              in_root_search = excluded.in_root_search, pinned_at = excluded.pinned_at
+              in_root_search = excluded.in_root_search, pinned_at = excluded.pinned_at,
+              icon_path = excluded.icon_path
             """
         )
         // Both statements name columns in struct order, which `is_enabled` was appended after.
         loadStmt = prepare(
             """
-            SELECT id, name, link, open_with, icon, is_enabled, in_root_search, pinned_at, created_at
+            SELECT id, name, link, open_with, icon, is_enabled, in_root_search, pinned_at, created_at, icon_path
             FROM quicklinks
             """
         )
@@ -333,6 +355,7 @@ final class QuicklinkStore {
         return Quicklink(
             id: id, name: name, link: link, openWithBundleID: columnString(stmt, 3),
             iconSymbol: columnString(stmt, 4),
+            iconPath: columnString(stmt, 9),
             isEnabled: sqlite3_column_int(stmt, 5) != 0,
             showsInRootSearch: sqlite3_column_int(stmt, 6) != 0,
             pinnedAt: columnDate(stmt, 7),

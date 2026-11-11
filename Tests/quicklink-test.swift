@@ -29,6 +29,7 @@ struct QuicklinkTests {
         archiveMerge()
         archiveAcceptsAHandWrittenFile()
         raycastImport()
+        faviconHostExtraction()
 
         print("\(passes)/\(passes + failures) passed")
         if failures > 0 { exit(1) }
@@ -334,6 +335,7 @@ struct QuicklinkTests {
             let store = QuicklinkStore(directory: dir)
             var draft = link("Downloads", "~/Downloads")
             draft.iconSymbol = "folder"
+            draft.iconPath = "/fake/path/icon.png"
             draft.openWithBundleID = "com.apple.finder"
             stored = try? store.add(draft).id
             try? store.togglePinned(id: stored!)
@@ -349,6 +351,7 @@ struct QuicklinkTests {
         expect(restored.id == stored, "identity survives")
         expect(restored.name == "Downloads" && restored.link == "~/Downloads", "fields survive")
         expect(restored.iconSymbol == "folder", "the icon survives")
+        expect(restored.iconPath == "/fake/path/icon.png", "the icon path survives")
         expect(restored.openWithBundleID == "com.apple.finder", "the open-with app survives")
         expect(restored.isPinned, "the pin stamp survives")
         expect(!restored.isEnabled, "the enabled flag survives")
@@ -630,6 +633,27 @@ struct QuicklinkTests {
             .appendingPathComponent("szcast-quicklink-test-\(UUID().uuidString)", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
+    }
+
+    static func faviconHostExtraction() {
+        expect(
+            QuicklinkFaviconService.extractHost(from: "https://github.com/torvalds/linux") == "github.com",
+            "extracts host from standard https URL")
+        expect(
+            QuicklinkFaviconService.extractHost(from: "https://search.brave.com/search?q={argument name=\"Query\"}") == "search.brave.com",
+            "strips placeholders and extracts host")
+        expect(
+            QuicklinkFaviconService.extractHost(from: "chatgpt.com/?q={argument}") == "chatgpt.com",
+            "handles schemeless web host")
+        expect(
+            QuicklinkFaviconService.extractHost(from: "http://localhost:3000/api") == "localhost",
+            "strips port from host")
+        expect(
+            QuicklinkFaviconService.extractHost(from: "~/Downloads") == nil,
+            "path destination returns nil for host")
+        expect(
+            QuicklinkFaviconService.extractHost(from: "shortcuts://run-shortcut?name=Test") == nil,
+            "deeplink destination returns nil for host")
     }
 
     /// Writes a database the store didn't create, which is the only way to prove it reads one.

@@ -12,9 +12,11 @@ final class QuicklinkEditorSession {
     var name: String
     var link: String
     var iconSymbol: String?
+    var iconPath: String?
     var openWithBundleID: String?
     var showsInRootSearch: Bool
     var isPinned: Bool
+    var isFetchingFavicon: Bool = false
     var selection: TextSelection?
     var focusedField: Field = .link
     var errorMessage: String?
@@ -25,6 +27,7 @@ final class QuicklinkEditorSession {
         name = quicklink?.name ?? ""
         link = quicklink?.link ?? ""
         iconSymbol = quicklink?.iconSymbol
+        iconPath = quicklink?.iconPath
         openWithBundleID = quicklink?.openWithBundleID
         showsInRootSearch = quicklink?.showsInRootSearch ?? true
         isPinned = quicklink?.isPinned ?? false
@@ -38,10 +41,21 @@ final class QuicklinkEditorSession {
     func draft(now: Date) -> Quicklink {
         Quicklink(
             id: id, name: name, link: link, openWithBundleID: openWithBundleID,
-            iconSymbol: iconSymbol, isEnabled: original?.isEnabled ?? true,
+            iconSymbol: iconSymbol, iconPath: iconPath, isEnabled: original?.isEnabled ?? true,
             showsInRootSearch: showsInRootSearch,
             pinnedAt: isPinned ? (original?.pinnedAt ?? now) : nil,
             createdAt: original?.createdAt ?? now)
+    }
+
+    func fetchFavicon() async {
+        let trimmed = link.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        isFetchingFavicon = true
+        defer { isFetchingFavicon = false }
+        if let path = await QuicklinkFaviconService.fetchFavicon(for: trimmed, quicklinkID: id) {
+            iconPath = path
+            iconSymbol = nil
+        }
     }
 
     func advanceFocus(backwards: Bool) {

@@ -101,12 +101,24 @@ struct QuicklinkEditorView: View {
             if value.isEmpty {
                 EmptyView()
             } else if QuicklinkDestination.containsPlaceholder(value) {
-                Text("Resolved when you open it — placeholders are filled in first.")
+                HStack(spacing: metrics.spacing.md) {
+                    Text("Resolved when you open it — placeholders are filled in first.")
+                    if QuicklinkFaviconService.extractHost(from: value) != nil {
+                        Spacer()
+                        fetchFaviconButton
+                    }
+                }
             } else if let destination = QuicklinkDestination.detect(value) {
-                Label {
-                    Text(destination.displayText).lineLimit(1).truncationMode(.middle)
-                } icon: {
-                    SymbolImage(name: destination.defaultSymbol, size: metrics.size.menuIcon)
+                HStack(spacing: metrics.spacing.md) {
+                    Label {
+                        Text(destination.displayText).lineLimit(1).truncationMode(.middle)
+                    } icon: {
+                        SymbolImage(name: destination.defaultSymbol, size: metrics.size.menuIcon)
+                    }
+                    if case .web = destination {
+                        Spacer()
+                        fetchFaviconButton
+                    }
                 }
             } else {
                 Text("This doesn't look like a URL, file path, or deeplink.")
@@ -115,6 +127,20 @@ struct QuicklinkEditorView: View {
         }
         .font(metrics.typography.rowTrailing)
         .foregroundStyle(Theme.Colors.textSecondary)
+    }
+
+    @ViewBuilder
+    private var fetchFaviconButton: some View {
+        if editor.isFetchingFavicon {
+            ProgressView()
+                .controlSize(.small)
+        } else {
+            Button(editor.iconPath != nil ? String(localized: "Refresh Favicon") : String(localized: "Fetch Favicon")) {
+                Task { await editor.fetchFavicon() }
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(Color.accentColor)
+        }
     }
 
     private var insertMenu: some View {
@@ -183,11 +209,22 @@ struct QuicklinkEditorView: View {
 
     private var iconMenu: some View {
         HStack(spacing: metrics.spacing.sm) {
-            SymbolImage(
-                name: editor.iconSymbol ?? QuicklinkDestination.detect(editor.link)?.defaultSymbol
-                    ?? Quicklink.sfSymbol,
-                size: metrics.scaled(Theme.Typography.menuSymbolSize))
-            menuChevron(for: iconMenuFrame)
+            if let iconPath = editor.iconPath, FileManager.default.fileExists(atPath: iconPath) {
+                EntryIconView(source: .artwork(path: iconPath, extent: IconCache.appIconExtent))
+                    .frame(
+                        width: metrics.scaled(Theme.Typography.menuSymbolSize),
+                        height: metrics.scaled(Theme.Typography.menuSymbolSize))
+            } else {
+                SymbolImage(
+                    name: editor.iconSymbol ?? QuicklinkDestination.detect(editor.link)?.defaultSymbol
+                        ?? Quicklink.sfSymbol,
+                    size: metrics.scaled(Theme.Typography.menuSymbolSize))
+            }
+            if editor.isFetchingFavicon {
+                ProgressView().controlSize(.small)
+            } else {
+                menuChevron(for: iconMenuFrame)
+            }
         }
         .padding(.horizontal, metrics.spacing.xl)
         .frame(height: metrics.size.dialogButtonHeight)
@@ -213,18 +250,55 @@ struct QuicklinkEditorView: View {
     }
 
     private func showIconMenu() {
-        let items =
-            [
-                PopoverMenuItem(title: String(localized: "Automatic"), systemImage: Quicklink.sfSymbol) {
-                    editor.iconSymbol = nil
+        var items: [PopoverMenuItem] = []
+        let canFetch = QuicklinkFaviconService.extractHost(from: editor.link) != nil
+        if canFetch {
+            items.append(
+                PopoverMenuItem(
+                    title: editor.iconPath != nil ? String(localized: "Refresh Favicon") : String(localized: "Fetch Favicon"),
+                    systemImage: "arrow.triangle.2.circlepath"
+                ) {
+                    Task { await editor.fetchFavicon() }
                 }
-            ]
-            + Self.iconSymbols.enumerated().map { index, symbol in
+            )
+        }
+        if editor.iconPath != nil {
+            items.append(
+                PopoverMenuItem(
+                    title: String(localized: "Remove Favicon"),
+                    systemImage: "trash"
+                ) {
+                    editor.iconPath = nil
+                }
+            )
+        }
+        items.append(
+            PopoverMenuItem(
+                title: String(localized: "Automatic Symbol"),
+                systemImage: Quicklink.sfSymbol,
+                startsSection: canFetch || editor.iconPath != nil
+            ) {
+                editor.iconSymbol = nil
+                editor.iconPath = nil
+            }
+        )
+        for (index, symbol) in Self.iconSymbols.enumerated() {
+            items.append(
                 PopoverMenuItem(title: symbol, systemImage: symbol, startsSection: index == 0) {
                     editor.iconSymbol = symbol
+                    editor.iconPath = nil
                 }
-            }
-        let selected = Self.iconSymbols.firstIndex { $0 == editor.iconSymbol }.map { $0 + 1 } ?? 0
+            )
+        }
+        let selected: Int
+        if editor.iconPath != nil {
+            selected = canFetch ? 0 : 1
+        } else if let iconSymbol = editor.iconSymbol, let index = Self.iconSymbols.firstIndex(of: iconSymbol) {
+            let offset = (canFetch ? 1 : 0) + (editor.iconPath != nil ? 1 : 0) + 1
+            selected = offset + index
+        } else {
+            selected = canFetch ? 1 : 0
+        }
         openInputMenu(PopoverMenuContent(items: items), .belowControl(iconMenuFrame), selected)
     }
 

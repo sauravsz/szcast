@@ -361,9 +361,45 @@ final class QuicklinkCoordinator {
                 draft.isEnabled = current.isEnabled
                 try updateQuicklink(draft)
             }
+            if draft.iconPath == nil && draft.iconSymbol == nil && settings.quicklinkAutoFetchFavicons {
+                fetchFavicon(for: draft.id)
+            }
             cancelQuicklinkEditing()
         } catch {
             editor.errorMessage = error.localizedDescription
+        }
+    }
+
+    func fetchFavicon(for id: UUID) {
+        guard let quicklink = store.quicklink(id: id) else { return }
+        Task {
+            if let path = await QuicklinkFaviconService.fetchFavicon(for: quicklink.link, quicklinkID: quicklink.id) {
+                var updated = quicklink
+                updated.iconPath = path
+                try? store.update(updated)
+            }
+        }
+    }
+
+    func removeFavicon(for id: UUID) {
+        guard var quicklink = store.quicklink(id: id) else { return }
+        QuicklinkFaviconService.removeIcon(for: id)
+        quicklink.iconPath = nil
+        try? store.update(quicklink)
+    }
+
+    func fetchAllFavicons() {
+        let targets = store.quicklinks.filter {
+            QuicklinkFaviconService.extractHost(from: $0.link) != nil
+        }
+        Task {
+            for quicklink in targets {
+                if let path = await QuicklinkFaviconService.fetchFavicon(for: quicklink.link, quicklinkID: quicklink.id) {
+                    var updated = quicklink
+                    updated.iconPath = path
+                    try? store.update(updated)
+                }
+            }
         }
     }
 

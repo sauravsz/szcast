@@ -721,6 +721,13 @@ final class AppSettings {
         }
     }
 
+    var quicklinkAutoFetchFavicons: Bool {
+        didSet {
+            defaults.set(
+                quicklinkAutoFetchFavicons, forKey: Key.quicklinkAutoFetchFavicons.rawValue)
+        }
+    }
+
     /// Whether the support window may reopen itself; off means never ask again.
     var supportRemindersEnabled: Bool {
         didSet { defaults.set(supportRemindersEnabled, forKey: Key.supportReminders.rawValue) }
@@ -1050,6 +1057,9 @@ final class AppSettings {
         quicklinkConfirmsBeforeDelete =
             defaults.object(forKey: Key.quicklinkConfirmsBeforeDelete.rawValue) == nil
             || defaults.bool(forKey: Key.quicklinkConfirmsBeforeDelete.rawValue)
+        quicklinkAutoFetchFavicons =
+            defaults.object(forKey: Key.quicklinkAutoFetchFavicons.rawValue) == nil
+            || defaults.bool(forKey: Key.quicklinkAutoFetchFavicons.rawValue)
         supportRemindersEnabled =
             defaults.object(forKey: Key.supportReminders.rawValue) == nil
             || defaults.bool(forKey: Key.supportReminders.rawValue)

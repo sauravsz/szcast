@@ -270,12 +270,19 @@ extension AppEntry {
     }
 
     init(_ quicklink: Quicklink) {
+        let iconOverride: EntryIcon?
+        if let iconPath = quicklink.iconPath, FileManager.default.fileExists(atPath: iconPath) {
+            iconOverride = .artwork(path: iconPath, extent: IconCache.appIconExtent)
+        } else {
+            iconOverride = nil
+        }
         self.init(
             id: quicklink.entryID, name: quicklink.name,
             url: URL(string: "szcast://quicklink/" + quicklink.id.uuidString)!,
             bundleID: nil, kind: .quicklink,
             symbolName: quicklink.iconSymbol
-                ?? QuicklinkDestination.detect(quicklink.link)?.defaultSymbol)
+                ?? QuicklinkDestination.detect(quicklink.link)?.defaultSymbol,
+            iconOverride: iconOverride)
     }
 
     /// No bundle id: that would key every shortcut's alias and ranking to the Shortcuts app.

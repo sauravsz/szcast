@@ -94,6 +94,10 @@ struct QuicklinksSettingsView: View {
                 SettingsRowTitle(.quicklinksBehaviour, "Confirm before deleting")
                 Text("From the launcher's Actions menu.")
             }
+            Toggle(isOn: $settings.quicklinkAutoFetchFavicons) {
+                SettingsRowTitle(.quicklinksBehaviour, "Automatically fetch favicons")
+                Text("Download website icons for web quicklinks.")
+            }
         } header: {
             SettingsSectionHeader(.quicklinksBehaviour)
         }
@@ -113,6 +117,13 @@ struct QuicklinksSettingsView: View {
             } label: {
                 SettingsRowTitle(.quicklinksImportExport, "Export quicklinks")
                 Text("To a JSON file.")
+            }
+            LabeledContent {
+                Button("Fetch All Favicons") { coordinator.fetchAllFavicons() }
+                    .disabled(store.quicklinks.isEmpty)
+            } label: {
+                SettingsRowTitle(.quicklinksImportExport, "Fetch all favicons")
+                Text("Download website icons for all saved web quicklinks.")
             }
         } header: {
             SettingsSectionHeader(.quicklinksImportExport)
@@ -135,14 +146,12 @@ private struct QuicklinkSettingsRow: View {
     @Binding var isEnabled: Bool
     let onEdit: () -> Void
     let onDelete: () -> Void
+    @Environment(QuicklinkCoordinator.self) private var coordinator
 
     var body: some View {
         SettingsRow(title: quicklink.name, subtitle: quicklink.link) {
-            SymbolImage(
-                name: quicklink.symbol,
-                size: Theme.Size.settingsRowIcon - Theme.Spacing.xs
-            )
-            .frame(width: SettingsListMetrics.iconSize, height: SettingsListMetrics.iconSize)
+            EntryIconView(source: quicklink.iconSource)
+                .frame(width: SettingsListMetrics.iconSize, height: SettingsListMetrics.iconSize)
         } trailing: {
             if quicklink.isPinned {
                 Image(systemName: "pin.fill")
@@ -162,6 +171,17 @@ private struct QuicklinkSettingsRow: View {
             // A disabled quicklink's shortcut fires into the funnel's refusal, so it dims too.
             ShortcutRecorder(action: .quicklink(id: quicklink.id))
                 .settingsEnabled(quicklink.isEnabled)
+
+            if QuicklinkFaviconService.extractHost(from: quicklink.link) != nil {
+                Button {
+                    coordinator.fetchFavicon(for: quicklink.id)
+                } label: {
+                    Image(systemName: quicklink.iconPath != nil ? "arrow.clockwise" : "globe")
+                }
+                .buttonStyle(.plain)
+                .help(quicklink.iconPath != nil ? "Refresh Favicon" : "Fetch Favicon")
+                .accessibilityLabel("Fetch Favicon for \(quicklink.name)")
+            }
 
             Button(action: onEdit) {
                 Image(systemName: "pencil")

@@ -70,6 +70,7 @@ enum QuicklinkArchive {
                     link: candidate.link.trimmingCharacters(in: .whitespacesAndNewlines),
                     openWithBundleID: candidate.openWithBundleID,
                     iconSymbol: candidate.iconSymbol,
+                    iconPath: candidate.iconPath,
                     isEnabled: candidate.isEnabled,
                     showsInRootSearch: candidate.showsInRootSearch,
                     pinnedAt: candidate.pinnedAt,
