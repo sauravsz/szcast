@@ -122,6 +122,36 @@ struct DictationTest {
                 fatalError("Missing Parakeet decoding configuration")
             }
         }
+        // S1-mini raw framing and model identification
+        guard DictationS1Polisher.isS1Mini("hf.co/superwhisper/s1-mini-gguf:Q4_K_M") else {
+            fatalError("Failed to identify S1-mini Ollama registry tag")
+        }
+        guard DictationS1Polisher.isS1Mini("superwhisper/s1-mini-gguf") else {
+            fatalError("Failed to identify S1-mini short name")
+        }
+        guard !DictationS1Polisher.isS1Mini("llama3.2:3b") else {
+            fatalError("Incorrectly identified llama3.2 as S1-mini")
+        }
+
+        let rawPrompt = DictationS1Polisher.makeRawPrompt(
+            systemPrompt: DictationS1Settings.systemPrompt,
+            userMessage: "[Styling: semi-formal] [Structure: prose] [Context: general]\nhello world"
+        )
+        guard rawPrompt.contains("<|im_start|>assistant\n<think>\n\n</think>\n\n") else {
+            fatalError("Raw prompt must contain closed empty think block to resolve unclosed thinking tag in GGUF template")
+        }
+        guard rawPrompt.contains("<|im_start|>system\n\(DictationS1Settings.systemPrompt)<|im_end|>\n") else {
+            fatalError("Raw prompt must contain framed system prompt")
+        }
+        guard rawPrompt.contains("<|im_start|>user\n[Styling: semi-formal] [Structure: prose] [Context: general]\nhello world<|im_end|>\n") else {
+            fatalError("Raw prompt must contain framed user message with control line")
+        }
+
+        let normalizedURL = DictationS1Polisher.normalizedBaseURL(URL(string: "http://localhost:11434/v1/chat/completions")!)
+        check(normalizedURL.absoluteString, "http://localhost:11434")
+
+        check(DictationS1Downloader.defaultModelID, "hf.co/superwhisper/s1-mini-gguf:Q4_K_M")
+
         print("Dictation text formatting passed")
     }
 }

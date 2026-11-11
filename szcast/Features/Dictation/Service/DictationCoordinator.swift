@@ -11,6 +11,7 @@ final class DictationCoordinator {
     let models: DictationModelStore
     let dictionaryStore = DictationDictionaryStore()
     let historyStore = DictationHistoryStore()
+    let s1Downloader = DictationS1Downloader()
     private let s1Polisher = DictationS1Polisher()
     private(set) var lastDictation: String?
     private let capture = DictationCapture()

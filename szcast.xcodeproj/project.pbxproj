@@ -16,6 +16,7 @@
 		16FD99237765635023752ADE /* DictationDictionaryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5514468C4D18274EF07EE1E7 /* DictationDictionaryStore.swift */; };
 		FB22F118BC6395AA82BD8974 /* DictationHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16DDD06310C52049BD45EA67 /* DictationHistoryStore.swift */; };
 		800E5F59D62245AC021B8AB6 /* DictationS1Polisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CFEC211592A3BDA09B00F05 /* DictationS1Polisher.swift */; };
+		800E5F59D62245AC021B8AB7 /* DictationS1Downloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CFEC211592A3BDA09B00F06 /* DictationS1Downloader.swift */; };
 		0047FE6A50E746CCF0FC6810 /* SystemActionRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AEDBB526AB2C0406D8226D5 /* SystemActionRunner.swift */; };
 		005B39EF22378D1736CE5805 /* TerminalLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EAA357A9F0317320CFAADF /* TerminalLogView.swift */; };
 		00BA80B95E15859F0FDA6F16 /* AppVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D4F22647E4E1BA19F0FC520 /* AppVersion.swift */; };
@@ -975,6 +976,7 @@
 		5514468C4D18274EF07EE1E7 /* DictationDictionaryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationDictionaryStore.swift; sourceTree = "<group>"; };
 		16DDD06310C52049BD45EA67 /* DictationHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationHistoryStore.swift; sourceTree = "<group>"; };
 		5CFEC211592A3BDA09B00F05 /* DictationS1Polisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationS1Polisher.swift; sourceTree = "<group>"; };
+		5CFEC211592A3BDA09B00F06 /* DictationS1Downloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationS1Downloader.swift; sourceTree = "<group>"; };
 		00B475B5929CC0478EFAC7D8 /* UpdateFailure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateFailure.swift; sourceTree = "<group>"; };
 		00CF6A57ECFDA17248393EA8 /* RaycastScriptImport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaycastScriptImport.swift; sourceTree = "<group>"; };
 		00ECBD55353C83A7F4E93592 /* MCPSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPSettingsSection.swift; sourceTree = "<group>"; };
@@ -2360,6 +2362,7 @@
 				5514468C4D18274EF07EE1E7 /* DictationDictionaryStore.swift */,
 				16DDD06310C52049BD45EA67 /* DictationHistoryStore.swift */,
 				5CFEC211592A3BDA09B00F05 /* DictationS1Polisher.swift */,
+				5CFEC211592A3BDA09B00F06 /* DictationS1Downloader.swift */,
 				24386713685FB65FB46A5516 /* DictationAudioDucker.swift */,
 				11A888004906108239CDDCF1 /* DictationCapture.swift */,
 				F93DC82C8E2CFC89CBA7FC8E /* DictationCoordinator.swift */,
@@ -4281,6 +4284,7 @@
 				16FD99237765635023752ADE /* DictationDictionaryStore.swift in Sources */,
 				FB22F118BC6395AA82BD8974 /* DictationHistoryStore.swift in Sources */,
 				800E5F59D62245AC021B8AB6 /* DictationS1Polisher.swift in Sources */,
+				800E5F59D62245AC021B8AB7 /* DictationS1Downloader.swift in Sources */,
 				56EB00CB2815CC268829C97B /* AIAttachmentPolicy.swift in Sources */,
 				7F22BD030E1D2A5DC43BABE9 /* AIBrand.swift in Sources */,
 				128AE908878AA0F96C928C9D /* AIChatCoordinator.swift in Sources */,

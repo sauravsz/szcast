@@ -76,16 +76,21 @@ struct DictationSettingsView: View {
         .onAppear {
             microphoneAccess = Permissions.microphoneAccess()
             if settings.dictationEnabled { microphones = DictationCapture.microphones }
+            Task {
+                await coordinator.s1Downloader.checkStatus()
+            }
         }
         .onChange(of: settings.dictationEnabled) { _, enabled in
             if enabled { microphones = DictationCapture.microphones }
         }
         .task {
+            await coordinator.s1Downloader.checkStatus()
             for await _ in NotificationCenter.default.notifications(
                 named: NSApplication.didBecomeActiveNotification)
             {
                 microphoneAccess = Permissions.microphoneAccess()
                 if settings.dictationEnabled { microphones = DictationCapture.microphones }
+                await coordinator.s1Downloader.checkStatus()
             }
         }
         .task(id: settings.dictationEnabled ? settings.dictationModel : nil) {
@@ -349,6 +354,8 @@ struct DictationSettingsView: View {
             }
 
             if settings.dictationS1Enabled {
+                s1ModelStatusRow
+
                 Picker(selection: $bSettings.dictationS1Tone) {
                     ForEach(S1Tone.allCases) { tone in
                         Text(tone.title).tag(tone)
@@ -380,6 +387,129 @@ struct DictationSettingsView: View {
             Text("AI Polish (S1-mini)")
         } footer: {
             Text("AI polish uses local Ollama or an OpenAI-compatible endpoint with the S1 control line.")
+        }
+    }
+
+    @ViewBuilder
+    private var s1ModelStatusRow: some View {
+        switch coordinator.s1Downloader.status {
+        case .idle, .checking:
+            HStack(spacing: Theme.Spacing.sm) {
+                ProgressView()
+                    .controlSize(.small)
+                Text("Checking Ollama S1-mini status...")
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+                Spacer()
+            }
+            .padding(.vertical, 2)
+
+        case .ollamaNotRunning:
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.orange)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Ollama is not running")
+                        .font(.system(size: 12, weight: .medium))
+                    Text("Start Ollama at localhost:11434 to run S1-mini offline.")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                Button("Retry") {
+                    Task { await coordinator.s1Downloader.checkStatus() }
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+            .padding(.vertical, 2)
+
+        case .installed(let modelName):
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.green)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("S1-mini Installed & Ready")
+                        .font(.system(size: 12, weight: .medium))
+                    Text("\(modelName) (484 MB)")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                Button("Refresh") {
+                    Task { await coordinator.s1Downloader.checkStatus() }
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+            .padding(.vertical, 2)
+
+        case .notInstalled:
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "arrow.down.circle")
+                    .foregroundColor(.blue)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("S1-mini Model Not Downloaded")
+                        .font(.system(size: 12, weight: .medium))
+                    Text("Download Superwhisper S1-mini (484 MB) into Ollama.")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                Button {
+                    coordinator.s1Downloader.download()
+                } label: {
+                    Label("Download (484 MB)", systemImage: "arrow.down.circle")
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+            }
+            .padding(.vertical, 2)
+
+        case .downloading(let progress, let statusText):
+            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+                HStack {
+                    Image(systemName: "arrow.down.circle.fill")
+                        .foregroundColor(.blue)
+                    Text("Downloading S1-mini: \(statusText)")
+                        .font(.system(size: 12, weight: .medium))
+                    Spacer()
+                    if progress > 0 {
+                        Text("\(Int(progress * 100))%")
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundColor(.secondary)
+                    }
+                    Button("Cancel") {
+                        coordinator.s1Downloader.cancelDownload()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.mini)
+                }
+                ProgressView(value: progress > 0 ? progress : nil)
+                    .progressViewStyle(.linear)
+            }
+            .padding(.vertical, 2)
+
+        case .error(let message):
+            HStack(spacing: Theme.Spacing.sm) {
+                Image(systemName: "xmark.octagon.fill")
+                    .foregroundColor(.red)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Download Failed")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.red)
+                    Text(message)
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                Button("Retry") {
+                    coordinator.s1Downloader.download()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+            .padding(.vertical, 2)
         }
     }
 
