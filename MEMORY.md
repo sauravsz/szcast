@@ -24,15 +24,15 @@ Fork of [Tinycast](https://github.com/abue-ammar/tinycast) by Abue Ammar, rename
 - `Scripts/run-tests.sh` — all 117 harnesses pass. `Scripts/build-dmg.sh` → `build/szcast-0.1.0.dmg`; needs the `szcast Self-Signed` keychain identity (already created; without it Accessibility/TCC grants reset each build).
 
 ## Recent Capabilities
+- **Release 1.1.2** (`6256ef5`): Dynamic font scaling (12pt-22pt) across launcher rows, details, and AI chat typography; instant `<alias><Space>` command expansion; rich inline images in Notes via TextKit 2 with caret reveal; snippet default action configuration (Paste, Copy, Copy & Paste); snippet duplication (`⌘D`); snippet tags & folder grouping with horizontal filter chips; and AI web search discoverability in chat composer.
 - **Focus Timer & Sensory Suite** (`45fb55e`): Full Pomodoro cycles (`.work`, `.shortBreak`, `.longBreak`), menu bar countdown item, `PaletteScreen` UI (`FocusTimerScreen`), non-blocking audio cues via `NSSound` (`SensoryAudioPlayer`), and full-screen CoreAnimation celebration (`ConfettiWindowController`).
 - **Native Live Web Search with Citations** (`88fb7f9`): Provider wrapper (`WebSearchAIProvider`) supporting Tavily, Exa, and Jina with secure Keychain storage (`KeychainSecretStore.webSearchAPIKeys`). Live search event forwarding (`.searching`, `.searched`), inline context augmentation (`<web_search_results>`), and Markdown inline citation instructions linking to `ChatCitations` source badges. Configurable via AI Settings with key validation and model capability detection.
 - **Default Fallbacks & Quicklinks Configuration** (`d069227`): Established default fallback order (`DefaultFallbacks.order`) and disabled set (`DefaultFallbacks.disabled`) matching user profile: enabled top 3 (Brave Search, ChatGPT Web Search, Brave Ask) with all others (commands and secondary search engines) disabled by default. Added `DefaultQuicklinks` seeding on first run.
 
-
 ## Active State & Next Steps
-- **Active State**: Local `main` branch has all Phase 1 (Focus Timer & Sensory), Phase 2 (Live Web Search with Tavily/Exa/Jina), and Default Fallbacks features verified and committed. Zero uncommitted changes. All 117 tests pass. Debug build succeeded.
+- **Active State**: Version 1.1.2 built, self-signed, pushed to `origin/main`, published to GitHub Releases (`v1.1.2`), and installed in `/Applications/szcast.app`. Working tree clean. All 117 tests pass.
 - **Immediate Next Steps**:
-  1. Evaluate local semantic/vector search vs SQLite FTS/Spotlight if desired.
-  2. Push commits to `origin/main` and prepare release build only when user explicitly confirms.
+  1. Monitor user feedback on font scaling and snippet folder organization.
+  2. Evaluate local semantic/vector search vs SQLite FTS/Spotlight if desired.
 
 Attribution: AGPL-3.0. Copyright © 2026 Abue Ammar in LICENSE; NOTICE.md keeps third-party material. Fork of Tinycast; no affiliation implied.
