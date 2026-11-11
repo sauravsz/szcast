@@ -32,10 +32,16 @@ struct ExtensionInstallPolicyTest {
               ExtensionInstallPolicy.isTrustedDownloadURL(URL(string: "https://www.raycast.com/x.zip")!))
         check("the bare raycast host is trusted",
               ExtensionInstallPolicy.isTrustedDownloadURL(URL(string: "https://raycast.com/x.zip")!))
+        check("the raycast releases host is trusted",
+              ExtensionInstallPolicy.isTrustedDownloadURL(URL(string: "https://extensions.raycast-releases.com/x.zip")!))
+        check("the bare raycast releases host is trusted",
+              ExtensionInstallPolicy.isTrustedDownloadURL(URL(string: "https://raycast-releases.com/x.zip")!))
         check("an unrelated host is refused",
               !ExtensionInstallPolicy.isTrustedDownloadURL(URL(string: "https://evil.example/x.zip")!))
         check("a look-alike host is refused",
               !ExtensionInstallPolicy.isTrustedDownloadURL(URL(string: "https://raycast.com.evil.example/x.zip")!))
+        check("a look-alike releases host is refused",
+              !ExtensionInstallPolicy.isTrustedDownloadURL(URL(string: "https://raycast-releases.com.evil.example/x.zip")!))
         check("plain http is refused",
               !ExtensionInstallPolicy.isTrustedDownloadURL(URL(string: "http://www.raycast.com/x.zip")!))
         check("a file URL is refused",

@@ -21,13 +21,21 @@ enum ExtensionInstallPolicy {
 
     /// The hosts a store download may come from. The URL arrives in a remote response, so it is
     /// checked rather than trusted: otherwise "store only" would mean "whatever the API returns".
-    static let trustedDownloadHosts: Set<String> = ["www.raycast.com", "raycast.com"]
+    static let trustedDownloadHosts: Set<String> = [
+        "www.raycast.com",
+        "raycast.com",
+        "extensions.raycast-releases.com",
+        "raycast-releases.com"
+    ]
 
     static func isTrustedDownloadURL(_ url: URL) -> Bool {
         guard url.scheme?.lowercased() == "https", let host = url.host?.lowercased() else {
             return false
         }
-        return trustedDownloadHosts.contains(host)
+        if trustedDownloadHosts.contains(host) {
+            return true
+        }
+        return host.hasSuffix(".raycast.com") || host.hasSuffix(".raycast-releases.com")
     }
 }
 
