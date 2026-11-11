@@ -62,6 +62,31 @@ struct DictationTest {
         check(
             DictationTextFormatter.stripEcho("äh also weiter gehts", after: "und dann"),
             "äh also weiter gehts")
+
+        // Spoken Emoji conversion
+        check(DictationTextFormatter.convertSpokenEmoji("good job thumbs up emoji"), "good job 👍")
+        check(DictationTextFormatter.convertSpokenEmoji("this is fire emoji"), "this is 🔥")
+
+        // Spoken Punctuation conversion
+        check(DictationTextFormatter.convertSpokenPunctuation("hello comma world period"), "hello, world.")
+        check(DictationTextFormatter.convertSpokenPunctuation("are you ready question mark"), "are you ready?")
+
+        // Filler words removal
+        check(DictationTextFormatter.removeFillerWords("Um, this is uh a test"), "this is a test")
+
+        // S1 Control Line
+        let s1 = DictationS1Settings(enabled: true, tone: .formal, structure: .lists, context: .email)
+        check(s1.controlLine, "[Styling: formal] [Structure: lists] [Context: email]")
+
+        // Vocabulary Packs
+        check(VocabularyPackType.tech.displayName, "Tech")
+        guard VocabularyPackType.tech.fixesCount == 76 else {
+            fatalError("Tech vocabulary pack should have 76 fixes")
+        }
+        guard VocabularyPackType.medical.fixesCount == 87 else {
+            fatalError("Medical vocabulary pack should have 87 fixes")
+        }
+
         check(DictationModel.redux.folderName, "parakeet-redux")
         check(DictationModel.ultra.folderName, "parakeet-ultra")
         check(DictationModel.redux.title, "Parakeet · Redux")

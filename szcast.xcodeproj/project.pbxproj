@@ -7,6 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B0FDE84036CE4A1716EFDAE2 /* CustomWord.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED159326D2C4D1A06F130487 /* CustomWord.swift */; };
+		DDFE113C33B885AFD38D0079 /* DictationHistoryItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F727C9F571DD9C97701F40FD /* DictationHistoryItem.swift */; };
+		5EB8A9CB49EBF740CC59EF24 /* DictationOtherAudioMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E34F1F824C8572E36B11C16 /* DictationOtherAudioMode.swift */; };
+		B81157037D6570A127E80A15 /* DictationS1Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39CD81DD10194EF6709D0447 /* DictationS1Settings.swift */; };
+		61FE79829C84256B2222632B /* DictationSnippet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2987727C4328C651016E074D /* DictationSnippet.swift */; };
+		39083F434B24A48B73B2F869 /* VocabularyPack.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDA2F21EB377E9234D7CD9EB /* VocabularyPack.swift */; };
+		16FD99237765635023752ADE /* DictationDictionaryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5514468C4D18274EF07EE1E7 /* DictationDictionaryStore.swift */; };
+		FB22F118BC6395AA82BD8974 /* DictationHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16DDD06310C52049BD45EA67 /* DictationHistoryStore.swift */; };
+		800E5F59D62245AC021B8AB6 /* DictationS1Polisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CFEC211592A3BDA09B00F05 /* DictationS1Polisher.swift */; };
 		0047FE6A50E746CCF0FC6810 /* SystemActionRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AEDBB526AB2C0406D8226D5 /* SystemActionRunner.swift */; };
 		005B39EF22378D1736CE5805 /* TerminalLogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2EAA357A9F0317320CFAADF /* TerminalLogView.swift */; };
 		00BA80B95E15859F0FDA6F16 /* AppVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D4F22647E4E1BA19F0FC520 /* AppVersion.swift */; };
@@ -956,6 +965,15 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		ED159326D2C4D1A06F130487 /* CustomWord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomWord.swift; sourceTree = "<group>"; };
+		F727C9F571DD9C97701F40FD /* DictationHistoryItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationHistoryItem.swift; sourceTree = "<group>"; };
+		9E34F1F824C8572E36B11C16 /* DictationOtherAudioMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationOtherAudioMode.swift; sourceTree = "<group>"; };
+		39CD81DD10194EF6709D0447 /* DictationS1Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationS1Settings.swift; sourceTree = "<group>"; };
+		2987727C4328C651016E074D /* DictationSnippet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationSnippet.swift; sourceTree = "<group>"; };
+		EDA2F21EB377E9234D7CD9EB /* VocabularyPack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyPack.swift; sourceTree = "<group>"; };
+		5514468C4D18274EF07EE1E7 /* DictationDictionaryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationDictionaryStore.swift; sourceTree = "<group>"; };
+		16DDD06310C52049BD45EA67 /* DictationHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationHistoryStore.swift; sourceTree = "<group>"; };
+		5CFEC211592A3BDA09B00F05 /* DictationS1Polisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationS1Polisher.swift; sourceTree = "<group>"; };
 		00B475B5929CC0478EFAC7D8 /* UpdateFailure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateFailure.swift; sourceTree = "<group>"; };
 		00CF6A57ECFDA17248393EA8 /* RaycastScriptImport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaycastScriptImport.swift; sourceTree = "<group>"; };
 		00ECBD55353C83A7F4E93592 /* MCPSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPSettingsSection.swift; sourceTree = "<group>"; };
@@ -2337,6 +2355,9 @@
 		2F37DF33894D0E30B694B323 /* Service */ = {
 			isa = PBXGroup;
 			children = (
+				5514468C4D18274EF07EE1E7 /* DictationDictionaryStore.swift */,
+				16DDD06310C52049BD45EA67 /* DictationHistoryStore.swift */,
+				5CFEC211592A3BDA09B00F05 /* DictationS1Polisher.swift */,
 				24386713685FB65FB46A5516 /* DictationAudioDucker.swift */,
 				11A888004906108239CDDCF1 /* DictationCapture.swift */,
 				F93DC82C8E2CFC89CBA7FC8E /* DictationCoordinator.swift */,
@@ -2558,6 +2579,12 @@
 		58F07CD16A5D35BECC10A00A /* Model */ = {
 			isa = PBXGroup;
 			children = (
+				ED159326D2C4D1A06F130487 /* CustomWord.swift */,
+				F727C9F571DD9C97701F40FD /* DictationHistoryItem.swift */,
+				9E34F1F824C8572E36B11C16 /* DictationOtherAudioMode.swift */,
+				39CD81DD10194EF6709D0447 /* DictationS1Settings.swift */,
+				2987727C4328C651016E074D /* DictationSnippet.swift */,
+				EDA2F21EB377E9234D7CD9EB /* VocabularyPack.swift */,
 				3A97F816CB516A9203224A17 /* DictationAudioChunks.swift */,
 				DE0EFB95551AD217589092E4 /* DictationDestination.swift */,
 				EBDDDF18171E28F02608E82F /* DictationIdleRelease.swift */,
@@ -4242,6 +4269,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B0FDE84036CE4A1716EFDAE2 /* CustomWord.swift in Sources */,
+				DDFE113C33B885AFD38D0079 /* DictationHistoryItem.swift in Sources */,
+				5EB8A9CB49EBF740CC59EF24 /* DictationOtherAudioMode.swift in Sources */,
+				B81157037D6570A127E80A15 /* DictationS1Settings.swift in Sources */,
+				61FE79829C84256B2222632B /* DictationSnippet.swift in Sources */,
+				39083F434B24A48B73B2F869 /* VocabularyPack.swift in Sources */,
+				16FD99237765635023752ADE /* DictationDictionaryStore.swift in Sources */,
+				FB22F118BC6395AA82BD8974 /* DictationHistoryStore.swift in Sources */,
+				800E5F59D62245AC021B8AB6 /* DictationS1Polisher.swift in Sources */,
 				56EB00CB2815CC268829C97B /* AIAttachmentPolicy.swift in Sources */,
 				7F22BD030E1D2A5DC43BABE9 /* AIBrand.swift in Sources */,
 				128AE908878AA0F96C928C9D /* AIChatCoordinator.swift in Sources */,

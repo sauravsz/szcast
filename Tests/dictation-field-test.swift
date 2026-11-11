@@ -403,9 +403,18 @@ final class AppSettings {
     var dictationAdaptsCapitalization = true
     var dictationLiveInsertion = false
     var dictationPlaysSounds = true
+    var dictationOtherAudioMode = DictationOtherAudioMode.lower
+    var dictationConvertSpokenEmoji = true
+    var dictationSpokenPunctuation = true
+    var dictationRemoveFillerWords = false
+    var dictationAutoCopyToClipboard = false
+    var dictationS1Enabled = false
+    var dictationS1Tone = S1Tone.casual
+    var dictationS1Structure = S1Structure.prose
+    var dictationS1Context = S1Context.general
 }
 
-enum HotKeyAction { case dictation }
+enum HotKeyAction { case dictation, dictationAddWord, dictationPasteLast, dictationCopyLast }
 
 @MainActor
 final class HotKeyManager {
@@ -485,8 +494,8 @@ enum AudioEvents {
 
 @MainActor
 final class DictationAudioDucker {
-    func begin() { AudioEvents.log.append("duck") }
-    func end() { AudioEvents.log.append("fade up") }
+    func begin(mode: DictationOtherAudioMode = .lower) { AudioEvents.log.append("duck") }
+    func end(mode: DictationOtherAudioMode = .lower) { AudioEvents.log.append("fade up") }
     func restoreImmediately() { AudioEvents.log.append("restore") }
 }
 
@@ -521,4 +530,4 @@ enum Paster {
     static func postCommandC(toPid pid: pid_t? = nil) {}
 }
 
-enum DialogTone { case danger }
+enum DialogTone { case neutral, success, danger }

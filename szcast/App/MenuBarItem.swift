@@ -23,6 +23,12 @@ struct MenuBarMenu: View {
                 AppCore.shared.paletteCoordinator.showPalette(mode: .clipboard)
             }
         }
+        if AppCore.shared.settings.dictationEnabled {
+            Button("Copy Last Dictation") {
+                AppCore.shared.dictationCoordinator.copyLastDictation()
+            }
+            .disabled(AppCore.shared.dictationCoordinator.lastDictation?.isEmpty ?? true)
+        }
         Divider()
         Button("Check for Updates…") { AppCore.shared.updateCoordinator.checkForUpdates() }
         Button("Support \(appName)…") { AppCore.shared.supportCoordinator.showSupport() }

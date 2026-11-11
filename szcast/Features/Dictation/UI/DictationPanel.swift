@@ -54,23 +54,42 @@ private struct DictationPanelView: View {
     let state: DictationDisplayState
 
     var body: some View {
-        Group {
+        HStack(spacing: Theme.Spacing.sm) {
+            // Recording status dot
+            Circle()
+                .fill(state.phase == .listening ? Color.red : Color.accentColor)
+                .frame(width: 8, height: 8)
+                .shadow(color: (state.phase == .listening ? Color.red : Color.accentColor).opacity(0.6), radius: 3)
+
             if state.phase == .listening {
-                DictationWaveform(
-                    levels: state.levels.enumerated().map { index, level in
-                        let edge = min(1, Float(min(index, state.levels.count - 1 - index)) / 4)
-                        let taper = edge * edge * (3 - 2 * edge)
-                        return level * (0.2 + 0.8 * taper)
-                    }, processing: false
-                )
-                .accessibilityLabel("Dictation listening")
+                // Compact Level Meter Bars
+                HStack(alignment: .center, spacing: 3) {
+                    ForEach(0..<10, id: \.self) { i in
+                        let level = i < state.levels.count ? state.levels[i] : 0
+                        Capsule()
+                            .fill(Theme.Colors.textPrimary.opacity(0.75))
+                            .frame(width: 2.5, height: max(3, CGFloat(level) * 16))
+                    }
+                }
+                .frame(height: 16)
+                .animation(.easeOut(duration: 0.08), value: state.levels)
             } else {
                 DictationProcessingWave()
-                    .accessibilityLabel("Transcribing dictation")
+                    .frame(width: 50)
             }
+
+            Text(state.phase == .listening ? "Listening…" : "Transcribing…")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(Theme.Colors.textSecondary)
         }
-        .frame(width: Theme.Size.dictationPanel.width, height: Theme.Size.dictationPanel.height)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .frame(minWidth: 170, minHeight: 36)
         .glassEffect(.regular, in: .capsule)
+        .overlay(
+            Capsule()
+                .stroke(Theme.Colors.border.opacity(0.3), lineWidth: 0.5)
+        )
     }
 }
 
@@ -80,7 +99,7 @@ private final class DictationPanel: NSPanel, AnimatedPanel {
 
     init(content: NSView) {
         super.init(
-            contentRect: NSRect(origin: .zero, size: Theme.Size.dictationPanel),
+            contentRect: NSRect(origin: .zero, size: CGSize(width: 190, height: 40)),
             styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         contentView = content
         isOpaque = false
@@ -125,11 +144,11 @@ final class DictationPanelController {
         panel.onAccept = onAccept
         panel.onCancel = onCancel
         self.panel = panel
-        let size = Theme.Size.dictationPanel
+        let pillSize = CGSize(width: 190, height: 40)
         panel.setFrameOrigin(
             NSPoint(
-                x: frame.midX - size.width / 2,
-                y: frame.minY + frame.height * 0.1 - size.height / 2))
+                x: frame.midX - pillSize.width / 2,
+                y: frame.minY + frame.height * 0.08 - pillSize.height / 2))
         state.phase = .listening
         state.levels = [Float](repeating: 0, count: DictationSpectrum.barCount)
         panel.makeKeyAndOrderFront(nil)

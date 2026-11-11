@@ -1,3 +1,4 @@
+import AppKit
 import CoreAudio
 import Foundation
 import OSLog
@@ -21,6 +22,7 @@ final class DictationAudioDucker {
     private let resolveOutput: (String) throws -> Output?
     private var snapshot: Snapshot?
     private var transition: Task<Void, Never>?
+    private var pausedMediaBundleIDs: [String] = []
 
     init(
         fileURL: URL = AppPaths.applicationSupport().appending(path: "dictation-volume.json"),
@@ -46,7 +48,12 @@ final class DictationAudioDucker {
         schedule { _ = try await $0.recoverSavedVolume() }
     }
 
-    func begin() {
+    func begin(mode: DictationOtherAudioMode = .lower) {
+        if mode == .continueAudio { return }
+        if mode == .pause {
+            pauseMedia()
+            return
+        }
         schedule { ducker in
             if ducker.snapshot == nil {
                 guard try await ducker.recoverSavedVolume(),
@@ -59,16 +66,48 @@ final class DictationAudioDucker {
                 ducker.snapshot = Snapshot(output: output, volume: volume)
             }
             guard let snapshot = ducker.snapshot else { return }
-            try await ducker.fade(to: snapshot.volume.original * 0.1, release: false)
+            let target = mode == .mute ? 0.0 : snapshot.volume.original * 0.1
+            try await ducker.fade(to: target, release: false)
         }
     }
 
-    func end() {
+    func end(mode: DictationOtherAudioMode = .lower) {
+        resumeMedia()
         guard snapshot != nil || transition != nil else { return }
         schedule { ducker in
             guard let snapshot = ducker.snapshot else { return }
             try await ducker.fade(to: snapshot.volume.original, release: true)
         }
+    }
+
+    private func pauseMedia() {
+        pausedMediaBundleIDs.removeAll()
+        for bundleID in ["com.apple.Music", "com.spotify.client"] {
+            guard !NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).isEmpty else { continue }
+            let script = """
+            tell application id "\(bundleID)"
+                if player state is playing then
+                    pause
+                    return "paused"
+                end if
+            end tell
+            return ""
+            """
+            var error: NSDictionary?
+            if let result = NSAppleScript(source: script)?.executeAndReturnError(&error).stringValue,
+               result == "paused" {
+                pausedMediaBundleIDs.append(bundleID)
+            }
+        }
+    }
+
+    private func resumeMedia() {
+        for bundleID in pausedMediaBundleIDs {
+            let script = "tell application id \"\(bundleID)\" to play"
+            var error: NSDictionary?
+            NSAppleScript(source: script)?.executeAndReturnError(&error)
+        }
+        pausedMediaBundleIDs.removeAll()
     }
 
     func restoreImmediately() {
@@ -170,14 +209,14 @@ final class DictationAudioDucker {
         }.value
     }
 
-    private static func output(for device: AudioHardwareDevice) throws -> Output? {
+    nonisolated private static func output(for device: AudioHardwareDevice) throws -> Output? {
         guard let control = try device.controls.first(where: isMainOutputVolume) else { return nil }
         return Output(
             deviceUID: try device.uid,
             read: { try control.volumeScalarValue }, write: { try control.setVolumeScalarValue($0) })
     }
 
-    private static func isMainOutputVolume(_ control: AudioHardwareControl) -> Bool {
+    nonisolated private static func isMainOutputVolume(_ control: AudioHardwareControl) -> Bool {
         guard (try? control.classID) == kAudioVolumeControlClassID else { return false }
         func value(for selector: AudioObjectPropertySelector) -> UInt32? {
             let address = AudioObjectPropertyAddress(

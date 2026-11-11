@@ -24,6 +24,15 @@ Fork of [Tinycast](https://github.com/abue-ammar/tinycast) by Abue Ammar, rename
 - `Scripts/run-tests.sh` — all 117 harnesses pass. `Scripts/build-dmg.sh` → `build/szcast-0.1.0.dmg`; needs the `szcast Self-Signed` keychain identity (already created; without it Accessibility/TCC grants reset each build).
 
 ## Recent Capabilities
+- **EnviousWispr Advanced Dictation Suite**: Deep integration of features ported from EnviousWispr into szcast native design:
+  - Multi-root model discovery across `~/Library/Application Support/FluidAudio/Models` and `~/Library/Application Support/EnviousWispr/Models` (immediate detection of installed Nvidia Parakeet Ultra).
+  - Superwhisper S1-mini offline AI polishing with Control Line prompt formatting (`Tone`, `Structure`, `Context`).
+  - Model offloading settings with memory release intervals and `Never` offload option.
+  - Spoken emoji converter (e.g. "thumbs up emoji" -> 👍), spoken punctuation, filler word cleaner (`um`, `uh`, `hmm`), and caret-aware smart text insertion.
+  - Media playback controls during recording (`Continue`, `Lower`, `Mute`, `Pause` with Apple Music / Spotify AppleScript hooks).
+  - Compact bottom screen glass recording pill with live audio level meter bars.
+  - Push to Talk vs Toggle recording modes, Escape cancellation, and hotkeys for Add Selected Word, Paste Last Dictation, Copy Last Dictation.
+  - Custom words dictionary with JSON import/export, 5 domain vocabulary packs (Tech 76, Medical 87, Legal 32, Brands 106, Names 90), self-learning dictionary detection, snippets, and searchable history.
 - **Release 1.1.2** (`6256ef5`): Dynamic font scaling (12pt-22pt) across launcher rows, details, and AI chat typography; instant `<alias><Space>` command expansion; rich inline images in Notes via TextKit 2 with caret reveal; snippet default action configuration (Paste, Copy, Copy & Paste); snippet duplication (`⌘D`); snippet tags & folder grouping with horizontal filter chips; and AI web search discoverability in chat composer.
 - **Focus Timer & Sensory Suite** (`45fb55e`): Full Pomodoro cycles (`.work`, `.shortBreak`, `.longBreak`), menu bar countdown item, `PaletteScreen` UI (`FocusTimerScreen`), non-blocking audio cues via `NSSound` (`SensoryAudioPlayer`), and full-screen CoreAnimation celebration (`ConfettiWindowController`).
 - **Native Live Web Search with Citations** (`88fb7f9`): Provider wrapper (`WebSearchAIProvider`) supporting Tavily, Exa, and Jina with secure Keychain storage (`KeychainSecretStore.webSearchAPIKeys`). Live search event forwarding (`.searching`, `.searched`), inline context augmentation (`<web_search_results>`), and Markdown inline citation instructions linking to `ChatCitations` source badges. Configurable via AI Settings with key validation and model capability detection.

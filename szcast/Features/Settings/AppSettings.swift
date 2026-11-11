@@ -407,6 +407,42 @@ final class AppSettings {
         didSet { defaults.set(dictationLanguage, forKey: Key.dictationLanguage.rawValue) }
     }
 
+    var dictationConvertSpokenEmoji: Bool {
+        didSet { defaults.set(dictationConvertSpokenEmoji, forKey: Key.dictationConvertSpokenEmoji.rawValue) }
+    }
+
+    var dictationSpokenPunctuation: Bool {
+        didSet { defaults.set(dictationSpokenPunctuation, forKey: Key.dictationSpokenPunctuation.rawValue) }
+    }
+
+    var dictationRemoveFillerWords: Bool {
+        didSet { defaults.set(dictationRemoveFillerWords, forKey: Key.dictationRemoveFillerWords.rawValue) }
+    }
+
+    var dictationOtherAudioMode: DictationOtherAudioMode {
+        didSet { defaults.set(dictationOtherAudioMode.rawValue, forKey: Key.dictationOtherAudioMode.rawValue) }
+    }
+
+    var dictationAutoCopyToClipboard: Bool {
+        didSet { defaults.set(dictationAutoCopyToClipboard, forKey: Key.dictationAutoCopyToClipboard.rawValue) }
+    }
+
+    var dictationS1Enabled: Bool {
+        didSet { defaults.set(dictationS1Enabled, forKey: Key.dictationS1Enabled.rawValue) }
+    }
+
+    var dictationS1Tone: S1Tone {
+        didSet { defaults.set(dictationS1Tone.rawValue, forKey: Key.dictationS1Tone.rawValue) }
+    }
+
+    var dictationS1Structure: S1Structure {
+        didSet { defaults.set(dictationS1Structure.rawValue, forKey: Key.dictationS1Structure.rawValue) }
+    }
+
+    var dictationS1Context: S1Context {
+        didSet { defaults.set(dictationS1Context.rawValue, forKey: Key.dictationS1Context.rawValue) }
+    }
+
     var notesRendersMarkdown: Bool {
         didSet { defaults.set(notesRendersMarkdown, forKey: Key.notesRendersMarkdown.rawValue) }
     }
@@ -871,6 +907,31 @@ final class AppSettings {
         dictationLanguage =
             defaults.string(forKey: Key.dictationLanguage.rawValue)
             .flatMap(DictationLanguage.init(rawValue:))?.rawValue
+        dictationConvertSpokenEmoji =
+            defaults.object(forKey: Key.dictationConvertSpokenEmoji.rawValue) == nil
+            || defaults.bool(forKey: Key.dictationConvertSpokenEmoji.rawValue)
+        dictationSpokenPunctuation =
+            defaults.object(forKey: Key.dictationSpokenPunctuation.rawValue) == nil
+            || defaults.bool(forKey: Key.dictationSpokenPunctuation.rawValue)
+        dictationRemoveFillerWords =
+            defaults.object(forKey: Key.dictationRemoveFillerWords.rawValue) == nil
+            || defaults.bool(forKey: Key.dictationRemoveFillerWords.rawValue)
+        dictationOtherAudioMode =
+            defaults.string(forKey: Key.dictationOtherAudioMode.rawValue)
+            .flatMap(DictationOtherAudioMode.init(rawValue:)) ?? .lower
+        dictationAutoCopyToClipboard =
+            defaults.object(forKey: Key.dictationAutoCopyToClipboard.rawValue) == nil
+            || defaults.bool(forKey: Key.dictationAutoCopyToClipboard.rawValue)
+        dictationS1Enabled = defaults.bool(forKey: Key.dictationS1Enabled.rawValue)
+        dictationS1Tone =
+            defaults.string(forKey: Key.dictationS1Tone.rawValue)
+            .flatMap(S1Tone.init(rawValue:)) ?? .semiFormal
+        dictationS1Structure =
+            defaults.string(forKey: Key.dictationS1Structure.rawValue)
+            .flatMap(S1Structure.init(rawValue:)) ?? .prose
+        dictationS1Context =
+            defaults.string(forKey: Key.dictationS1Context.rawValue)
+            .flatMap(S1Context.init(rawValue:)) ?? .general
         notesRendersMarkdown =
             defaults.object(forKey: Key.notesRendersMarkdown.rawValue) == nil
             || defaults.bool(forKey: Key.notesRendersMarkdown.rawValue)

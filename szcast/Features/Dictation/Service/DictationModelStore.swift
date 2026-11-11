@@ -47,10 +47,7 @@ final class DictationModelStore {
     func refreshInstalledModels() {
         installedModels = Set(
             DictationModel.allCases.filter { model in
-                let directory = directory(for: model)
-                return model.requiredFiles.allSatisfy {
-                    FileManager.default.fileExists(atPath: directory.appending(path: $0).path)
-                }
+                resolvedDirectory(for: model) != nil
             })
     }
 
@@ -183,7 +180,30 @@ final class DictationModelStore {
         }
     }
 
+    func resolvedDirectory(for model: DictationModel) -> URL? {
+        let candidateRoots = [
+            root,
+            FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/FluidAudio/Models"),
+            FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/EnviousWispr/Models")
+        ]
+        for candidateRoot in candidateRoots {
+            for folder in model.possibleFolderNames {
+                let candidateDir = candidateRoot.appendingPathComponent(folder)
+                let allFilesExist = model.requiredFiles.allSatisfy { file in
+                    FileManager.default.fileExists(atPath: candidateDir.appendingPathComponent(file).path)
+                }
+                if allFilesExist {
+                    return candidateDir
+                }
+            }
+        }
+        return nil
+    }
+
     private func directory(for model: DictationModel) -> URL {
-        root.appendingPathComponent(model.folderName)
+        if let resolved = resolvedDirectory(for: model) {
+            return resolved
+        }
+        return root.appendingPathComponent(model.folderName)
     }
 }

@@ -8,6 +8,9 @@ final class HotKeyManager {
     var onDictationPressed: (() -> Void)?
     var onDictationReleased: (() -> Void)?
     var onDictationCancelled: (() -> Void)?
+    var onDictationAddWord: (() -> Void)?
+    var onDictationPasteLast: (() -> Void)?
+    var onDictationCopyLast: (() -> Void)?
     var dictationEnabled = false {
         didSet {
             guard dictationEnabled != oldValue else { return }
@@ -253,7 +256,7 @@ final class HotKeyManager {
             index(id, bound: binding != nil, key: boundSnippetKey)
         case .extensionCommand(let entryID):
             index(entryID, bound: binding != nil, key: boundExtensionCommandKey)
-        case .togglePalette, .dictation, .command, .systemAction, .windowCommand:
+        case .togglePalette, .dictation, .dictationAddWord, .dictationPasteLast, .dictationCopyLast, .command, .systemAction, .windowCommand:
             break
         }
         candidateActionsCache = nil
@@ -385,6 +388,12 @@ final class HotKeyManager {
             return String(localized: "App Launcher")
         case .dictation:
             return String(localized: "Dictation")
+        case .dictationAddWord:
+            return String(localized: "Add Selected Word to Dictionary")
+        case .dictationPasteLast:
+            return String(localized: "Paste Last Dictation")
+        case .dictationCopyLast:
+            return String(localized: "Copy Last Dictation")
         case .command(let id):
             return id.name
         case .app(let bundleID), .settingsPane(let bundleID):
@@ -449,6 +458,9 @@ final class HotKeyManager {
         switch action {
         case .togglePalette: onTogglePalette?()
         case .dictation: onDictationPressed?()
+        case .dictationAddWord: onDictationAddWord?()
+        case .dictationPasteLast: onDictationPasteLast?()
+        case .dictationCopyLast: onDictationCopyLast?()
         case .command(let id): onRunCommand?(id)
         case .app(let bundleID): AppLauncher.toggle(bundleID: bundleID)
         case .settingsPane(let bundleID): AppLauncher.openSettingsPane(bundleID: bundleID)

@@ -98,6 +98,24 @@ enum SettingsBackupCoverage {
             "Dictation preferences stay local until backup supports them.",
         AppSettingsKey.dictationIdleRelease.rawValue:
             "Dictation memory use stays a device-local preference.",
+        AppSettingsKey.dictationOtherAudioMode.rawValue:
+            "Audio ducking and media playback behavior stays local to this Mac.",
+        AppSettingsKey.dictationConvertSpokenEmoji.rawValue:
+            "Dictation text formatting preferences stay local until backup supports them.",
+        AppSettingsKey.dictationSpokenPunctuation.rawValue:
+            "Dictation text formatting preferences stay local until backup supports them.",
+        AppSettingsKey.dictationRemoveFillerWords.rawValue:
+            "Dictation text formatting preferences stay local until backup supports them.",
+        AppSettingsKey.dictationAutoCopyToClipboard.rawValue:
+            "Clipboard dictation behavior stays local to this Mac.",
+        AppSettingsKey.dictationS1Enabled.rawValue:
+            "S1 offline AI model polish preference stays local to this Mac.",
+        AppSettingsKey.dictationS1Tone.rawValue:
+            "S1 polish styling preferences stay local until backup supports them.",
+        AppSettingsKey.dictationS1Structure.rawValue:
+            "S1 polish styling preferences stay local until backup supports them.",
+        AppSettingsKey.dictationS1Context.rawValue:
+            "S1 polish styling preferences stay local until backup supports them.",
         AppSettingsKey.clipboardTextSearchEnabled.rawValue:
             "Background OCR is an opt-in processing choice on this Mac; a backup must not enable it.",
         AppSettingsKey.snippetsEnabled.rawValue:

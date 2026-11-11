@@ -4,6 +4,9 @@ enum HotKeyAction: Hashable, Sendable {
     /// Fixed actions with no command row of their own.
     case togglePalette
     case dictation
+    case dictationAddWord
+    case dictationPasteLast
+    case dictationCopyLast
     /// Parameterised over the catalog, so a new built-in command is bindable with no case here.
     case command(CommandID)
     case app(bundleID: String)
@@ -26,6 +29,9 @@ enum HotKeyAction: Hashable, Sendable {
         switch self {
         case .togglePalette: "hotkey.togglePalette"
         case .dictation: "hotkey.dictation"
+        case .dictationAddWord: "hotkey.dictationAddWord"
+        case .dictationPasteLast: "hotkey.dictationPasteLast"
+        case .dictationCopyLast: "hotkey.dictationCopyLast"
         case .command(let id): "hotkey." + id.rawValue
         case .app(let bundleID): "hotkey.app." + bundleID
         case .settingsPane(let bundleID): "hotkey.pane." + bundleID

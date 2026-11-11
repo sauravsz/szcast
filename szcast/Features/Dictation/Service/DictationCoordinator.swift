@@ -9,6 +9,10 @@ final class DictationCoordinator {
     private let settings: AppSettings
     private let hotKeys: HotKeyManager
     let models: DictationModelStore
+    let dictionaryStore = DictationDictionaryStore()
+    let historyStore = DictationHistoryStore()
+    private let s1Polisher = DictationS1Polisher()
+    private(set) var lastDictation: String?
     private let capture = DictationCapture()
     private let audioDucker: DictationAudioDucker
     private let cues = DictationCueRunner()
@@ -54,6 +58,7 @@ final class DictationCoordinator {
             if pendingStartCue == token { playStartCue() }
         }
         capture.onLimit = { [weak self] in self?.accept() }
+        self.lastDictation = historyStore.items.first?.text
     }
 
     func setEnabled(_ enabled: Bool) {
@@ -157,7 +162,7 @@ final class DictationCoordinator {
         liveText = ""
         self.target = target
         pendingStartCue = settings.dictationPlaysSounds ? current : nil
-        if pendingStartCue == nil { audioDucker.begin() }
+        if pendingStartCue == nil { audioDucker.begin(mode: settings.dictationOtherAudioMode) }
         startTask = Task { [weak self] in
             guard let self else { return }
             do {
@@ -189,7 +194,7 @@ final class DictationCoordinator {
             if capture.isBluetooth { try? await Task.sleep(for: Self.bluetoothSettle) }
             guard token == current, phase == .starting || phase == .listening else { return }
             cues.play(.start)
-            audioDucker.begin()
+            audioDucker.begin(mode: settings.dictationOtherAudioMode)
         }
     }
 
@@ -208,7 +213,7 @@ final class DictationCoordinator {
             audioDucker.restoreImmediately()
             cues.play(.stop)
         } else {
-            audioDucker.end()
+            audioDucker.end(mode: settings.dictationOtherAudioMode)
         }
         // A cancelled chunk keeps its audio: the final pass starts at liveOffset, losing nothing.
         let pendingLive = liveTask
@@ -240,14 +245,41 @@ final class DictationCoordinator {
                     tail, model: model,
                     language: language)
                 guard token == current else { return }
+
+                var processed = transcript
+                if settings.dictationConvertSpokenEmoji {
+                    processed = DictationTextFormatter.convertSpokenEmoji(processed)
+                }
+                if settings.dictationSpokenPunctuation {
+                    processed = DictationTextFormatter.convertSpokenPunctuation(processed)
+                }
+                if settings.dictationRemoveFillerWords {
+                    processed = DictationTextFormatter.removeFillerWords(processed)
+                }
+                processed = dictionaryStore.applyDictionaryAndPacks(processed)
+
+                if settings.dictationS1Enabled {
+                    let s1 = DictationS1Settings(
+                        enabled: true,
+                        tone: settings.dictationS1Tone,
+                        structure: settings.dictationS1Structure,
+                        context: settings.dictationS1Context
+                    )
+                    processed = await s1Polisher.polish(processed, settings: s1)
+                }
+
                 // A mic belongs to its field: the text goes in there, never to the clipboard.
                 let context = destination.pastes ? insertionContext() : nil
                 let text = DictationTextFormatter.format(
-                    transcript, context: context,
+                    processed, context: context,
                     adaptCapitalization: settings.dictationAdaptsCapitalization)
                 let target = self.target
                 let assembled = liveText + text
                 guard !text.isEmpty else { finishWithoutRemainder(destination); return }
+
+                lastDictation = assembled
+                historyStore.add(text: assembled, rawText: transcript, duration: Double(tail.count) / 16000.0)
+
                 panel.close()
                 if destination.pastes {
                     injector.deliver(
@@ -257,7 +289,9 @@ final class DictationCoordinator {
                         onDelivered: { [weak self] in
                             guard let self, token == current else { return }
                             let lost = liveDeliveryFailed
-                            if destination.copies { Paster.copyPlainText(assembled) }
+                            if destination.copies || settings.dictationAutoCopyToClipboard {
+                                Paster.copyPlainText(assembled)
+                            }
                             reset(cancelTranscription: false)
                             if lost, destination.pastes {
                                 showMessage(
@@ -268,7 +302,9 @@ final class DictationCoordinator {
                         onFailed: { [weak self] in
                             guard let self, token == current else { return }
                             reset(cancelTranscription: false)
-                            if destination.copies { Paster.copyPlainText(assembled) }
+                            if destination.copies || settings.dictationAutoCopyToClipboard {
+                                Paster.copyPlainText(assembled)
+                            }
                             showMessage(String(localized: "Couldn't paste dictation into this app"), .danger)
                         })
                 } else {
@@ -405,7 +441,65 @@ final class DictationCoordinator {
         target = nil
         field = nil
         panel.close()
-        audioDucker.end()
+        audioDucker.end(mode: settings.dictationOtherAudioMode)
+    }
+
+    func pasteLastDictation() {
+        guard let last = lastDictation, !last.isEmpty else {
+            showMessage(String(localized: "No recent dictation to paste"), .neutral)
+            return
+        }
+        injector.deliver(
+            InjectedText(last), target: target, expectedKeyword: nil,
+            keywordLength: 0, automaticGeneration: nil,
+            isValid: { true },
+            onDelivered: {},
+            onFailed: { [weak self] in
+                Paster.copyPlainText(last)
+                self?.showMessage(String(localized: "Pasting failed; copied last dictation to clipboard"), .neutral)
+            }
+        )
+    }
+
+    func pasteHistoryItem(_ text: String) {
+        lastDictation = text
+        pasteLastDictation()
+    }
+
+    func copyLastDictation() {
+        guard let last = lastDictation, !last.isEmpty else {
+            showMessage(String(localized: "No recent dictation to copy"), .neutral)
+            return
+        }
+        Paster.copyPlainText(last)
+        showMessage(String(localized: "Copied last dictation to clipboard"), .success)
+    }
+
+    func addSelectedWordToDictionary() {
+        let pb = NSPasteboard.general
+        let original = pb.string(forType: .string)
+        // Send Cmd+C key event
+        let src = CGEventSource(stateID: .hidSystemState)
+        let keyDown = CGEvent(keyboardEventSource: src, virtualKey: 0x08, keyDown: true)
+        keyDown?.flags = .maskCommand
+        let keyUp = CGEvent(keyboardEventSource: src, virtualKey: 0x08, keyDown: false)
+        keyDown?.post(tap: .cghidEventTap)
+        keyUp?.post(tap: .cghidEventTap)
+
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(150))
+            guard let self else { return }
+            let word = pb.string(forType: .string)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            if let word, !word.isEmpty, word != original {
+                self.dictionaryStore.addWord(canonical: word)
+                self.showMessage(String(localized: "Added \"\(word)\" to Dictionary"), .success)
+            } else if let word, !word.isEmpty {
+                self.dictionaryStore.addWord(canonical: word)
+                self.showMessage(String(localized: "Added \"\(word)\" to Dictionary"), .success)
+            } else {
+                self.showMessage(String(localized: "Select a word to add to Dictionary"), .neutral)
+            }
+        }
     }
 }
 

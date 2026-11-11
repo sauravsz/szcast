@@ -378,6 +378,9 @@ final class AppCore {
             hotKeys.onDictationPressed = { [weak self] in self?.dictationCoordinator.pressed() }
             hotKeys.onDictationReleased = { [weak self] in self?.dictationCoordinator.released() }
             hotKeys.onDictationCancelled = { [weak self] in self?.dictationCoordinator.cancel() }
+            hotKeys.onDictationAddWord = { [weak self] in self?.dictationCoordinator.addSelectedWordToDictionary() }
+            hotKeys.onDictationPasteLast = { [weak self] in self?.dictationCoordinator.pasteLastDictation() }
+            hotKeys.onDictationCopyLast = { [weak self] in self?.dictationCoordinator.copyLastDictation() }
             hotKeys.onRunCommand = { [weak self] id in self?.launcherCoordinator.runCommand(id) }
             hotKeys.onRunCustomCommand = { [weak self] id in
                 self?.customCommandCoordinator.runCustomCommand(id: id)
@@ -581,7 +584,7 @@ final class AppCore {
             return snippetsStore.record(id: id)?.snippet.name
         case .extensionCommand(let entryID):
             return appIndex.apps.first { $0.kind == .extensionCommand && $0.id == entryID }?.name
-        case .togglePalette, .dictation, .command, .systemAction, .windowCommand:
+        case .togglePalette, .dictation, .dictationAddWord, .dictationPasteLast, .dictationCopyLast, .command, .systemAction, .windowCommand:
             return nil
         }
     }

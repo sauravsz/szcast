@@ -61,6 +61,18 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
         }
     }
     var folderName: String { isQwen ? rawValue : "parakeet-\(rawValue)" }
+    var possibleFolderNames: [String] {
+        switch self {
+        case .ultra:
+            return ["parakeet-ultra", "parakeet-ultra-coreml"]
+        case .redux:
+            return ["parakeet-redux", "parakeet-tdt-0.6b-v3", "parakeet-tdt-0.6b-v3-coreml"]
+        case .qwenSmall:
+            return ["qwen-0.6b", "Qwen3-ASR-0.6B-CoreML-INT8"]
+        case .qwenLarge:
+            return ["qwen-1.7b", "Qwen3-ASR-1.7B-CoreML-INT8"]
+        }
+    }
     var approximateInstalledMegabytes: Int {
         switch self {
         case .ultra: 632
