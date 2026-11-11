@@ -773,6 +773,11 @@ final class AppCore {
                 $0.dictationModels.setIdleRelease($0.settings.dictationIdleRelease)
             })
         track(
+            { _ = $0.dictationS1IdleRelease },
+            reproject: {
+                DictationLlamaServerManager.shared.setIdleRelease($0.settings.dictationS1IdleRelease)
+            })
+        track(
             {
                 _ = $0.dictationEnabled
                 _ = $0.dictationMode

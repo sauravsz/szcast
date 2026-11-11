@@ -162,6 +162,19 @@ struct DictationTest {
             fatalError("Default port for llama-server should be 51143")
         }
 
+        // S1-mini idle release verification
+        guard DictationS1Settings.default.idleRelease == .tenMinutes else {
+            fatalError("Default S1 idle release should be 10 minutes")
+        }
+        DictationLlamaServerManager.shared.setIdleRelease(.never)
+        guard DictationLlamaServerManager.shared.currentIdleRelease == .never else {
+            fatalError("Failed to set idle release to never")
+        }
+        DictationLlamaServerManager.shared.setIdleRelease(.fiveMinutes)
+        guard DictationLlamaServerManager.shared.currentIdleRelease == .fiveMinutes else {
+            fatalError("Failed to set idle release to 5 minutes")
+        }
+
         print("Dictation text formatting passed")
     }
 }

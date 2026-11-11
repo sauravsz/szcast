@@ -265,7 +265,8 @@ final class DictationCoordinator {
                         enabled: true,
                         tone: settings.dictationS1Tone,
                         structure: settings.dictationS1Structure,
-                        context: settings.dictationS1Context
+                        context: settings.dictationS1Context,
+                        idleRelease: settings.dictationS1IdleRelease
                     )
                     processed = await s1Polisher.polish(processed, settings: s1)
                 }

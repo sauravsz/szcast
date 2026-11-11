@@ -372,6 +372,7 @@ run dictation-field-test   Szcast/Features/Dictation/Model/DictationModel.swift 
                            Szcast/Features/Dictation/Model/DictationTextFormatter.swift \
                            Szcast/Features/Dictation/Model/DictationOtherAudioMode.swift \
                            Szcast/Features/Dictation/Model/DictationS1Settings.swift \
+                           Szcast/Features/Dictation/Model/DictationIdleRelease.swift \
                            Szcast/Features/Dictation/Model/CustomWord.swift \
                            Szcast/Features/Dictation/Model/VocabularyPack.swift \
                            Szcast/Features/Dictation/Model/DictationSnippet.swift \

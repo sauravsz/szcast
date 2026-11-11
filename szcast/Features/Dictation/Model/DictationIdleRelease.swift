@@ -1,6 +1,6 @@
 import Foundation
 
-enum DictationIdleRelease: Int, CaseIterable, Identifiable, Sendable {
+enum DictationIdleRelease: Int, CaseIterable, Identifiable, Codable, Sendable {
     case never = 0
     case oneMinute = 1
     case twoMinutes = 2

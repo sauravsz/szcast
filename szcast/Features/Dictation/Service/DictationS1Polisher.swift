@@ -32,7 +32,7 @@ actor DictationS1Polisher {
         let userMessage = "\(settings.controlLine)\n\(transcript)"
 
         // Priority 1 (DEFAULT): Direct local s1-mini-1.0.gguf via embedded/managed llama-server
-        if let llamaServerURL = try? await DictationLlamaServerManager.shared.ensureRunning() {
+        if let llamaServerURL = try? await DictationLlamaServerManager.shared.ensureRunning(idleRelease: settings.idleRelease) {
             let chatEndpoint = llamaServerURL.appendingPathComponent("v1/chat/completions")
             if let output = try? await sendChatRequest(
                 model: "s1-mini",

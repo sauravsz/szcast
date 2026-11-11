@@ -51,12 +51,28 @@ struct DictationS1Settings: Codable, Sendable, Equatable {
     var tone: S1Tone
     var structure: S1Structure
     var context: S1Context
+    var idleRelease: DictationIdleRelease
+
+    init(
+        enabled: Bool,
+        tone: S1Tone,
+        structure: S1Structure,
+        context: S1Context,
+        idleRelease: DictationIdleRelease = .tenMinutes
+    ) {
+        self.enabled = enabled
+        self.tone = tone
+        self.structure = structure
+        self.context = context
+        self.idleRelease = idleRelease
+    }
 
     static let `default` = DictationS1Settings(
         enabled: false,
         tone: .semiFormal,
         structure: .prose,
-        context: .general
+        context: .general,
+        idleRelease: .tenMinutes
     )
 
     var controlLine: String {

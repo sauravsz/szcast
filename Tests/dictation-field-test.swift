@@ -412,6 +412,7 @@ final class AppSettings {
     var dictationS1Tone = S1Tone.casual
     var dictationS1Structure = S1Structure.prose
     var dictationS1Context = S1Context.general
+    var dictationS1IdleRelease = DictationIdleRelease.tenMinutes
 }
 
 enum HotKeyAction { case dictation, dictationAddWord, dictationPasteLast, dictationCopyLast }

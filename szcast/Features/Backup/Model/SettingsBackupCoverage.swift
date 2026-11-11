@@ -117,6 +117,8 @@ enum SettingsBackupCoverage {
             "S1 polish styling preferences stay local until backup supports them.",
         AppSettingsKey.dictationS1Context.rawValue:
             "S1 polish styling preferences stay local until backup supports them.",
+        AppSettingsKey.dictationS1IdleRelease.rawValue:
+            "S1 polish idle release preference stays local to this Mac.",
         AppSettingsKey.clipboardTextSearchEnabled.rawValue:
             "Background OCR is an opt-in processing choice on this Mac; a backup must not enable it.",
         AppSettingsKey.snippetsEnabled.rawValue:

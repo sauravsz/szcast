@@ -9,9 +9,17 @@ final class DictationLlamaServerManager {
     private var process: Process?
     private var runningPort: Int?
     private var idleTask: Task<Void, Never>?
+    private(set) var currentIdleRelease: DictationIdleRelease = .tenMinutes
 
     static let defaultPort: Int = 51143
     static let directHuggingFaceURL = URL(string: "https://huggingface.co/superwhisper/s1-mini-GGUF/resolve/34add00a48a2e5d24e5a4ee5405a99620a3a240c/s1-mini-q4_k_m.gguf")!
+
+    func setIdleRelease(_ idleRelease: DictationIdleRelease) {
+        currentIdleRelease = idleRelease
+        if process?.isRunning == true {
+            scheduleIdleShutdown(idleRelease: idleRelease)
+        }
+    }
 
     var isModelAvailable: Bool {
         Self.resolveGGUFModel() != nil
@@ -73,7 +81,10 @@ final class DictationLlamaServerManager {
         return nil
     }
 
-    func ensureRunning() async throws -> URL {
+    func ensureRunning(idleRelease: DictationIdleRelease? = nil) async throws -> URL {
+        if let idleRelease {
+            currentIdleRelease = idleRelease
+        }
         idleTask?.cancel()
         idleTask = nil
 
@@ -81,7 +92,7 @@ final class DictationLlamaServerManager {
         let baseURL = URL(string: "http://127.0.0.1:\(port)")!
 
         if process?.isRunning == true, await checkHealth(baseURL: baseURL) {
-            scheduleIdleShutdown()
+            scheduleIdleShutdown(idleRelease: currentIdleRelease)
             return baseURL
         }
 
@@ -121,7 +132,7 @@ final class DictationLlamaServerManager {
             try? await Task.sleep(for: .milliseconds(200))
             if await checkHealth(baseURL: baseURL) {
                 Self.logger.info("llama-server running on \(baseURL.absoluteString)")
-                scheduleIdleShutdown()
+                scheduleIdleShutdown(idleRelease: currentIdleRelease)
                 return baseURL
             }
             if !p.isRunning {
@@ -130,7 +141,7 @@ final class DictationLlamaServerManager {
         }
 
         if await checkHealth(baseURL: baseURL) {
-            scheduleIdleShutdown()
+            scheduleIdleShutdown(idleRelease: currentIdleRelease)
             return baseURL
         }
 
@@ -149,13 +160,22 @@ final class DictationLlamaServerManager {
         return true
     }
 
-    func scheduleIdleShutdown(minutes: Int = 10) {
+    func scheduleIdleShutdown(idleRelease: DictationIdleRelease? = nil) {
+        let release = idleRelease ?? currentIdleRelease
         idleTask?.cancel()
+        idleTask = nil
+        guard release != .never, release.rawValue > 0 else {
+            return
+        }
         idleTask = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(minutes * 60))
+            try? await Task.sleep(for: .seconds(release.rawValue * 60))
             guard !Task.isCancelled else { return }
             self?.stop()
         }
+    }
+
+    func scheduleIdleShutdown(minutes: Int) {
+        scheduleIdleShutdown(idleRelease: DictationIdleRelease(rawValue: minutes) ?? .never)
     }
 
     func stop() {

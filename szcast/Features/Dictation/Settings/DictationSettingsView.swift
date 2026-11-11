@@ -382,11 +382,20 @@ struct DictationSettingsView: View {
                     SettingsRowTitle(.dictationOutput, "Context")
                     Text("Format dictated greetings and sign-offs as email or general prose.")
                 }
+
+                Picker(selection: $bSettings.dictationS1IdleRelease) {
+                    ForEach(DictationIdleRelease.allCases) { option in
+                        Text(option.title(locale: .current)).tag(option)
+                    }
+                } label: {
+                    SettingsRowTitle(.dictationMemory, "Unload model after")
+                    Text("Frees memory when S1-mini is not normalizing. Next polish reloads.")
+                }
             }
         } header: {
             Text("AI Polish (S1-mini)")
         } footer: {
-            Text("AI polish uses local Ollama or an OpenAI-compatible endpoint with the S1 control line.")
+            Text("AI polish normalizes text using local standalone S1-mini (default) or Ollama with the S1 control line.")
         }
     }
 

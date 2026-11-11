@@ -443,6 +443,10 @@ final class AppSettings {
         didSet { defaults.set(dictationS1Context.rawValue, forKey: Key.dictationS1Context.rawValue) }
     }
 
+    var dictationS1IdleRelease: DictationIdleRelease {
+        didSet { defaults.set(dictationS1IdleRelease.rawValue, forKey: Key.dictationS1IdleRelease.rawValue) }
+    }
+
     var notesRendersMarkdown: Bool {
         didSet { defaults.set(notesRendersMarkdown, forKey: Key.notesRendersMarkdown.rawValue) }
     }
@@ -939,6 +943,10 @@ final class AppSettings {
         dictationS1Context =
             defaults.string(forKey: Key.dictationS1Context.rawValue)
             .flatMap(S1Context.init(rawValue:)) ?? .general
+        dictationS1IdleRelease =
+            defaults.object(forKey: Key.dictationS1IdleRelease.rawValue)
+            .flatMap { $0 as? Int }
+            .flatMap(DictationIdleRelease.init(rawValue:)) ?? .tenMinutes
         notesRendersMarkdown =
             defaults.object(forKey: Key.notesRendersMarkdown.rawValue) == nil
             || defaults.bool(forKey: Key.notesRendersMarkdown.rawValue)
