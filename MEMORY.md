@@ -39,7 +39,7 @@ Fork of [Tinycast](https://github.com/abue-ammar/tinycast) by Abue Ammar, rename
 - **Default Fallbacks & Quicklinks Configuration** (`d069227`): Established default fallback order (`DefaultFallbacks.order`) and disabled set (`DefaultFallbacks.disabled`) matching user profile: enabled top 3 (Brave Search, ChatGPT Web Search, Brave Ask) with all others (commands and secondary search engines) disabled by default. Added `DefaultQuicklinks` seeding on first run.
 
 ## Active State & Next Steps
-- **Active State**: Version 1.1.2 built, self-signed, pushed to `origin/main`, published to GitHub Releases (`v1.1.2`), and installed in `/Applications/szcast.app`. Working tree clean. All 117 tests pass.
+- **Active State**: Version 1.1.2 built, self-signed, pushed to `origin/main`, published to GitHub Releases (`v1.1.2`), and installed in `/Applications/szcast.app`. Working tree clean. Dictation engine audited and hardened (`a1f4af4e`): non-activating floating pill with global/local Escape interception, active app paste injection, safe pasteboard dictionary capture, regex template escaping with length-descending term sorting, voice snippet expansion, async detached AppleScript ducking, and dynamic Ollama model discovery. All 117 tests pass.
 - **Immediate Next Steps**:
   1. Monitor user feedback on font scaling and snippet folder organization.
   2. Evaluate local semantic/vector search vs SQLite FTS/Spotlight if desired.
