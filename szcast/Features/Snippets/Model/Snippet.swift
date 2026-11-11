@@ -1,24 +1,43 @@
 import Foundation
 
+enum SnippetDefaultAction: String, CaseIterable, Identifiable, Sendable {
+    case paste
+    case copy
+    case copyAndPaste
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .paste: return String(localized: "Paste to Active App")
+        case .copy: return String(localized: "Copy to Clipboard")
+        case .copyAndPaste: return String(localized: "Copy and Paste")
+        }
+    }
+}
+
 struct Snippet: Sendable, Hashable {
     var name: String
     var text: String
     var keyword: String?
     var isEnabled: Bool
     var showsConfirmation: Bool
+    var folder: String?
 
     init(
         name: String,
         text: String,
         keyword: String? = nil,
         isEnabled: Bool = true,
-        showsConfirmation: Bool = false
+        showsConfirmation: Bool = false,
+        folder: String? = nil
     ) {
         self.name = name
         self.text = text
         self.keyword = keyword
         self.isEnabled = isEnabled
         self.showsConfirmation = showsConfirmation
+        self.folder = folder
     }
 }
 

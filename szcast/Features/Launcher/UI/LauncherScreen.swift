@@ -160,7 +160,15 @@ struct LauncherScreen: PaletteScreen {
         case .meeting(let meeting):
             return meeting.link == nil
                 ? String(localized: "Open in Calendar") : String(localized: "Join Meeting")
-        case .entry(let app): return app.kind.descriptor.openVerb.resolved()
+        case .entry(let app):
+            if app.kind == .snippet {
+                switch core.settings.snippetsDefaultAction {
+                case .paste: return String(localized: "Paste Snippet")
+                case .copy: return String(localized: "Copy Snippet")
+                case .copyAndPaste: return String(localized: "Copy & Paste Snippet")
+                }
+            }
+            return app.kind.descriptor.openVerb.resolved()
         case .file(let result):
             return result.isDirectory ? String(localized: "Open Folder") : String(localized: "Open File")
         case .fallback(let fallback, _): return fallback.openVerb

@@ -258,7 +258,7 @@ enum NoteMarkdownEditing {
             else { return nil }
             let overlapsLinkOrCode = markdown.inlines(of: line).contains {
                 switch $0.kind {
-                case .link, .code: NSIntersectionRange($0.range, selection).length > 0
+                case .link, .code, .image: NSIntersectionRange($0.range, selection).length > 0
                 default: false
                 }
             }

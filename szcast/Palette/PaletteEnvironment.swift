@@ -5,7 +5,13 @@ private struct InterfaceMetricsScope: ViewModifier {
     let settings: AppSettings
 
     func body(content: Content) -> some View {
-        content.environment(\.metrics, settings.interfaceSize.metrics)
+        let metrics = InterfaceMetrics(
+            scale: settings.interfaceSize.scale,
+            rowTitleSize: settings.launcherRowTitleFontSize,
+            rowSubtitleSize: settings.launcherRowSubtitleFontSize,
+            fontFamily: settings.launcherFontFamily
+        )
+        content.environment(\.metrics, metrics)
     }
 }
 

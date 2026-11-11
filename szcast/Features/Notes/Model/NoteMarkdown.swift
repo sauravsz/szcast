@@ -51,6 +51,7 @@ struct NoteMarkdown: Sendable, Equatable {
             case strong, emphasis, strongEmphasis, strikethrough, code
             case link(destination: String)
             case autolink
+            case image(destination: String, alt: String)
         }
 
         let kind: Kind

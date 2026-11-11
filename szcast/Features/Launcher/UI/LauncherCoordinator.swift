@@ -81,12 +81,12 @@ final class LauncherCoordinator {
                 AppLauncher.open(app.url)
                 return
             }
-            runCommand(id)
+            runCommand(id, searchQuery: searchQuery)
             return
         }
         if app.kind == .quickAction {
             if let command = CommandCatalog.command(for: app) {
-                runCommand(command)
+                runCommand(command, searchQuery: searchQuery)
                 return
             }
             guard let id = CustomQuickAction.id(fromEntryID: app.id) else { return }
@@ -163,10 +163,14 @@ final class LauncherCoordinator {
     }
 
     /// The one funnel a built-in command runs through, from a palette row or its global shortcut.
-    func runCommand(_ id: CommandID) {
+    func runCommand(_ id: CommandID, searchQuery: String? = nil) {
         switch id {
         case .quickAI:
-            core.quickAICoordinator.show()
+            if let searchQuery, !searchQuery.isEmpty {
+                core.quickAICoordinator.show(draft: searchQuery)
+            } else {
+                core.quickAICoordinator.show()
+            }
         case .aiChat:
             dismissPalette()
             core.aiChatCoordinator.toggleWindow()
@@ -179,26 +183,30 @@ final class LauncherCoordinator {
         case .summarize:
             core.quickActionCoordinator.run(.summarize)
         case .calculatorHistory:
-            paletteCoordinator.togglePalette(mode: .calculatorHistory)
+            paletteCoordinator.togglePalette(mode: .calculatorHistory, seeding: searchQuery)
         case .clipboardHistory:
-            paletteCoordinator.togglePalette(mode: .clipboard)
+            paletteCoordinator.togglePalette(mode: .clipboard, seeding: searchQuery)
         case .pasteSequentially:
             core.clipboardCoordinator.pasteNextInSequence()
         case .searchEmoji:
-            paletteCoordinator.togglePalette(mode: .emoji)
+            paletteCoordinator.togglePalette(mode: .emoji, seeding: searchQuery)
         case .searchFiles:
-            fileSearchCoordinator.show()
+            fileSearchCoordinator.show(query: searchQuery ?? "")
         case .searchMenuItems:
-            menuSearchCoordinator.show()
+            menuSearchCoordinator.show(query: searchQuery ?? "")
         case .switchWindows:
-            windowSwitchCoordinator.show()
+            if let searchQuery, !searchQuery.isEmpty {
+                windowSwitchCoordinator.show(query: searchQuery)
+            } else {
+                windowSwitchCoordinator.show()
+            }
         case .switchWindowsBackwards:
             windowSwitchCoordinator.show(backwards: true)
         case .openCamera:
             dismissPalette()
             Task { await core.cameraCoordinator.show() }
         case .define:
-            core.dictionaryCoordinator.show()
+            core.dictionaryCoordinator.show(term: searchQuery ?? "")
         case .openInBrowser, .runShellCommand:
             break  // Query-driven: each runs where the typed text is, never through this funnel.
         case .joinNextMeeting:
@@ -221,9 +229,9 @@ final class LauncherCoordinator {
             dismissPalette()
             notesCoordinator.searchNotes()
         case .searchQuicklinks:
-            paletteCoordinator.togglePalette(mode: .quicklinks)
+            paletteCoordinator.togglePalette(mode: .quicklinks, seeding: searchQuery)
         case .searchSnippets:
-            snippetCoordinator.showSnippets()
+            snippetCoordinator.showSnippets(query: searchQuery ?? "")
         case .createSnippet:
             snippetCoordinator.createSnippetFromSelection()
         case .createWindowLayout:
@@ -241,7 +249,7 @@ final class LauncherCoordinator {
         case .createCustomCommand:
             customCommandCoordinator.editCustomCommand(nil)
         case .searchCustomCommands:
-            customCommandCoordinator.showCustomCommands()
+            customCommandCoordinator.showCustomCommands(query: searchQuery ?? "")
         case .importQuicklinks:
             dismissPalette()
             Task { await quicklinkCoordinator.importQuicklinks() }
@@ -270,7 +278,7 @@ final class LauncherCoordinator {
             dismissPalette()
             core.supportCoordinator.showSupport()
         case .focusTimer:
-            paletteCoordinator.togglePalette(mode: .focusTimer)
+            paletteCoordinator.togglePalette(mode: .focusTimer, seeding: searchQuery)
         case .quit:
             NSApp.terminate(nil)
         }

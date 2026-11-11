@@ -17,9 +17,17 @@ struct AIChatDetailView: View {
         return ChatChoices.split(last.text).choices
     }
 
+    private var chatTypography: ChatTypography {
+        ChatTypography(
+            baseSize: coordinator.aiSettings.chatFontSize,
+            fontFamily: coordinator.aiSettings.chatFontFamily,
+            codeFontFamily: coordinator.aiSettings.chatCodeFontFamily
+        )
+    }
+
     var body: some View {
         GeometryReader { geometry in
-            pane(composerHeight: ChatComposerTextView.maximumHeight(in: geometry.size.height))
+            pane(composerHeight: ChatComposerTextView.maximumHeight(in: geometry.size.height, typography: chatTypography))
         }
         .animation(.easeOut(duration: Theme.Duration.tooltip), value: showsContext)
         .dropDestination(for: URL.self) { files, _ in
@@ -92,6 +100,7 @@ struct AIChatDetailView: View {
                     : nil
             )
             .environment(\.chatExpandsReasoning, coordinator.aiSettings.expandsReasoning)
+            .environment(\.chatTypography, chatTypography)
             // A switched chat is a new scroll: its own tail-following, opening at its latest line.
             .id(chat.session.id)
             .overlay(alignment: .topTrailing) {
@@ -126,6 +135,7 @@ private struct AIChatComposer: View {
     let maximumTextHeight: CGFloat
     @Binding var showsContext: Bool
     @Binding var isDropTargeted: Bool
+    @Environment(\.chatTypography) private var chatTypography
     @State private var editor = ComposerTextViewHandle()
 
     private var canSend: Bool {
@@ -146,6 +156,7 @@ private struct AIChatComposer: View {
             ZStack(alignment: .topLeading) {
                 if chat.draft.isEmpty {
                     Text("Ask anything…")
+                        .font(chatTypography.swiftUIFont())
                         .foregroundStyle(.tertiary)
                         .allowsHitTesting(false)
                 }
@@ -154,7 +165,8 @@ private struct AIChatComposer: View {
                     maximumTextHeight: maximumTextHeight, handle: editor,
                     isFileDragTargeted: $isDropTargeted,
                     onDropFiles: { coordinator.attach(files: $0, to: chat) },
-                    onInvalidate: { coordinator.dictation.cancel(in: $0) }, onSubmit: submit)
+                    onInvalidate: { coordinator.dictation.cancel(in: $0) }, onSubmit: submit,
+                    typography: chatTypography)
             }
             // The text's edge is the + glyph's, which sits centred in its own hover square.
             .padding(.horizontal, Theme.Spacing.sm)
@@ -347,6 +359,8 @@ private struct AIAddMenu: View {
             Divider()
             if offersSearch {
                 Toggle("Web Search", systemImage: "globe", isOn: $settings.webSearchEnabled)
+            } else {
+                Button("Configure Web Search…", systemImage: "globe") { coordinator.showSettings() }
             }
             AIToolsMenu(chat: chat, coordinator: coordinator)
         } label: {

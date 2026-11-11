@@ -69,6 +69,18 @@ final class AISettingsStore {
     var retention: AIRetention {
         didSet { defaults.set(retention.rawValue, forKey: AppSettingsKey.aiRetention.rawValue) }
     }
+    /// Font size for AI chat messages, composer, and response elements (default: 14pt).
+    var chatFontSize: CGFloat {
+        didSet { defaults.set(Double(chatFontSize), forKey: AppSettingsKey.chatFontSize.rawValue) }
+    }
+    /// Custom font family for AI chat messages; nil uses system font.
+    var chatFontFamily: String? {
+        didSet { defaults.set(chatFontFamily, forKey: AppSettingsKey.chatFontFamily.rawValue) }
+    }
+    /// Custom monospaced font family for AI chat code blocks; nil uses system monospace.
+    var chatCodeFontFamily: String? {
+        didSet { defaults.set(chatCodeFontFamily, forKey: AppSettingsKey.chatCodeFontFamily.rawValue) }
+    }
     var opensTo: AIOpensTo {
         didSet { defaults.set(opensTo.rawValue, forKey: AppSettingsKey.aiOpensTo.rawValue) }
     }
@@ -141,6 +153,10 @@ final class AISettingsStore {
         retention =
             AIRetention(rawValue: defaults.integer(forKey: AppSettingsKey.aiRetention.rawValue))
             ?? .forever
+        let storedChatFontSize = defaults.double(forKey: AppSettingsKey.chatFontSize.rawValue)
+        chatFontSize = storedChatFontSize > 0 ? CGFloat(storedChatFontSize) : 14.0
+        chatFontFamily = defaults.string(forKey: AppSettingsKey.chatFontFamily.rawValue)
+        chatCodeFontFamily = defaults.string(forKey: AppSettingsKey.chatCodeFontFamily.rawValue)
         opensTo =
             AIOpensTo(rawValue: defaults.integer(forKey: AppSettingsKey.aiOpensTo.rawValue))
             ?? .recent

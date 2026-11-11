@@ -186,6 +186,7 @@ private struct ChatMessageView: View, @MainActor Equatable {
     let onRegenerate: (() -> Void)?
     let onChoose: ((String) -> Void)?
     @Environment(\.chatTextHighlight) private var highlight
+    @Environment(\.chatTypography) private var chatTypography
 
     @State private var hovered = false
 
@@ -254,7 +255,7 @@ private struct ChatMessageView: View, @MainActor Equatable {
             .padding(metrics.spacing.md)
         } else {
             bubbleContent
-                .font(metrics.typography.rowTitle)
+                .font(chatTypography.swiftUIFont())
                 .foregroundStyle(.primary)
                 .textSelection(.enabled)
                 // The user bubble is inset because it carries a fill.

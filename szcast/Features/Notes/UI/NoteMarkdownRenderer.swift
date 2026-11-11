@@ -191,3 +191,71 @@ final class NoteMarkdownRenderer: NSObject, @MainActor NSTextStorageDelegate {
         textView.textLayoutManager?.invalidateLayout(for: textRange)
     }
 }
+
+/// In-memory cache and resolver for note inline images.
+@MainActor
+enum NoteImageCache {
+    private static let cache = NSCache<NSString, NSImage>()
+    static var notesDirectory: URL? {
+        didSet {
+            clear()
+        }
+    }
+
+    /// Resolves an image destination (relative or absolute) to an `NSImage`, caching the result.
+    static func image(for destination: String) -> NSImage? {
+        let key = destination as NSString
+        if let cached = cache.object(forKey: key) {
+            return cached
+        }
+        let url: URL?
+        if destination.hasPrefix("/") || destination.hasPrefix("file://") {
+            url = URL(string: destination) ?? URL(fileURLWithPath: destination)
+        } else if let notesDir = notesDirectory {
+            url = notesDir.appendingPathComponent(destination)
+        } else {
+            url = nil
+        }
+        guard let url, FileManager.default.fileExists(atPath: url.path),
+            let image = NSImage(contentsOf: url)
+        else {
+            return nil
+        }
+        cache.setObject(image, forKey: key)
+        return image
+    }
+
+    /// Saves image data into `<notesDirectory>/assets/` and caches the loaded image.
+    static func saveAttachment(
+        data: Data,
+        notesDirectory: URL,
+        originalName: String? = nil,
+        preferredExtension: String = "png"
+    ) -> (relativePath: String, url: URL)? {
+        let assetsDir = notesDirectory.appendingPathComponent("assets", isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: assetsDir, withIntermediateDirectories: true)
+            let ext = (originalName as NSString?)?.pathExtension.lowercased()
+            let finalExt = (ext != nil && !ext!.isEmpty) ? ext! : preferredExtension
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withYear, .withMonth, .withDay, .withTime]
+            let timeString = formatter.string(from: Date()).replacingOccurrences(of: ":", with: "-")
+            let shortID = String(UUID().uuidString.prefix(8)).lowercased()
+            let filename = "image-\(timeString)-\(shortID).\(finalExt)"
+            let destination = assetsDir.appendingPathComponent(filename)
+            try data.write(to: destination, options: .atomic)
+            let relativePath = "assets/\(filename)"
+            if let img = NSImage(data: data) {
+                cache.setObject(img, forKey: relativePath as NSString)
+            }
+            return (relativePath, destination)
+        } catch {
+            return nil
+        }
+    }
+
+    /// Evicts all cached images.
+    static func clear() {
+        cache.removeAllObjects()
+    }
+}

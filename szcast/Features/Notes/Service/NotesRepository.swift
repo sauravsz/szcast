@@ -266,6 +266,32 @@ struct NotesRepository: Sendable {
             locale: Locale(identifier: "en_US_POSIX"))
     }
 
+    /// Saves an image attachment into the `assets` subdirectory of the notes directory.
+    /// Returns the relative path (e.g. `assets/image-timestamp.png`) and the full file URL.
+    @discardableResult
+    func saveImageAttachment(
+        data: Data,
+        originalName: String? = nil,
+        preferredExtension: String = "png"
+    ) throws(Failure) -> (relativePath: String, url: URL) {
+        try mappedError(at: notesDirectory) {
+            let assetsDir = notesDirectory.appendingPathComponent("assets", isDirectory: true)
+            try FileManager.default.createDirectory(at: assetsDir, withIntermediateDirectories: true)
+
+            let ext = (originalName as NSString?)?.pathExtension.lowercased()
+            let finalExt = (ext != nil && !ext!.isEmpty) ? ext! : preferredExtension
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withYear, .withMonth, .withDay, .withTime]
+            let timeString = formatter.string(from: Date()).replacingOccurrences(of: ":", with: "-")
+            let shortID = String(UUID().uuidString.prefix(8)).lowercased()
+            let filename = "image-\(timeString)-\(shortID).\(finalExt)"
+
+            let destination = assetsDir.appendingPathComponent(filename)
+            try writeNewFileAtomically(data, to: destination)
+            return ("assets/\(filename)", destination)
+        }
+    }
+
     private func writeNewFileAtomically(_ data: Data, to destination: URL) throws {
         let temporary = destination.deletingLastPathComponent().appendingPathComponent(
             ".\(destination.lastPathComponent).\(UUID().uuidString).tmp")

@@ -127,20 +127,46 @@ enum NoteMarkdownStyler {
             switch inline.kind {
             case .strong, .emphasis, .strongEmphasis:
                 runs.append((inline.contentRange, [.font: font]))
+                runs += inline.markerRanges.map { ($0, markerLook) }
             case .strikethrough:
                 runs.append((inline.contentRange, [.strikethroughStyle: NSUnderlineStyle.single.rawValue]))
+                runs += inline.markerRanges.map { ($0, markerLook) }
             case .code:
                 let codeFont = NoteMarkdownTypography.inlineCode(matching: font)
                 if isRevealed { markerLook[.font] = codeFont }
                 let background = color(Theme.Colors.controlSurface)
                 runs.append((inline.contentRange, [.font: codeFont, .backgroundColor: background]))
+                runs += inline.markerRanges.map { ($0, markerLook) }
             case .link(let destination):
                 runs.append((inline.contentRange, linkLook(URL(string: destination), isRevealed: isRevealed)))
+                runs += inline.markerRanges.map { ($0, markerLook) }
             case .autolink:
                 let url = URL(string: text.substring(with: inline.range))
                 runs.append((inline.range, linkLook(url, isRevealed: isRevealed)))
+                runs += inline.markerRanges.map { ($0, markerLook) }
+            case .image(let destination, _):
+                if isRevealed {
+                    runs.append((inline.contentRange, [.foregroundColor: color(Theme.Colors.noteText)]))
+                    runs += inline.markerRanges.map { ($0, markerLook) }
+                } else if let image = NoteImageCache.image(for: destination) {
+                    let attachment = NSTextAttachment()
+                    attachment.image = image
+                    let maxWidth: CGFloat = 520
+                    let size = image.size
+                    let aspect = (size.width > 0 && size.height > 0) ? (size.height / size.width) : 0.75
+                    let width = min(maxWidth, max(size.width, 24))
+                    let height = width * aspect
+                    attachment.bounds = CGRect(x: 0, y: -2, width: width, height: height)
+
+                    runs.append((NSRange(location: inline.range.location, length: 1), [.attachment: attachment]))
+                    if inline.range.length > 1 {
+                        runs.append((NSRange(location: inline.range.location + 1, length: inline.range.length - 1), hidden))
+                    }
+                } else {
+                    runs.append((inline.contentRange, [.foregroundColor: color(Theme.Colors.textSecondary)]))
+                    runs += inline.markerRanges.map { ($0, hidden) }
+                }
             }
-            runs += inline.markerRanges.map { ($0, markerLook) }
         }
         return runs
     }

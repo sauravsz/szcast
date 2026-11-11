@@ -4,6 +4,7 @@ import SwiftUI
 struct NoteEditorView: NSViewRepresentable {
     let input: NoteEditorInput
     let rendersMarkdown: Bool
+    var notesDirectory: URL? = nil
     let onSourceChange: (String) -> Void
     let onCharacterCountChange: (NoteEditorInput, Int) -> Void
     let onFormattingChange: (NoteEditorInput, NoteFormatting) -> Void
@@ -43,6 +44,7 @@ struct NoteEditorView: NSViewRepresentable {
     @MainActor
     final class Coordinator: NSObject, NSTextViewDelegate, NoteTextViewEditing {
         var parent: NoteEditorView
+        var notesDirectory: URL? { parent.notesDirectory ?? NoteImageCache.notesDirectory }
         weak var textView: NoteTextView? {
             didSet { attach() }
         }
@@ -201,6 +203,7 @@ struct NoteEditorView: NSViewRepresentable {
     static func configure(_ textView: NSTextView) {
         textView.isRichText = false
         textView.importsGraphics = false
+        textView.registerForDraggedTypes([.fileURL, .png, .tiff])
         textView.drawsBackground = false
         textView.isVerticallyResizable = true
         textView.isHorizontallyResizable = false

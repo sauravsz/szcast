@@ -23,6 +23,9 @@ final class PaletteState {
     }
     var fileSearchFilter: FileSearchFilter = .all
     var emojiCategoryFilter: EmojiCategoryFilter = .all
+    var snippetFolderFilter: String? = nil {
+        didSet { if oldValue != snippetFolderFilter { selection = 0; restoredSelection = nil } }
+    }
     /// Nil means the configured default; zoom only overrides it for this picker session.
     var emojiGridColumnsOverride: EmojiGridColumns?
     /// Ordering out leaves the SwiftUI tree mounted, so a media preview needs this to stop playing.
@@ -144,6 +147,7 @@ final class PaletteState {
         clipboardFilter = .all
         fileSearchFilter = .all
         emojiCategoryFilter = .all
+        snippetFolderFilter = nil
         emojiGridColumnsOverride = nil
         forceExpanded = false
         dropHoverHighlight()

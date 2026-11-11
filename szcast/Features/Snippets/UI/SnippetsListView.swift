@@ -69,6 +69,17 @@ private struct SnippetRow: View {
                 .font(metrics.typography.rowTitle)
                 .lineLimit(1)
             Spacer(minLength: metrics.spacing.lg)
+            if let folder = record.snippet.folder, !folder.isEmpty {
+                Text(folder)
+                    .font(metrics.typography.keyCap)
+                    .foregroundStyle(Theme.Colors.textSecondary)
+                    .padding(.horizontal, metrics.spacing.xs)
+                    .padding(.vertical, 2)
+                    .background(
+                        RoundedRectangle(cornerRadius: metrics.radius.attachmentChip, style: .continuous)
+                            .fill(Theme.Colors.rowHover)
+                    )
+            }
             if let keyword = record.snippet.keyword, !keyword.isEmpty {
                 Text(keyword)
                     .font(metrics.typography.keyCap)
@@ -139,6 +150,9 @@ private struct SnippetInfoSection: View {
 
     private var rows: [InfoRow] {
         var rows = [InfoRow(label: String(localized: "Name"), value: record.snippet.name)]
+        if let folder = record.snippet.folder, !folder.isEmpty {
+            rows.append(InfoRow(label: String(localized: "Folder"), value: folder))
+        }
         if let keyword = record.snippet.keyword, !keyword.isEmpty {
             rows.append(InfoRow(label: String(localized: "Keyword"), value: keyword))
         }

@@ -143,9 +143,17 @@ struct SnippetRepository: Sendable {
                 for fileURL in files {
                     do {
                         let content = try String(contentsOf: fileURL, encoding: .utf8)
-                        let snippet = try SnippetMarkdownSerializer.parse(
+                        var snippet = try SnippetMarkdownSerializer.parse(
                             content: content,
                             fileURL: fileURL)
+                        if snippet.folder == nil {
+                            let parentURL = fileURL.deletingLastPathComponent().standardizedFileURL
+                            let snippetsPath = snippetsDirectory.standardizedFileURL.resolvingSymlinksInPath().path
+                            let parentPath = parentURL.resolvingSymlinksInPath().path
+                            if parentPath != snippetsPath && parentPath.hasPrefix(snippetsPath) {
+                                snippet.folder = parentURL.lastPathComponent
+                            }
+                        }
                         records.append(
                             StoredSnippet(
                                 fileURL: fileURL,
@@ -251,14 +259,30 @@ struct SnippetRepository: Sendable {
     }
 
     private func markdownFiles(in directory: URL) throws -> [URL] {
-        try FileManager.default.contentsOfDirectory(
+        var results: [URL] = []
+        let items = try FileManager.default.contentsOfDirectory(
             at: directory,
-            includingPropertiesForKeys: [.isRegularFileKey],
+            includingPropertiesForKeys: [.isRegularFileKey, .isDirectoryKey],
             options: [.skipsHiddenFiles]
         )
-        .filter { $0.pathExtension.lowercased() == "md" }
-        .filter(Self.isLoadableFile)
-        .sorted { $0.lastPathComponent < $1.lastPathComponent }
+        for item in items {
+            var isDir: ObjCBool = false
+            if FileManager.default.fileExists(atPath: item.path, isDirectory: &isDir), isDir.boolValue {
+                if let subItems = try? FileManager.default.contentsOfDirectory(
+                    at: item,
+                    includingPropertiesForKeys: [.isRegularFileKey],
+                    options: [.skipsHiddenFiles]
+                ) {
+                    results.append(
+                        contentsOf: subItems.filter {
+                            $0.pathExtension.lowercased() == "md" && Self.isLoadableFile($0)
+                        })
+                }
+            } else if item.pathExtension.lowercased() == "md", Self.isLoadableFile(item) {
+                results.append(item)
+            }
+        }
+        return results.sorted { $0.lastPathComponent < $1.lastPathComponent }
     }
 
     // Keeps a directory or device node named `*.md` out; only non-files pay for resolving.
@@ -316,7 +340,7 @@ struct SnippetRepository: Sendable {
         let standardized = fileURL.standardizedFileURL
         let parentPath = standardized.deletingLastPathComponent().resolvingSymlinksInPath().path
         let snippetsPath = snippetsDirectory.standardizedFileURL.resolvingSymlinksInPath().path
-        guard parentPath == snippetsPath,
+        guard parentPath == snippetsPath || parentPath.hasPrefix(snippetsPath + "/"),
             standardized.pathExtension.lowercased() == "md"
         else {
             throw RepositoryError.invalidFileLocation(fileURL)

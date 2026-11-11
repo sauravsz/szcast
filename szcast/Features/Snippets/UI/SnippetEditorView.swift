@@ -126,6 +126,11 @@ struct SnippetEditorView: View {
                 focus: .name,
                 hint: String(localized: "Required. Shown in the library and launcher."))
             field(
+                String(localized: "Folder"), placeholder: String(localized: "Optional folder or tag (e.g. Work, Code)"),
+                label: String(localized: "Snippet folder"), text: $editor.folder,
+                focus: .folder, hint: String(localized: "Optional. Group snippets by folder or tag.")
+            )
+            field(
                 String(localized: "Keyword"), placeholder: String(localized: "Optional, for example !notes"),
                 label: String(localized: "Snippet keyword"), text: $editor.keyword,
                 focus: .keyword, hint: String(localized: "Optional. Type this to expand the snippet.")

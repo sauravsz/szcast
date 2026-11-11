@@ -244,6 +244,21 @@ final class AppSettings {
         }
     }
 
+    /// Font size for search result titles in the launcher palette (default: 14pt).
+    var launcherRowTitleFontSize: CGFloat {
+        didSet { defaults.set(Double(launcherRowTitleFontSize), forKey: Key.launcherRowTitleFontSize.rawValue) }
+    }
+
+    /// Font size for search result subtitles and trailing labels in the launcher palette (default: 12pt).
+    var launcherRowSubtitleFontSize: CGFloat {
+        didSet { defaults.set(Double(launcherRowSubtitleFontSize), forKey: Key.launcherRowSubtitleFontSize.rawValue) }
+    }
+
+    /// Custom font family for launcher text; nil uses the system font.
+    var launcherFontFamily: String? {
+        didSet { defaults.set(launcherFontFamily, forKey: Key.launcherFontFamily.rawValue) }
+    }
+
     /// Summon the launcher as a slim search bar that expands into the full list on typing.
     var compactMode: Bool {
         didSet { defaults.set(compactMode, forKey: Key.compactMode.rawValue) }
@@ -446,6 +461,13 @@ final class AppSettings {
     /// The snippets folder as the user wrote it, `~` allowed; nil keeps it in Application Support.
     var snippetsFolder: String? {
         didSet { defaults.set(snippetsFolder, forKey: Key.snippetsFolder.rawValue) }
+    }
+
+    var snippetsDefaultAction: SnippetDefaultAction {
+        didSet {
+            defaults.set(
+                snippetsDefaultAction.rawValue, forKey: Key.snippetsDefaultAction.rawValue)
+        }
     }
 
     var navigationEnabled: Bool {
@@ -776,6 +798,11 @@ final class AppSettings {
         interfaceSize =
             defaults.string(forKey: Key.interfaceSize.rawValue).flatMap(InterfaceSize.init)
             ?? .standard
+        let storedRowTitleSize = defaults.double(forKey: Key.launcherRowTitleFontSize.rawValue)
+        launcherRowTitleFontSize = storedRowTitleSize > 0 ? CGFloat(storedRowTitleSize) : 14.0
+        let storedRowSubtitleSize = defaults.double(forKey: Key.launcherRowSubtitleFontSize.rawValue)
+        launcherRowSubtitleFontSize = storedRowSubtitleSize > 0 ? CGFloat(storedRowSubtitleSize) : 12.0
+        launcherFontFamily = defaults.string(forKey: Key.launcherFontFamily.rawValue)
         compactMode =
             defaults.object(forKey: Key.compactMode.rawValue) == nil
             || defaults.bool(forKey: Key.compactMode.rawValue)
@@ -870,6 +897,9 @@ final class AppSettings {
             defaults.object(forKey: Key.snippetsShowInLauncher.rawValue) == nil
             || defaults.bool(forKey: Key.snippetsShowInLauncher.rawValue)
         snippetsFolder = defaults.string(forKey: Key.snippetsFolder.rawValue)
+        snippetsDefaultAction =
+            defaults.string(forKey: Key.snippetsDefaultAction.rawValue)
+            .flatMap(SnippetDefaultAction.init) ?? .paste
         // Opt-in, unlike its siblings: until it is asked for, nothing about extensions is loaded.
         extensionsEnabled = defaults.object(forKey: Key.extensionsEnabled.rawValue) == nil
             || defaults.bool(forKey: Key.extensionsEnabled.rawValue)

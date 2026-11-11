@@ -4,11 +4,12 @@ import SwiftUI
 @Observable
 final class SnippetEditorSession {
     enum Field: CaseIterable, Hashable {
-        case template, name, keyword, enabled, confirmation
+        case template, name, folder, keyword, enabled, confirmation
     }
 
     let record: StoredSnippet?
     var name: String
+    var folder: String
     var keyword: String
     var text: String
     var isEnabled: Bool
@@ -22,6 +23,7 @@ final class SnippetEditorSession {
         self.record = record
         let snippet = record?.snippet
         name = snippet?.name ?? ""
+        folder = snippet?.folder ?? ""
         keyword = snippet?.keyword ?? ""
         text = snippet?.text ?? ""
         isEnabled = snippet?.isEnabled ?? true
@@ -34,10 +36,12 @@ final class SnippetEditorSession {
 
     var snippet: Snippet {
         let keyword = keyword.trimmingCharacters(in: .whitespacesAndNewlines)
+        let folder = folder.trimmingCharacters(in: .whitespacesAndNewlines)
         return Snippet(
             name: name.trimmingCharacters(in: .whitespacesAndNewlines), text: text,
             keyword: keyword.isEmpty ? nil : keyword, isEnabled: isEnabled,
-            showsConfirmation: showsConfirmation)
+            showsConfirmation: showsConfirmation,
+            folder: folder.isEmpty ? nil : folder)
     }
 
     func advanceFocus(backwards: Bool) {

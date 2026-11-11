@@ -11,10 +11,13 @@ enum RaycastSnippetImport {
 
             let rawKeyword = entry["keyword"] as? String
             let keyword = rawKeyword?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let rawFolder = (entry["group"] as? String) ?? (entry["folder"] as? String)
+            let folder = rawFolder?.trimmingCharacters(in: .whitespacesAndNewlines)
             return Snippet(
                 name: name,
                 text: text,
-                keyword: keyword?.isEmpty == false ? keyword : nil)
+                keyword: keyword?.isEmpty == false ? keyword : nil,
+                folder: folder?.isEmpty == false ? folder : nil)
         }
     }
 }

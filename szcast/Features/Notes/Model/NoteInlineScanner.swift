@@ -23,7 +23,7 @@ struct NoteInlineScanner {
     private static func mayStartInline(_ unit: UInt16) -> Bool {
         switch unit {
         case Unit.asterisk, Unit.underscore, Unit.tilde, Unit.backtick, Unit.openBracket,
-            Unit.backslash, Unit.colon:
+            Unit.backslash, Unit.colon, Unit.exclamation:
             true
         default:
             false
@@ -52,7 +52,17 @@ struct NoteInlineScanner {
             } else if unit == Unit.openBracket, !inLabel, let link = link(at: index, in: content) {
                 let isImage = index > content.lowerBound && units[index - 1] == Unit.exclamation
                 if isImage {
-                    block((index - 1)..<link.end)
+                    let label = (index + 1)..<link.labelEnd
+                    let alt = String(decoding: units[label], as: UTF16.self)
+                    let start = index - 1
+                    found.append(
+                        NoteMarkdown.Inline(
+                            kind: .image(destination: link.destination, alt: alt),
+                            range: NSRange(start..<link.end), contentRange: NSRange(label),
+                            markerRanges: [
+                                NSRange(location: start, length: 2), NSRange(link.labelEnd..<link.end)
+                            ]))
+                    block(start..<link.end)
                 } else {
                     let label = (index + 1)..<link.labelEnd
                     found.append(

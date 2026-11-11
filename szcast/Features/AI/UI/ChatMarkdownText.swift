@@ -7,6 +7,7 @@ struct ChatMarkdownText: View {
     @Environment(\.chatTextHighlight) private var highlight
     @Environment(\.chatCitations) private var citations
     @Environment(\.chatFindPath) private var path
+    @Environment(\.chatTypography) private var chatTypography
     let blocks: [MarkdownBlock]
     var failedFrom: Int?
 
@@ -22,7 +23,7 @@ struct ChatMarkdownText: View {
         ChatTextRepresentable(
             source: ChatMarkdownSource(
                 blocks: blocks, highlight: highlight, citations: citations, prefix: path,
-                failedFrom: failedFrom, metrics: metrics)
+                failedFrom: failedFrom, metrics: metrics, chatTypography: chatTypography)
         ) { rect in
             if rect != currentMatch { currentMatch = rect }
         }

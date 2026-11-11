@@ -41,6 +41,7 @@ enum SettingsBackupCoverage {
         "customCommandsEnabled": .customCommandsEnabled,
         "customCommandsShowInLauncher": .customCommandsShowInLauncher,
         "snippetsShowInLauncher": .snippetsShowInLauncher,
+        "snippetsDefaultAction": .snippetsDefaultAction,
         "navigationEnabled": .navigationEnabled,
         "menuSearchDisabledApps": .menuSearchDisabledApps,
         "menuSearchShowsAppleMenu": .menuSearchShowsAppleMenu,
@@ -208,6 +209,18 @@ enum SettingsBackupCoverage {
         AppSettingsKey.focusTimerShowsInMenuBar.rawValue:
             "Focus timer menu bar display is a local preference on this Mac.",
         AppSettingsKey.webSearchProvider.rawValue:
-            "Web search engine selection is a local preference on this Mac."
+            "Web search engine selection is a local preference on this Mac.",
+        AppSettingsKey.launcherRowTitleFontSize.rawValue:
+            "Launcher typography sizing is a display-local preference on this Mac.",
+        AppSettingsKey.launcherRowSubtitleFontSize.rawValue:
+            "Launcher typography sizing is a display-local preference on this Mac.",
+        AppSettingsKey.launcherFontFamily.rawValue:
+            "Launcher font family depends on fonts installed on this Mac.",
+        AppSettingsKey.chatFontSize.rawValue:
+            "AI Chat typography sizing is a display-local preference on this Mac.",
+        AppSettingsKey.chatFontFamily.rawValue:
+            "AI Chat font family depends on fonts installed on this Mac.",
+        AppSettingsKey.chatCodeFontFamily.rawValue:
+            "AI Chat code font family depends on fonts installed on this Mac."
     ]
 }

@@ -139,8 +139,88 @@ final class NoteTextView: NSTextView, InjectableTextView {
     }
 
     override func paste(_ sender: Any?) {
+        guard !pasteImage(from: .general) else { return }
         guard !pasteLink(from: .general) else { return }
         super.paste(sender)
+    }
+
+    /// Pastes an image from pasteboard into note assets and inserts markdown image tag.
+    func pasteImage(from pasteboard: NSPasteboard) -> Bool {
+        // 1. Check for file URLs with image extensions
+        if let urls = pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL] {
+            for fileURL in urls where isImageExtension(fileURL.pathExtension) {
+                if let data = try? Data(contentsOf: fileURL) {
+                    return insertImage(data: data, originalName: fileURL.lastPathComponent)
+                }
+            }
+        }
+
+        // 2. Check for PNG or TIFF data directly on the pasteboard
+        if let pngData = pasteboard.data(forType: .png) {
+            return insertImage(data: pngData, originalName: "image.png")
+        }
+        if let tiffData = pasteboard.data(forType: .tiff),
+            let bitmap = NSBitmapImageRep(data: tiffData),
+            let pngData = bitmap.representation(using: .png, properties: [:])
+        {
+            return insertImage(data: pngData, originalName: "image.png")
+        }
+
+        return false
+    }
+
+    func insertImage(data: Data, originalName: String?) -> Bool {
+        guard let notesDirectory = editing?.notesDirectory ?? NoteImageCache.notesDirectory else {
+            return false
+        }
+        guard let result = NoteImageCache.saveAttachment(
+            data: data,
+            notesDirectory: notesDirectory,
+            originalName: originalName
+        ) else {
+            return false
+        }
+        let alt = (originalName as NSString?)?.deletingPathExtension ?? "image"
+        let markdownTag = "![\(alt)](\(result.relativePath))\n"
+        let range = selectedRange()
+        let plan = NoteEditPlan(
+            range: range,
+            replacement: markdownTag,
+            selection: NSRange(location: range.location + (markdownTag as NSString).length, length: 0)
+        )
+        return performEdit(plan)
+    }
+
+    private func isImageExtension(_ ext: String) -> Bool {
+        let imageExtensions: Set<String> = [
+            "png", "jpg", "jpeg", "gif", "webp", "heic", "tiff", "tif", "bmp", "svg"
+        ]
+        return imageExtensions.contains(ext.lowercased())
+    }
+
+    // MARK: - Drag and Drop
+
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        if hasImageOnPasteboard(sender.draggingPasteboard) {
+            return .copy
+        }
+        return super.draggingEntered(sender)
+    }
+
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        if pasteImage(from: sender.draggingPasteboard) {
+            return true
+        }
+        return super.performDragOperation(sender)
+    }
+
+    private func hasImageOnPasteboard(_ pasteboard: NSPasteboard) -> Bool {
+        if let urls = pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL] {
+            if urls.contains(where: { isImageExtension($0.pathExtension) }) {
+                return true
+            }
+        }
+        return pasteboard.types?.contains(where: { $0 == .png || $0 == .tiff }) == true
     }
 
     /// Pasting a lone URL over selected text makes a link; anything else pastes as plain text.

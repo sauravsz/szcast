@@ -440,6 +440,16 @@ struct RootPaletteView: View {
                     core.fileSearchCoordinator.show(query: term)
                     return
                 }
+                // Alias + Space: typing an alias followed by Space opens the command/action set.
+                if vm.mode == .launcher,
+                    let trigger = AliasTrigger.parse(vm.query, registeredAliases: core.aliases.allAliases)
+                {
+                    if let entry = appIndex.entry(matchingAlias: trigger.alias) {
+                        vm.query = ""
+                        core.launcherCoordinator.launch(entry, searchQuery: trigger.remainder)
+                        return
+                    }
+                }
                 land(restoringSelection: true)
                 if vm.mode == .fileSearch { fileSearch.search(vm.query, filter: vm.fileSearchFilter) }
                 if vm.mode == .launcher { core.fileSearchCoordinator.searchFromLauncher(vm.query) }

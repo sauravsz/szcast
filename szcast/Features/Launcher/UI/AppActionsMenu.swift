@@ -140,20 +140,61 @@ enum AppActionsMenu {
             case .application, .command, .extensionCommand: "list.dash.header.rectangle"
             default: "list.bullet.rectangle"
             }
+        let primaryVerb: String
+        if app.kind == .snippet {
+            switch core.settings.snippetsDefaultAction {
+            case .paste: primaryVerb = String(localized: "Paste Snippet")
+            case .copy: primaryVerb = String(localized: "Copy to Clipboard")
+            case .copyAndPaste: primaryVerb = String(localized: "Copy and Paste")
+            }
+        } else {
+            primaryVerb = app.kind.descriptor.openVerb.resolved()
+        }
         var items = [
             PopoverMenuItem(
-                title: app.kind.descriptor.openVerb.resolved(), systemImage: primarySymbol,
+                title: primaryVerb, systemImage: primarySymbol,
                 shortcut: "↵"
             ) { core.launcherCoordinator.launch(app, searchQuery: searchQuery) }
         ]
         if app.kind == .snippet, let id = StoredSnippet.id(fromEntryID: app.id),
             let record = core.snippetsStore.record(id: id)
         {
+            let defaultAction = core.settings.snippetsDefaultAction
+            if defaultAction != .copy {
+                items.append(
+                    PopoverMenuItem(
+                        title: String(localized: "Copy to Clipboard"), systemImage: "doc.on.doc", shortcut: "⌘C"
+                    ) {
+                        core.snippetCoordinator.expandSnippetFromPalette(id: record.id, action: .copy)
+                    })
+            }
+            if defaultAction != .paste {
+                items.append(
+                    PopoverMenuItem(
+                        title: String(localized: "Paste Snippet"), systemImage: "text.quote", shortcut: defaultAction == .copy ? "⌘V" : nil
+                    ) {
+                        core.snippetCoordinator.expandSnippetFromPalette(id: record.id, action: .paste)
+                    })
+            }
+            if defaultAction != .copyAndPaste {
+                items.append(
+                    PopoverMenuItem(
+                        title: String(localized: "Copy and Paste"), systemImage: "doc.on.clipboard", shortcut: "⌥↵"
+                    ) {
+                        core.snippetCoordinator.expandSnippetFromPalette(id: record.id, action: .copyAndPaste)
+                    })
+            }
             items.append(
                 PopoverMenuItem(
                     title: String(localized: "Edit Snippet"), systemImage: "pencil", shortcut: "⌘E"
                 ) {
                     core.snippetCoordinator.editSnippet(record)
+                })
+            items.append(
+                PopoverMenuItem(
+                    title: String(localized: "Duplicate Snippet"), systemImage: "plus.square.on.square", shortcut: "⌘D"
+                ) {
+                    core.snippetCoordinator.duplicateSnippet(record)
                 })
         }
         if app.canRevealInFinder {

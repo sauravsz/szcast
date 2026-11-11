@@ -24,6 +24,7 @@ struct NotesTests {
         try await testCollectionMutationsFlushTheDraft()
         try await testStoreRecoversFromFailures()
         try await testStoreRelocates()
+        try testImageAttachments()
 
         print(failures == 0 ? "Notes tests passed" : "\(failures) tests failed")
         exit(failures == 0 ? 0 : 1)
@@ -699,6 +700,32 @@ struct NotesTests {
         store.stop()
     }
 
+    private static func testImageAttachments() throws {
+        let root = temporaryRoot("image-attachments")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let repository = try repository(in: root)
+
+        let sampleData = Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
+        let (relativePath, fileURL) = try repository.saveImageAttachment(data: sampleData, originalName: "screenshot.png")
+
+        check("image attachment relative path starts with assets/", relativePath.hasPrefix("assets/image-"))
+        check("image attachment ends with .png", relativePath.hasSuffix(".png"))
+        check("image file exists on disk", FileManager.default.fileExists(atPath: fileURL.path))
+
+        let savedBytes = try Data(contentsOf: fileURL)
+        check("saved image bytes match original data", savedBytes == sampleData)
+
+        let markdown = "Note with image:\n![\(relativePath)](\(relativePath))"
+        let parsed = NoteMarkdownParser.parse(markdown)
+        let inlines = parsed.lines.count > 1 ? parsed.inlines(of: parsed.lines[1]) : []
+        check("inline image parsed from note markdown", inlines.contains(where: {
+            if case .image(let dest, _) = $0.kind {
+                return dest == relativePath
+            }
+            return false
+        }))
+    }
+
     private static func testMarkdownParser() {
         let tiled = ["a\nb\n", "a\r\nb", "\n\n", "x", "a\u{2029}b\rc"]
         check("an empty source is one empty line", NoteMarkdownParser.parse("").lines.map(\.kind) == [.blank])
@@ -835,7 +862,9 @@ struct NotesTests {
         check(
             "a link hides its bracket and its destination",
             link.markerRanges.map { substring(linkSource, $0) } == ["[", "](https://x.com/(y))"])
-        check("an image stays literal", spans("![alt **x**](a.png)").isEmpty)
+        check(
+            "an image parses as an image inline",
+            spans("![alt **x**](a.png)") == [.init(.image(destination: "a.png", alt: "alt **x**"), "alt **x**")])
         check("a destination with a space is not a link", spans("[a](b c)").isEmpty)
 
         check(

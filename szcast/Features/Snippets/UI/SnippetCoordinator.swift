@@ -133,6 +133,19 @@ final class SnippetCoordinator {
         paletteCoordinator.showPalette(mode: .snippetEditor)
     }
 
+    func duplicateSnippet(_ record: StoredSnippet) {
+        guard settings.snippetsEnabled else { return }
+        let editor = SnippetEditorSession(record: nil)
+        editor.name = String(localized: "\(record.snippet.name) (Copy)")
+        editor.text = record.snippet.text
+        editor.folder = record.snippet.folder ?? ""
+        editor.keyword = ""
+        editor.isEnabled = record.snippet.isEnabled
+        editor.showsConfirmation = record.snippet.showsConfirmation
+        self.editor = editor
+        paletteCoordinator.showPalette(mode: .snippetEditor)
+    }
+
     /// Starts from the text selected in the app in front, read through Accessibility, never ⌘C.
     func createSnippetFromSelection() {
         guard settings.snippetsEnabled else { return }
@@ -273,11 +286,11 @@ final class SnippetCoordinator {
     }
 
     /// The browser's ↵. The target has to be read before the panel hides, as the launcher's does.
-    func expandSnippetFromPalette(id: StoredSnippet.ID) {
+    func expandSnippetFromPalette(id: StoredSnippet.ID, action: SnippetDefaultAction? = nil) {
         let target = windowController.previousTarget
         // One of our own editors is only reachable again once the palette hands key back to it.
         paletteCoordinator.hidePalette(restoreFocus: target?.ownEditor != nil)
-        expandSnippet(id: id, target: target)
+        expandSnippet(id: id, target: target, action: action)
     }
 
     /// A shortcut lands where the caret is; over the palette, that's what the palette covered.
@@ -300,6 +313,7 @@ final class SnippetCoordinator {
     func expandSnippet(
         id: StoredSnippet.ID,
         target: InjectionTarget?,
+        action: SnippetDefaultAction? = nil,
         expectedKeyword: String? = nil,
         keywordLength: Int = 0,
         automaticGeneration: UInt? = nil
@@ -311,8 +325,9 @@ final class SnippetCoordinator {
                 target: target)
             return
         }
-        // Only the interactive path needs this: it must fail before the prompt, not after.
-        if automaticGeneration == nil {
+        let resolvedAction = action ?? settings.snippetsDefaultAction
+        // Only the interactive path that actually pastes needs to prepare interactive expansion:
+        if automaticGeneration == nil, resolvedAction != .copy {
             guard injector.prepareInteractiveExpansion(target: target) else { return }
         }
         let context = injector.captureExpansionContext(
@@ -332,6 +347,7 @@ final class SnippetCoordinator {
                 context: context,
                 result: result,
                 target: target,
+                action: resolvedAction,
                 expectedKeyword: expectedKeyword,
                 keywordLength: keywordLength,
                 automaticGeneration: automaticGeneration)
@@ -348,6 +364,7 @@ final class SnippetCoordinator {
                 context: context,
                 result: SnippetTemplateEngine.expand(record, snippets: records, context: context),
                 target: target,
+                action: resolvedAction,
                 expectedKeyword: nil,
                 keywordLength: 0,
                 automaticGeneration: nil)
@@ -360,12 +377,27 @@ final class SnippetCoordinator {
         context: SnippetTemplateEngine.ExpansionContext,
         result: SnippetTemplateEngine.ExpansionResult,
         target: InjectionTarget?,
+        action: SnippetDefaultAction,
         expectedKeyword: String?,
         keywordLength: Int,
         automaticGeneration: UInt?
     ) {
-        let confirmation =
-            record.snippet.showsConfirmation ? String(localized: "Inserted \(record.snippet.name)") : nil
+        let confirmation: String?
+        if record.snippet.showsConfirmation {
+            switch action {
+            case .paste:
+                confirmation = String(localized: "Inserted \(record.snippet.name)")
+            case .copy:
+                confirmation = String(localized: "Copied \(record.snippet.name)")
+            case .copyAndPaste:
+                confirmation = String(localized: "Copied and Inserted \(record.snippet.name)")
+            }
+        } else if action == .copy {
+            confirmation = String(localized: "Copied “\(record.snippet.name)” to clipboard")
+        } else {
+            confirmation = nil
+        }
+
         if !result.missingArguments.isEmpty {
             promptSnippetArguments(
                 record: record,
@@ -373,6 +405,7 @@ final class SnippetCoordinator {
                 context: context,
                 missingArgs: result.missingArguments,
                 target: target,
+                action: action,
                 expectedKeyword: expectedKeyword,
                 keywordLength: keywordLength,
                 automaticGeneration: automaticGeneration,
@@ -381,7 +414,9 @@ final class SnippetCoordinator {
         }
         completeSnippetExpansion(
             result,
+            record: record,
             target: target,
+            action: action,
             expectedKeyword: expectedKeyword,
             keywordLength: keywordLength,
             automaticGeneration: automaticGeneration,
@@ -394,6 +429,7 @@ final class SnippetCoordinator {
         context: SnippetTemplateEngine.ExpansionContext,
         missingArgs: [SnippetTemplateEngine.MissingArgument],
         target: InjectionTarget?,
+        action: SnippetDefaultAction,
         expectedKeyword: String?,
         keywordLength: Int,
         automaticGeneration: UInt?,
@@ -426,7 +462,9 @@ final class SnippetCoordinator {
                 userArguments: arguments)
             completeSnippetExpansion(
                 result,
+                record: record,
                 target: target,
+                action: action,
                 expectedKeyword: expectedKeyword,
                 keywordLength: keywordLength,
                 automaticGeneration: automaticGeneration,
@@ -436,21 +474,54 @@ final class SnippetCoordinator {
 
     private func completeSnippetExpansion(
         _ result: SnippetTemplateEngine.ExpansionResult,
+        record: StoredSnippet,
         target: InjectionTarget?,
+        action: SnippetDefaultAction,
         expectedKeyword: String?,
         keywordLength: Int,
         automaticGeneration: UInt?,
         confirmation: String?
     ) {
-        injector.deliver(
-            InjectedText(result.text, cursorOffsetFromEnd: result.cursorOffsetFromEnd),
-            target: target,
-            expectedKeyword: expectedKeyword,
-            keywordLength: keywordLength,
-            automaticGeneration: automaticGeneration,
-            onDelivered: { [weak self] in
-                guard let self, let confirmation else { return }
-                self.showMessage(confirmation, .success)
-            })
+        switch action {
+        case .copy:
+            Paster.copyPlainText(result.text)
+            if keywordLength > 0 {
+                injector.deliver(
+                    InjectedText(""),
+                    target: target,
+                    expectedKeyword: expectedKeyword,
+                    keywordLength: keywordLength,
+                    automaticGeneration: automaticGeneration)
+            }
+            if let confirmation {
+                showMessage(confirmation, .success)
+            }
+
+        case .paste:
+            injector.deliver(
+                InjectedText(result.text, cursorOffsetFromEnd: result.cursorOffsetFromEnd),
+                target: target,
+                expectedKeyword: expectedKeyword,
+                keywordLength: keywordLength,
+                automaticGeneration: automaticGeneration,
+                onDelivered: { [weak self] in
+                    guard let self, let confirmation else { return }
+                    self.showMessage(confirmation, .success)
+                })
+
+        case .copyAndPaste:
+            Paster.copyPlainText(result.text)
+            injector.deliver(
+                InjectedText(result.text, cursorOffsetFromEnd: result.cursorOffsetFromEnd),
+                target: target,
+                expectedKeyword: expectedKeyword,
+                keywordLength: keywordLength,
+                automaticGeneration: automaticGeneration,
+                onDelivered: { [weak self] in
+                    Paster.copyPlainText(result.text)
+                    guard let self, let confirmation else { return }
+                    self.showMessage(confirmation, .success)
+                })
+        }
     }
 }

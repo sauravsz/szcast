@@ -9,6 +9,25 @@ struct ChatMarkdownSource: Equatable {
     let prefix: [Int]
     let failedFrom: Int?
     let metrics: InterfaceMetrics
+    let chatTypography: ChatTypography
+
+    init(
+        blocks: [MarkdownBlock],
+        highlight: ChatTextHighlight?,
+        citations: [String: Int],
+        prefix: [Int],
+        failedFrom: Int?,
+        metrics: InterfaceMetrics,
+        chatTypography: ChatTypography = ChatTypography()
+    ) {
+        self.blocks = blocks
+        self.highlight = highlight
+        self.citations = citations
+        self.prefix = prefix
+        self.failedFrom = failedFrom
+        self.metrics = metrics
+        self.chatTypography = chatTypography
+    }
 }
 
 struct ChatRenderedText {
@@ -38,6 +57,7 @@ struct ChatMarkdownRenderer {
 
     private let source: ChatMarkdownSource
     private var typography: InterfaceMetrics.Typography { source.metrics.typography }
+    private var chatTypography: ChatTypography { source.chatTypography }
     private var spacing: InterfaceMetrics.Spacing { source.metrics.spacing }
 
     init(_ source: ChatMarkdownSource) {
@@ -86,7 +106,7 @@ struct ChatMarkdownRenderer {
         return ChatRenderedText(string: output.string, codeBlocks: output.codeBlocks, current: current)
     }
 
-    private var bodyFont: NSFont { typography.textNSFont(.body) }
+    private var bodyFont: NSFont { chatTypography.bodyFont() }
 
     private func textColor(_ context: Context) -> NSColor {
         if context.failed { return NSColor(Theme.Colors.destructive) }
@@ -179,11 +199,7 @@ struct ChatMarkdownRenderer {
     }
 
     private func headingFont(_ level: Int) -> NSFont {
-        switch level {
-        case 1: typography.textNSFont(.title2, weight: .semibold)
-        case 2: typography.textNSFont(.title3, weight: .semibold)
-        default: typography.textNSFont(.headline)
-        }
+        chatTypography.headingFont(level: level)
     }
 
     private func paragraphStyle(in context: Context, extra: [NSTextBlock] = []) -> NSMutableParagraphStyle {
@@ -235,7 +251,7 @@ struct ChatMarkdownRenderer {
                     runFont = NSFontManager.shared.convert(runFont, toHaveTrait: .italicFontMask)
                 }
                 if intent.contains(.code) {
-                    runFont = typography.textNSFont(.body, monospaced: true)
+                    runFont = chatTypography.codeFont()
                     attributes[.backgroundColor] = NSColor(Theme.Colors.controlSurface)
                 }
                 if intent.contains(.strikethrough) {
@@ -369,7 +385,7 @@ struct ChatMarkdownRenderer {
             edge: .minY)
         box.setWidth(spacing.lg, type: .absoluteValueType, for: .padding, edge: .maxY)
         box.setWidth(context.indent, type: .absoluteValueType, for: .margin, edge: .minX)
-        let font = typography.textNSFont(.callout, monospaced: true)
+        let font = chatTypography.codeFont()
         let style = paragraphStyle(in: context, extra: [box])
         style.firstLineHeadIndent = 0
         style.headIndent = 0
@@ -453,7 +469,7 @@ struct ChatMarkdownRenderer {
                 inside.indent = 0
                 inline(
                     column < cells.count ? cells[column] : "",
-                    font: row == 0 ? typography.textNSFont(.subheadline, weight: .medium) : bodyFont,
+                    font: row == 0 ? chatTypography.bodyFont(weight: .semibold) : bodyFont,
                     leaf: path + [row, column], in: inside, into: output, extraBlocks: [cell],
                     alignment: alignment(table, column))
             }

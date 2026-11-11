@@ -5,11 +5,33 @@ struct InterfaceMetrics: Equatable, Sendable {
     static let standard = InterfaceMetrics(scale: 1)
 
     let scale: CGFloat
+    let rowTitleSize: CGFloat
+    let rowSubtitleSize: CGFloat
+    let fontFamily: String?
+
+    init(
+        scale: CGFloat,
+        rowTitleSize: CGFloat = 14,
+        rowSubtitleSize: CGFloat = 12,
+        fontFamily: String? = nil
+    ) {
+        self.scale = scale
+        self.rowTitleSize = rowTitleSize
+        self.rowSubtitleSize = rowSubtitleSize
+        self.fontFamily = fontFamily
+    }
 
     var spacing: Spacing { Spacing(scale: scale) }
     var radius: Radius { Radius(scale: scale) }
     var size: Size { Size(scale: scale) }
-    var typography: Typography { Typography(scale: scale) }
+    var typography: Typography {
+        Typography(
+            scale: scale,
+            rowTitleSize: rowTitleSize,
+            rowSubtitleSize: rowSubtitleSize,
+            fontFamily: fontFamily
+        )
+    }
 
     /// For a tuned length a surface owns itself, where `Theme` states no token for it.
     func scaled(_ value: CGFloat) -> CGFloat { scaledPoints(value, scale) }
@@ -142,18 +164,39 @@ struct InterfaceMetrics: Equatable, Sendable {
     }
 
     /// `NSFont` is the only public source of a text style's size and face.
-    struct Typography: Sendable {
+    struct Typography: Sendable, Equatable {
         let scale: CGFloat
+        let rowTitleSize: CGFloat
+        let rowSubtitleSize: CGFloat
+        let fontFamily: String?
+
+        init(
+            scale: CGFloat,
+            rowTitleSize: CGFloat = 14,
+            rowSubtitleSize: CGFloat = 12,
+            fontFamily: String? = nil
+        ) {
+            self.scale = scale
+            self.rowTitleSize = rowTitleSize
+            self.rowSubtitleSize = rowSubtitleSize
+            self.fontFamily = fontFamily
+        }
 
         var searchFieldSize: CGFloat { scaledPoints(Theme.Typography.searchFieldSize, scale) }
         var searchField: Font {
-            scale == 1
+            if let fontFamily, !fontFamily.isEmpty {
+                return .custom(fontFamily, size: searchFieldSize)
+            }
+            return scale == 1
                 ? Theme.Typography.searchField
                 : .system(size: searchFieldSize, weight: .regular)
         }
         /// Isolated because `Theme`'s twin is, not because resolving a font needs main.
         @MainActor var searchFieldNSFont: NSFont {
-            scale == 1
+            if let fontFamily, !fontFamily.isEmpty, let font = NSFont(name: fontFamily, size: searchFieldSize) {
+                return font
+            }
+            return scale == 1
                 ? Theme.Typography.searchFieldNSFont
                 : NSFont.systemFont(ofSize: searchFieldSize, weight: .regular)
         }
@@ -163,10 +206,10 @@ struct InterfaceMetrics: Equatable, Sendable {
                 : .system(size: scaledPoints(Theme.Typography.headerIconSize, scale), weight: .medium)
         }
 
-        var rowTitle: Font { font(Theme.Typography.rowTitle, .body) }
-        var rowTrailing: Font { font(Theme.Typography.rowTrailing, .callout) }
-        var sectionHeader: Font { font(Theme.Typography.sectionHeader, .subheadline, .medium) }
-        var panelTitle: Font { font(Theme.Typography.panelTitle, .headline) }
+        var rowTitle: Font { resolveFont(size: rowTitleSize, weight: .regular) }
+        var rowTrailing: Font { resolveFont(size: rowSubtitleSize, weight: .regular) }
+        var sectionHeader: Font { resolveFont(size: max(rowSubtitleSize - 1, 10), weight: .medium) }
+        var panelTitle: Font { resolveFont(size: rowTitleSize, weight: .bold) }
         var calcResult: Font { font(Theme.Typography.calcResult, .title1) }
         var keyCap: Font { font(Theme.Typography.keyCap, .caption1) }
         var compactKeyCap: Font { font(Theme.Typography.compactKeyCap, .caption2) }
@@ -180,13 +223,21 @@ struct InterfaceMetrics: Equatable, Sendable {
                 : .system(size: nsFont(.callout).pointSize, design: .monospaced)
         }
         var inlineCode: Font { font(Theme.Typography.inlineCode, .body).monospaced() }
-        var bar: Font { font(Theme.Typography.bar, .callout, .medium) }
+        var bar: Font { resolveFont(size: rowSubtitleSize, weight: .medium) }
         var chip: Font { font(Theme.Typography.chip, .callout) }
         @MainActor var chipNSFont: NSFont { scale == 1 ? Theme.Typography.chipNSFont : nsFont(.callout) }
         var disclosure: Font { font(Theme.Typography.disclosure, .caption1, .semibold) }
-        var menuRow: Font { font(Theme.Typography.menuRow, .body) }
-        var menuShortcut: Font { font(Theme.Typography.menuShortcut, .callout) }
-        var menuIcon: Font { font(Theme.Typography.menuIcon, .body) }
+        var menuRow: Font { resolveFont(size: rowTitleSize, weight: .regular) }
+        var menuShortcut: Font { resolveFont(size: rowSubtitleSize, weight: .regular) }
+        var menuIcon: Font { resolveFont(size: rowTitleSize, weight: .regular) }
+
+        private func resolveFont(size: CGFloat, weight: Font.Weight = .regular) -> Font {
+            let scaled = scaledPoints(size, scale)
+            if let fontFamily, !fontFamily.isEmpty {
+                return .custom(fontFamily, size: scaled).weight(weight)
+            }
+            return .system(size: scaled, weight: weight)
+        }
 
         /// The AppKit twin of a text style, for text an `NSTextView` draws beside SwiftUI's own.
         func textNSFont(
@@ -194,6 +245,13 @@ struct InterfaceMetrics: Equatable, Sendable {
         ) -> NSFont {
             let base = nsFont(style)
             if monospaced { return .monospacedSystemFont(ofSize: base.pointSize, weight: weight ?? .regular) }
+            if let fontFamily, !fontFamily.isEmpty, let custom = NSFont(name: fontFamily, size: base.pointSize) {
+                guard let weight else { return custom }
+                let descriptor = custom.fontDescriptor.addingAttributes([
+                    .traits: [NSFontDescriptor.TraitKey.weight: weight]
+                ])
+                return NSFont(descriptor: descriptor, size: base.pointSize) ?? custom
+            }
             guard let weight else { return base }
             return .systemFont(ofSize: base.pointSize, weight: weight)
         }

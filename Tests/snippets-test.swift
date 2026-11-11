@@ -12,6 +12,7 @@ struct SnippetsTests {
         // The in-process delivery tier drives a real text view, which needs AppKit awake.
         _ = NSApplication.shared
         testIdentityAndRevision()
+        testDefaultAction()
         testEditorSession()
         testRaycastImport()
         try testMarkdownCodec()
@@ -53,6 +54,19 @@ struct SnippetsTests {
             SnippetSourceRevision(content: "same") != SnippetSourceRevision(content: "same\n"))
     }
 
+    private static func testDefaultAction() {
+        check("default actions count is 3", SnippetDefaultAction.allCases.count == 3)
+        check("paste raw value is paste", SnippetDefaultAction.paste.rawValue == "paste")
+        check("copy raw value is copy", SnippetDefaultAction.copy.rawValue == "copy")
+        check("copyAndPaste raw value is copyAndPaste", SnippetDefaultAction.copyAndPaste.rawValue == "copyAndPaste")
+        check("paste id matches raw value", SnippetDefaultAction.paste.id == "paste")
+        check("copy id matches raw value", SnippetDefaultAction.copy.id == "copy")
+        check("copyAndPaste id matches raw value", SnippetDefaultAction.copyAndPaste.id == "copyAndPaste")
+        check("paste title is non-empty", !SnippetDefaultAction.paste.title.isEmpty)
+        check("copy title is non-empty", !SnippetDefaultAction.copy.title.isEmpty)
+        check("copyAndPaste title is non-empty", !SnippetDefaultAction.copyAndPaste.title.isEmpty)
+    }
+
     private static func testEditorSession() {
         let editor = SnippetEditorSession(record: nil)
         check(
@@ -62,13 +76,16 @@ struct SnippetsTests {
         )
         editor.name = "  Example \n"
         editor.keyword = "  !example  "
+        editor.folder = "  Work \n"
         editor.text = "  First\nSecond\n"
         check("named draft can be saved", editor.canSave)
         check(
             "editor trims metadata without changing template whitespace",
-            editor.snippet == Snippet(name: "Example", text: editor.text, keyword: "!example"))
+            editor.snippet == Snippet(name: "Example", text: editor.text, keyword: "!example", folder: "Work"))
         editor.keyword = " \n"
         check("blank editor keyword is normalized to nil", editor.snippet.keyword == nil)
+        editor.folder = " \n"
+        check("blank editor folder is normalized to nil", editor.snippet.folder == nil)
         editor.isSaving = true
         check("a pending save cannot be submitted twice", !editor.canSave)
         editor.isSaving = false
@@ -134,6 +151,11 @@ struct SnippetsTests {
         check(
             "Raycast import uses safe szcast defaults",
             imported.allSatisfy { $0.isEnabled && !$0.showsConfirmation })
+
+        let withGroup = RaycastSnippetImport.parse([
+            ["title": "Work Email", "text": "work@example.com", "group": "Work"]
+        ])
+        check("Raycast group imports as folder", withGroup.first?.folder == "Work")
     }
 
     private static func testMarkdownCodec() throws {
@@ -156,6 +178,11 @@ struct SnippetsTests {
         check(
             "Markdown codec preserves leading, blank, CRLF, and trailing body boundaries",
             parsed.text == snippet.text)
+
+        let withFolder = Snippet(name: "Categorized", text: "Hello", folder: "Engineering")
+        let serializedWithFolder = SnippetMarkdownSerializer.serialize(withFolder)
+        let parsedWithFolder = try SnippetMarkdownSerializer.parse(content: serializedWithFolder, fileURL: fileURL)
+        check("folder parses and round-trips in frontmatter", parsedWithFolder.folder == "Engineering")
 
         let injection = Snippet(name: "Safe\"\nenabled: false", text: "Body")
         let injectionSource = SnippetMarkdownSerializer.serialize(injection)

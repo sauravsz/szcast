@@ -159,6 +159,7 @@ struct AIScreen: PaletteScreen {
 }
 
 private struct AIChatView: View {
+    @Environment(\.metrics) private var metrics
     let chat: AIChatState
     let settings: AISettingsStore
     let availability: () -> String?
@@ -184,6 +185,12 @@ private struct AIChatView: View {
                     onChoose: chat.isStreaming || !settings.choicesEnabled ? nil : onChoose
                 )
                 .environment(\.chatExpandsReasoning, settings.expandsReasoning)
+                .environment(\.chatTypography, ChatTypography(
+                    baseSize: settings.chatFontSize,
+                    fontFamily: settings.chatFontFamily,
+                    codeFontFamily: settings.chatCodeFontFamily,
+                    scale: metrics.scale
+                ))
             }
         }
         .onAppear(perform: onAppear)

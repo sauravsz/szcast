@@ -18,9 +18,34 @@ struct LauncherSettingsFileTest {
         testWaitingRecords()
         testDeletedWaitingRecord()
         testMovedShortcut()
+        testAliasTrigger()
 
         print(failures == 0 ? "\nALL PASSED" : "\n\(failures) FAILED")
         exit(failures == 0 ? 0 : 1)
+    }
+
+    private static func testAliasTrigger() {
+        let aliases: Set<String> = ["e", "emoji", "calc"]
+        let trigger1 = AliasTrigger.parse("e ", registeredAliases: aliases)
+        check("alias followed by space matches", trigger1 == AliasTrigger(alias: "e", remainder: ""))
+
+        let trigger2 = AliasTrigger.parse("e heart", registeredAliases: aliases)
+        check("alias followed by space extracts remainder", trigger2 == AliasTrigger(alias: "e", remainder: "heart"))
+
+        let trigger3 = AliasTrigger.parse("E smile", registeredAliases: aliases)
+        check("alias trigger is case insensitive", trigger3 == AliasTrigger(alias: "e", remainder: "smile"))
+
+        let trigger4 = AliasTrigger.parse("emoji cat", registeredAliases: aliases)
+        check("longer alias matches over prefix alias", trigger4 == AliasTrigger(alias: "emoji", remainder: "cat"))
+
+        let trigger5 = AliasTrigger.parse("e", registeredAliases: aliases)
+        check("bare alias without space does not trigger", trigger5 == nil)
+
+        let trigger6 = AliasTrigger.parse("safari app", registeredAliases: aliases)
+        check("unknown alias does not trigger", trigger6 == nil)
+
+        let trigger7 = AliasTrigger.parse(" e ", registeredAliases: aliases)
+        check("leading space does not trigger alias", trigger7 == nil)
     }
 
     private static func testInvalidRecords() {

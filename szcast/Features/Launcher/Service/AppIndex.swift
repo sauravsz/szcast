@@ -698,6 +698,19 @@ final class AppIndex {
         }
     }
 
+    /// Finds the entry matching an alias, if one exists.
+    func entry(matchingAlias aliasCandidate: String) -> AppEntry? {
+        guard let key = aliases.entryKey(forAlias: aliasCandidate) else { return nil }
+        if let entry = searchEntries.first(where: { $0.preferenceKey == key }) {
+            return entry
+        }
+        let ranked = matches(aliasCandidate, limit: 10)
+        return ranked.first { entry in
+            aliases.alias(for: entry.preferenceKey)?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                == aliasCandidate.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        }
+    }
+
     /// Ranked matches lead so Return still opens the best one; a started category only appends.
     private func searchResults(_ query: String, limit: Int = 200) -> Results {
         let q = query.trimmingCharacters(in: .whitespacesAndNewlines)

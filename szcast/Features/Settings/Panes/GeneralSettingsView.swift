@@ -81,6 +81,7 @@ struct GeneralSettingsView: View {
                     SettingsRowTitle(.generalAppearance, "Show animations")
                 }
                 InterfaceSizeRow()
+                LauncherTypographyRows()
                 WindowModeRow()
                     .background {
                         if !settings.compactMode {
@@ -278,5 +279,67 @@ private struct InterfaceSizeRow: View {
         .accessibilityLabel(size.title)
         .accessibilityAddTraits(selected ? [.isSelected] : [])
         .help(size.title)
+    }
+}
+
+private struct LauncherTypographyRows: View {
+    @Environment(AppSettings.self) private var settings
+
+    private var availableFontFamilies: [String] {
+        NSFontManager.shared.availableFontFamilies.sorted()
+    }
+
+    var body: some View {
+        @Bindable var settings = settings
+        Stepper(value: $settings.launcherRowTitleFontSize, in: 11...24, step: 1) {
+            SettingsRowTitle(.generalAppearance, "Result title font size")
+            Text("\(Int(settings.launcherRowTitleFontSize)) pt (default: 14 pt)")
+        }
+        Stepper(value: $settings.launcherRowSubtitleFontSize, in: 10...20, step: 1) {
+            SettingsRowTitle(.generalAppearance, "Subtitle font size")
+            Text("\(Int(settings.launcherRowSubtitleFontSize)) pt (default: 12 pt)")
+        }
+        Picker(selection: $settings.launcherFontFamily) {
+            Text("System Default").tag(nil as String?)
+            ForEach(availableFontFamilies, id: \.self) { family in
+                Text(family).tag(Optional(family))
+            }
+        } label: {
+            SettingsRowTitle(.generalAppearance, "Custom font")
+            Text("Applies to launcher search results and menus.")
+        }
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            Text("Preview")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            HStack(spacing: Theme.Spacing.md) {
+                Image(systemName: "sparkles")
+                    .frame(width: 18, height: 18)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Generate Password by Strength")
+                        .font(previewFont(size: settings.launcherRowTitleFontSize, weight: .regular))
+                    Text("Passphrase Generator")
+                        .font(previewFont(size: settings.launcherRowSubtitleFontSize, weight: .regular))
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Text("Quick AI ⇥")
+                    .font(previewFont(size: settings.launcherRowSubtitleFontSize, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(Theme.Spacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: Theme.Radius.row, style: .continuous)
+                    .fill(Theme.Colors.controlSurface)
+            )
+        }
+        .padding(.vertical, Theme.Spacing.xs)
+    }
+
+    private func previewFont(size: CGFloat, weight: Font.Weight) -> Font {
+        if let family = settings.launcherFontFamily, !family.isEmpty {
+            return .custom(family, size: size).weight(weight)
+        }
+        return .system(size: size, weight: weight)
     }
 }

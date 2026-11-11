@@ -9,17 +9,49 @@ struct SnippetsScreen: PaletteScreen {
     let openActions: () -> Void
 
     /// A disabled snippet is off everywhere, so the browser lists exactly what the launcher does.
+    var availableFolders: [String] {
+        let folders = Set(
+            store.snippets.compactMap {
+                $0.snippet.folder?.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            .filter { !$0.isEmpty })
+        return folders.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+    }
+
+    var folderCounts: [String: Int] {
+        var counts: [String: Int] = [:]
+        for record in store.snippets where record.snippet.isEnabled {
+            if let folder = record.snippet.folder?.trimmingCharacters(in: .whitespacesAndNewlines), !folder.isEmpty {
+                counts[folder, default: 0] += 1
+            }
+        }
+        return counts
+    }
+
     var rows: [StoredSnippet] {
         let enabled = store.snippets.filter { $0.snippet.isEnabled }
+        let filtered: [StoredSnippet]
+        if let folder = vm.snippetFolderFilter, !folder.isEmpty {
+            filtered = enabled.filter { $0.snippet.folder == folder }
+        } else {
+            filtered = enabled
+        }
         let query = vm.query.trimmingCharacters(in: .whitespaces)
-        guard !query.isEmpty else { return enabled }
-        return enabled.filter { record in
+        guard !query.isEmpty else { return filtered }
+        return filtered.filter { record in
             record.snippet.name.localizedCaseInsensitiveContains(query)
                 || record.snippet.keyword?.localizedCaseInsensitiveContains(query) == true
+                || record.snippet.folder?.localizedCaseInsensitiveContains(query) == true
         }
     }
 
-    let primaryActionTitle = String(localized: "Paste Snippet")
+    var primaryActionTitle: String {
+        switch core.settings.snippetsDefaultAction {
+        case .paste: return String(localized: "Paste Snippet")
+        case .copy: return String(localized: "Copy Snippet")
+        case .copyAndPaste: return String(localized: "Copy & Paste Snippet")
+        }
+    }
 
     private func record(at selection: Int) -> StoredSnippet? {
         let rows = rows
@@ -50,6 +82,8 @@ struct SnippetsScreen: PaletteScreen {
         }
         guard let record = record(at: selection) else { return false }
         switch shortcut {
+        case .duplicate:
+            core.snippetCoordinator.duplicateSnippet(record)
         case .edit:
             core.snippetCoordinator.editSnippet(record)
         case .delete:
@@ -66,22 +100,42 @@ struct SnippetsScreen: PaletteScreen {
     @ViewBuilder
     private func content(selection: Int, scroll: ScrollIntent) -> some View {
         let rows = rows
-        if rows.isEmpty {
+        let folders = availableFolders
+        if rows.isEmpty && folders.isEmpty {
             EmptyResults(text: emptyMessage)
         } else {
             let selected = record(at: selection)
             HStack(spacing: 0) {
-                SnippetsList(
-                    results: rows, selectedID: selected?.id, scroll: scroll,
-                    onSelect: { record in
-                        vm.selection = rows.firstIndex(of: record) ?? 0
-                    },
-                    onActivate: { activate(at: vm.selection) },
-                    onActions: { record in
-                        if let index = rows.firstIndex(of: record) { vm.selection = index }
-                        openActions()
+                VStack(spacing: 0) {
+                    if !folders.isEmpty {
+                        SnippetFolderChips(
+                            folders: folders,
+                            counts: folderCounts,
+                            totalCount: store.snippets.count { $0.snippet.isEnabled },
+                            selectedFolder: vm.snippetFolderFilter,
+                            onSelect: { folder in
+                                vm.snippetFolderFilter = folder
+                            }
+                        )
+                        Rectangle().fill(Theme.Colors.separator).frame(height: Theme.Size.hairline)
                     }
-                )
+                    if rows.isEmpty {
+                        EmptyResults(text: emptyMessage)
+                            .frame(maxHeight: .infinity)
+                    } else {
+                        SnippetsList(
+                            results: rows, selectedID: selected?.id, scroll: scroll,
+                            onSelect: { record in
+                                vm.selection = rows.firstIndex(of: record) ?? 0
+                            },
+                            onActivate: { activate(at: vm.selection) },
+                            onActions: { record in
+                                if let index = rows.firstIndex(of: record) { vm.selection = index }
+                                openActions()
+                            }
+                        )
+                    }
+                }
                 .frame(width: metrics.size.clipboardListWidth)
                 Rectangle().fill(Theme.Colors.separator).frame(width: Theme.Size.hairline)
                 SnippetPreview(record: selected)
@@ -100,37 +154,148 @@ struct SnippetsScreen: PaletteScreen {
 @MainActor
 enum SnippetActionsMenu {
     static func content(record: StoredSnippet, core: AppCore) -> PopoverMenuContent {
-        PopoverMenuContent(
-            header: record.snippet.name,
-            items: [
+        let defaultAction = core.settings.snippetsDefaultAction
+        var items: [PopoverMenuItem] = []
+
+        switch defaultAction {
+        case .paste:
+            items.append(
                 PopoverMenuItem(
                     title: String(localized: "Paste Snippet"), systemImage: "text.quote", shortcut: "↵"
                 ) {
-                    core.snippetCoordinator.expandSnippetFromPalette(id: record.id)
-                },
+                    core.snippetCoordinator.expandSnippetFromPalette(id: record.id, action: .paste)
+                })
+            items.append(
                 PopoverMenuItem(
-                    title: String(localized: "Edit Snippet"), systemImage: "pencil", startsSection: true,
-                    shortcut: "⌘E"
+                    title: String(localized: "Copy to Clipboard"), systemImage: "doc.on.doc", shortcut: "⌘C"
                 ) {
-                    core.snippetCoordinator.editSnippet(record)
-                },
+                    core.snippetCoordinator.expandSnippetFromPalette(id: record.id, action: .copy)
+                })
+            items.append(
                 PopoverMenuItem(
-                    title: String(localized: "Create Snippet"), systemImage: "plus", shortcut: "⌘N"
+                    title: String(localized: "Copy and Paste"), systemImage: "doc.on.clipboard", shortcut: "⌥↵"
                 ) {
-                    core.snippetCoordinator.editSnippet(nil)
-                },
+                    core.snippetCoordinator.expandSnippetFromPalette(id: record.id, action: .copyAndPaste)
+                })
+
+        case .copy:
+            items.append(
                 PopoverMenuItem(
-                    title: String(localized: "Show in Finder"), systemImage: "folder", startsSection: true,
-                    shortcut: "⌘↵"
+                    title: String(localized: "Copy to Clipboard"), systemImage: "doc.on.doc", shortcut: "↵"
                 ) {
-                    core.snippetCoordinator.showSnippetInFinder(record)
-                },
+                    core.snippetCoordinator.expandSnippetFromPalette(id: record.id, action: .copy)
+                })
+            items.append(
                 PopoverMenuItem(
-                    title: String(localized: "Delete Snippet"), systemImage: "trash", startsSection: true,
-                    shortcut: "⌃X", isDestructive: true
+                    title: String(localized: "Paste Snippet"), systemImage: "text.quote", shortcut: "⌘V"
                 ) {
-                    Task { await core.snippetCoordinator.deleteSnippet(id: record.id) }
+                    core.snippetCoordinator.expandSnippetFromPalette(id: record.id, action: .paste)
+                })
+            items.append(
+                PopoverMenuItem(
+                    title: String(localized: "Copy and Paste"), systemImage: "doc.on.clipboard", shortcut: "⌥↵"
+                ) {
+                    core.snippetCoordinator.expandSnippetFromPalette(id: record.id, action: .copyAndPaste)
+                })
+
+        case .copyAndPaste:
+            items.append(
+                PopoverMenuItem(
+                    title: String(localized: "Copy and Paste"), systemImage: "doc.on.clipboard", shortcut: "↵"
+                ) {
+                    core.snippetCoordinator.expandSnippetFromPalette(id: record.id, action: .copyAndPaste)
+                })
+            items.append(
+                PopoverMenuItem(
+                    title: String(localized: "Paste Snippet"), systemImage: "text.quote", shortcut: "⌘V"
+                ) {
+                    core.snippetCoordinator.expandSnippetFromPalette(id: record.id, action: .paste)
+                })
+            items.append(
+                PopoverMenuItem(
+                    title: String(localized: "Copy to Clipboard"), systemImage: "doc.on.doc", shortcut: "⌘C"
+                ) {
+                    core.snippetCoordinator.expandSnippetFromPalette(id: record.id, action: .copy)
+                })
+        }
+
+        items.append(contentsOf: [
+            PopoverMenuItem(
+                title: String(localized: "Edit Snippet"), systemImage: "pencil", startsSection: true,
+                shortcut: "⌘E"
+            ) {
+                core.snippetCoordinator.editSnippet(record)
+            },
+            PopoverMenuItem(
+                title: String(localized: "Duplicate Snippet"), systemImage: "plus.square.on.square",
+                shortcut: "⌘D"
+            ) {
+                core.snippetCoordinator.duplicateSnippet(record)
+            },
+            PopoverMenuItem(
+                title: String(localized: "Create Snippet"), systemImage: "plus", shortcut: "⌘N"
+            ) {
+                core.snippetCoordinator.editSnippet(nil)
+            },
+            PopoverMenuItem(
+                title: String(localized: "Show in Finder"), systemImage: "folder", startsSection: true,
+                shortcut: "⌘↵"
+            ) {
+                core.snippetCoordinator.showSnippetInFinder(record)
+            },
+            PopoverMenuItem(
+                title: String(localized: "Delete Snippet"), systemImage: "trash", startsSection: true,
+                shortcut: "⌃X", isDestructive: true
+            ) {
+                Task { await core.snippetCoordinator.deleteSnippet(id: record.id) }
+            }
+        ])
+
+        return PopoverMenuContent(header: record.snippet.name, items: items)
+    }
+}
+
+private struct SnippetFolderChips: View {
+    @Environment(\.metrics) private var metrics
+    let folders: [String]
+    let counts: [String: Int]
+    let totalCount: Int
+    let selectedFolder: String?
+    let onSelect: (String?) -> Void
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: metrics.spacing.xs) {
+                chip(title: String(localized: "All"), count: totalCount, isSelected: selectedFolder == nil) {
+                    onSelect(nil)
                 }
-            ])
+                ForEach(folders, id: \.self) { folder in
+                    chip(title: folder, count: counts[folder] ?? 0, isSelected: selectedFolder == folder) {
+                        onSelect(folder)
+                    }
+                }
+            }
+            .padding(.horizontal, metrics.spacing.md)
+            .padding(.vertical, metrics.spacing.xs)
+        }
+    }
+
+    private func chip(title: String, count: Int, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: metrics.spacing.xs) {
+                Text(title)
+                Text("\(count)")
+                    .foregroundStyle(isSelected ? Theme.Colors.textPrimary : Theme.Colors.textTertiary)
+            }
+            .font(metrics.typography.keyCap)
+            .padding(.horizontal, metrics.spacing.sm)
+            .padding(.vertical, 4)
+            .background(
+                RoundedRectangle(cornerRadius: metrics.radius.attachmentChip, style: .continuous)
+                    .fill(isSelected ? Theme.Colors.selection : Theme.Colors.rowHover)
+            )
+            .foregroundStyle(isSelected ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
+        }
+        .buttonStyle(.plain)
     }
 }

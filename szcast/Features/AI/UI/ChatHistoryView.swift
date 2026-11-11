@@ -149,6 +149,11 @@ struct ChatHistoryPreview: View {
                 Color.clear
             }
         }
+        .environment(\.chatTypography, ChatTypography(
+            baseSize: settings.chatFontSize,
+            fontFamily: settings.chatFontFamily,
+            codeFontFamily: settings.chatCodeFontFamily
+        ))
         .environment(\.chatExpandsReasoning, settings.expandsReasoning)
         .task(id: conversationID) {
             session = nil

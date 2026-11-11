@@ -13,24 +13,30 @@ struct ChatComposerTextView: NSViewRepresentable {
     let onInvalidate: (ComposerTextView) -> Void
     let onSubmit: () -> Void
 
-    private static var font: NSFont { .preferredFont(forTextStyle: .body) }
+    var typography: ChatTypography = ChatTypography()
 
-    static var lineHeight: CGFloat {
-        (font.ascender - font.descender + font.leading).rounded(.up)
+    private var font: NSFont { typography.bodyFont() }
+
+    static func lineHeight(for typography: ChatTypography = ChatTypography()) -> CGFloat {
+        let f = typography.bodyFont()
+        return (f.ascender - f.descender + f.leading).rounded(.up)
     }
 
-    static func maximumHeight(in availableHeight: CGFloat) -> CGFloat {
-        let lines = (availableHeight * Theme.Size.aiChatComposerHeightFraction / lineHeight).rounded(.down)
-        return max(1, min(Theme.Size.aiChatComposerMaxLines, lines)) * lineHeight
+    static func maximumHeight(in availableHeight: CGFloat, typography: ChatTypography = ChatTypography()) -> CGFloat {
+        let lh = lineHeight(for: typography)
+        let lines = (availableHeight * Theme.Size.aiChatComposerHeightFraction / lh).rounded(.down)
+        return max(1, min(Theme.Size.aiChatComposerMaxLines, lines)) * lh
     }
 
-    static func textHeight(_ text: String, width: CGFloat, maximumHeight: CGFloat) -> CGFloat {
+    static func textHeight(_ text: String, width: CGFloat, maximumHeight: CGFloat, typography: ChatTypography = ChatTypography()) -> CGFloat {
+        let f = typography.bodyFont()
+        let lh = lineHeight(for: typography)
         let measured = (text.hasSuffix("\n") ? text + " " : text) as NSString
         let height = measured.boundingRect(
             with: CGSize(width: width, height: .greatestFiniteMagnitude),
-            options: [.usesLineFragmentOrigin, .usesFontLeading], attributes: [.font: font]
+            options: [.usesLineFragmentOrigin, .usesFontLeading], attributes: [.font: f]
         ).height.rounded(.up)
-        return min(max(lineHeight, height), maximumHeight)
+        return min(max(lh, height), maximumHeight)
     }
 
     func makeCoordinator() -> Coordinator {
@@ -50,7 +56,7 @@ struct ChatComposerTextView: NSViewRepresentable {
         textView.isRichText = false
         textView.importsGraphics = false
         textView.allowsUndo = true
-        textView.font = Self.font
+        textView.font = font
         textView.textColor = .labelColor
         textView.textContainerInset = .zero
         textView.textContainer?.lineFragmentPadding = 0
@@ -71,6 +77,7 @@ struct ChatComposerTextView: NSViewRepresentable {
         textView.onFileDragTargeted = { [$isFileDragTargeted] in $isFileDragTargeted.wrappedValue = $0 }
         // Only an outside write lands here; echoing the view's own text back would reset the caret.
         if textView.string != text { textView.string = text }
+        if textView.font != font { textView.font = font }
         guard context.coordinator.focusedKey != focusKey else { return }
         context.coordinator.focusedKey = focusKey
         // Next turn: on first mount the view has no window to become first responder of yet.

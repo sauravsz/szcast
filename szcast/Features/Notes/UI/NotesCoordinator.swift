@@ -58,8 +58,11 @@ final class NotesCoordinator {
         self.core = core
         self.isFormattingBarExpanded = isFormattingBarExpanded
         self.saveFormattingBarExpanded = saveFormattingBarExpanded
+        NoteImageCache.notesDirectory = store.notesDirectory
         store.onIssue = { [weak self] issue in self?.present(issue) }
     }
+
+    var notesDirectory: URL { store.notesDirectory }
 
     var editorInput: NoteEditorInput {
         NoteEditorInput(

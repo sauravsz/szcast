@@ -48,6 +48,7 @@ enum AppSettingsKey: String, CaseIterable {
     case snippetsEnabled = "snippetsEnabled"
     case snippetsShowInLauncher = "snippetsShowInLauncher"
     case snippetsFolder = "snippetsFolder"
+    case snippetsDefaultAction = "snippetsDefaultAction"
     case navigationEnabled = "navigationEnabled"
     case menuSearchDisabledApps = "menuSearchDisabledApps"
     case menuSearchShowsAppleMenu = "menuSearchShowsAppleMenu"
@@ -128,4 +129,10 @@ enum AppSettingsKey: String, CaseIterable {
     case focusTimerLongBreak = "focusTimerLongBreak"
     case focusTimerShowsInMenuBar = "focusTimerShowsInMenuBar"
     case webSearchProvider = "webSearchProvider"
+    case launcherRowTitleFontSize = "launcherRowTitleFontSize"
+    case launcherRowSubtitleFontSize = "launcherRowSubtitleFontSize"
+    case launcherFontFamily = "launcherFontFamily"
+    case chatFontSize = "chatFontSize"
+    case chatFontFamily = "chatFontFamily"
+    case chatCodeFontFamily = "chatCodeFontFamily"
 }

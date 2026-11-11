@@ -162,9 +162,49 @@ struct AISettingsView: View {
                     and Claude.
                     """)
             }
+            Stepper(value: $settings.chatFontSize, in: 10...24, step: 1) {
+                SettingsRowTitle(.aiChat, "Chat font size")
+                Text("\(Int(settings.chatFontSize)) pt (default: 14 pt)")
+            }
+            Picker(selection: $settings.chatFontFamily) {
+                Text("System Default").tag(nil as String?)
+                ForEach(availableFontFamilies, id: \.self) { family in
+                    Text(family).tag(Optional(family))
+                }
+            } label: {
+                SettingsRowTitle(.aiChat, "Chat font")
+            }
+            Picker(selection: $settings.chatCodeFontFamily) {
+                Text("System Monospaced").tag(nil as String?)
+                ForEach(availableMonospacedFontFamilies, id: \.self) { family in
+                    Text(family).tag(Optional(family))
+                }
+            } label: {
+                SettingsRowTitle(.aiChat, "Code font")
+            }
+            ChatTypographyPreview(
+                fontSize: settings.chatFontSize,
+                fontFamily: settings.chatFontFamily,
+                codeFontFamily: settings.chatCodeFontFamily
+            )
         } header: {
             SettingsSectionHeader(.aiChat)
         }
+    }
+
+    private var availableFontFamilies: [String] {
+        NSFontManager.shared.availableFontFamilies.sorted()
+    }
+
+    private var availableMonospacedFontFamilies: [String] {
+        let manager = NSFontManager.shared
+        let mono = manager.availableFontFamilies.filter { family in
+            if let font = NSFont(name: family, size: 12) {
+                return manager.traits(of: font).contains(.fixedPitchFontMask)
+            }
+            return manager.font(withFamily: family, traits: .fixedPitchFontMask, weight: 5, size: 12) != nil
+        }
+        return mono.isEmpty ? ["Menlo", "Monaco", "Courier New"] : mono.sorted()
     }
 
     private var conversationsSection: some View {
@@ -268,5 +308,53 @@ private struct WebSearchAPIKeyRow: View {
     private func refresh() {
         isStored = settings.hasWebSearchAPIKey(for: provider)
         apiKey = ""
+    }
+}
+
+private struct ChatTypographyPreview: View {
+    let fontSize: CGFloat
+    let fontFamily: String?
+    let codeFontFamily: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            Text("Preview")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                Text("Heading 2 Preview")
+                    .font(previewFont(size: (fontSize * 1.15).rounded(), weight: .semibold))
+                Text("This is how your AI chat assistant responses will look with styled text.")
+                    .font(previewFont(size: fontSize, weight: .regular))
+                Text("let code = \"preview\";")
+                    .font(previewCodeFont(size: max(fontSize - 1, 9)))
+                    .padding(Theme.Spacing.xs)
+                    .background(
+                        RoundedRectangle(cornerRadius: 4, style: .continuous)
+                            .fill(Theme.Colors.controlSurface)
+                    )
+            }
+            .padding(Theme.Spacing.md)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: Theme.Radius.row, style: .continuous)
+                    .fill(Theme.Colors.controlSurface.opacity(0.5))
+            )
+        }
+        .padding(.vertical, Theme.Spacing.xs)
+    }
+
+    private func previewFont(size: CGFloat, weight: Font.Weight) -> Font {
+        if let fontFamily, !fontFamily.isEmpty {
+            return .custom(fontFamily, size: size).weight(weight)
+        }
+        return .system(size: size, weight: weight)
+    }
+
+    private func previewCodeFont(size: CGFloat) -> Font {
+        if let codeFontFamily, !codeFontFamily.isEmpty {
+            return .custom(codeFontFamily, size: size)
+        }
+        return .system(size: size, design: .monospaced)
     }
 }

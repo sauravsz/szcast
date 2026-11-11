@@ -42,6 +42,19 @@ struct SnippetsSettingsView: View {
             }
 
             Group {
+                Section {
+                    Picker(selection: $settings.snippetsDefaultAction) {
+                        ForEach(SnippetDefaultAction.allCases) { action in
+                            Text(action.title).tag(action)
+                        }
+                    } label: {
+                        SettingsRowTitle(.snippetsSnippets, "Default action")
+                        Text("↵ performs this action.")
+                    }
+                } header: {
+                    SettingsSectionHeader(.snippetsSnippets)
+                }
+
                 FeatureCommandsSection(owner: .snippets, anchor: .snippetsCommands)
                 library
                 libraryNotices

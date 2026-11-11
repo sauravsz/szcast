@@ -372,6 +372,7 @@ run dictation-field-test   Szcast/Features/Dictation/Model/DictationModel.swift 
                            Szcast/Features/Dictation/Model/DictationTextFormatter.swift \
                            Szcast/Features/Dictation/Service/DictationCoordinator.swift \
                            Szcast/Features/Dictation/Service/DictationInsertionContext.swift \
+                           Szcast/DesignSystem/ChatTypography.swift \
                            Szcast/Features/AI/UI/ChatComposerTextView.swift \
                            Szcast/Features/TextInjection/Service/*.swift \
                            Szcast/Features/Snippets/Model/*.swift \
@@ -857,6 +858,7 @@ run ai-responses-test      Szcast/Features/AI/Model/AIConnection.swift \
 run chat-markdown-test     Szcast/Platform/Appearance.swift \
                            Szcast/DesignSystem/Theme.swift \
                            Szcast/DesignSystem/InterfaceMetrics.swift \
+                           Szcast/DesignSystem/ChatTypography.swift \
                            Szcast/Features/Settings/InterfaceSize.swift \
                            Szcast/Features/AI/Model/AIRequest.swift \
                            Szcast/Features/AI/Model/AITool.swift \
