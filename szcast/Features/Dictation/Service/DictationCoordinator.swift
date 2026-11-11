@@ -281,6 +281,10 @@ final class DictationCoordinator {
                         idleRelease: settings.dictationS1IdleRelease
                     )
                     processed = await s1Polisher.polish(processed, settings: s1)
+                    // Authoritative post-pass: ensure user custom words, vocabulary packs, and snippets
+                    // are never undone or mis-cased by the speech normalization model
+                    processed = dictionaryStore.applyDictionaryAndPacks(processed)
+                    processed = dictionaryStore.applySnippets(processed)
                 }
 
                 // A mic belongs to its field: the text goes in there, never to the clipboard.

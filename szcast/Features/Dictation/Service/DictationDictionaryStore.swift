@@ -5,12 +5,17 @@ import OSLog
 @Observable
 final class DictationDictionaryStore {
     private static let logger = Logger(subsystem: "com.sauravsz.szcast", category: "DictationDictionary")
+    private static let enabledPacksDefaultsKey = "dictationEnabledVocabularyPacks"
     private let fileURL: URL
     private let snippetsFileURL: URL
 
     private(set) var words: [CustomWord] = []
     private(set) var snippets: [DictationSnippet] = []
-    var enabledPacks: Set<VocabularyPackType> = [.tech, .brands]
+    var enabledPacks: Set<VocabularyPackType> = [.tech, .brands] {
+        didSet {
+            saveEnabledPacks()
+        }
+    }
     var selfLearningEnabled: Bool = true
 
     // Vocabulary packs storage: pack -> (canonical -> [aliases])
@@ -22,9 +27,20 @@ final class DictationDictionaryStore {
     ) {
         self.fileURL = fileURL
         self.snippetsFileURL = snippetsFileURL
+        if let saved = UserDefaults.standard.stringArray(forKey: Self.enabledPacksDefaultsKey) {
+            let loaded = saved.compactMap { VocabularyPackType(rawValue: $0) }
+            self.enabledPacks = Set(loaded)
+        } else {
+            self.enabledPacks = [.tech, .brands]
+        }
         loadPacks()
         loadWords()
         loadSnippets()
+    }
+
+    private func saveEnabledPacks() {
+        let keys = enabledPacks.map(\.rawValue)
+        UserDefaults.standard.set(keys, forKey: Self.enabledPacksDefaultsKey)
     }
 
     // MARK: - Word Management
@@ -99,7 +115,9 @@ final class DictationDictionaryStore {
         customRules.sort { $0.phrase.count > $1.phrase.count }
 
         for rule in customRules {
-            let pattern = #"\b"# + NSRegularExpression.escapedPattern(for: rule.phrase) + #"\b"#
+            let escaped = NSRegularExpression.escapedPattern(for: rule.phrase)
+            let patternString = escaped.replacingOccurrences(of: "'", with: "['’]")
+            let pattern = #"\b"# + patternString + #"\b"#
             if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) {
                 let range = NSRange(result.startIndex..<result.endIndex, in: result)
                 let template = NSRegularExpression.escapedTemplate(for: rule.canonical)
@@ -126,7 +144,9 @@ final class DictationDictionaryStore {
         packRules.sort { $0.phrase.count > $1.phrase.count }
 
         for rule in packRules {
-            let pattern = #"\b"# + NSRegularExpression.escapedPattern(for: rule.phrase) + #"\b"#
+            let escaped = NSRegularExpression.escapedPattern(for: rule.phrase)
+            let patternString = escaped.replacingOccurrences(of: "'", with: "['’]")
+            let pattern = #"\b"# + patternString + #"\b"#
             if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) {
                 let range = NSRange(result.startIndex..<result.endIndex, in: result)
                 let template = NSRegularExpression.escapedTemplate(for: rule.canonical)
@@ -295,19 +315,54 @@ final class DictationDictionaryStore {
 
     // MARK: - Pack Data Loader
 
+    func loadedTermsCount(for pack: VocabularyPackType) -> Int {
+        packTerms[pack]?.count ?? 0
+    }
+
     private func loadPacks() {
-        // Read bundled pack JSONs from EnviousWispr directory if available or fallback
-        let packsDir = FileManager.default.homeDirectoryForCurrentUser
+        let bundlePacksURL = Bundle.main.url(forResource: "Packs", withExtension: nil)
+            ?? Bundle.main.resourceURL?.appendingPathComponent("Packs")
+
+        let devTreeURL: URL? = {
+            let currentFile = URL(fileURLWithPath: #filePath)
+            // #filePath: .../szcast/Features/Dictation/Service/DictationDictionaryStore.swift
+            let root = currentFile
+                .deletingLastPathComponent() // Service
+                .deletingLastPathComponent() // Dictation
+                .deletingLastPathComponent() // Features
+                .deletingLastPathComponent() // szcast
+            return root.appendingPathComponent("Resources/Packs")
+        }()
+
+        let appSupportPacksURL = AppPaths.applicationSupport().appendingPathComponent("Packs")
+        let enviousWisprBundleURL = URL(fileURLWithPath: "/Applications/EnviousWispr.app/Contents/Resources/EnviousWispr_EnviousWisprPostProcessing.bundle/Contents/Resources")
+        let enviousWisprSupportURL = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Application Support/EnviousWispr/Resources/Packs")
 
         for pack in VocabularyPackType.allCases {
             var loaded = false
-            let path = packsDir.appendingPathComponent("\(pack.rawValue).json")
-            if FileManager.default.fileExists(atPath: path.path),
-               let data = try? Data(contentsOf: path),
-               let dict = try? JSONDecoder().decode([String: [String]].self, from: data) {
-                packTerms[pack] = dict
-                loaded = true
+            let filename = "\(pack.rawValue).json"
+
+            let candidates: [URL?] = [
+                bundlePacksURL?.appendingPathComponent(filename),
+                Bundle.main.url(forResource: pack.rawValue, withExtension: "json", subdirectory: "Packs"),
+                Bundle.main.url(forResource: pack.rawValue, withExtension: "json"),
+                devTreeURL?.appendingPathComponent(filename),
+                appSupportPacksURL.appendingPathComponent(filename),
+                enviousWisprBundleURL.appendingPathComponent(filename),
+                enviousWisprSupportURL.appendingPathComponent(filename)
+            ]
+
+            for candidate in candidates.compactMap({ $0 }) {
+                if FileManager.default.fileExists(atPath: candidate.path),
+                   let data = try? Data(contentsOf: candidate),
+                   let dict = try? JSONDecoder().decode([String: [String]].self, from: data),
+                   !dict.isEmpty {
+                    packTerms[pack] = dict
+                    loaded = true
+                    Self.logger.info("Loaded \(dict.count) terms for pack '\(pack.rawValue)' from \(candidate.path)")
+                    break
+                }
             }
 
             if !loaded {

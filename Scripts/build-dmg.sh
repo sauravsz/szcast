@@ -26,6 +26,12 @@ if [ -f "szcast/Resources/szcast.icns" ]; then
     cp "szcast/Resources/szcast.icns" "$APP/Contents/Resources/szcast.icns"
 fi
 
+if [ -d "szcast/Resources/Packs" ]; then
+    echo "▸ Injecting vocabulary packs…"
+    mkdir -p "$APP/Contents/Resources/Packs"
+    cp -R szcast/Resources/Packs/*.json "$APP/Contents/Resources/Packs/"
+fi
+
 if [ -f "$APP/Contents/Resources/llama-server" ]; then
     echo "▸ Signing bundled llama-server…"
     codesign -f -s "$IDENTITY" --timestamp=none "$APP/Contents/Resources/llama-server"

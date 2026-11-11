@@ -2,6 +2,7 @@ import Foundation
 
 @main
 struct DictationTest {
+    @MainActor
     static func main() {
         let locale = Locale(identifier: "en_US")
         func check(_ actual: String, _ expected: String) {
@@ -86,6 +87,67 @@ struct DictationTest {
         guard VocabularyPackType.medical.fixesCount == 87 else {
             fatalError("Medical vocabulary pack should have 87 fixes")
         }
+
+        let tempWordsURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "-words.json")
+        let tempSnippetsURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "-snippets.json")
+        defer {
+            try? FileManager.default.removeItem(at: tempWordsURL)
+            try? FileManager.default.removeItem(at: tempSnippetsURL)
+        }
+
+        let store = DictationDictionaryStore(fileURL: tempWordsURL, snippetsFileURL: tempSnippetsURL)
+        check(String(store.loadedTermsCount(for: .tech)), "76")
+        check(String(store.loadedTermsCount(for: .medical)), "87")
+        check(String(store.loadedTermsCount(for: .legal)), "32")
+        check(String(store.loadedTermsCount(for: .brands)), "106")
+        check(String(store.loadedTermsCount(for: .names)), "90")
+
+        // Enable all packs for comprehensive testing
+        store.enabledPacks = Set(VocabularyPackType.allCases)
+
+        // Test alias replacement
+        // Tech (real aliases from tech.json: esync -> async, angularge -> AngularJS, autosculum -> autoscaling)
+        check(store.applyDictionaryAndPacks("I am writing esync code for angularge with autosculum"),
+              "I am writing async code for AngularJS with autoscaling")
+
+        // Brands
+        check(store.applyDictionaryAndPacks("I ate at mcdennalls and ordered addides shoes"),
+              "I ate at McDonald's and ordered adidas shoes")
+        check(store.applyDictionaryAndPacks("I ate at mcdonalds"),
+              "I ate at McDonald's")
+        check(store.applyDictionaryAndPacks("I ate at mcdonald’s"),
+              "I ate at McDonald's")
+
+        // Medical
+        check(store.applyDictionaryAndPacks("take acidaminophan for your ankle"),
+              "take acetaminophen for your ankle")
+
+        // Names
+        check(store.applyDictionaryAndPacks("meeting with aguary and acosto tomorrow"),
+              "meeting with Aguirre and Acosta tomorrow")
+
+        // Legal
+        check(store.applyDictionaryAndPacks("file the epilati brief in archord"),
+              "file the appellate brief in accord")
+
+        // Disabled pack behavior
+        store.enabledPacks = [.tech]
+        check(store.applyDictionaryAndPacks("esync and addides"),
+              "async and addides")
+
+        // Re-enable brands
+        store.enabledPacks = [.tech, .brands]
+        check(store.applyDictionaryAndPacks("esync and addides"),
+              "async and adidas")
+
+        // Custom words precedence over packs
+        store.addWord(canonical: "CustomAsync", aliases: ["esync"])
+        check(store.applyDictionaryAndPacks("running esync"),
+              "running CustomAsync")
+
+        // Snippets
+        store.addSnippet(keyword: "brb", expansion: "be right back")
+        check(store.applySnippets("I will brb"), "I will be right back")
 
         check(DictationModel.redux.folderName, "parakeet-redux")
         check(DictationModel.ultra.folderName, "parakeet-ultra")

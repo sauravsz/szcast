@@ -904,7 +904,7 @@ struct DictationSettingsView: View {
     private func exportWords() {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.json]
-        panel.nameFieldStringValue = "EnviousWispr Words.json"
+        panel.nameFieldStringValue = "szcast Words.json"
         if panel.runModal() == .OK, let url = panel.url {
             try? coordinator.dictionaryStore.exportToJSON(to: url)
         }
