@@ -48,7 +48,41 @@ enum NoteMarkdownStyler {
 
         switch line.kind {
         case .blank, .paragraph:
-            break
+            let inlines = markdown.inlines(of: line)
+            if !isRevealed,
+                let imgInline = inlines.first(where: {
+                    if case .image = $0.kind { return true }
+                    return false
+                }),
+                case .image(let destination, _) = imgInline.kind,
+                let image = NoteImageCache.image(for: destination)
+            {
+                let maxWidth: CGFloat = 520
+                let maxHeight: CGFloat = 360
+                let size = image.size
+                let aspect = (size.width > 0 && size.height > 0) ? (size.height / size.width) : 0.75
+                var width = min(maxWidth, max(size.width, 48))
+                var height = width * aspect
+                if height > maxHeight {
+                    height = maxHeight
+                    width = min(maxWidth, height / aspect)
+                }
+                let displaySize = CGSize(width: width, height: height)
+                let totalHeight = height + 16
+                let pStyle = NSMutableParagraphStyle()
+                pStyle.minimumLineHeight = totalHeight
+                pStyle.maximumLineHeight = totalHeight
+                base[.paragraphStyle] = pStyle
+                base[.font] = NoteMarkdownTypography.hidden
+                base[.foregroundColor] = NSColor.clear
+                base[.noteBlockDecoration] = decoration(
+                    .image(image, size: displaySize),
+                    fill: Theme.Colors.separator,
+                    ink: Theme.Colors.separator
+                )
+                runs.append((line.range, hidden))
+                return LineStyle(base: base, runs: runs)
+            }
         case .heading(let level):
             base[.font] = NoteMarkdownTypography.heading(level)
             base[.paragraphStyle] = paragraph {
@@ -144,24 +178,10 @@ enum NoteMarkdownStyler {
                 let url = URL(string: text.substring(with: inline.range))
                 runs.append((inline.range, linkLook(url, isRevealed: isRevealed)))
                 runs += inline.markerRanges.map { ($0, markerLook) }
-            case .image(let destination, _):
+            case .image:
                 if isRevealed {
                     runs.append((inline.contentRange, [.foregroundColor: color(Theme.Colors.noteText)]))
                     runs += inline.markerRanges.map { ($0, markerLook) }
-                } else if let image = NoteImageCache.image(for: destination) {
-                    let attachment = NSTextAttachment()
-                    attachment.image = image
-                    let maxWidth: CGFloat = 520
-                    let size = image.size
-                    let aspect = (size.width > 0 && size.height > 0) ? (size.height / size.width) : 0.75
-                    let width = min(maxWidth, max(size.width, 24))
-                    let height = width * aspect
-                    attachment.bounds = CGRect(x: 0, y: -2, width: width, height: height)
-
-                    runs.append((NSRange(location: inline.range.location, length: 1), [.attachment: attachment]))
-                    if inline.range.length > 1 {
-                        runs.append((NSRange(location: inline.range.location + 1, length: inline.range.length - 1), hidden))
-                    }
                 } else {
                     runs.append((inline.contentRange, [.foregroundColor: color(Theme.Colors.textSecondary)]))
                     runs += inline.markerRanges.map { ($0, hidden) }

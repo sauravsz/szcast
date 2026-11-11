@@ -51,6 +51,8 @@ final class NoteBlockLayoutFragment: NSTextLayoutFragment {
             drawLabel(label, level: level, left: left, top: point.y, in: context)
         case .task(let level, let checked):
             drawBox(level: level, checked: checked, left: left, top: point.y, in: context)
+        case .image(let image, let size):
+            drawImage(image, size: size, left: left, top: point.y, in: context)
         }
     }
 
@@ -157,6 +159,34 @@ final class NoteBlockLayoutFragment: NSTextLayoutFragment {
         context.setLineCap(.round)
         context.setLineJoin(.round)
         context.strokePath()
+    }
+
+    private func drawImage(
+        _ image: NSImage, size: CGSize, left: CGFloat, top: CGFloat, in context: CGContext
+    ) {
+        let padding: CGFloat = 8
+        let rect = CGRect(x: left, y: top + padding, width: size.width, height: size.height)
+        let cornerRadius: CGFloat = 8
+        let clipPath = CGPath(roundedRect: rect, cornerWidth: cornerRadius, cornerHeight: cornerRadius, transform: nil)
+
+        context.saveGState()
+        context.addPath(clipPath)
+        context.clip()
+
+        NSGraphicsContext.saveGraphicsState()
+        let gContext = NSGraphicsContext(cgContext: context, flipped: true)
+        NSGraphicsContext.current = gContext
+        image.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1.0)
+        NSGraphicsContext.restoreGraphicsState()
+
+        context.restoreGState()
+
+        context.saveGState()
+        context.addPath(clipPath)
+        context.setStrokeColor(decoration.fill.cgColor)
+        context.setLineWidth(1)
+        context.strokePath()
+        context.restoreGState()
     }
 
     // MARK: - Geometry and text

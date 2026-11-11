@@ -16,6 +16,7 @@ final class NoteBlockDecoration: NSObject, Sendable {
         /// The source's own label, such as `3.` or `3)`.
         case ordered(level: Int, label: String)
         case task(level: Int, checked: Bool)
+        case image(NSImage, size: CGSize)
     }
 
     let shape: Shape
