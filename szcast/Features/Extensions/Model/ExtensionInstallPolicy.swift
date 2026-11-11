@@ -24,8 +24,11 @@ enum ExtensionInstallPolicy {
     static let trustedDownloadHosts: Set<String> = [
         "www.raycast.com",
         "raycast.com",
+        "backend.raycast.com",
         "extensions.raycast-releases.com",
-        "raycast-releases.com"
+        "raycast-releases.com",
+        "files.raycast.com",
+        "assets.raycast.com"
     ]
 
     static func isTrustedDownloadURL(_ url: URL) -> Bool {

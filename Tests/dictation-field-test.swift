@@ -455,6 +455,7 @@ final class DictationModelStore {
     func isInstalled(_ model: DictationModel) -> Bool { true }
     func download(_ model: DictationModel) async throws {}
     func delete(_ model: DictationModel) async throws {}
+    func prewarm(_ model: DictationModel) {}
     func stop() async {}
     func prepareForTermination() {}
 

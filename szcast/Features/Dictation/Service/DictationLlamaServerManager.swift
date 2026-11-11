@@ -21,6 +21,13 @@ final class DictationLlamaServerManager {
         }
     }
 
+    func prewarm(idleRelease: DictationIdleRelease? = nil) {
+        guard isModelAvailable, isBinaryAvailable else { return }
+        Task { [weak self] in
+            _ = try? await self?.ensureRunning(idleRelease: idleRelease)
+        }
+    }
+
     var isModelAvailable: Bool {
         Self.resolveGGUFModel() != nil
     }
@@ -115,8 +122,7 @@ final class DictationLlamaServerManager {
             "-fa", "on",
             "--cache-type-k", "q8_0",
             "--cache-type-v", "q8_0",
-            "--jinja",
-            "--chat-template-kwargs", "{\"enable_thinking\":false}"
+            "--reasoning", "off"
         ]
 
         let pipe = Pipe()

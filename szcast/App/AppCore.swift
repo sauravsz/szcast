@@ -484,6 +484,10 @@ final class AppCore {
 
             observeFeatureSwitches()
 
+            if settings.dictationEnabled {
+                dictationCoordinator.prewarm()
+            }
+
             // First launch binds no hotkey, so guide once; the marker is written at show-time.
             if !OnboardingState.hasOnboarded {
                 OnboardingState.markShown()
@@ -785,6 +789,9 @@ final class AppCore {
             reproject: {
                 $0.hotKeys.dictationHoldToTalk = $0.settings.dictationMode == .pushToTalk
                 $0.hotKeys.dictationEnabled = $0.settings.dictationEnabled
+                if $0.settings.dictationEnabled {
+                    $0.dictationCoordinator.prewarm()
+                }
             })
         track(
             {

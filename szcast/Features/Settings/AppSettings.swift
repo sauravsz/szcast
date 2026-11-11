@@ -914,7 +914,7 @@ final class AppSettings {
         dictationIdleRelease =
             defaults.object(forKey: Key.dictationIdleRelease.rawValue)
             .flatMap { $0 as? Int }
-            .flatMap(DictationIdleRelease.init(rawValue:)) ?? .oneMinute
+            .flatMap(DictationIdleRelease.init(rawValue:)) ?? .never
         dictationLanguage =
             defaults.string(forKey: Key.dictationLanguage.rawValue)
             .flatMap(DictationLanguage.init(rawValue:))?.rawValue
@@ -933,7 +933,9 @@ final class AppSettings {
         dictationAutoCopyToClipboard =
             defaults.object(forKey: Key.dictationAutoCopyToClipboard.rawValue) == nil
             || defaults.bool(forKey: Key.dictationAutoCopyToClipboard.rawValue)
-        dictationS1Enabled = defaults.bool(forKey: Key.dictationS1Enabled.rawValue)
+        dictationS1Enabled =
+            defaults.object(forKey: Key.dictationS1Enabled.rawValue) == nil
+            || defaults.bool(forKey: Key.dictationS1Enabled.rawValue)
         dictationS1Tone =
             defaults.string(forKey: Key.dictationS1Tone.rawValue)
             .flatMap(S1Tone.init(rawValue:)) ?? .semiFormal

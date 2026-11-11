@@ -151,6 +151,36 @@ final class DictationModelStore {
         }
     }
 
+    func prewarm(_ model: DictationModel) {
+        guard isInstalled(model), !transcribing else { return }
+        releaseTask?.cancel()
+        releaseTask = nil
+        Task { [weak self] in
+            guard let self, !self.transcribing else { return }
+            do {
+                if self.loadedModel != model { await self.release() }
+                guard !self.transcribing else { return }
+                let worker = try self.worker ?? self.makeWorker()
+                self.worker = worker
+                if self.loadedModel != model {
+                    let dummySamples: [Float] = [0.0]
+                    let request = DictationWire.Request(
+                        id: UUID(), model: model, directory: self.directory(for: model),
+                        sampleCount: dummySamples.count, language: nil
+                    )
+                    _ = try? await worker.transcribe(dummySamples, request: request) { [weak self] in
+                        guard let self, self.worker === worker else { return }
+                        self.loadedModel = model
+                    }
+                    self.loadedModel = model
+                }
+                self.scheduleRelease()
+            } catch {
+                // Prewarm failure is non-fatal
+            }
+        }
+    }
+
     func release() async {
         releaseTask?.cancel()
         releaseTask = nil

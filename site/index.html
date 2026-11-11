@@ -3,8 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="szcast — a native macOS launcher for everyday productivity. Lightweight and open source." />
+  <meta name="description" content="szcast — a native macOS launcher for everyday productivity with offline S1-mini speech normalization. Lightweight and open source." />
   <meta name="theme-color" content="#0b0b0f" />
+  <link rel="icon" type="image/png" href="docs-images/icon.png" />
+  <link rel="apple-touch-icon" href="docs-images/icon.png" />
   <title>szcast — native macOS launcher</title>
   <style>
     :root { color-scheme: dark; --bg:#0b0b0f; --panel:#131318; --fg:#f2f2f5; --muted:#9aa3ad; --line:#24242e; --accent:#60a5fa; }
@@ -80,11 +82,16 @@ open szcast.xcodeproj    # scheme: Szcast, then ⌘R</code></pre>
         </ul>
       </div>
       <div class="panel">
-        <h2>Launcher touches</h2>
+        <h2>Features &amp; Enhancements</h2>
         <ul>
-          <li><strong>Space</strong> in root search opens the file search screen, Alfred-style.</li>
-          <li><strong>⌘1…⌘0</strong> activates the Nth visible row; hold ⌘ to see the digits.</li>
-          <li>Self-update is disabled in this build — nothing installs over itself.</li>
+          <li><strong>Offline S1-mini Speech Normalization</strong>: Embedded local <code>llama-server</code> with ~280ms inference, tone/structure/context control lines, and idle offload timers.</li>
+          <li><strong>EnviousWispr Architecture Alignment</strong>: Multi-root Parakeet Ultra discovery, spoken emoji/punctuation conversion, filler word removal, and dictionary packs.</li>
+          <li><strong>Quicklink Favicons Auto-Fetch</strong>: High-res icon caching via Google CDN, DuckDuckGo, and direct origin fallbacks.</li>
+          <li><strong>Raycast Store Updates &amp; Extensions</strong>: Trusted release CDN policy for one-click extension installs and updates directly in-app.</li>
+          <li><strong>Dynamic Font Scaling</strong>: Real-time typography scaling from 12pt to 22pt across palette rows and chat.</li>
+          <li><strong>Focus Timer &amp; Sensory Suite</strong>: Native Pomodoro cycles, menu bar countdown, and non-blocking sound cues.</li>
+          <li><strong>Native AI Web Search</strong>: Live web citations with Tavily, Exa, and Jina integration.</li>
+          <li><strong>Rich Notes &amp; Snippets</strong>: Inline images, YAML tagging, folder filters, and <code>⌘D</code> duplication.</li>
         </ul>
       </div>
     </div>

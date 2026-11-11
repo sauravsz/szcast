@@ -149,11 +149,23 @@ final class DictationCoordinator {
         }
     }
 
+    func prewarm() {
+        guard settings.dictationEnabled else { return }
+        models.prewarm(settings.dictationModel)
+        if settings.dictationS1Enabled {
+            DictationLlamaServerManager.shared.prewarm(idleRelease: settings.dictationS1IdleRelease)
+        }
+    }
+
     private func begin(target: InjectionTarget?) {
         guard models.isInstalled(settings.dictationModel) else {
             field = nil
             showMessage(String(localized: "Download the dictation model in Settings first"), .danger)
             return
+        }
+        models.prewarm(settings.dictationModel)
+        if settings.dictationS1Enabled {
+            DictationLlamaServerManager.shared.prewarm(idleRelease: settings.dictationS1IdleRelease)
         }
         token = UUID()
         let current = token

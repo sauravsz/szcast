@@ -21,11 +21,17 @@ xcodebuild -project Szcast.xcodeproj -scheme Szcast -configuration Release \
 
 APP="$DERIVED/Build/Products/Release/szcast.app"
 
+if [ -f "szcast/Resources/szcast.icns" ]; then
+    echo "▸ Injecting brand icon szcast.icns…"
+    cp "szcast/Resources/szcast.icns" "$APP/Contents/Resources/szcast.icns"
+fi
+
 if [ -f "$APP/Contents/Resources/llama-server" ]; then
     echo "▸ Signing bundled llama-server…"
     codesign -f -s "$IDENTITY" --timestamp=none "$APP/Contents/Resources/llama-server"
-    codesign -f -s "$IDENTITY" --timestamp=none "$APP"
 fi
+
+codesign -f -s "$IDENTITY" --timestamp=none "$APP"
 
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")"
 DMG="build/szcast-${VERSION}.dmg"

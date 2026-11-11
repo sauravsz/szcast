@@ -65,8 +65,8 @@ actor DictationS1Polisher {
                 let chatURL = baseURL.appendingPathComponent("v1/chat/completions")
                 if let output = try await sendChatRequest(
                     model: effectiveModel,
-                    systemPrompt: DictationS1Settings.systemPrompt,
-                    userMessage: userMessage,
+                    systemPrompt: DictationS1Settings.generalSystemPrompt,
+                    userMessage: transcript,
                     endpointURL: chatURL
                 ) {
                     return output

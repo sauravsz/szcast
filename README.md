@@ -25,7 +25,7 @@
   <img src="docs/screenshot.jpg" alt="szcast command palette">
 </p>
 
-szcast is a keyboard-first launcher for macOS: a command palette, file and menu search, clipboard history, snippets with tag/folder grouping, window management, notes with rich inline images, dictation, a calculator, a Pomodoro focus timer, and AI chat with live web search citations. Built with SwiftUI and AppKit — no dependencies, no Electron, no telemetry. It runs Raycast extensions, too.
+szcast is a keyboard-first launcher for macOS: a command palette, file and menu search, clipboard history, snippets with tag/folder grouping, window management, notes with rich inline images, dictation with offline AI speech normalization, a calculator, a Pomodoro focus timer, quicklink favicon resolution, and AI chat with live web search citations. Built with SwiftUI and AppKit — no dependencies, no Electron, no telemetry. It runs Raycast extensions, too.
 
 [Explore all features →](docs/features/)
 
@@ -35,8 +35,13 @@ Download the DMG from [Releases](https://github.com/sauravsz/szcast/releases/lat
 
 ## Differences from Tinycast
 
-szcast builds on Tinycast with new features, visual customizations, and sensible defaults configured out of the box:
+szcast builds on Tinycast with new features, visual customizations, performance enhancements, and sensible defaults configured out of the box:
 
+- **Standalone S1-mini Speech Normalization**: Ported and adapted from [EnviousWispr](https://github.com/saurabhav88/EnviousWispr) — local offline AI polishing using `s1-mini-1.0.gguf` via an embedded, managed `llama-server` binary bundled directly inside the app bundle. Runs entirely on loopback (`127.0.0.1:51143`) delivering ~280ms inference without requiring external Ollama daemons. Configurable model offload / idle release intervals (`Never`, 1m, 2m, 5m, 10m default, 15m, 20m, 30m, 1h) ensure system memory is freed when idle.
+- **EnviousWispr Control Line & Prompt Alignment**: Zero-configuration alignment with EnviousWispr's speech normalization architecture — pre-configured system prompts and control line framing (`[Styling: semi-formal] [Structure: prose] [Context: general]`) with seamless fallback to general copy-edit cleaning for external LLMs.
+- **Advanced Dictation Suite**: Multi-root model discovery across FluidAudio and EnviousWispr directories (immediate Nvidia Parakeet Ultra detection), spoken emoji conversion, spoken punctuation, filler word cleaner, media playback controls during recording (Continue, Lower, Mute, Pause with Apple Music and Spotify hooks), bottom-screen glass recording pill with live audio level meter bars, custom words dictionary with JSON import/export, 5 domain vocabulary packs (Tech, Medical, Legal, Brands, Names), self-learning dictionary detection, and menu bar shortcuts.
+- **Quicklink Favicons Resolution**: High-resolution favicon auto-fetching and disk caching (`QuicklinkFaviconService`) for web quicklinks via Google Favicons CDN, DuckDuckGo, and direct origin `/favicon.ico` fallbacks. Renders in launcher search, preview panes, and settings rows, with one-click "Fetch All Favicons" and per-link refresh controls.
+- **Raycast Store Extension Updates & CDN Trust**: Trusted download host policy (`ExtensionInstallPolicy`) covering Raycast Store package release CDNs (`extensions.raycast-releases.com`, `raycast-releases.com`, `backend.raycast.com`), enabling one-click installs and updates for all community extensions without security blocks.
 - **Dynamic Font Scaling**: Global typography slider in *Settings › General › Appearance* that dynamically scales launcher row titles, subtitles, accessory labels, details pane, and AI chat text from 12pt to 22pt.
 - **`<alias><Space>` Command Trigger**: Typing an alias followed by Space in the root palette instantly expands and selects the command without pressing Return.
 - **Focus Timer & Sensory Suite**: Native Pomodoro timer (`.work`, `.shortBreak`, `.longBreak`), menu bar countdown display, non-blocking audio cues, and full-screen celebration effects.
@@ -44,7 +49,6 @@ szcast builds on Tinycast with new features, visual customizations, and sensible
 - **Rich Notes with Inline Images**: TextKit 2 image attachments with clipboard image paste, drag-and-drop, and dynamic Markdown reveal when the cursor rests on the line.
 - **Enhanced Snippets Management**: Folder and tag organization via YAML frontmatter, horizontal filter chips, snippet duplication (`⌘D`), and configurable default actions (Paste, Copy, or Copy & Paste).
 - **Curated Defaults and Quicklinks**: Fallback search seeded with Brave Search, ChatGPT Web Search, and Brave Ask; Hyper key (⌃⌥⇧⌘) pre-armed out of the box; Space quick-jump to file search; and ⌘1…⌘0 row activation shortcuts.
-- **Advanced Dictation Suite**: Ported capabilities from [EnviousWispr](https://github.com/saurabhav88/EnviousWispr) — shared model discovery across FluidAudio and EnviousWispr paths (immediate Nvidia Parakeet Ultra support), Superwhisper S1-mini offline AI polish with tone/structure/context control line prompting, model offloading with idle release intervals and Never offload option, spoken emoji conversion, spoken punctuation, filler word removal, media playback controls during recording (Continue, Lower, Mute, Pause with Apple Music and Spotify hooks), bottom-screen glass recording pill with live audio level meter, custom words dictionary with JSON import/export, 5 domain vocabulary packs (Tech, Medical, Legal, Brands, Names), self-learning dictionary corrections, and menu bar copy action.
 
 ## What to know before you rely on it
 

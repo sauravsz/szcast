@@ -89,12 +89,12 @@ final class DictationCapture {
     func stop() async -> [Float] {
         guard let session else { return [] }
         self.session = nil
-        let box = CaptureSessionBox(session)
-        await Task.detached { box.session.stopRunning() }.value
         output?.setSampleBufferDelegate(nil, queue: nil)
         output = nil
         let samples = collector?.finish() ?? []
         collector = nil
+        let box = CaptureSessionBox(session)
+        Task.detached(priority: .utility) { box.session.stopRunning() }
         return samples
     }
 
