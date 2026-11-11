@@ -82,32 +82,47 @@ final class DictationAudioDucker {
 
     private func pauseMedia() {
         pausedMediaBundleIDs.removeAll()
-        for bundleID in ["com.apple.Music", "com.spotify.client"] {
-            guard !NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).isEmpty else { continue }
-            let script = """
-            tell application id "\(bundleID)"
-                if player state is playing then
-                    pause
-                    return "paused"
-                end if
-            end tell
-            return ""
-            """
-            var error: NSDictionary?
-            if let result = NSAppleScript(source: script)?.executeAndReturnError(&error).stringValue,
-               result == "paused" {
-                pausedMediaBundleIDs.append(bundleID)
+        let running = ["com.apple.Music", "com.spotify.client"].filter {
+            !NSRunningApplication.runningApplications(withBundleIdentifier: $0).isEmpty
+        }
+        guard !running.isEmpty else { return }
+        Task.detached(priority: .userInitiated) { [weak self] in
+            var paused: [String] = []
+            for bundleID in running {
+                let script = """
+                tell application id "\(bundleID)"
+                    if player state is playing then
+                        pause
+                        return "paused"
+                    end if
+                end tell
+                return ""
+                """
+                var error: NSDictionary?
+                if let result = NSAppleScript(source: script)?.executeAndReturnError(&error).stringValue,
+                   result == "paused" {
+                    paused.append(bundleID)
+                }
+            }
+            if !paused.isEmpty {
+                await MainActor.run { [weak self] in
+                    self?.pausedMediaBundleIDs = paused
+                }
             }
         }
     }
 
     private func resumeMedia() {
-        for bundleID in pausedMediaBundleIDs {
-            let script = "tell application id \"\(bundleID)\" to play"
-            var error: NSDictionary?
-            NSAppleScript(source: script)?.executeAndReturnError(&error)
-        }
+        let toResume = pausedMediaBundleIDs
         pausedMediaBundleIDs.removeAll()
+        guard !toResume.isEmpty else { return }
+        Task.detached(priority: .utility) {
+            for bundleID in toResume {
+                let script = "tell application id \"\(bundleID)\" to play"
+                var error: NSDictionary?
+                NSAppleScript(source: script)?.executeAndReturnError(&error)
+            }
+        }
     }
 
     func restoreImmediately() {

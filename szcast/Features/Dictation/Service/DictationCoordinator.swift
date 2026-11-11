@@ -257,6 +257,7 @@ final class DictationCoordinator {
                     processed = DictationTextFormatter.removeFillerWords(processed)
                 }
                 processed = dictionaryStore.applyDictionaryAndPacks(processed)
+                processed = dictionaryStore.applySnippets(processed)
 
                 if settings.dictationS1Enabled {
                     let s1 = DictationS1Settings(
@@ -449,8 +450,9 @@ final class DictationCoordinator {
             showMessage(String(localized: "No recent dictation to paste"), .neutral)
             return
         }
+        let activeTarget = InjectionTarget.current()
         injector.deliver(
-            InjectedText(last), target: target, expectedKeyword: nil,
+            InjectedText(last), target: activeTarget, expectedKeyword: nil,
             keywordLength: 0, automaticGeneration: nil,
             isValid: { true },
             onDelivered: {},
@@ -477,7 +479,7 @@ final class DictationCoordinator {
 
     func addSelectedWordToDictionary() {
         let pb = NSPasteboard.general
-        let original = pb.string(forType: .string)
+        let initialChangeCount = pb.changeCount
         // Send Cmd+C key event
         let src = CGEventSource(stateID: .hidSystemState)
         let keyDown = CGEvent(keyboardEventSource: src, virtualKey: 0x08, keyDown: true)
@@ -489,16 +491,14 @@ final class DictationCoordinator {
         Task { @MainActor [weak self] in
             try? await Task.sleep(for: .milliseconds(150))
             guard let self else { return }
-            let word = pb.string(forType: .string)?.trimmingCharacters(in: .whitespacesAndNewlines)
-            if let word, !word.isEmpty, word != original {
-                self.dictionaryStore.addWord(canonical: word)
-                self.showMessage(String(localized: "Added \"\(word)\" to Dictionary"), .success)
-            } else if let word, !word.isEmpty {
-                self.dictionaryStore.addWord(canonical: word)
-                self.showMessage(String(localized: "Added \"\(word)\" to Dictionary"), .success)
-            } else {
+            guard pb.changeCount != initialChangeCount,
+                  let word = pb.string(forType: .string)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !word.isEmpty else {
                 self.showMessage(String(localized: "Select a word to add to Dictionary"), .neutral)
+                return
             }
+            self.dictionaryStore.addWord(canonical: word)
+            self.showMessage(String(localized: "Added \"\(word)\" to Dictionary"), .success)
         }
     }
 }

@@ -33,7 +33,10 @@ struct DictationSettingsView: View {
     @State private var showingAddSnippetSheet = false
     @State private var newSnippetKeyword = ""
     @State private var newSnippetExpansion = ""
-    @State private var snippets: [DictationSnippet] = []
+
+    private var snippets: [DictationSnippet] {
+        coordinator.dictionaryStore.snippets
+    }
 
     // History search
     @State private var historySearchQuery = ""
@@ -73,7 +76,6 @@ struct DictationSettingsView: View {
         .onAppear {
             microphoneAccess = Permissions.microphoneAccess()
             if settings.dictationEnabled { microphones = DictationCapture.microphones }
-            loadSnippets()
         }
         .onChange(of: settings.dictationEnabled) { _, enabled in
             if enabled { microphones = DictationCapture.microphones }
@@ -747,34 +749,14 @@ struct DictationSettingsView: View {
         }
     }
 
-    // MARK: - Snippet persistence
-
-    private var snippetsFileURL: URL {
-        AppPaths.applicationSupport().appending(path: "dictation-snippets.json")
-    }
-
-    private func loadSnippets() {
-        if let data = try? Data(contentsOf: snippetsFileURL),
-           let list = try? JSONDecoder().decode([DictationSnippet].self, from: data) {
-            snippets = list
-        }
-    }
-
-    private func saveSnippets() {
-        if let data = try? JSONEncoder().encode(snippets) {
-            try? data.write(to: snippetsFileURL, options: .atomic)
-        }
-    }
+    // MARK: - Snippet operations
 
     private func addSnippet(keyword: String, expansion: String) {
-        let snippet = DictationSnippet(keyword: keyword, expansion: expansion)
-        snippets.append(snippet)
-        saveSnippets()
+        coordinator.dictionaryStore.addSnippet(keyword: keyword, expansion: expansion)
     }
 
     private func deleteSnippet(_ id: UUID) {
-        snippets.removeAll { $0.id == id }
-        saveSnippets()
+        coordinator.dictionaryStore.deleteSnippet(id)
     }
 
     // MARK: - Bindings & Helpers

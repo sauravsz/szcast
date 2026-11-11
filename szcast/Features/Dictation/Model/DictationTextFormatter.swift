@@ -119,7 +119,7 @@ enum DictationTextFormatter {
         (#"\b(?:close quote|close quotation mark)\b"#, "\""),
         (#"\b(?:single quote|apostrophe)\b"#, "'"),
         (#"\b(?:em dash)\b"#, "—"),
-        (#"\b(?:hyphen|dash)\b"#, "-"),
+        (#"\b(?:hyphen|dash mark)\b"#, "-"),
         (#"\b(?:ampersand)\b"#, "&"),
         (#"\b(?:plus sign)\b"#, "+"),
         (#"\b(?:equals sign)\b"#, "="),
@@ -207,18 +207,19 @@ enum DictationTextFormatter {
 
     static func format(_ transcription: String, context: Context?, adaptCapitalization: Bool = true) -> String {
         var text = transcription.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty, let context else { return text }
+        guard !text.isEmpty else { return text }
         if adaptCapitalization, let first = text.first, first.isLetter {
-            let replacement: String
-            if context.lastNonWhitespace == nil || context.newParagraph
-                || context.lastNonWhitespace.map({ ".!?".contains($0) }) == true
-            {
-                replacement = String(first).uppercased()
+            let shouldUppercase: Bool
+            if let context {
+                shouldUppercase = context.lastNonWhitespace == nil || context.newParagraph
+                    || context.lastNonWhitespace.map({ ".!?".contains($0) }) == true
             } else {
-                replacement = String(first).lowercased()
+                shouldUppercase = true
             }
+            let replacement = shouldUppercase ? String(first).uppercased() : String(first).lowercased()
             text.replaceSubrange(text.startIndex...text.startIndex, with: replacement)
         }
+        guard let context else { return text }
         if let trailing = context.trailing, !trailing.isWhitespace,
             !"([{/\"'‘’“—-".contains(trailing),
             let leading = text.first, !".,!?;:)]}/\"'”".contains(leading)

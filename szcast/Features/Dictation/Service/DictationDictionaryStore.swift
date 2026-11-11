@@ -6,8 +6,10 @@ import OSLog
 final class DictationDictionaryStore {
     private static let logger = Logger(subsystem: "com.sauravsz.szcast", category: "DictationDictionary")
     private let fileURL: URL
+    private let snippetsFileURL: URL
 
     private(set) var words: [CustomWord] = []
+    private(set) var snippets: [DictationSnippet] = []
     var enabledPacks: Set<VocabularyPackType> = [.tech, .brands]
     var selfLearningEnabled: Bool = true
 
@@ -15,11 +17,14 @@ final class DictationDictionaryStore {
     private var packTerms: [VocabularyPackType: [String: [String]]] = [:]
 
     init(
-        fileURL: URL = AppPaths.applicationSupport().appending(path: "dictation-words.json")
+        fileURL: URL = AppPaths.applicationSupport().appending(path: "dictation-words.json"),
+        snippetsFileURL: URL = AppPaths.applicationSupport().appending(path: "dictation-snippets.json")
     ) {
         self.fileURL = fileURL
+        self.snippetsFileURL = snippetsFileURL
         loadPacks()
         loadWords()
+        loadSnippets()
     }
 
     // MARK: - Word Management
@@ -69,37 +74,120 @@ final class DictationDictionaryStore {
 
     // MARK: - Word Replacement / Post-Processing
 
+    private struct ReplacementRule {
+        let phrase: String
+        let canonical: String
+    }
+
     func applyDictionaryAndPacks(_ text: String) -> String {
         var result = text
 
         // 1. Apply user custom words (highest priority)
+        var customRules: [ReplacementRule] = []
         for word in words {
+            let canon = word.canonical.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !canon.isEmpty else { continue }
             for alias in word.aliases {
-                guard !alias.isEmpty else { continue }
-                let pattern = #"\b"# + NSRegularExpression.escapedPattern(for: alias) + #"\b"#
-                if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) {
-                    let range = NSRange(result.startIndex..<result.endIndex, in: result)
-                    result = regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: word.canonical)
+                let clean = alias.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !clean.isEmpty {
+                    customRules.append(ReplacementRule(phrase: clean, canonical: canon))
                 }
+            }
+            customRules.append(ReplacementRule(phrase: canon, canonical: canon))
+        }
+        // Sort by phrase length descending to match longer compound expressions first
+        customRules.sort { $0.phrase.count > $1.phrase.count }
+
+        for rule in customRules {
+            let pattern = #"\b"# + NSRegularExpression.escapedPattern(for: rule.phrase) + #"\b"#
+            if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) {
+                let range = NSRange(result.startIndex..<result.endIndex, in: result)
+                let template = NSRegularExpression.escapedTemplate(for: rule.canonical)
+                result = regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: template)
             }
         }
 
         // 2. Apply active vocabulary packs
+        var packRules: [ReplacementRule] = []
         for pack in enabledPacks {
             guard let dict = packTerms[pack] else { continue }
             for (canonical, aliases) in dict {
+                let canon = canonical.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !canon.isEmpty else { continue }
                 for alias in aliases {
-                    guard !alias.isEmpty else { continue }
-                    let pattern = #"\b"# + NSRegularExpression.escapedPattern(for: alias) + #"\b"#
-                    if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) {
-                        let range = NSRange(result.startIndex..<result.endIndex, in: result)
-                        result = regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: canonical)
+                    let clean = alias.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !clean.isEmpty {
+                        packRules.append(ReplacementRule(phrase: clean, canonical: canon))
                     }
                 }
+                packRules.append(ReplacementRule(phrase: canon, canonical: canon))
+            }
+        }
+        packRules.sort { $0.phrase.count > $1.phrase.count }
+
+        for rule in packRules {
+            let pattern = #"\b"# + NSRegularExpression.escapedPattern(for: rule.phrase) + #"\b"#
+            if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) {
+                let range = NSRange(result.startIndex..<result.endIndex, in: result)
+                let template = NSRegularExpression.escapedTemplate(for: rule.canonical)
+                result = regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: template)
             }
         }
 
         return result
+    }
+
+    // MARK: - Snippets
+
+    func addSnippet(keyword: String, expansion: String) {
+        let cleanKw = keyword.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanKw.isEmpty else { return }
+        let snippet = DictationSnippet(keyword: cleanKw, expansion: expansion)
+        snippets.append(snippet)
+        saveSnippets()
+    }
+
+    func deleteSnippet(_ id: UUID) {
+        snippets.removeAll { $0.id == id }
+        saveSnippets()
+    }
+
+    func applySnippets(_ text: String) -> String {
+        guard !snippets.isEmpty else { return text }
+        var result = text
+        let sorted = snippets.sorted { $0.keyword.count > $1.keyword.count }
+        for snippet in sorted {
+            let kw = snippet.keyword.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !kw.isEmpty else { continue }
+            let pattern = #"\b"# + NSRegularExpression.escapedPattern(for: kw) + #"\b"#
+            if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) {
+                let range = NSRange(result.startIndex..<result.endIndex, in: result)
+                let template = NSRegularExpression.escapedTemplate(for: snippet.expansion)
+                result = regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: template)
+            }
+        }
+        return result
+    }
+
+    private func loadSnippets() {
+        if FileManager.default.fileExists(atPath: snippetsFileURL.path),
+           let data = try? Data(contentsOf: snippetsFileURL),
+           let list = try? JSONDecoder().decode([DictationSnippet].self, from: data) {
+            snippets = list
+        }
+    }
+
+    private func saveSnippets() {
+        do {
+            let dir = snippetsFileURL.deletingLastPathComponent()
+            try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.prettyPrinted]
+            let data = try encoder.encode(snippets)
+            try data.write(to: snippetsFileURL, options: .atomic)
+        } catch {
+            Self.logger.error("Failed to save dictation snippets: \(error.localizedDescription)")
+        }
     }
 
     // MARK: - Import & Export

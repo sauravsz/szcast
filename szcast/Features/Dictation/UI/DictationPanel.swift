@@ -94,9 +94,6 @@ private struct DictationPanelView: View {
 }
 
 private final class DictationPanel: NSPanel, AnimatedPanel {
-    var onAccept: (() -> Void)?
-    var onCancel: (() -> Void)?
-
     init(content: NSView) {
         super.init(
             contentRect: NSRect(origin: .zero, size: CGSize(width: 190, height: 40)),
@@ -112,25 +109,16 @@ private final class DictationPanel: NSPanel, AnimatedPanel {
         followMotion()
     }
 
-    override var canBecomeKey: Bool { true }
+    override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
-
-    override func sendEvent(_ event: NSEvent) {
-        if event.type == .keyDown, !event.isARepeat {
-            switch Int(event.keyCode) {
-            case kVK_Return, kVK_ANSI_KeypadEnter: onAccept?(); return
-            case kVK_Escape: onCancel?(); return
-            default: break
-            }
-        }
-        super.sendEvent(event)
-    }
 }
 
 @MainActor
 final class DictationPanelController {
     let state = DictationDisplayState()
     private var panel: DictationPanel?
+    private var globalEventMonitor: Any?
+    private var localEventMonitor: Any?
     var onAccept: (() -> Void)?
     var onCancel: (() -> Void)?
 
@@ -141,8 +129,6 @@ final class DictationPanelController {
             panel
             ?? DictationPanel(
                 content: NSHostingView(rootView: DictationPanelView(state: state).motionScope()))
-        panel.onAccept = onAccept
-        panel.onCancel = onCancel
         self.panel = panel
         let pillSize = CGSize(width: 190, height: 40)
         panel.setFrameOrigin(
@@ -151,11 +137,46 @@ final class DictationPanelController {
                 y: frame.minY + frame.height * 0.08 - pillSize.height / 2))
         state.phase = .listening
         state.levels = [Float](repeating: 0, count: DictationSpectrum.barCount)
-        panel.makeKeyAndOrderFront(nil)
+        panel.orderFrontRegardless()
+
+        installEscapeMonitors()
     }
 
     func close() {
+        removeEscapeMonitors()
         panel?.orderOut(nil)
         panel = nil
+    }
+
+    private func installEscapeMonitors() {
+        if globalEventMonitor == nil {
+            globalEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
+                if event.keyCode == UInt16(kVK_Escape) {
+                    Task { @MainActor [weak self] in
+                        self?.onCancel?()
+                    }
+                }
+            }
+        }
+        if localEventMonitor == nil {
+            localEventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+                if event.keyCode == UInt16(kVK_Escape) {
+                    self?.onCancel?()
+                    return nil
+                }
+                return event
+            }
+        }
+    }
+
+    private func removeEscapeMonitors() {
+        if let monitor = globalEventMonitor {
+            NSEvent.removeMonitor(monitor)
+            globalEventMonitor = nil
+        }
+        if let monitor = localEventMonitor {
+            NSEvent.removeMonitor(monitor)
+            localEventMonitor = nil
+        }
     }
 }
