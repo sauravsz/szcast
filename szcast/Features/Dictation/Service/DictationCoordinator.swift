@@ -319,9 +319,10 @@ final class DictationCoordinator {
 
                 panel.close()
                 if destination.pastes {
-                    if settings.dictationPasteMode == .allAtOnce {
+                    switch settings.dictationPasteMode {
+                    case .allAtOnce:
                         // All at once: instant paste via direct editor injection or pasteboard Command+V
-                        let app = target?.externalApp
+                        let app = target?.externalApp ?? NSWorkspace.shared.frontmostApplication
                         if let editor = target?.ownEditor {
                             injector.deliver(
                                 InjectedText(text), target: target, expectedKeyword: nil,
@@ -346,8 +347,8 @@ final class DictationCoordinator {
                             }
                             reset(cancelTranscription: false)
                         }
-                    } else {
-                        // Word-by-word: typewriter stream pasting
+                    case .wordByWord:
+                        // Word-by-word: typewriter stream pasting (35ms cadence)
                         Task { [weak self] in
                             guard let self else { return }
                             let words = text.split(separator: " ", omittingEmptySubsequences: false)
@@ -361,6 +362,26 @@ final class DictationCoordinator {
                                     onDelivered: {},
                                     onFailed: {})
                                 try? await Task.sleep(for: .milliseconds(35))
+                            }
+                            if destination.copies || settings.dictationAutoCopyToClipboard {
+                                Paster.copyPlainText(assembled)
+                            }
+                            reset(cancelTranscription: false)
+                        }
+                    case .characterByCharacter:
+                        // Character-by-character: typewriter stream pasting (15ms cadence)
+                        Task { [weak self] in
+                            guard let self else { return }
+                            for char in text {
+                                guard token == current else { break }
+                                let chunk = String(char)
+                                injector.deliver(
+                                    InjectedText(chunk), target: target, expectedKeyword: nil,
+                                    keywordLength: 0, automaticGeneration: nil,
+                                    isValid: { [weak self] in self?.token == current },
+                                    onDelivered: {},
+                                    onFailed: {})
+                                try? await Task.sleep(for: .milliseconds(15))
                             }
                             if destination.copies || settings.dictationAutoCopyToClipboard {
                                 Paster.copyPlainText(assembled)
@@ -403,14 +424,14 @@ final class DictationCoordinator {
     }
 
     private func startLiveInsertion(token current: UUID) {
-        // Live insertion into documents only runs when explicitly configured in word-by-word streaming mode
-        guard insertionPastes, settings.dictationPasteMode == .wordByWord, settings.dictationLiveInsertion else { return }
+        // Live insertion into documents only runs when explicitly configured
+        guard insertionPastes, settings.dictationLiveInsertion else { return }
         liveTask = Task { [weak self] in
             guard let self else { return }
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(2))
                 guard !Task.isCancelled, token == current, phase == .listening else { return }
-                guard settings.dictationPasteMode == .wordByWord, settings.dictationLiveInsertion else { return }
+                guard settings.dictationLiveInsertion else { return }
                 await flushLiveChunk(token: current)
             }
         }

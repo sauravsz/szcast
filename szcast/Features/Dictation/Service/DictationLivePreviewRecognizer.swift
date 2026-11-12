@@ -17,31 +17,47 @@ actor DictationLivePreviewRecognizer {
     private var committedText = ""
     private var inFlightText = ""
 
+    // Universal fallback via SFSpeechRecognizer
+    private var sfRecognizer: SFSpeechRecognizer?
+    private var sfRequest: SFSpeechAudioBufferRecognitionRequest?
+    private var sfTask: SFSpeechRecognitionTask?
+
     func start(
         locale: Locale = .current,
         onText: @escaping @Sendable (String) -> Void
     ) async {
         stop()
+        sourceFormat = AVAudioFormat(
+            commonFormat: .pcmFormatFloat32,
+            sampleRate: 16000,
+            channels: 1,
+            interleaved: false
+        )
         do {
             let installed = await DictationTranscriber.installedLocales
-            let effectiveLocale = (await DictationTranscriber.supportedLocale(equivalentTo: locale))
-                ?? installed.first
-                ?? Locale(identifier: "en-US")
+            let effectiveLocale: Locale
+            if installed.contains(where: { $0.identifier == locale.identifier }) {
+                effectiveLocale = locale
+            } else if let match = installed.first(where: { $0.language.languageCode == locale.language.languageCode }) {
+                effectiveLocale = match
+            } else if let first = installed.first {
+                effectiveLocale = first
+            } else {
+                effectiveLocale = (await DictationTranscriber.supportedLocale(equivalentTo: locale))
+                    ?? Locale(identifier: "en-US")
+            }
 
             let module = DictationTranscriber(locale: effectiveLocale, preset: .progressiveLongDictation)
-            guard let source = AVAudioFormat(
-                commonFormat: .pcmFormatFloat32,
-                sampleRate: 16000,
-                channels: 1,
-                interleaved: false
-            ) else { return }
+            guard let source = sourceFormat else { return }
 
             guard let target = await SpeechAnalyzer.bestAvailableAudioFormat(
                 compatibleWith: [module],
                 considering: source
-            ) else { return }
+            ) else {
+                startSFSpeechFallback(locale: locale, onText: onText)
+                return
+            }
 
-            sourceFormat = source
             targetFormat = target
             converter = (source == target) ? nil : AVAudioConverter(from: source, to: target)
 
@@ -74,22 +90,74 @@ actor DictationLivePreviewRecognizer {
         } catch {
             self.analyzer = nil
             self.streamContinuation = nil
+            startSFSpeechFallback(locale: locale, onText: onText)
+        }
+    }
+
+    private func startSFSpeechFallback(
+        locale: Locale,
+        onText: @escaping @Sendable (String) -> Void
+    ) {
+        let recognizer = SFSpeechRecognizer(locale: locale) ?? SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
+        guard let recognizer, recognizer.isAvailable else {
             self.isRunning = false
+            return
+        }
+        let request = SFSpeechAudioBufferRecognitionRequest()
+        request.shouldReportPartialResults = true
+        if recognizer.supportsOnDeviceRecognition {
+            request.requiresOnDeviceRecognition = true
+        }
+        self.sfRecognizer = recognizer
+        self.sfRequest = request
+        self.isRunning = true
+
+        self.sfTask = recognizer.recognitionTask(with: request) { result, error in
+            if let result {
+                let transcription = result.bestTranscription.formattedString
+                onText(transcription)
+            }
         }
     }
 
     private func updateText(piece: String, isFinal: Bool) -> String {
+        let trimmed = piece.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            let combined = (committedText.isEmpty ? "" : committedText + " ") + inFlightText
+            return combined.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
         if isFinal {
-            committedText += piece
+            if committedText.isEmpty {
+                committedText = trimmed
+            } else {
+                committedText += " " + trimmed
+            }
             inFlightText = ""
         } else {
-            inFlightText = piece
+            inFlightText = trimmed
         }
-        return (committedText + inFlightText).trimmingCharacters(in: .whitespacesAndNewlines)
+        let full = (committedText.isEmpty ? "" : committedText + " ") + inFlightText
+        return full.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     func feed(_ samples: [Float]) {
-        guard isRunning, let continuation = streamContinuation, let source = sourceFormat, let target = targetFormat,
+        guard isRunning else { return }
+
+        // SFSpeechRecognizer fallback feeding
+        if let sfRequest, let source = sourceFormat,
+           let buffer = AVAudioPCMBuffer(pcmFormat: source, frameCapacity: AVAudioFrameCount(samples.count)),
+           let channel = buffer.floatChannelData {
+            buffer.frameLength = AVAudioFrameCount(samples.count)
+            samples.withUnsafeBufferPointer { src in
+                guard let base = src.baseAddress else { return }
+                channel[0].update(from: base, count: samples.count)
+            }
+            sfRequest.append(buffer)
+            return
+        }
+
+        // SpeechAnalyzer feeding
+        guard let continuation = streamContinuation, let source = sourceFormat, let target = targetFormat,
               !samples.isEmpty,
               let buffer = AVAudioPCMBuffer(pcmFormat: source, frameCapacity: AVAudioFrameCount(samples.count)),
               let channel = buffer.floatChannelData
@@ -130,6 +198,11 @@ actor DictationLivePreviewRecognizer {
     func stop() {
         guard isRunning else { return }
         isRunning = false
+        sfTask?.cancel()
+        sfTask = nil
+        sfRequest?.endAudio()
+        sfRequest = nil
+        sfRecognizer = nil
         collectorTask?.cancel()
         collectorTask = nil
         streamContinuation?.finish()

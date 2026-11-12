@@ -56,8 +56,9 @@ enum Paster {
     /// String counterpart of `paste`, marker-stamped so the text doesn't re-enter history.
     @MainActor
     static func pasteString(_ text: String, previousApp: NSRunningApplication?) {
+        let app = previousApp ?? NSWorkspace.shared.frontmostApplication
         writeString(text)
-        previousApp?.activate()
+        app?.activate()
         DispatchQueue.main.asyncAfter(deadline: .now() + activationDelay) {
             postCommandV()
         }

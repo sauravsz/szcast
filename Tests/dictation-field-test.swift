@@ -414,6 +414,7 @@ final class AppSettings {
     var dictationS1Context = S1Context.general
     var dictationS1IdleRelease = DictationIdleRelease.tenMinutes
     var dictationPasteMode = DictationPasteMode.allAtOnce
+    var dictationLivePreviewEnabled = true
 }
 
 enum HotKeyAction { case dictation, dictationAddWord, dictationPasteLast, dictationCopyLast }
@@ -531,6 +532,7 @@ enum Paster {
     static let szcastEventTag: Int64 = 0x54494E59
     static var copies: [String] = []
     static func copyPlainText(_ text: String) { copies.append(text) }
+    static func pasteString(_ text: String, previousApp: NSRunningApplication?) { copies.append(text) }
     static func postCommandV(toPid pid: pid_t? = nil) {}
     static func postCommandC(toPid pid: pid_t? = nil) {}
 }
