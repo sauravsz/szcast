@@ -59,7 +59,7 @@ Fork of [Tinycast](https://github.com/abue-ammar/tinycast) by Abue Ammar, rename
   - Streamlined Documentation & Web Portal: Rewrote `README.md` and `site/index.html` to be direct and concise.
 
 ## Active State & Next Steps
-- **Active State**: Version 1.2.0 built, self-signed, release DMG generated (`build/szcast-1.2.0.dmg`), tagged as `v1.2.0`, and installed in `/Applications/szcast.app`. Uploaded `build/szcast-1.2.0.zip` to GitHub Release `v1.2.0` so the in-app updater can discover and install it. Only `/Applications/szcast.app` is installed and registered with LaunchServices.
+- **Active State**: Version 1.2.0 built, self-signed, release DMG generated (`build/szcast-1.2.0.dmg`), tagged as `v1.2.0`, and installed in `/Applications/szcast.app`. Uploaded updated `build/szcast-1.2.0.dmg` and `build/szcast-1.2.0.zip` to GitHub Release `v1.2.0`. Fixed transcription stalling (pipe buffer deadlock in `llama-server`, CoreML GPU compilation delay, bounded 4s request timeouts) and set `dictationIdleRelease` and `dictationS1IdleRelease` to `.never` by default so models remain hot in memory. All 117 test harnesses pass.
 - **Immediate Next Steps**:
   1. Have user test dictation speed (~250ms inference) and verified pill UI in daily workflow.
   2. Confirm pristine icon rendering across Dock, Launchpad, and App Switcher.
