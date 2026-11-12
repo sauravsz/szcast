@@ -9,7 +9,7 @@ final class DictationLlamaServerManager {
     private var process: Process?
     private var runningPort: Int?
     private var idleTask: Task<Void, Never>?
-    private(set) var currentIdleRelease: DictationIdleRelease = .tenMinutes
+    private(set) var currentIdleRelease: DictationIdleRelease = .never
 
     static let defaultPort: Int = 51143
     static let directHuggingFaceURL = URL(string: "https://huggingface.co/superwhisper/s1-mini-GGUF/resolve/34add00a48a2e5d24e5a4ee5405a99620a3a240c/s1-mini-q4_k_m.gguf")!
@@ -128,9 +128,8 @@ final class DictationLlamaServerManager {
             "--chat-template-kwargs", "{\"enable_thinking\":false}"
         ]
 
-        let pipe = Pipe()
-        p.standardError = pipe
-        p.standardOutput = pipe
+        p.standardOutput = FileHandle.nullDevice
+        p.standardError = FileHandle.nullDevice
 
         try p.run()
         self.process = p

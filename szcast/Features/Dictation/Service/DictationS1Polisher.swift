@@ -4,6 +4,13 @@ import OSLog
 actor DictationS1Polisher {
     private static let logger = Logger(subsystem: "com.sauravsz.szcast", category: "DictationS1Polish")
 
+    private static let session: URLSession = {
+        let config = URLSessionConfiguration.ephemeral
+        config.timeoutIntervalForRequest = 4.0
+        config.timeoutIntervalForResource = 5.0
+        return URLSession(configuration: config)
+    }()
+
     /// Check if model identifier corresponds to S1-mini.
     static func isS1Mini(_ modelID: String) -> Bool {
         let lower = modelID.lowercased()
@@ -114,10 +121,10 @@ actor DictationS1Polisher {
         var request = URLRequest(url: generateURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = 6.0
+        request.timeoutInterval = 4.0
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await Self.session.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
             return nil
         }
@@ -175,10 +182,10 @@ actor DictationS1Polisher {
         var request = URLRequest(url: endpointURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = 6.0
+        request.timeoutInterval = 4.0
         request.httpBody = try JSONEncoder().encode(body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await Self.session.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
             return nil
         }
@@ -200,7 +207,7 @@ actor DictationS1Polisher {
         }
         var request = URLRequest(url: tagsURL)
         request.timeoutInterval = 1.5
-        guard let (data, response) = try? await URLSession.shared.data(for: request),
+        guard let (data, response) = try? await Self.session.data(for: request),
               let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode),
               let decoded = try? JSONDecoder().decode(TagsResponse.self, from: data) else {
             return preferred

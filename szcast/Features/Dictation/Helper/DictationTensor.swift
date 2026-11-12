@@ -61,7 +61,9 @@ enum DictationTensor {
     static func load(_ name: String, at directory: URL, units: MLComputeUnits = .all) throws -> MLModel {
         let configuration = MLModelConfiguration()
         configuration.computeUnits = units
-        configuration.allowLowPrecisionAccumulationOnGPU = true
+        if units == .cpuAndGPU || units == .all {
+            configuration.allowLowPrecisionAccumulationOnGPU = true
+        }
         return try MLModel(
             contentsOf: directory.appendingPathComponent(name + ".mlmodelc"),
             configuration: configuration)

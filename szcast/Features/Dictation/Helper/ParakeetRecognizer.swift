@@ -17,11 +17,11 @@ final class ParakeetRecognizer {
         preprocessor = try DictationTensor.load("Preprocessor", at: directory, units: .cpuOnly)
         encoder = try DictationTensor.load(
             "Encoder", at: directory,
-            units: .all)
-        decoder = try DictationTensor.load("Decoder", at: directory, units: .all)
+            units: configuration.encoderUsesGPU ? .cpuAndGPU : .cpuAndNeuralEngine)
+        decoder = try DictationTensor.load("Decoder", at: directory, units: .cpuAndNeuralEngine)
         joint = try DictationTensor.load(
             configuration.joint,
-            at: directory, units: .all)
+            at: directory, units: .cpuAndNeuralEngine)
         let pieces = try JSONDecoder().decode(
             [String: String].self,
             from: Data(contentsOf: directory.appendingPathComponent("parakeet_vocab.json")))

@@ -948,7 +948,7 @@ final class AppSettings {
         dictationS1IdleRelease =
             defaults.object(forKey: Key.dictationS1IdleRelease.rawValue)
             .flatMap { $0 as? Int }
-            .flatMap(DictationIdleRelease.init(rawValue:)) ?? .tenMinutes
+            .flatMap(DictationIdleRelease.init(rawValue:)) ?? .never
         notesRendersMarkdown =
             defaults.object(forKey: Key.notesRendersMarkdown.rawValue) == nil
             || defaults.bool(forKey: Key.notesRendersMarkdown.rawValue)
