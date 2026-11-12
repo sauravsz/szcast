@@ -825,6 +825,7 @@ struct RootPaletteView: View {
             headerField
                 .simultaneousGesture(TapGesture().onEnded { resetCompactSelection() })
             if let accessory = headerAccessory {
+                headerGutter(width: metrics.spacing.sm)
                 accessory.view
                 // Given room last: at the default priority it would split it with the field.
                 Spacer(minLength: 0).layoutPriority(-1)
@@ -964,11 +965,11 @@ struct RootPaletteView: View {
         let font = metrics.typography.searchFieldNSFont
         let text = vm.query.isEmpty ? searchPrompt : vm.query
         let typed = (text as NSString).size(withAttributes: [.font: font]).width
-        let chrome = metrics.size.headerIconSlot + metrics.spacing.md * 3 + metrics.spacing.xl
+        let chrome = metrics.size.headerIconSlot + metrics.spacing.md * 3 + metrics.spacing.sm + metrics.spacing.xl
         let room = metrics.size.panelWidth - accessory.width - chrome
-        // +3pt so the caret sits after the last glyph rather than on top of it.
+        // +8pt trailing breathing room so the text, caret, and selection never collide with the accessory.
         return min(
-            max(typed + metrics.scaled(3), metrics.scaled(18)),
+            max(typed + metrics.scaled(8), metrics.scaled(24)),
             max(room, metrics.size.searchFieldMinWidth))
     }
 

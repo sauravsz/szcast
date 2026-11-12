@@ -24,7 +24,27 @@ final class DictationLlamaServerManager {
     func prewarm(idleRelease: DictationIdleRelease? = nil) {
         guard isModelAvailable, isBinaryAvailable else { return }
         Task { [weak self] in
-            _ = try? await self?.ensureRunning(idleRelease: idleRelease)
+            guard let self else { return }
+            if let baseURL = try? await self.ensureRunning(idleRelease: idleRelease) {
+                // Background KV-cache prewarming: prime the system prompt and control line into llama-server's KV cache
+                let chatEndpoint = baseURL.appendingPathComponent("v1/chat/completions")
+                var request = URLRequest(url: chatEndpoint)
+                request.httpMethod = "POST"
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                request.setValue("keep-alive", forHTTPHeaderField: "Connection")
+                request.timeoutInterval = 2.0
+                let prewarmPayload: [String: Any] = [
+                    "model": "s1-mini",
+                    "messages": [
+                        ["role": "system", "content": DictationS1Settings.systemPrompt],
+                        ["role": "user", "content": "\(DictationS1Settings.default.controlLine)\nHello"]
+                    ],
+                    "temperature": 0.0,
+                    "max_tokens": 1
+                ]
+                request.httpBody = try? JSONSerialization.data(withJSONObject: prewarmPayload)
+                _ = try? await URLSession.shared.data(for: request)
+            }
         }
     }
 
@@ -88,7 +108,7 @@ final class DictationLlamaServerManager {
         return nil
     }
 
-    func ensureRunning(idleRelease: DictationIdleRelease? = nil) async throws -> URL {
+    func ensureRunning(idleRelease: DictationIdleRelease? = nil, forceRestart: Bool = false) async throws -> URL {
         if let idleRelease {
             currentIdleRelease = idleRelease
         }
@@ -98,7 +118,7 @@ final class DictationLlamaServerManager {
         let port = runningPort ?? Self.defaultPort
         let baseURL = URL(string: "http://127.0.0.1:\(port)")!
 
-        if process?.isRunning == true, await checkHealth(baseURL: baseURL) {
+        if !forceRestart, process?.isRunning == true {
             scheduleIdleShutdown(idleRelease: currentIdleRelease)
             return baseURL
         }
@@ -118,9 +138,7 @@ final class DictationLlamaServerManager {
             "-m", modelURL.path,
             "--host", "127.0.0.1",
             "--port", String(port),
-            "-c", "512",
-            "-t", "4",
-            "-ngl", "99",
+            "-c", "2048",
             "-fa", "on",
             "--cache-type-k", "q8_0",
             "--cache-type-v", "q8_0",

@@ -62,15 +62,28 @@ actor DictationS1Polisher {
         let userMessage = "\(settings.controlLine)\n\(transcript)"
 
         // Priority 1 (DEFAULT): Direct local s1-mini-1.0.gguf via embedded/managed llama-server
+        let transcriptWordCount = transcript.split(separator: " ").count
         if let llamaServerURL = try? await DictationLlamaServerManager.shared.ensureRunning(idleRelease: settings.idleRelease) {
             let chatEndpoint = llamaServerURL.appendingPathComponent("v1/chat/completions")
             if let output = try? await sendChatRequest(
                 model: "s1-mini",
                 systemPrompt: DictationS1Settings.systemPrompt,
                 userMessage: userMessage,
+                transcriptWordCount: transcriptWordCount,
                 endpointURL: chatEndpoint
             ) {
                 return output
+            } else if let retryURL = try? await DictationLlamaServerManager.shared.ensureRunning(idleRelease: settings.idleRelease, forceRestart: true) {
+                let retryEndpoint = retryURL.appendingPathComponent("v1/chat/completions")
+                if let output = try? await sendChatRequest(
+                    model: "s1-mini",
+                    systemPrompt: DictationS1Settings.systemPrompt,
+                    userMessage: userMessage,
+                    transcriptWordCount: transcriptWordCount,
+                    endpointURL: retryEndpoint
+                ) {
+                    return output
+                }
             }
         }
 
@@ -97,6 +110,7 @@ actor DictationS1Polisher {
                     model: effectiveModel,
                     systemPrompt: DictationS1Settings.generalSystemPrompt,
                     userMessage: transcript,
+                    transcriptWordCount: transcriptWordCount,
                     endpointURL: chatURL
                 ) {
                     return output
@@ -164,6 +178,7 @@ actor DictationS1Polisher {
         model: String,
         systemPrompt: String,
         userMessage: String,
+        transcriptWordCount: Int,
         endpointURL: URL
     ) async throws -> String? {
         struct Message: Encodable {
@@ -189,14 +204,14 @@ actor DictationS1Polisher {
             let choices: [Choice]
         }
 
-        let cap = max(128, min(512, userMessage.split(separator: " ").count * 4))
+        let cap = max(24, min(512, transcriptWordCount * 2 + 16))
         let body = RequestBody(
             model: model,
             messages: [
                 Message(role: "system", content: systemPrompt),
                 Message(role: "user", content: userMessage)
             ],
-            temperature: 0.1,
+            temperature: 0.0,
             stream: false,
             max_tokens: cap
         )
@@ -204,6 +219,7 @@ actor DictationS1Polisher {
         var request = URLRequest(url: endpointURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("keep-alive", forHTTPHeaderField: "Connection")
         request.timeoutInterval = 8.0
         request.httpBody = try JSONEncoder().encode(body)
 
