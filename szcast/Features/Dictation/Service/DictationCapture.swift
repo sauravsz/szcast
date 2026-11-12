@@ -27,6 +27,7 @@ final class DictationCapture {
 
     var onLevels: (([Float]) -> Void)?
     var onLimit: (() -> Void)?
+    var onSamples: (@Sendable ([Float]) -> Void)?
 
     private(set) var isBluetooth = false
     private var session: AVCaptureSession?
@@ -67,12 +68,16 @@ final class DictationCapture {
         }
         capture.addInput(input)
         capture.addOutput(output)
+        let samplesHandler = self.onSamples
         let collector = try AudioCollector(
             onLevels: { [weak self] levels in
                 Task { @MainActor [weak self] in self?.onLevels?(levels) }
             },
             onLimit: { [weak self] in
                 Task { @MainActor [weak self] in self?.onLimit?() }
+            },
+            onSamples: { chunk in
+                samplesHandler?(chunk)
             })
         output.setSampleBufferDelegate(collector, queue: collector.queue)
         self.session = capture
@@ -123,12 +128,18 @@ private final class AudioCollector: NSObject, AVCaptureAudioDataOutputSampleBuff
     private var reachedLimit = false
     private let onLevels: @Sendable ([Float]) -> Void
     private let onLimit: @Sendable () -> Void
+    private let onSamples: (@Sendable ([Float]) -> Void)?
 
-    init(onLevels: @escaping @Sendable ([Float]) -> Void, onLimit: @escaping @Sendable () -> Void) throws {
+    init(
+        onLevels: @escaping @Sendable ([Float]) -> Void,
+        onLimit: @escaping @Sendable () -> Void,
+        onSamples: (@Sendable ([Float]) -> Void)? = nil
+    ) throws {
         spectrum = try DictationSpectrum()
         displayedLevels = [Float](repeating: 0, count: DictationSpectrum.barCount)
         self.onLevels = onLevels
         self.onLimit = onLimit
+        self.onSamples = onSamples
     }
 
     func captureOutput(
@@ -150,7 +161,9 @@ private final class AudioCollector: NSObject, AVCaptureAudioDataOutputSampleBuff
         guard count > 0, samples.count < DictationWire.maximumSamples else { return }
         let floats = data.assumingMemoryBound(to: Float.self)
         let accepted = min(count, DictationWire.maximumSamples - samples.count)
-        samples.append(contentsOf: UnsafeBufferPointer(start: floats, count: accepted))
+        let chunk = Array(UnsafeBufferPointer(start: floats, count: accepted))
+        samples.append(contentsOf: chunk)
+        onSamples?(chunk)
         if samples.count == DictationWire.maximumSamples, !reachedLimit {
             reachedLimit = true
             onLimit()

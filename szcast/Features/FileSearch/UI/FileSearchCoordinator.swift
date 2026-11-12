@@ -115,6 +115,18 @@ final class FileSearchCoordinator {
         AppLauncher.showInFinder(result.url)
     }
 
+    func toggleQuickLook(_ result: FileSearchResult) {
+        QuickLookCoordinator.shared.toggle(url: result.url)
+    }
+
+    func updateQuickLookSelection(_ result: FileSearchResult?) {
+        QuickLookCoordinator.shared.updateSelection(url: result?.url)
+    }
+
+    func closeQuickLook() {
+        QuickLookCoordinator.shared.close()
+    }
+
     /// macOS's own share sheet, anchored to the palette's trailing edge so the row stays beside it.
     func share(_ result: FileSearchResult) {
         guard let provider = NSItemProvider(contentsOf: result.url),

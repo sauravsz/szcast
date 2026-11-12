@@ -429,11 +429,12 @@ final class TextInjector {
         targetApp: NSRunningApplication?,
         automaticGeneration: AutomaticGeneration?
     ) async -> Bool {
+        let prefersInstantPaste = settings.dictationPasteMode == .allAtOnce
         let isShortSingleLine =
             text.count <= 100
             && !text.contains("\n")
             && !text.contains("\r")
-        if isShortSingleLine {
+        if isShortSingleLine && !prefersInstantPaste {
             return await deliverUsingUnicodeEvents(
                 text,
                 keywordLength: keywordLength,

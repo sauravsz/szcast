@@ -6,10 +6,33 @@ actor DictationS1Polisher {
 
     private static let session: URLSession = {
         let config = URLSessionConfiguration.ephemeral
-        config.timeoutIntervalForRequest = 4.0
-        config.timeoutIntervalForResource = 5.0
+        config.timeoutIntervalForRequest = 8.0
+        config.timeoutIntervalForResource = 10.0
         return URLSession(configuration: config)
     }()
+
+    /// Clean, unquote, un-think, and capitalize polished output.
+    static func cleanOutput(_ raw: String) -> String? {
+        var trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.contains("<think>") {
+            trimmed = trimmed.replacingOccurrences(of: #"(?s)<think>.*?(?:</think>|$)\s*"#, with: "", options: .regularExpression)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        if trimmed.hasPrefix("```") {
+            trimmed = trimmed.replacingOccurrences(of: #"^```[a-zA-Z]*\n?"#, with: "", options: .regularExpression)
+            trimmed = trimmed.replacingOccurrences(of: #"\n?```$"#, with: "", options: .regularExpression)
+            trimmed = trimmed.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        if (trimmed.hasPrefix("\"") && trimmed.hasSuffix("\"") && trimmed.count >= 2) ||
+           (trimmed.hasPrefix("“") && trimmed.hasSuffix("”") && trimmed.count >= 2) {
+            trimmed = String(trimmed.dropFirst().dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        trimmed = trimmed.replacingOccurrences(of: #"^\s+"#, with: "", options: .regularExpression)
+        if let firstLetterIndex = trimmed.firstIndex(where: { $0.isLetter }) {
+            trimmed.replaceSubrange(firstLetterIndex...firstLetterIndex, with: String(trimmed[firstLetterIndex]).uppercased())
+        }
+        return trimmed.isEmpty ? nil : trimmed
+    }
 
     /// Check if model identifier corresponds to S1-mini.
     static func isS1Mini(_ modelID: String) -> Bool {
@@ -121,7 +144,7 @@ actor DictationS1Polisher {
         var request = URLRequest(url: generateURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = 4.0
+        request.timeoutInterval = 8.0
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let (data, response) = try await Self.session.data(for: request)
@@ -134,8 +157,7 @@ actor DictationS1Polisher {
             return nil
         }
 
-        let trimmed = responseText.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? nil : trimmed
+        return Self.cleanOutput(responseText)
     }
 
     private func sendChatRequest(
@@ -167,7 +189,7 @@ actor DictationS1Polisher {
             let choices: [Choice]
         }
 
-        let cap = max(32, min(384, userMessage.split(separator: " ").count * 3))
+        let cap = max(128, min(512, userMessage.split(separator: " ").count * 4))
         let body = RequestBody(
             model: model,
             messages: [
@@ -182,7 +204,7 @@ actor DictationS1Polisher {
         var request = URLRequest(url: endpointURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = 4.0
+        request.timeoutInterval = 8.0
         request.httpBody = try JSONEncoder().encode(body)
 
         let (data, response) = try await Self.session.data(for: request)
@@ -191,10 +213,10 @@ actor DictationS1Polisher {
         }
 
         let decoded = try JSONDecoder().decode(ResponseBody.self, from: data)
-        if let output = decoded.choices.first?.message.content.trimmingCharacters(in: .whitespacesAndNewlines), !output.isEmpty {
-            return output
+        guard let output = decoded.choices.first?.message.content, !output.isEmpty else {
+            return nil
         }
-        return nil
+        return Self.cleanOutput(output)
     }
 
     private func resolveModel(preferred: String, baseURL: URL) async -> String {

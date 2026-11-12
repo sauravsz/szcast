@@ -121,6 +121,7 @@ FILE_INDEX="$FS/Service/FileIndex.swift $FS/Service/FileIndexSnapshot.swift $FS/
 run file-search-test       $FS/Model/*.swift
 run file-index-test        $FS/Model/*.swift $FILE_INDEX
 run file-search-session-test $FS/Model/*.swift $FS/Service/FileSearchSession.swift $FILE_INDEX
+run quicklook-test         Szcast/Palette/PaletteShortcut.swift Szcast/Features/FileSearch/Service/QuickLookCoordinator.swift
 run menu-search-test       $L/SearchRelevance.swift \
                            Szcast/Features/MenuSearch/Model/*.swift \
                            Szcast/Features/MenuSearch/Service/*.swift
@@ -363,9 +364,10 @@ run fallback-test          Szcast/Features/Launcher/Model/Fallback.swift \
                            Szcast/Platform/LocalizedResource.swift
 run dictionary-test        Szcast/Features/Dictionary/Model/DictionaryEntry.swift \
                            Szcast/Features/Dictionary/Model/DictionaryMarkup.swift
-run dictation-test         Szcast/Platform/ASCIIKeyboardLayout.swift Szcast/Features/HotKeys/Model/HIDKeyMapping.swift Szcast/Features/HotKeys/Model/HyperKey.swift Szcast/Features/HotKeys/Model/DoubleTapModifier.swift Szcast/Features/HotKeys/Model/ModifierKey.swift Szcast/Features/HotKeys/Model/HotKeyBinding.swift Szcast/Features/HotKeys/Service/KeyShortcut.swift Szcast/Features/Dictation/Model/DictationHotkeyPreset.swift Szcast/Features/Dictation/Model/DictationModel.swift Szcast/Features/Dictation/Model/DictationIdleRelease.swift Szcast/Features/Dictation/Model/DictationLanguage.swift Szcast/Features/Dictation/Model/DictationTextFormatter.swift Szcast/Features/Dictation/Model/DictationS1Settings.swift Szcast/Features/Dictation/Model/CustomWord.swift Szcast/Features/Dictation/Model/DictationSnippet.swift Szcast/Features/Dictation/Model/VocabularyPack.swift Szcast/Features/Dictation/Service/DictationDictionaryStore.swift Szcast/Features/Dictation/Service/DictationS1Polisher.swift Szcast/Features/Dictation/Service/DictationS1Downloader.swift Szcast/Features/Dictation/Service/DictationLlamaServerManager.swift Szcast/Platform/AppPaths.swift
+run dictation-test         Szcast/Platform/ASCIIKeyboardLayout.swift Szcast/Features/HotKeys/Model/HIDKeyMapping.swift Szcast/Features/HotKeys/Model/HyperKey.swift Szcast/Features/HotKeys/Model/DoubleTapModifier.swift Szcast/Features/HotKeys/Model/ModifierKey.swift Szcast/Features/HotKeys/Model/HotKeyBinding.swift Szcast/Features/HotKeys/Service/KeyShortcut.swift Szcast/Features/Dictation/Model/DictationHotkeyPreset.swift Szcast/Features/Dictation/Model/DictationModel.swift Szcast/Features/Dictation/Model/DictationIdleRelease.swift Szcast/Features/Dictation/Model/DictationPasteMode.swift Szcast/Features/Dictation/Model/DictationLanguage.swift Szcast/Features/Dictation/Model/DictationTextFormatter.swift Szcast/Features/Dictation/Model/DictationS1Settings.swift Szcast/Features/Dictation/Model/CustomWord.swift Szcast/Features/Dictation/Model/DictationSnippet.swift Szcast/Features/Dictation/Model/VocabularyPack.swift Szcast/Features/Dictation/Service/DictationDictionaryStore.swift Szcast/Features/Dictation/Service/DictationS1Polisher.swift Szcast/Features/Dictation/Service/DictationS1Downloader.swift Szcast/Features/Dictation/Service/DictationLlamaServerManager.swift Szcast/Platform/AppPaths.swift
 run dictation-cue-test     Szcast/Features/Dictation/Service/DictationCueRunner.swift
 run dictation-field-test   Szcast/Features/Dictation/Model/DictationModel.swift \
+                           Szcast/Features/Dictation/Model/DictationPasteMode.swift \
                            Szcast/Features/Dictation/Model/DictationAudioChunks.swift \
                            Szcast/Features/Dictation/Model/DictationMode.swift \
                            Szcast/Features/Dictation/Model/DictationDestination.swift \
@@ -377,6 +379,7 @@ run dictation-field-test   Szcast/Features/Dictation/Model/DictationModel.swift 
                            Szcast/Features/Dictation/Model/VocabularyPack.swift \
                            Szcast/Features/Dictation/Model/DictationSnippet.swift \
                            Szcast/Features/Dictation/Model/DictationHistoryItem.swift \
+                           Szcast/Features/Dictation/Service/DictationLivePreviewRecognizer.swift \
                            Szcast/Features/Dictation/Service/DictationCoordinator.swift \
                            Szcast/Features/Dictation/Service/DictationInsertionContext.swift \
                            Szcast/Features/Dictation/Service/DictationDictionaryStore.swift \
@@ -609,6 +612,7 @@ run slow snippets-test     Szcast/Platform/NotificationToken.swift \
                            Szcast/Features/Snippets/Model/*.swift \
                            Szcast/Features/Snippets/Service/*.swift \
                            Szcast/Features/Snippets/UI/SnippetEditorSession.swift \
+                           Szcast/Features/Dictation/Model/DictationPasteMode.swift \
                            Szcast/Features/TextInjection/Service/*.swift
 run notes-test             Szcast/Platform/Signposts.swift \
                            $L/SearchRelevance.swift \

@@ -15,30 +15,30 @@ struct DictationTest {
         typealias Context = DictationTextFormatter.Context
         check(DictationTextFormatter.format("  Hello. \n", context: nil), "Hello.")
         check(DictationTextFormatter.format("hello", context: Context(before: "", after: "")), "Hello")
-        check(DictationTextFormatter.format("World", context: Context(before: "Hello", after: "")), " world")
-        check(DictationTextFormatter.format("world", context: Context(before: "Hello.", after: "")), " World")
+        check(DictationTextFormatter.format("World", context: Context(before: "Hello", after: "")), "World")
+        check(DictationTextFormatter.format("world", context: Context(before: "Hello.", after: "")), "World")
         check(DictationTextFormatter.format("hello", context: Context(before: "Wait. ", after: "")), "Hello")
         check(
             DictationTextFormatter.format("hello", context: Context(before: "Wait\n  ", after: "")), "Hello")
         check(
             DictationTextFormatter.format("World", context: Context(before: "Hello ", after: "again")),
-            "world ")
-        check(DictationTextFormatter.format("hello", context: Context(before: "(", after: ")")), "hello")
+            "World ")
+        check(DictationTextFormatter.format("hello", context: Context(before: "(", after: ")")), "Hello")
         check(
             DictationTextFormatter.format("application", context: Context(before: "l’", after: "")),
-            "application")
+            "Application")
         check(
             DictationTextFormatter.format(
                 "szcast", context: Context(before: "Use", after: "again"),
-                adaptCapitalization: false), " szcast ")
+                adaptCapitalization: false), "Szcast ")
         check(
             DictationTextFormatter.format(
                 "world", context: Context(before: "Hello.", after: ""),
-                adaptCapitalization: false), " world")
+                adaptCapitalization: false), "World")
         check(
             DictationTextFormatter.format(
                 "hello", context: Context(before: "", after: ""),
-                adaptCapitalization: false), "hello")
+                adaptCapitalization: false), "Hello")
         check(
             DictationTextFormatter.format(
                 "World.", context: Context(before: "Hello ", after: ")"),
@@ -48,7 +48,7 @@ struct DictationTest {
             DictationTextFormatter.format(
                 "world",
                 context: Context(
-                    before: document.prefix(7), after: document.suffix(6))), " World ")
+                    before: document.prefix(7), after: document.suffix(6))), "World ")
         check(DictationTextFormatter.stripEcho(" world peace", after: "Hello world"), " peace")
         check(DictationTextFormatter.stripEcho("theatre tickets", after: "said the"), "theatre tickets")
         check(DictationTextFormatter.stripEcho(" world", after: "Hello world"), "")
@@ -78,6 +78,14 @@ struct DictationTest {
         // S1 Control Line
         let s1 = DictationS1Settings(enabled: true, tone: .formal, structure: .lists, context: .email)
         check(s1.controlLine, "[Styling: formal] [Structure: lists] [Context: email]")
+
+        // S1 Output Cleaning & Normalization
+        check(DictationS1Polisher.cleanOutput("<think>reasoning</think>hello world") ?? "", "Hello world")
+        check(DictationS1Polisher.cleanOutput("<think>unclosed thought\nmore text") ?? "", "")
+        check(DictationS1Polisher.cleanOutput("<think>thought</think>  \"this is a quote\"") ?? "", "This is a quote")
+        check(DictationS1Polisher.cleanOutput("```\nsome code block\n```") ?? "", "Some code block")
+        check(DictationS1Polisher.cleanOutput("   leading spaces and first lower") ?? "", "Leading spaces and first lower")
+        check(DictationS1Polisher.cleanOutput("“curly quotes”") ?? "", "Curly quotes")
 
         // Vocabulary Packs
         check(VocabularyPackType.tech.displayName, "Tech")
@@ -171,6 +179,9 @@ struct DictationTest {
         check(DictationIdleRelease.never.title(locale: locale), "Never")
         check(DictationIdleRelease.oneHour.title(locale: locale), "1 hour")
         check(DictationIdleRelease.oneHour.title(locale: Locale(identifier: "fr_FR")), "1\u{00a0}heure")
+        check(DictationPasteMode.allAtOnce.rawValue, "allAtOnce")
+        check(DictationPasteMode.wordByWord.rawValue, "wordByWord")
+        check(DictationPasteMode.allCases.count.description, "2")
         check(DictationLanguage.english.displayName(locale: locale), "English")
         check(DictationLanguage.english.displayName(locale: Locale(identifier: "de_DE")), "Englisch")
         check(DictationLanguage.english.rawValue, "English")

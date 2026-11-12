@@ -91,6 +91,8 @@ enum SettingsBackupCoverage {
         AppSettingsKey.dictationMicrophone.rawValue: "Names a microphone attached to this Mac.",
         AppSettingsKey.dictationDestination.rawValue:
             "An import must not change where dictated text is sent.",
+        AppSettingsKey.dictationPasteMode.rawValue:
+            "Dictation pasting mode preferences stay local until backup supports them.",
         AppSettingsKey.dictationAdaptsCapitalization.rawValue:
             "Dictation preferences stay local until backup supports them.",
         AppSettingsKey.dictationLiveInsertion.rawValue:

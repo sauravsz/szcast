@@ -13,6 +13,7 @@ final class DictationCoordinator {
     let historyStore = DictationHistoryStore()
     let s1Downloader = DictationS1Downloader()
     private let s1Polisher = DictationS1Polisher()
+    private let livePreviewCoordinator = DictationLivePreviewCoordinator()
     private(set) var lastDictation: String?
     private let capture = DictationCapture()
     private let audioDucker: DictationAudioDucker
@@ -59,6 +60,15 @@ final class DictationCoordinator {
             if pendingStartCue == token { playStartCue() }
         }
         capture.onLimit = { [weak self] in self?.accept() }
+        capture.onSamples = { [weak self] samples in
+            self?.livePreviewCoordinator.feed(samples)
+        }
+        livePreviewCoordinator.onPreviewText = { [weak self] preview in
+            Task { @MainActor [weak self] in
+                guard let self, phase == .listening else { return }
+                panel.state.previewText = preview
+            }
+        }
         self.lastDictation = historyStore.items.first?.text
     }
 
@@ -189,6 +199,8 @@ final class DictationCoordinator {
                 }
                 phase = .listening
                 panel.show()
+                let langIdentifier = settings.dictationLanguage ?? "en-US"
+                livePreviewCoordinator.start(locale: Locale(identifier: langIdentifier))
                 startLiveInsertion(token: current)
                 if finishWhenStarted { accept() }
             } catch {
@@ -224,6 +236,7 @@ final class DictationCoordinator {
         guard phase == .listening else { return }
         phase = .transcribing
         panel.state.phase = .transcribing
+        livePreviewCoordinator.stop()
         field?.isTranscribing = true
         if settings.dictationPlaysSounds {
             audioDucker.restoreImmediately()
@@ -453,6 +466,8 @@ final class DictationCoordinator {
 
     private func reset(cancelTranscription: Bool = true) {
         token = UUID()
+        livePreviewCoordinator.stop()
+        panel.state.previewText = ""
         if cancelTranscription { transcriptionTask?.cancel() }
         liveTask?.cancel()
         liveTask = nil

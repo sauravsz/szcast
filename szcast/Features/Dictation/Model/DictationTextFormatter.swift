@@ -206,26 +206,17 @@ enum DictationTextFormatter {
     // MARK: - Smart Caret Insertion
 
     static func format(_ transcription: String, context: Context?, adaptCapitalization: Bool = true) -> String {
-        var text = transcription.trimmingCharacters(in: .whitespacesAndNewlines)
+        var text = transcription.replacingOccurrences(of: #"^\s+"#, with: "", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return text }
-        if adaptCapitalization, let first = text.first, first.isLetter {
-            let shouldUppercase: Bool
-            if let context {
-                shouldUppercase = context.lastNonWhitespace == nil || context.newParagraph
-                    || context.lastNonWhitespace.map({ ".!?".contains($0) }) == true
-            } else {
-                shouldUppercase = true
-            }
-            let replacement = shouldUppercase ? String(first).uppercased() : String(first).lowercased()
-            text.replaceSubrange(text.startIndex...text.startIndex, with: replacement)
+
+        // Always capitalize the first letter of the transcription and never allow leading space
+        if let firstLetterIndex = text.firstIndex(where: { $0.isLetter }) {
+            text.replaceSubrange(firstLetterIndex...firstLetterIndex, with: String(text[firstLetterIndex]).uppercased())
         }
+
         guard let context else { return text }
-        if let trailing = context.trailing, !trailing.isWhitespace,
-            !"([{/\"'‘’“—-".contains(trailing),
-            let leading = text.first, !".,!?;:)]}/\"'”".contains(leading)
-        {
-            text = " " + text
-        }
+        // Trailing context: add space if inserting before another word
         if let leading = context.following, !leading.isWhitespace,
             let trailing = text.last, !trailing.isWhitespace,
             !".,!?;:)]}/\"'”".contains(leading)

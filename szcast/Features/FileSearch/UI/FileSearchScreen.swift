@@ -88,6 +88,12 @@ struct FileSearchScreen: PaletteScreen {
                     .frame(width: Theme.Size.hairline)
                 FileSearchPreview(result: selected)
             }
+            .onChange(of: selected?.url) { _, _ in
+                core.fileSearchCoordinator.updateQuickLookSelection(selected)
+            }
+            .onDisappear {
+                core.fileSearchCoordinator.closeQuickLook()
+            }
         }
     }
 
@@ -145,6 +151,9 @@ enum FileSearchActionsMenu {
                 PopoverMenuItem(
                     title: String(localized: "Show in Finder"), systemImage: "folder", shortcut: "⌘↵"
                 ) { coordinator.showInFinder(result) },
+                PopoverMenuItem(
+                    title: String(localized: "Quick Look"), systemImage: "eye", shortcut: "⌘Y"
+                ) { coordinator.toggleQuickLook(result) },
                 PopoverMenuItem(title: String(localized: "Share…"), systemImage: "square.and.arrow.up") {
                     coordinator.share(result)
                 }
@@ -178,6 +187,7 @@ enum FileSearchActionsMenu {
         let coordinator = core.fileSearchCoordinator
         switch shortcut {
         case .toggleFavorite: core.favorites.toggle(result)
+        case .quickLook: coordinator.toggleQuickLook(result)
         case .copyFile: coordinator.copyFile(result)
         case .copyName: coordinator.copyName(result)
         case .copyPath: coordinator.copyPath(result)

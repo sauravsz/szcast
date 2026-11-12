@@ -40,13 +40,16 @@ open /Applications/szcast.app
 ## Features
 
 ### Advanced Offline Dictation
+- **Live Speech Preview**: Real-time speech preview displayed dynamically inside the floating glass pill while speaking.
+- **Configurable Pasting Mode**: Choose between instant all-at-once pasting or streaming word-by-word delivery.
 - **Local Speech Recognition**: Multi-root model discovery supporting Nvidia Parakeet Ultra with real-time Apple Neural Engine and Metal GPU execution.
-- **Embedded S1-mini Normalization**: Bundled `llama-server` running `s1-mini-1.0.gguf` on loopback with Metal offload (`-ngl 99`, `-t 4`), sub-300ms inference, idle memory unloading, and Jinja thinking bypass.
+- **Embedded S1-mini Normalization**: Bundled `llama-server` running `s1-mini-1.0.gguf` on loopback with Metal offload (`-ngl 99`, `-t 4`), sub-300ms inference, idle memory unloading, automatic capitalization, leading space stripping, and Jinja thinking bypass.
 - **Vocabulary Packs & Custom Dictionary**: Preloaded domain dictionaries (Tech, Medical, Legal, Brands, Names) with phonetic alias matching and post-polish canonicalization.
 - **Dictation Hotkey Presets**: Instant triggers for `Fn key`, `⌥Space`, `⌃Space`, or custom keybinds.
 - **Audio Intelligence**: Automatic background audio ducking (Spotify and Apple Music), spoken emoji/punctuation expansion, filler word scrubbing, and compact live audio level meters.
 
 ### Launcher & Navigation
+- **Quick Look File Preview (`⌘Y`)**: Native macOS floating Quick Look preview for any file in File Search or Launcher, updating dynamically as you navigate results.
 - **Dynamic Typography Scaling**: Real-time font slider (12pt to 22pt) across row labels, accessory details, and AI chat.
 - **Instant Alias Triggers**: Type any alias followed by Space to expand and run commands immediately.
 - **Quicklink Favicons**: Auto-fetches and caches web favicons via Google, DuckDuckGo, and origin `/favicon.ico`.

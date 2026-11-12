@@ -2101,6 +2101,7 @@ final class ClipboardManager {
 @MainActor
 final class AppSettings {
     var snippetsEnabled = false
+    var dictationPasteMode = DictationPasteMode.allAtOnce
 }
 
 enum Permissions {

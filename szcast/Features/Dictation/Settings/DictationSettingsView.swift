@@ -302,6 +302,15 @@ struct DictationSettingsView: View {
                     SettingsRowTitle(.dictationOutput, "When finished")
                 }
 
+                Picker(selection: $bSettings.dictationPasteMode) {
+                    ForEach(DictationPasteMode.allCases) { mode in
+                        Text(mode.title).tag(mode)
+                    }
+                } label: {
+                    SettingsRowTitle(.dictationOutput, "Pasting method")
+                    Text(settings.dictationPasteMode.summary)
+                }
+
                 Toggle(isOn: $bSettings.dictationAutoCopyToClipboard) {
                     SettingsRowTitle(.dictationOutput, "Auto-copy to clipboard")
                     Text("Copies dictation when automatic pasting is skipped or unavailable.")

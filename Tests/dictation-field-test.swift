@@ -413,6 +413,7 @@ final class AppSettings {
     var dictationS1Structure = S1Structure.prose
     var dictationS1Context = S1Context.general
     var dictationS1IdleRelease = DictationIdleRelease.tenMinutes
+    var dictationPasteMode = DictationPasteMode.allAtOnce
 }
 
 enum HotKeyAction { case dictation, dictationAddWord, dictationPasteLast, dictationCopyLast }
@@ -431,6 +432,7 @@ final class HotKeyManager {
 final class DictationCapture {
     static weak var latest: DictationCapture?
     var onLevels: (([Float]) -> Void)?
+    var onSamples: (@Sendable ([Float]) -> Void)?
     var onLimit: (() -> Void)?
     var isRecording = false
     var isBluetooth = false
@@ -478,6 +480,7 @@ final class DictationPanelController {
     final class State {
         var phase = Phase.listening
         var levels: [Float] = []
+        var previewText: String = ""
     }
     static weak var latest: DictationPanelController?
     let state = State()

@@ -558,6 +558,12 @@ struct LauncherScreen: PaletteScreen {
             files: fileSection,
             fallbacks: fallbackSection
         )
+        .onChange(of: file(at: selection)?.url) { _, _ in
+            core.fileSearchCoordinator.updateQuickLookSelection(file(at: selection))
+        }
+        .onDisappear {
+            core.fileSearchCoordinator.closeQuickLook()
+        }
     }
 
     private var fileSection: LauncherList.FileSection? {
