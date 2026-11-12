@@ -50,18 +50,20 @@ Fork of [Tinycast](https://github.com/abue-ammar/tinycast) by Abue Ammar, rename
   - Dictation Floating Pill UI Fix: Fixed waveform overflow in `DictationPanel.swift` by unifying processing wave to 10 matching capsules within a 55px container with traveling accent wave animation. Added `.fixedSize` to prevent status text truncation and widened pill NSPanel to 210px with zero overlap.
   - macOS Version Cleanup: Removed deprecated `/Applications/Tinycast.app` and old DerivedData debug builds; cleanly installed and registered the latest signed `szcast.app` at `/Applications/szcast.app`.
 
-- **Release 1.2.0**:
+- **Release 1.0.6**:
+  - Sequential Releases Normalization: Re-sequenced GitHub releases into clean chronological semantic versions: `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3` (defaults on & chords), `v1.0.4` (store-only extensions & background prompt), `v1.0.5` (font scaling, rich note images, alias space, snippets tags), and `v1.0.6` (latest). Scrapped all binaries from older releases so only `v1.0.6` holds `.dmg` and `.zip` distribution bundles.
+  - Quick Look File Preview (`⌘Y`): Built native macOS `QLPreviewPanel` coordinator in `QuickLookCoordinator.swift` integrated with `FileSearchScreen` and `LauncherScreen`. Real-time selection tracking updates the preview as arrow keys navigate; dismisses with `⌘Y`, `Escape`, or palette dismiss.
+  - EnviousWispr Live Speech Dictation Preview: Real-time partial transcript preview rendered live inside the floating dictation pill while speaking via on-device speech recognition (`SFSpeechRecognizer` / `DictationLivePreviewRecognizer`), with fallback to audio metering and smooth transition to final Parakeet + S1 transcription.
+  - Configurable Pasting Modes: Added `dictationPasteMode` (`.instant` vs `.wordByWord`), allowing transcripts to be pasted all at once or word-by-word with 35ms cadence.
+  - Auto-Capitalization & Leading Space Elimination: Capitalized initial letters across direct transcripts and S1 polish outputs; stripped unwanted leading whitespace before the first character.
+  - Persistent Hot Models: Set `dictationIdleRelease` and `dictationS1IdleRelease` to `.never` by default so models remain hot in memory.
   - Full-Bleed Continuous Superellipse Brand Icon: Inset mathematical superellipse crop (`a=794, b=786, p=4.2`) eliminating 100% of corner teeth, checkerboard bleeding, and bottom line artifacts across all 10 macOS resolutions, AppIcon.appiconset, szcast.icns, and web assets.
-  - S1-mini Speech Normalization Speed Optimization: Startup prewarming in `AppCore.start` and activation prewarming in `DictationCoordinator.setEnabled`; pinned `-t 4` high-performance cores, `-ngl 99` Metal GPU offloading, `-c 512` context window, and adaptive token limits (`max_tokens`) cutting inference latency to ~250ms on Apple Silicon M1/M2/M3/M4.
-  - Floating Dictation Pill UI: Fixed 210px panel frame, 10-capsule accent traveling wave, `.fixedSize()` status label, eliminating all waveform overlap and label truncation.
   - Dictation Hotkey Presets: Native 1-click presets for `Fn key`, `Option+Space`, `Control+Space`, and custom shortcut recorder.
-  - Cleaned Up Legacy Tags: Removed 134 older upstream `v0.*` Tinycast tags from both local and remote repository.
-  - Streamlined Documentation & Web Portal: Rewrote `README.md` and `site/index.html` to be direct and concise.
 
 ## Active State & Next Steps
-- **Active State**: Version 1.2.0 built, self-signed, release DMG generated (`build/szcast-1.2.0.dmg`), tagged as `v1.2.0`, and installed in `/Applications/szcast.app`. Uploaded updated `build/szcast-1.2.0.dmg` and `build/szcast-1.2.0.zip` to GitHub Release `v1.2.0`. Fixed transcription stalling (pipe buffer deadlock in `llama-server`, CoreML GPU compilation delay, bounded 4s request timeouts) and set `dictationIdleRelease` and `dictationS1IdleRelease` to `.never` by default so models remain hot in memory. All 117 test harnesses pass.
+- **Active State**: Version 1.0.6 built, self-signed, release DMG and zip generated (`build/szcast-1.0.6.dmg`, `build/szcast-1.0.6.zip`), tagged as `v1.0.6`, pushed to origin, and installed in `/Applications/szcast.app`. GitHub releases cleanly re-sequenced (`v1.0.0` - `v1.0.6`) with older binaries deleted. All 118 test harnesses pass.
 - **Immediate Next Steps**:
-  1. Have user test dictation speed (~250ms inference) and verified pill UI in daily workflow.
-  2. Confirm pristine icon rendering across Dock, Launchpad, and App Switcher.
+  1. Have tester verify `⌘Y` Quick Look preview in File Search and Launcher.
+  2. Have tester verify EnviousWispr live speech transcription preview inside the floating pill and instant paste mode.
 
 Attribution: AGPL-3.0. Copyright © 2026 Abue Ammar in LICENSE; NOTICE.md keeps third-party material. Fork of Tinycast; no affiliation implied.
