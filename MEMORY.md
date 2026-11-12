@@ -66,9 +66,9 @@ Fork of [Tinycast](https://github.com/abue-ammar/tinycast) by Abue Ammar, rename
   - Dictation Hotkey Presets: Native 1-click presets for `Fn key`, `Option+Space`, `Control+Space`, and custom shortcut recorder.
 
 ## Active State & Next Steps
-- **Active State**: Version 1.0.6 built, self-signed, release DMG and zip generated (`build/szcast-1.0.6.dmg`, `build/szcast-1.0.6.zip`), tagged as `v1.0.6`, pushed to origin, and installed in `/Applications/szcast.app`. GitHub releases cleanly re-sequenced (`v1.0.0` - `v1.0.6`) with older binaries deleted. Search bar collision and S1 cleanup latency optimizations deployed and uploaded to GitHub Release `v1.0.6`. All 118 test harnesses pass.
+- **Active State**: Version 1.0.6 built, self-signed, release DMG and zip generated (`build/szcast-1.0.6.dmg`, `build/szcast-1.0.6.zip`), installed in `/Applications/szcast.app`. Single-shot paste after S1-mini cleanup enforced; legacy document streaming modes removed; code files sanitized; waiting for user permission to push release assets. All 118 test harnesses pass.
 - **Immediate Next Steps**:
-  1. Have tester verify `⌘Y` Quick Look preview in File Search and Launcher.
-  2. Have tester verify EnviousWispr live speech transcription preview inside the floating pill, instant paste mode, and fast S1 cleanup.
+  1. Await user confirmation/permission before publishing `v1.0.6` tag/release to GitHub.
+  2. Verify live dictation preview in floating pill and instant paste after S1-mini fine-touching in real-world apps.
 
 Attribution: AGPL-3.0. Copyright © 2026 Abue Ammar in LICENSE; NOTICE.md keeps third-party material. Fork of Tinycast; no affiliation implied.
