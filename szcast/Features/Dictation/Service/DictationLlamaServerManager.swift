@@ -68,8 +68,6 @@ final class DictationLlamaServerManager {
     static func resolveGGUFModel() -> URL? {
         let home = FileManager.default.homeDirectoryForCurrentUser
         let candidates = [
-            home.appendingPathComponent("Library/Application Support/EnviousWispr/Models/s1-mini/s1-mini-1.0.gguf"),
-            home.appendingPathComponent("Library/Application Support/EnviousWispr/Models/s1-mini-1.0.gguf"),
             home.appendingPathComponent("Library/Application Support/szcast/Models/s1-mini/s1-mini-1.0.gguf"),
             home.appendingPathComponent("Library/Application Support/szcast/Models/s1-mini-1.0.gguf"),
             AppPaths.caches().appendingPathComponent("Dictation/s1-mini/s1-mini-1.0.gguf")
@@ -94,7 +92,6 @@ final class DictationLlamaServerManager {
         let home = FileManager.default.homeDirectoryForCurrentUser
         let candidates = [
             home.appendingPathComponent("AIOS/Github Repos/szcast/szcast/Resources/llama-server").path,
-            home.appendingPathComponent("AIOS/Github Repos/EnviousWispr/Sources/EnviousWispr/Resources/llama-server").path,
             home.appendingPathComponent(".lmstudio/extensions/backends/llama.cpp-mac-arm64-apple-metal-advsimd-2.60.0/llama-server").path,
             home.appendingPathComponent(".lmstudio/extensions/backends/llama.cpp-mac-arm64-apple-metal-advsimd-2.55.0/llama-server").path,
             "/opt/homebrew/bin/llama-server",

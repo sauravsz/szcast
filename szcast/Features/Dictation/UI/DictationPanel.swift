@@ -107,7 +107,7 @@ private struct DictationPanelView: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .frame(minWidth: 120, maxWidth: 192, minHeight: 36, maxHeight: 36)
+        .frame(minWidth: 160, maxWidth: state.previewText.isEmpty ? 192 : 360, minHeight: 36, maxHeight: 36)
         .glassEffect(.regular, in: .capsule)
         .overlay(
             Capsule()
@@ -164,6 +164,21 @@ final class DictationPanelController {
         panel.orderFrontRegardless()
 
         installEscapeMonitors()
+    }
+
+    func updatePreviewText(_ text: String) {
+        state.previewText = text
+        guard let panel, let screen = panel.screen ?? NSScreen.main else { return }
+        let targetWidth: CGFloat = text.isEmpty ? 192 : min(360, max(192, CGFloat(text.count * 7 + 85)))
+        guard abs(panel.frame.width - targetWidth) > 4 else { return }
+        let currentFrame = panel.frame
+        let newX = screen.visibleFrame.midX - targetWidth / 2
+        let newFrame = NSRect(x: newX, y: currentFrame.origin.y, width: targetWidth, height: 36)
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.12
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            panel.animator().setFrame(newFrame, display: true)
+        }
     }
 
     func close() {

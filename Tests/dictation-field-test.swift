@@ -12,9 +12,6 @@ struct DictationFieldTest {
         try await testWindowClose()
         try await testQueuedCancellation(closing: false)
         try await testQueuedCancellation(closing: true)
-        try await testLiveDeliveryFailure()
-        try await testQueuedLiveChunk(cancelling: false)
-        try await testQueuedLiveChunk(cancelling: true)
         try await testSoundsOff()
         try await testSounds()
         try await testCancelSilently()
@@ -134,70 +131,6 @@ struct DictationFieldTest {
         expect(first.text == "First draft", "Queued speech cannot write into its canceled draft")
         expect(state.chat.text == (closing ? "First draft" : "New chat"), "Queued speech cannot cross chats")
         expect(fixture.messages.isEmpty, "Discarding queued speech is silent")
-    }
-
-    private static func testLiveDeliveryFailure() async throws {
-        let fixture = Fixture()
-        fixture.settings.dictationDestination = .paste
-        fixture.settings.dictationLiveInsertion = true
-        _ = fixture.coordinator
-        fixture.capture.snapshotSamples =
-            [Float](repeating: 0.5, count: 32_000)
-            + [Float](repeating: 0, count: 16_000)
-        fixture.coordinator.pressed()
-        try await waitLong { fixture.capture.isRecording }
-        try await waitLong { fixture.models.pending != nil }
-        fixture.models.finish("Spoken words")
-        try await wait { fixture.models.finished }
-        fixture.coordinator.accept()
-        try await waitLong { !fixture.messages.isEmpty }
-        expect(
-            fixture.messages == ["Couldn't paste some dictation into this app"],
-            "A failed live chunk is reported once at finish, never silently lost")
-        expect(Paster.copies.isEmpty, "A paste destination copies nothing on the way out")
-    }
-
-    private static func testQueuedLiveChunk(cancelling: Bool) async throws {
-        let fixture = Fixture()
-        fixture.settings.dictationLiveInsertion = true
-        let editor = ComposerTextView()
-        var release: CheckedContinuation<Void, Never>?
-        fixture.queue.enqueue(isAutomatic: false) {
-            await withCheckedContinuation { release = $0 }
-        }
-        try await wait { release != nil }
-        try await fixture.start(into: editor)
-        fixture.capture.snapshotSamples =
-            [Float](repeating: 0.5, count: 32_000)
-            + [Float](repeating: 0, count: 16_000)
-        try await waitLong { fixture.models.pending != nil }
-        fixture.models.finish("Spoken words")
-        try await wait { fixture.models.finished }
-
-        guard cancelling else {
-            fixture.coordinator.toggle(into: editor)
-            release?.resume()
-            try await wait { fixture.coordinator.field == nil }
-            expect(editor.string == "Spoken words", "Finishing lets a queued live chunk land")
-            expect(fixture.messages.isEmpty, "A landed live chunk reports nothing")
-            return
-        }
-        fixture.coordinator.cancel(in: editor)
-        release?.resume()
-        await fixture.queue.drain()
-        try await wait { !fixture.capture.isRecording }
-        fixture.settings.dictationLiveInsertion = false
-        // Stopping ignores a toggle, so retry until the cancelled session has wound down.
-        try await wait {
-            if fixture.coordinator.field == nil { fixture.coordinator.toggle(into: editor) }
-            return fixture.capture.isRecording
-        }
-        fixture.coordinator.toggle(into: editor)
-        try await wait { fixture.models.pending != nil }
-        fixture.models.finish("More words")
-        try await wait { fixture.coordinator.field == nil }
-        expect(editor.string == "More words", "Cancelling drops a queued live chunk")
-        expect(fixture.messages.isEmpty, "A chunk dropped by cancelling never fails the next session")
     }
 
     private static func testSoundsOff() async throws {
@@ -491,6 +424,7 @@ final class DictationPanelController {
     init() { Self.latest = self }
     func show() { isVisible = true }
     func close() { isVisible = false }
+    func updatePreviewText(_ text: String) { state.previewText = text }
 }
 
 @MainActor
@@ -532,7 +466,10 @@ enum Paster {
     static let szcastEventTag: Int64 = 0x54494E59
     static var copies: [String] = []
     static func copyPlainText(_ text: String) { copies.append(text) }
-    static func pasteString(_ text: String, previousApp: NSRunningApplication?) { copies.append(text) }
+    static func pasteString(_ text: String, previousApp: NSRunningApplication?, completion: (@MainActor () -> Void)? = nil) {
+        copies.append(text)
+        completion?()
+    }
     static func postCommandV(toPid pid: pid_t? = nil) {}
     static func postCommandC(toPid pid: pid_t? = nil) {}
 }

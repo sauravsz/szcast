@@ -223,8 +223,8 @@ final class DictationDictionaryStore {
                 }
                 return count
             }
-            // EnviousWispr wrapper format { "words": [...] }
-            struct EnviousWisprWordsFile: Decodable {
+            // Object wrapper format { "words": [...] }
+            struct WordsFileWrapper: Decodable {
                 struct RawWord: Decodable {
                     let canonical: String
                     let aliases: [String]?
@@ -232,7 +232,7 @@ final class DictationDictionaryStore {
                 }
                 let words: [RawWord]
             }
-            if let wrapper = try? JSONDecoder().decode(EnviousWisprWordsFile.self, from: data) {
+            if let wrapper = try? JSONDecoder().decode(WordsFileWrapper.self, from: data) {
                 for w in wrapper.words {
                     addWord(canonical: w.canonical, aliases: w.aliases ?? [], category: w.category ?? "general")
                     count += 1
@@ -290,14 +290,6 @@ final class DictationDictionaryStore {
                 Self.logger.error("Failed to load custom words: \(error.localizedDescription)")
             }
         }
-
-        // Seed from EnviousWispr custom-words.json if available
-        let enviousWisprURL = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Application Support/EnviousWispr/custom-words.json")
-        if FileManager.default.fileExists(atPath: enviousWisprURL.path),
-           let content = try? String(contentsOf: enviousWisprURL, encoding: .utf8) {
-            _ = importFromText(content)
-        }
     }
 
     private func save() {
@@ -335,9 +327,6 @@ final class DictationDictionaryStore {
         }()
 
         let appSupportPacksURL = AppPaths.applicationSupport().appendingPathComponent("Packs")
-        let enviousWisprBundleURL = URL(fileURLWithPath: "/Applications/EnviousWispr.app/Contents/Resources/EnviousWispr_EnviousWisprPostProcessing.bundle/Contents/Resources")
-        let enviousWisprSupportURL = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Application Support/EnviousWispr/Resources/Packs")
 
         for pack in VocabularyPackType.allCases {
             var loaded = false
@@ -348,9 +337,7 @@ final class DictationDictionaryStore {
                 Bundle.main.url(forResource: pack.rawValue, withExtension: "json", subdirectory: "Packs"),
                 Bundle.main.url(forResource: pack.rawValue, withExtension: "json"),
                 devTreeURL?.appendingPathComponent(filename),
-                appSupportPacksURL.appendingPathComponent(filename),
-                enviousWisprBundleURL.appendingPathComponent(filename),
-                enviousWisprSupportURL.appendingPathComponent(filename)
+                appSupportPacksURL.appendingPathComponent(filename)
             ]
 
             for candidate in candidates.compactMap({ $0 }) {

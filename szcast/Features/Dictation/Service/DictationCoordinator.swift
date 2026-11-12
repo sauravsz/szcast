@@ -27,10 +27,6 @@ final class DictationCoordinator {
     @ObservationIgnored private var enableTask: Task<Void, Never>?
     @ObservationIgnored private var startTask: Task<Void, Never>?
     @ObservationIgnored private var transcriptionTask: Task<Void, Never>?
-    @ObservationIgnored private var liveTask: Task<Void, Never>?
-    @ObservationIgnored private var liveOffset = 0
-    @ObservationIgnored private var liveText = ""
-    @ObservationIgnored private var liveDeliveryFailed = false
     @ObservationIgnored private var stopTask: Task<Void, Never>?
     @ObservationIgnored private var cueTask: Task<Void, Never>?
     @ObservationIgnored private var pendingStartCue: UUID?
@@ -66,7 +62,7 @@ final class DictationCoordinator {
         livePreviewCoordinator.onPreviewText = { [weak self] preview in
             Task { @MainActor [weak self] in
                 guard let self, phase == .listening else { return }
-                panel.state.previewText = preview
+                panel.updatePreviewText(preview)
             }
         }
         self.lastDictation = historyStore.items.first?.text
@@ -95,6 +91,10 @@ final class DictationCoordinator {
             }
             settings.dictationEnabled = true
             if settings.dictationDestination.pastes { Permissions.ensureAccessibility() }
+            if settings.dictationLivePreviewEnabled {
+                let lang = settings.dictationLanguage ?? "en-US"
+                livePreviewCoordinator.prewarm(locale: Locale(identifier: lang))
+            }
             if settings.dictationS1Enabled {
                 DictationLlamaServerManager.shared.prewarm(idleRelease: settings.dictationS1IdleRelease)
             }
@@ -165,6 +165,10 @@ final class DictationCoordinator {
     func prewarm() {
         guard settings.dictationEnabled else { return }
         models.prewarm(settings.dictationModel)
+        if settings.dictationLivePreviewEnabled {
+            let lang = settings.dictationLanguage ?? "en-US"
+            livePreviewCoordinator.prewarm(locale: Locale(identifier: lang))
+        }
         if settings.dictationS1Enabled {
             DictationLlamaServerManager.shared.prewarm(idleRelease: settings.dictationS1IdleRelease)
         }
@@ -184,8 +188,6 @@ final class DictationCoordinator {
         let current = token
         phase = .starting
         finishWhenStarted = false
-        liveOffset = 0
-        liveText = ""
         self.target = target
         pendingStartCue = settings.dictationPlaysSounds ? current : nil
         if pendingStartCue == nil { audioDucker.begin(mode: settings.dictationOtherAudioMode) }
@@ -203,7 +205,6 @@ final class DictationCoordinator {
                     let langIdentifier = settings.dictationLanguage ?? "en-US"
                     livePreviewCoordinator.start(locale: Locale(identifier: langIdentifier))
                 }
-                startLiveInsertion(token: current)
                 if finishWhenStarted { accept() }
             } catch {
                 guard token == current else { return }
@@ -238,6 +239,7 @@ final class DictationCoordinator {
         guard phase == .listening else { return }
         phase = .transcribing
         panel.state.phase = .transcribing
+        panel.updatePreviewText("")
         livePreviewCoordinator.stop()
         field?.isTranscribing = true
         if settings.dictationPlaysSounds {
@@ -246,34 +248,23 @@ final class DictationCoordinator {
         } else {
             audioDucker.end(mode: settings.dictationOtherAudioMode)
         }
-        // A cancelled chunk keeps its audio: the final pass starts at liveOffset, losing nothing.
-        let pendingLive = liveTask
-        liveTask = nil
-        pendingLive?.cancel()
+
         let current = token
         let model = settings.dictationModel
         let language = settings.dictationLanguage
         transcriptionTask = Task { [weak self] in
             guard let self else { return }
-            await pendingLive?.value
             let samples = await capture.stop()
-            // Queued chunks land first: reset would drop them, and the remainder spaces after them.
-            if !liveText.isEmpty { await injector.drain() }
             guard token == current else { return }
-            let tail = liveOffset < samples.count ? Array(samples[liveOffset...]) : []
             let destination = field == nil ? settings.dictationDestination : .paste
-            if tail.count < 1_600 {
-                if liveText.isEmpty {
-                    reset(cancelTranscription: false)
-                    showMessage(String(localized: "No speech was recorded"), .danger)
-                } else {
-                    finishWithoutRemainder(destination)
-                }
+            if samples.count < 1_600 {
+                reset(cancelTranscription: false)
+                showMessage(String(localized: "No speech was recorded"), .danger)
                 return
             }
             do {
                 let transcript = try await models.transcribe(
-                    tail, model: model,
+                    samples, model: model,
                     language: language)
                 guard token == current else { return }
 
@@ -290,6 +281,10 @@ final class DictationCoordinator {
                 processed = dictionaryStore.applyDictionaryAndPacks(processed)
                 processed = dictionaryStore.applySnippets(processed)
 
+                if settings.dictationLivePreviewEnabled {
+                    let lang = settings.dictationLanguage ?? "en-US"
+                    livePreviewCoordinator.prewarm(locale: Locale(identifier: lang))
+                }
                 if settings.dictationS1Enabled {
                     let s1 = DictationS1Settings(
                         enabled: true,
@@ -311,80 +306,40 @@ final class DictationCoordinator {
                     processed, context: context,
                     adaptCapitalization: settings.dictationAdaptsCapitalization)
                 let target = self.target
-                let assembled = liveText + text
-                guard !text.isEmpty else { finishWithoutRemainder(destination); return }
+                guard !text.isEmpty else {
+                    reset(cancelTranscription: false)
+                    return
+                }
 
-                lastDictation = assembled
-                historyStore.add(text: assembled, rawText: transcript, duration: Double(tail.count) / 16000.0)
+                lastDictation = text
+                historyStore.add(text: text, rawText: transcript, duration: Double(samples.count) / 16000.0)
 
                 panel.close()
                 if destination.pastes {
-                    switch settings.dictationPasteMode {
-                    case .allAtOnce:
-                        // All at once: instant paste via direct editor injection or pasteboard Command+V
-                        let app = target?.externalApp ?? NSWorkspace.shared.frontmostApplication
-                        if let editor = target?.ownEditor {
-                            injector.deliver(
-                                InjectedText(text), target: target, expectedKeyword: nil,
-                                keywordLength: 0, automaticGeneration: nil,
-                                isValid: { [weak self] in self?.token == current },
-                                onDelivered: { [weak self] in
-                                    guard let self, token == current else { return }
-                                    if destination.copies || settings.dictationAutoCopyToClipboard {
-                                        Paster.copyPlainText(assembled)
-                                    }
-                                    reset(cancelTranscription: false)
-                                },
-                                onFailed: { [weak self] in
-                                    guard let self, token == current else { return }
-                                    reset(cancelTranscription: false)
-                                    showMessage(String(localized: "Couldn't paste dictation into this app"), .danger)
-                                })
-                        } else {
-                            Paster.pasteString(text, previousApp: app)
+                    // All at once: instant paste via direct editor injection or pasteboard Command+V
+                    let app = target?.externalApp ?? NSWorkspace.shared.frontmostApplication
+                    if let editor = target?.ownEditor {
+                        injector.deliver(
+                            InjectedText(text), target: target, expectedKeyword: nil,
+                            keywordLength: 0, automaticGeneration: nil,
+                            isValid: { [weak self] in self?.token == current },
+                            onDelivered: { [weak self] in
+                                guard let self, token == current else { return }
+                                if destination.copies || settings.dictationAutoCopyToClipboard {
+                                    Paster.copyPlainText(text)
+                                }
+                                reset(cancelTranscription: false)
+                            },
+                            onFailed: { [weak self] in
+                                guard let self, token == current else { return }
+                                reset(cancelTranscription: false)
+                                showMessage(String(localized: "Couldn't paste dictation into this app"), .danger)
+                            })
+                    } else {
+                        Paster.pasteString(text, previousApp: app) { [weak self] in
+                            guard let self, token == current else { return }
                             if destination.copies || settings.dictationAutoCopyToClipboard {
-                                Paster.copyPlainText(assembled)
-                            }
-                            reset(cancelTranscription: false)
-                        }
-                    case .wordByWord:
-                        // Word-by-word: typewriter stream pasting (35ms cadence)
-                        Task { [weak self] in
-                            guard let self else { return }
-                            let words = text.split(separator: " ", omittingEmptySubsequences: false)
-                            for (index, word) in words.enumerated() {
-                                guard token == current else { break }
-                                let chunk = (index == 0 ? "" : " ") + String(word)
-                                injector.deliver(
-                                    InjectedText(chunk), target: target, expectedKeyword: nil,
-                                    keywordLength: 0, automaticGeneration: nil,
-                                    isValid: { [weak self] in self?.token == current },
-                                    onDelivered: {},
-                                    onFailed: {})
-                                try? await Task.sleep(for: .milliseconds(35))
-                            }
-                            if destination.copies || settings.dictationAutoCopyToClipboard {
-                                Paster.copyPlainText(assembled)
-                            }
-                            reset(cancelTranscription: false)
-                        }
-                    case .characterByCharacter:
-                        // Character-by-character: typewriter stream pasting (15ms cadence)
-                        Task { [weak self] in
-                            guard let self else { return }
-                            for char in text {
-                                guard token == current else { break }
-                                let chunk = String(char)
-                                injector.deliver(
-                                    InjectedText(chunk), target: target, expectedKeyword: nil,
-                                    keywordLength: 0, automaticGeneration: nil,
-                                    isValid: { [weak self] in self?.token == current },
-                                    onDelivered: {},
-                                    onFailed: {})
-                                try? await Task.sleep(for: .milliseconds(15))
-                            }
-                            if destination.copies || settings.dictationAutoCopyToClipboard {
-                                Paster.copyPlainText(assembled)
+                                Paster.copyPlainText(text)
                             }
                             reset(cancelTranscription: false)
                         }
@@ -401,81 +356,10 @@ final class DictationCoordinator {
         }
     }
 
-    private func finishWithoutRemainder(_ destination: DictationDestination) {
-        let text = liveText
-        let lost = liveDeliveryFailed
-        reset(cancelTranscription: false)
-        if !text.isEmpty, destination.copies { Paster.copyPlainText(text) }
-        if lost, destination.pastes {
-            showMessage(String(localized: "Couldn't paste some dictation into this app"), .danger)
-        }
-    }
-
-    /// Chunks already pasted only make sense where text is pasted at all.
-    private var insertionPastes: Bool {
-        field == nil ? settings.dictationDestination.pastes : true
-    }
-
-    /// Chunk spacing from the caret, else from pasted text, so chunks never glue without a space.
+    /// Chunk spacing from the caret, else nil.
     private func insertionContext() -> DictationTextFormatter.Context? {
         if let context = DictationInsertionContext.read(in: target) { return context }
-        guard !liveText.isEmpty else { return nil }
-        return DictationTextFormatter.Context(before: liveText.suffix(512), after: Substring())
-    }
-
-    private func startLiveInsertion(token current: UUID) {
-        // Live insertion into documents only runs when explicitly configured
-        guard insertionPastes, settings.dictationLiveInsertion else { return }
-        liveTask = Task { [weak self] in
-            guard let self else { return }
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(2))
-                guard !Task.isCancelled, token == current, phase == .listening else { return }
-                guard settings.dictationLiveInsertion else { return }
-                await flushLiveChunk(token: current)
-            }
-        }
-    }
-
-    private func flushLiveChunk(token current: UUID) async {
-        let snapshot = capture.snapshot()
-        guard token == current else { return }
-        let fresh = snapshot.count - liveOffset
-        guard fresh >= DictationAudioChunks.minimumLiveSamples else { return }
-        guard
-            fresh >= DictationAudioChunks.maximumLiveSamples
-                || DictationAudioChunks.endsInPause(in: snapshot, from: liveOffset, to: snapshot.count)
-        else { return }
-        let end = DictationAudioChunks.liveCut(in: snapshot, from: liveOffset, to: snapshot.count)
-        guard end > liveOffset else { return }
-        let overlap = DictationAudioChunks.liveOverlapStart(in: snapshot, before: liveOffset)
-        let segment = Array(snapshot[overlap..<end])
-        do {
-            let transcript = try await models.transcribe(
-                segment, model: settings.dictationModel,
-                language: settings.dictationLanguage)
-            guard token == current else { return }
-            liveOffset = end
-            let context = insertionContext()
-            let text = DictationTextFormatter.format(
-                transcript, context: context,
-                adaptCapitalization: settings.dictationAdaptsCapitalization)
-            let stripped = DictationTextFormatter.stripEcho(text, after: liveText)
-            guard !stripped.isEmpty else { return }
-            liveText += stripped
-            let target = self.target
-            injector.deliver(
-                InjectedText(stripped), target: target, expectedKeyword: nil,
-                keywordLength: 0, automaticGeneration: nil,
-                isValid: { [weak self] in self?.token == current },
-                onDelivered: {},
-                onFailed: { [weak self] in
-                    guard let self, token == current else { return }
-                    liveDeliveryFailed = true
-                })
-        } catch {
-            // The final pass starts at liveOffset, so it covers what this chunk left behind.
-        }
+        return nil
     }
 
     func cancel(in editor: any InjectableTextView) {
@@ -487,7 +371,6 @@ final class DictationCoordinator {
         guard phase != .stopping, phase != .idle || !settings.dictationEnabled else { return }
         let pendingStart = startTask
         let pendingTranscription = transcriptionTask
-        let pendingLive = liveTask
         reset()
         phase = .stopping
         let current = token
@@ -496,7 +379,6 @@ final class DictationCoordinator {
             await pendingStart?.value
             _ = await capture.stop()
             await pendingTranscription?.value
-            await pendingLive?.value
             if !settings.dictationEnabled { await models.stop() }
             if token == current { phase = .idle; stopTask = nil }
         }
@@ -517,11 +399,6 @@ final class DictationCoordinator {
         livePreviewCoordinator.stop()
         panel.state.previewText = ""
         if cancelTranscription { transcriptionTask?.cancel() }
-        liveTask?.cancel()
-        liveTask = nil
-        liveOffset = 0
-        liveText = ""
-        liveDeliveryFailed = false
         startTask = nil
         transcriptionTask = nil
         phase = .idle

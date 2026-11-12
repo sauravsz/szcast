@@ -55,12 +55,17 @@ enum Paster {
 
     /// String counterpart of `paste`, marker-stamped so the text doesn't re-enter history.
     @MainActor
-    static func pasteString(_ text: String, previousApp: NSRunningApplication?) {
+    static func pasteString(_ text: String, previousApp: NSRunningApplication?, completion: (@MainActor () -> Void)? = nil) {
         let app = previousApp ?? NSWorkspace.shared.frontmostApplication
         writeString(text)
         app?.activate()
         DispatchQueue.main.asyncAfter(deadline: .now() + activationDelay) {
             postCommandV()
+            if let completion {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) {
+                    completion()
+                }
+            }
         }
     }
 
@@ -174,10 +179,12 @@ enum Paster {
 
         if let pid {
             down.postToPid(pid)
+            Thread.sleep(forTimeInterval: 0.02)
             up.postToPid(pid)
         } else {
-            down.post(tap: .cghidEventTap)
-            up.post(tap: .cghidEventTap)
+            down.post(tap: .cgAnnotatedSessionEventTap)
+            Thread.sleep(forTimeInterval: 0.02)
+            up.post(tap: .cgAnnotatedSessionEventTap)
         }
     }
 }

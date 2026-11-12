@@ -213,8 +213,7 @@ final class DictationModelStore {
     func resolvedDirectory(for model: DictationModel) -> URL? {
         let candidateRoots = [
             root,
-            FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/FluidAudio/Models"),
-            FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/EnviousWispr/Models")
+            FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/FluidAudio/Models")
         ]
         for candidateRoot in candidateRoots {
             for folder in model.possibleFolderNames {

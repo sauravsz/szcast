@@ -560,11 +560,6 @@ struct DictationSettingsView: View {
                 SettingsRowTitle(.dictationOutput, "Smart insertion")
                 Text("Fits text to the spacing and capitals around your cursor.")
             }
-
-            Toggle(isOn: $bSettings.dictationLiveInsertion) {
-                SettingsRowTitle(.dictationOutput, "Insert while recording")
-                Text("Paste each chunk as you speak, instead of only when finished.")
-            }
         } header: {
             Text("Formatting & Rules")
         }
