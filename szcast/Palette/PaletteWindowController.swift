@@ -1,5 +1,6 @@
 import AppKit
 import Carbon.HIToolbox
+import QuickLookUI
 import SwiftUI
 
 @MainActor
@@ -43,6 +44,18 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
 
     init(core: AppCore) {
         self.core = core
+        super.init()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleApplicationDidResignActive),
+            name: NSApplication.didResignActiveNotification,
+            object: nil)
+    }
+
+    @objc private func handleApplicationDidResignActive(_ notification: Notification) {
+        guard isVisible, !core.isShowingDialog else { return }
+        if core.palette.menuOpen { return }
+        core.paletteCoordinator.hidePalette(restoreFocus: false)
     }
 
     var isVisible: Bool { panel?.isVisible ?? false }
@@ -234,6 +247,8 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
         commandEscapeTap.disable()
         guard isVisible, !core.isShowingDialog else { return }
         if core.palette.menuOpen { return }
+        // Keep palette visible when Quick Look preview panel takes key
+        if QuickLookCoordinator.shared.isVisible || NSApp.keyWindow is QLPreviewPanel { return }
         // A file panel sets its own level under ours, so sink rather than dismiss.
         if NSApp.modalWindow != nil {
             panel?.level = .normal

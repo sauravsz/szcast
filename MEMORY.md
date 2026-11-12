@@ -54,6 +54,8 @@ Fork of [Tinycast](https://github.com/abue-ammar/tinycast) by Abue Ammar, rename
   - Sequential Releases Normalization: Re-sequenced GitHub releases into clean chronological semantic versions: `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3` (defaults on & chords), `v1.0.4` (store-only extensions & background prompt), `v1.0.5` (font scaling, rich note images, alias space, snippets tags), and `v1.0.6` (latest). Scrapped all binaries from older releases so only `v1.0.6` holds `.dmg` and `.zip` distribution bundles.
   - Quick Look File Preview (`⌘Y`): Built native macOS `QLPreviewPanel` coordinator in `QuickLookCoordinator.swift` integrated with `FileSearchScreen` and `LauncherScreen`. Real-time selection tracking updates the preview as arrow keys navigate; dismisses with `⌘Y`, `Escape`, or palette dismiss.
   - EnviousWispr Live Speech Dictation Preview: Real-time partial transcript preview rendered live inside the floating dictation pill while speaking via on-device speech recognition (`SFSpeechRecognizer` / `DictationLivePreviewRecognizer`), with fallback to audio metering and smooth transition to final Parakeet + S1 transcription.
+  - S1-mini Cleanup Latency Tuning: Brought speech normalization latency to parity with EnviousWispr (~200ms). Eliminated blocking HTTP `/health` roundtrips on alive llama-server instances, added active KV-cache prewarming on dictation start, set greedy argmax decode (`temperature: 0.0`), connection keep-alive, and dynamic tight `max_tokens`.
+  - Search Bar Layout & Accessory Spacing: Added dedicated spacing gutter (`metrics.spacing.sm`) and trailing breathing room (+8pt) in `RootPaletteView.swift` header bar between search field and command argument accessories (e.g. Brew argument slots), preventing query text and accessory collision.
   - Configurable Pasting Modes: Added `dictationPasteMode` (`.instant` vs `.wordByWord`), allowing transcripts to be pasted all at once or word-by-word with 35ms cadence.
   - Auto-Capitalization & Leading Space Elimination: Capitalized initial letters across direct transcripts and S1 polish outputs; stripped unwanted leading whitespace before the first character.
   - Persistent Hot Models: Set `dictationIdleRelease` and `dictationS1IdleRelease` to `.never` by default so models remain hot in memory.
@@ -61,9 +63,9 @@ Fork of [Tinycast](https://github.com/abue-ammar/tinycast) by Abue Ammar, rename
   - Dictation Hotkey Presets: Native 1-click presets for `Fn key`, `Option+Space`, `Control+Space`, and custom shortcut recorder.
 
 ## Active State & Next Steps
-- **Active State**: Version 1.0.6 built, self-signed, release DMG and zip generated (`build/szcast-1.0.6.dmg`, `build/szcast-1.0.6.zip`), tagged as `v1.0.6`, pushed to origin, and installed in `/Applications/szcast.app`. GitHub releases cleanly re-sequenced (`v1.0.0` - `v1.0.6`) with older binaries deleted. All 118 test harnesses pass.
+- **Active State**: Version 1.0.6 built, self-signed, release DMG and zip generated (`build/szcast-1.0.6.dmg`, `build/szcast-1.0.6.zip`), tagged as `v1.0.6`, pushed to origin, and installed in `/Applications/szcast.app`. GitHub releases cleanly re-sequenced (`v1.0.0` - `v1.0.6`) with older binaries deleted. Search bar collision and S1 cleanup latency optimizations deployed and uploaded to GitHub Release `v1.0.6`. All 118 test harnesses pass.
 - **Immediate Next Steps**:
   1. Have tester verify `⌘Y` Quick Look preview in File Search and Launcher.
-  2. Have tester verify EnviousWispr live speech transcription preview inside the floating pill and instant paste mode.
+  2. Have tester verify EnviousWispr live speech transcription preview inside the floating pill, instant paste mode, and fast S1 cleanup.
 
 Attribution: AGPL-3.0. Copyright © 2026 Abue Ammar in LICENSE; NOTICE.md keeps third-party material. Fork of Tinycast; no affiliation implied.

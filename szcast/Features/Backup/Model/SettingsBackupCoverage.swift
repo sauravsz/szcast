@@ -93,6 +93,8 @@ enum SettingsBackupCoverage {
             "An import must not change where dictated text is sent.",
         AppSettingsKey.dictationPasteMode.rawValue:
             "Dictation pasting mode preferences stay local until backup supports them.",
+        AppSettingsKey.dictationLivePreviewEnabled.rawValue:
+            "Dictation live preview preferences stay local until backup supports them.",
         AppSettingsKey.dictationAdaptsCapitalization.rawValue:
             "Dictation preferences stay local until backup supports them.",
         AppSettingsKey.dictationLiveInsertion.rawValue:

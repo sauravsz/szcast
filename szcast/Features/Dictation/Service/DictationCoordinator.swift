@@ -199,8 +199,10 @@ final class DictationCoordinator {
                 }
                 phase = .listening
                 panel.show()
-                let langIdentifier = settings.dictationLanguage ?? "en-US"
-                livePreviewCoordinator.start(locale: Locale(identifier: langIdentifier))
+                if settings.dictationLivePreviewEnabled {
+                    let langIdentifier = settings.dictationLanguage ?? "en-US"
+                    livePreviewCoordinator.start(locale: Locale(identifier: langIdentifier))
+                }
                 startLiveInsertion(token: current)
                 if finishWhenStarted { accept() }
             } catch {
@@ -317,31 +319,55 @@ final class DictationCoordinator {
 
                 panel.close()
                 if destination.pastes {
-                    injector.deliver(
-                        InjectedText(text), target: target, expectedKeyword: nil,
-                        keywordLength: 0, automaticGeneration: nil,
-                        isValid: { [weak self] in self?.token == current },
-                        onDelivered: { [weak self] in
-                            guard let self, token == current else { return }
-                            let lost = liveDeliveryFailed
+                    if settings.dictationPasteMode == .allAtOnce {
+                        // All at once: instant paste via direct editor injection or pasteboard Command+V
+                        let app = target?.externalApp
+                        if let editor = target?.ownEditor {
+                            injector.deliver(
+                                InjectedText(text), target: target, expectedKeyword: nil,
+                                keywordLength: 0, automaticGeneration: nil,
+                                isValid: { [weak self] in self?.token == current },
+                                onDelivered: { [weak self] in
+                                    guard let self, token == current else { return }
+                                    if destination.copies || settings.dictationAutoCopyToClipboard {
+                                        Paster.copyPlainText(assembled)
+                                    }
+                                    reset(cancelTranscription: false)
+                                },
+                                onFailed: { [weak self] in
+                                    guard let self, token == current else { return }
+                                    reset(cancelTranscription: false)
+                                    showMessage(String(localized: "Couldn't paste dictation into this app"), .danger)
+                                })
+                        } else {
+                            Paster.pasteString(text, previousApp: app)
                             if destination.copies || settings.dictationAutoCopyToClipboard {
                                 Paster.copyPlainText(assembled)
                             }
                             reset(cancelTranscription: false)
-                            if lost, destination.pastes {
-                                showMessage(
-                                    String(localized: "Couldn't paste some dictation into this app"),
-                                    .danger)
+                        }
+                    } else {
+                        // Word-by-word: typewriter stream pasting
+                        Task { [weak self] in
+                            guard let self else { return }
+                            let words = text.split(separator: " ", omittingEmptySubsequences: false)
+                            for (index, word) in words.enumerated() {
+                                guard token == current else { break }
+                                let chunk = (index == 0 ? "" : " ") + String(word)
+                                injector.deliver(
+                                    InjectedText(chunk), target: target, expectedKeyword: nil,
+                                    keywordLength: 0, automaticGeneration: nil,
+                                    isValid: { [weak self] in self?.token == current },
+                                    onDelivered: {},
+                                    onFailed: {})
+                                try? await Task.sleep(for: .milliseconds(35))
                             }
-                        },
-                        onFailed: { [weak self] in
-                            guard let self, token == current else { return }
-                            reset(cancelTranscription: false)
                             if destination.copies || settings.dictationAutoCopyToClipboard {
                                 Paster.copyPlainText(assembled)
                             }
-                            showMessage(String(localized: "Couldn't paste dictation into this app"), .danger)
-                        })
+                            reset(cancelTranscription: false)
+                        }
+                    }
                 } else {
                     Paster.copyPlainText(text)
                     reset(cancelTranscription: false)
@@ -377,13 +403,14 @@ final class DictationCoordinator {
     }
 
     private func startLiveInsertion(token current: UUID) {
-        guard insertionPastes, settings.dictationLiveInsertion else { return }
+        // Live insertion into documents only runs when explicitly configured in word-by-word streaming mode
+        guard insertionPastes, settings.dictationPasteMode == .wordByWord, settings.dictationLiveInsertion else { return }
         liveTask = Task { [weak self] in
             guard let self else { return }
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(2))
                 guard !Task.isCancelled, token == current, phase == .listening else { return }
-                guard settings.dictationLiveInsertion else { return }
+                guard settings.dictationPasteMode == .wordByWord, settings.dictationLiveInsertion else { return }
                 await flushLiveChunk(token: current)
             }
         }

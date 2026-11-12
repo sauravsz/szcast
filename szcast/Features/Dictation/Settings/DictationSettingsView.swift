@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 
 enum DictationSettingsSection: String, CaseIterable, Identifiable {
     case general = "General"
+    case livePreview = "Live Preview"
     case formatting = "Formatting & AI"
     case dictionary = "Dictionary & Packs"
     case snippets = "Snippets"
@@ -76,6 +77,8 @@ struct DictationSettingsView: View {
                 switch selectedSection {
                 case .general:
                     generalSection(settings: settings)
+                case .livePreview:
+                    livePreviewSection(settings: settings)
                 case .formatting:
                     formattingSection(settings: settings)
                 case .dictionary:
@@ -403,6 +406,131 @@ struct DictationSettingsView: View {
             } header: {
                 SettingsSectionHeader(.dictationModel)
             }
+        }
+    }
+
+    // MARK: - Live Preview Section
+
+    @ViewBuilder
+    private func livePreviewSection(settings: AppSettings) -> some View {
+        @Bindable var bSettings = settings
+
+        Section {
+            HStack(alignment: .center, spacing: Theme.Spacing.md) {
+                Image(systemName: "text.viewfinder")
+                    .font(.system(size: 20))
+                    .foregroundStyle(Color.accentColor)
+                    .frame(width: 32, height: 32)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text("Show words while you speak")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Theme.Colors.textPrimary)
+
+                        Image(systemName: "questionmark.circle")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Theme.Colors.textSecondary)
+                            .help("Displays real-time partial transcription inside the floating recording pill.")
+
+                        Circle()
+                            .fill(Color.green)
+                            .frame(width: 6, height: 6)
+
+                        Text("Ready")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(.green)
+                    }
+
+                    Text("See words before you finish your dictation.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.Colors.textSecondary)
+                }
+
+                Spacer(minLength: Theme.Spacing.md)
+
+                // Language mode badge/selector
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("Automatic")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(Theme.Colors.textPrimary)
+                    Text("Auto · no language pinned ⇅")
+                        .font(.system(size: 10))
+                        .foregroundStyle(Theme.Colors.textSecondary)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Theme.Colors.border.opacity(0.4), lineWidth: 1)
+                )
+
+                Toggle("", isOn: $bSettings.dictationLivePreviewEnabled)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+            }
+            .padding(.vertical, 4)
+        } header: {
+            HStack {
+                Text("LIVE PREVIEW")
+                Spacer()
+                Text("Runs on this Mac. Nothing you say is sent anywhere.")
+                    .font(.caption2)
+                    .foregroundStyle(Theme.Colors.textSecondary)
+            }
+        }
+
+        Section {
+            HStack(alignment: .center, spacing: Theme.Spacing.md) {
+                Image(systemName: "globe")
+                    .font(.system(size: 20))
+                    .foregroundStyle(Theme.Colors.textPrimary)
+                    .frame(width: 32, height: 32)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Universal")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Theme.Colors.textPrimary)
+
+                    Text("Uses on-device Apple Speech framework for live words.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.Colors.textSecondary)
+                }
+
+                Spacer(minLength: Theme.Spacing.md)
+
+                Circle()
+                    .fill(Color.green)
+                    .frame(width: 6, height: 6)
+
+                Text("Ready")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.green)
+
+                Menu {
+                    Button("Automatic (System Default)") {}
+                    Button("English (US)") {}
+                    Button("English (UK)") {}
+                } label: {
+                    Text("Change")
+                        .font(.system(size: 12, weight: .medium))
+                }
+                .menuStyle(.borderedButton)
+                .fixedSize()
+            }
+            .padding(.vertical, 4)
+        } header: {
+            HStack {
+                Text("PREVIEW ENGINE")
+                Spacer()
+                Text("Compare engines ↗")
+                    .font(.caption2)
+                    .foregroundStyle(Color.accentColor)
+            }
+        } footer: {
+            Text("Choose which engine shows words while you speak.")
+                .font(.caption)
+                .foregroundStyle(Theme.Colors.textSecondary)
         }
     }
 

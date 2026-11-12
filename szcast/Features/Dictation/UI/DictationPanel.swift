@@ -42,16 +42,16 @@ private struct DictationProcessingWave: View {
             let progress =
                 timeline.date.timeIntervalSince(startedAt)
                 .truncatingRemainder(dividingBy: 1.2) / 1.2
-            let center = (reduceMotion ? 0.5 : progress) * 14 - 2
-            HStack(alignment: .center, spacing: 3) {
-                ForEach(0..<10, id: \.self) { index in
-                    let level = Float(max(0, 1 - abs(Double(index) - center) / 2.5))
+            let center = (reduceMotion ? 0.5 : progress) * 10 - 2
+            HStack(alignment: .center, spacing: 2.5) {
+                ForEach(0..<6, id: \.self) { index in
+                    let level = Float(max(0, 1 - abs(Double(index) - center) / 2.0))
                     Capsule()
                         .fill(Color.accentColor.opacity(0.4 + 0.6 * Double(level)))
-                        .frame(width: 2.5, height: max(3, 4 + 10 * CGFloat(level)))
+                        .frame(width: 2, height: max(3, 4 + 8 * CGFloat(level)))
                 }
             }
-            .frame(width: 55, height: 16)
+            .frame(width: 26, height: 14)
         }
     }
 }
@@ -60,24 +60,24 @@ private struct DictationPanelView: View {
     let state: DictationDisplayState
 
     var body: some View {
-        HStack(spacing: Theme.Spacing.sm) {
+        HStack(spacing: 6) {
             // Recording status dot
             Circle()
                 .fill(state.phase == .listening ? Color.red : Color.accentColor)
-                .frame(width: 8, height: 8)
-                .shadow(color: (state.phase == .listening ? Color.red : Color.accentColor).opacity(0.6), radius: 3)
+                .frame(width: 7, height: 7)
+                .shadow(color: (state.phase == .listening ? Color.red : Color.accentColor).opacity(0.6), radius: 2)
 
             if state.phase == .listening {
-                // Compact Level Meter Bars
-                HStack(alignment: .center, spacing: 3) {
-                    ForEach(0..<10, id: \.self) { i in
+                // Compact Level Meter Bars (6 bars)
+                HStack(alignment: .center, spacing: 2) {
+                    ForEach(0..<6, id: \.self) { i in
                         let level = i < state.levels.count ? state.levels[i] : 0
                         Capsule()
                             .fill(Theme.Colors.textPrimary.opacity(0.75))
-                            .frame(width: 2.5, height: max(3, CGFloat(level) * 16))
+                            .frame(width: 2, height: max(3, CGFloat(level) * 14))
                     }
                 }
-                .frame(width: 55, height: 16)
+                .frame(width: 26, height: 14)
                 .animation(.easeOut(duration: 0.08), value: state.levels)
 
                 if !state.previewText.isEmpty {
@@ -96,7 +96,7 @@ private struct DictationPanelView: View {
                 }
             } else {
                 DictationProcessingWave()
-                    .frame(width: 55, height: 16)
+                    .frame(width: 26, height: 14)
 
                 Text("Transcribing…")
                     .font(.system(size: 11, weight: .medium))
@@ -105,9 +105,9 @@ private struct DictationPanelView: View {
                     .fixedSize(horizontal: true, vertical: false)
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 8)
-        .frame(minWidth: 210, maxWidth: 320, minHeight: 38, maxHeight: 38)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .frame(minWidth: 120, maxWidth: 192, minHeight: 36, maxHeight: 36)
         .glassEffect(.regular, in: .capsule)
         .overlay(
             Capsule()
@@ -119,7 +119,7 @@ private struct DictationPanelView: View {
 private final class DictationPanel: NSPanel, AnimatedPanel {
     init(content: NSView) {
         super.init(
-            contentRect: NSRect(origin: .zero, size: CGSize(width: 320, height: 40)),
+            contentRect: NSRect(origin: .zero, size: CGSize(width: 192, height: 36)),
             styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         contentView = content
         isOpaque = false
@@ -153,7 +153,7 @@ final class DictationPanelController {
             ?? DictationPanel(
                 content: NSHostingView(rootView: DictationPanelView(state: state).motionScope()))
         self.panel = panel
-        let pillSize = CGSize(width: 320, height: 40)
+        let pillSize = CGSize(width: 192, height: 36)
         panel.setFrameOrigin(
             NSPoint(
                 x: frame.midX - pillSize.width / 2,

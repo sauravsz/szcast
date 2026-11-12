@@ -388,6 +388,10 @@ final class AppSettings {
         didSet { defaults.set(dictationPasteMode.rawValue, forKey: Key.dictationPasteMode.rawValue) }
     }
 
+    var dictationLivePreviewEnabled: Bool {
+        didSet { defaults.set(dictationLivePreviewEnabled, forKey: Key.dictationLivePreviewEnabled.rawValue) }
+    }
+
     var dictationAdaptsCapitalization: Bool {
         didSet {
             defaults.set(dictationAdaptsCapitalization, forKey: Key.dictationAdaptsCapitalization.rawValue)
@@ -911,6 +915,9 @@ final class AppSettings {
         dictationPasteMode =
             defaults.string(forKey: Key.dictationPasteMode.rawValue)
             .flatMap(DictationPasteMode.init) ?? .allAtOnce
+        dictationLivePreviewEnabled =
+            defaults.object(forKey: Key.dictationLivePreviewEnabled.rawValue) == nil
+            || defaults.bool(forKey: Key.dictationLivePreviewEnabled.rawValue)
         dictationAdaptsCapitalization =
             defaults.object(forKey: Key.dictationAdaptsCapitalization.rawValue) == nil
             || defaults.bool(forKey: Key.dictationAdaptsCapitalization.rawValue)

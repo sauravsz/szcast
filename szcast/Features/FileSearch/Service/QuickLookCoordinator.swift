@@ -7,11 +7,12 @@ final class QuickLookCoordinator: NSObject, @preconcurrency QLPreviewPanelDataSo
     static let shared = QuickLookCoordinator()
 
     private(set) var currentURL: URL?
+    private(set) var isOpenOrOpening = false
     private weak var activePanel: QLPreviewPanel?
     private var closeObserver: Any?
 
     var isVisible: Bool {
-        activePanel?.isVisible == true
+        isOpenOrOpening || (activePanel?.isVisible == true)
     }
 
     func toggle(url: URL) {
@@ -20,7 +21,9 @@ final class QuickLookCoordinator: NSObject, @preconcurrency QLPreviewPanelDataSo
         if panel.isVisible && currentURL == url {
             close()
         } else {
+            isOpenOrOpening = true
             currentURL = url
+            panel.level = NSWindow.Level(rawValue: NSWindow.Level.modalPanel.rawValue + 2)
             panel.dataSource = self
             panel.delegate = self
             panel.reloadData()
@@ -41,6 +44,7 @@ final class QuickLookCoordinator: NSObject, @preconcurrency QLPreviewPanelDataSo
     }
 
     func close() {
+        isOpenOrOpening = false
         if let observer = closeObserver {
             NotificationCenter.default.removeObserver(observer)
             closeObserver = nil
@@ -49,6 +53,10 @@ final class QuickLookCoordinator: NSObject, @preconcurrency QLPreviewPanelDataSo
             panel.orderOut(nil)
         }
         currentURL = nil
+        // Restore key focus to Palette window if visible
+        if let paletteWindow = NSApp.windows.first(where: { $0.isVisible && !($0 is QLPreviewPanel) && $0.level.rawValue >= NSWindow.Level.modalPanel.rawValue }) {
+            paletteWindow.makeKeyAndOrderFront(nil)
+        }
     }
 
     private func installCloseObserver(for panel: QLPreviewPanel) {
@@ -61,7 +69,11 @@ final class QuickLookCoordinator: NSObject, @preconcurrency QLPreviewPanelDataSo
             queue: .main
         ) { [weak self] _ in
             MainActor.assumeIsolated {
+                self?.isOpenOrOpening = false
                 self?.currentURL = nil
+                if let paletteWindow = NSApp.windows.first(where: { $0.isVisible && !($0 is QLPreviewPanel) && $0.level.rawValue >= NSWindow.Level.modalPanel.rawValue }) {
+                    paletteWindow.makeKeyAndOrderFront(nil)
+                }
             }
         }
     }
@@ -82,6 +94,22 @@ final class QuickLookCoordinator: NSObject, @preconcurrency QLPreviewPanelDataSo
     // MARK: - QLPreviewPanelDelegate
 
     func previewPanel(_ panel: QLPreviewPanel!, handle event: NSEvent!) -> Bool {
-        false
+        guard event.type == .keyDown else { return false }
+        if event.keyCode == 53 /* Escape */ || event.keyCode == 49 /* Space */ {
+            close()
+            return true
+        }
+        if event.modifierFlags.contains(.command), event.charactersIgnoringModifiers == "y" {
+            close()
+            return true
+        }
+        // Down / Up arrow keys: forward to palette so selection navigates live
+        if event.keyCode == 125 || event.keyCode == 126 {
+            if let paletteWindow = NSApp.windows.first(where: { $0.isVisible && !($0 is QLPreviewPanel) && $0.level.rawValue >= NSWindow.Level.modalPanel.rawValue }) {
+                paletteWindow.sendEvent(event)
+                return true
+            }
+        }
+        return false
     }
 }
