@@ -67,19 +67,11 @@ szcast is engineered natively on macOS technologies:
 
 ## Acknowledgements
 
-szcast builds upon and integrates work from several open-source projects, models, and architectures:
-
 - **[Tinycast](https://github.com/abue-ammar/tinycast)** by Abue Ammar: The native macOS launcher foundation upon which szcast is built.
-- **[EnviousWispr](https://github.com/saurabhav88/EnviousWispr)** by saurabhav88: Dictation architecture inspiration, domain vocabulary packs (Tech, Medical, Legal, Brands, Names), audio ducking mechanics, and speech normalization workflows. Saurav rebuilt the dictation suite natively in szcast following EnviousWispr's design patterns.
-- **[Superwhisper](https://huggingface.co/superwhisper/s1-mini-GGUF)**: Fine-tuned `s1-mini` local speech normalization model.
-- **[NVIDIA Parakeet](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3)** & **[FluidInference](https://huggingface.co/FluidInference/parakeet-ultra-coreml)**: Fast on-device CoreML speech recognition models.
-- **[llama.cpp](https://github.com/ggerganov/llama.cpp)** by Georgi Gerganov: High-performance local inference server powering embedded Metal GPU speech normalization.
-- **[Raycast](https://raycast.com)**: The extension API and community package ecosystem.
-- **[Rooms](https://github.com/saragordic/rooms)** by Sara Gordić: Window rooms and layout engine architecture.
-- **[fsearch](https://github.com/noahdunnagan/fsearch)** by Noah Dunnagan: High-performance disk crawler and indexing design.
-- **Search Providers**: [Tavily](https://tavily.com), [Exa](https://exa.ai), and [Jina](https://jina.ai) for live web search integration.
+- **[EnviousWispr](https://github.com/saurabhav88/EnviousWispr)** by saurabhav88: Dictation architecture inspiration, domain vocabulary packs, audio ducking, and speech normalization workflows rebuilt natively in szcast.
+- **[Raycast](https://raycast.com)**: The extension API and community extension ecosystem supported by szcast.
 
-Detailed third-party notices and license texts are documented in [NOTICE.md](NOTICE.md).
+Third-party licenses and notices are documented in [NOTICE.md](NOTICE.md).
 
 ## License
 
