@@ -614,12 +614,15 @@
       <div class="card">
         <span class="badge plus">Extended</span>
         <h4>Live web search in AI chat</h4>
-        <p>Upstream carries a boolean that says whether a provider <em>offers</em> search. szcast
-           implements the search itself: <em>Tavily</em>, <em>Exa</em> and <em>Jina</em> behind one
-           service, with results folded back into the reply as numbered citations you can open.</p>
-        <p>Point it at your own API key or leave it off entirely — nothing is proxied.</p>
+        <p>Search without switching provider. szcast talks to <em>Tavily</em>, <em>Exa</em> and
+           <em>Jina</em> directly, so any model in the picker can read the live web — including
+           local ones, which have no hosted search to fall back on. Results come back as numbered
+           citations you can open.</p>
+        <p>Point it at your own API key or leave it off entirely — nothing is proxied through us.
+           Upstream added each provider's own hosted search tool in November; this is the
+           provider-agnostic complement to it.</p>
         <div class="detail">WebSearchService · WebSearchAIProvider · ChatCitations<br />
-          279 lines · three providers · one search box</div>
+          279 lines · three search providers · works with local models</div>
       </div>
 
       <div class="card">
