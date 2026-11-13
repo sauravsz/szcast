@@ -65,10 +65,15 @@ Fork of [Tinycast](https://github.com/abue-ammar/tinycast) by Abue Ammar, rename
   - Full-Bleed Continuous Superellipse Brand Icon: Inset mathematical superellipse crop (`a=794, b=786, p=4.2`) eliminating 100% of corner teeth, checkerboard bleeding, and bottom line artifacts across all 10 macOS resolutions, AppIcon.appiconset, szcast.icns, and web assets.
   - Dictation Hotkey Presets: Native 1-click presets for `Fn key`, `Option+Space`, `Control+Space`, and custom shortcut recorder.
 
+- **Release 1.0.7**:
+  - Single-Shot Paste Pipeline: Completely disabled live document chunk typing during speech; audio is strictly routed to the floating pill HUD for live visual feedback.
+  - S1-mini Post-Clean Delivery: The full audio recording is transcribed, normalized and cleaned via local S1-mini model, and pasted in a single shot via ⌘V (`Paster.pasteString`) only after cleanup completes.
+  - Streamlined Pasting Mode: Standardized on "All at once after transcribing and cleaning"; removed legacy typewriter and word-by-word streaming modes and the "Insert while recording" setting.
+  - Codebase Sanitization: Purged internal third-party project references and hardcoded paths across all Swift source files.
+
 ## Active State & Next Steps
-- **Active State**: Version 1.0.6 built, self-signed, release DMG and zip generated (`build/szcast-1.0.6.dmg`, `build/szcast-1.0.6.zip`), installed in `/Applications/szcast.app`. Single-shot paste after S1-mini cleanup enforced; legacy document streaming modes removed; code files sanitized; waiting for user permission to push release assets. All 118 test harnesses pass.
+- **Active State**: Version 1.0.7 released on GitHub with signed distribution assets (`szcast-1.0.7.dmg`, `szcast-1.0.7.zip`), installed to `/Applications/szcast.app`. All 118 test harnesses pass.
 - **Immediate Next Steps**:
-  1. Await user confirmation/permission before publishing `v1.0.6` tag/release to GitHub.
-  2. Verify live dictation preview in floating pill and instant paste after S1-mini fine-touching in real-world apps.
+  1. Verify live dictation preview in floating pill and instant paste after S1-mini fine-touching in real-world apps.
 
 Attribution: AGPL-3.0. Copyright © 2026 Abue Ammar in LICENSE; NOTICE.md keeps third-party material. Fork of Tinycast; no affiliation implied.
