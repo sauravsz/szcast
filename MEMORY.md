@@ -69,7 +69,6 @@ Fork of [Tinycast](https://github.com/abue-ammar/tinycast) by Abue Ammar, rename
   - Single-Shot Paste Pipeline: Completely disabled live document chunk typing during speech; audio is strictly routed to the floating pill HUD for live visual feedback.
   - S1-mini Post-Clean Delivery: The full audio recording is transcribed, normalized and cleaned via local S1-mini model, and pasted in a single shot via ⌘V (`Paster.pasteString`) only after cleanup completes.
   - Streamlined Pasting Mode: Standardized on "All at once after transcribing and cleaning"; removed legacy typewriter and word-by-word streaming modes and the "Insert while recording" setting.
-  - Codebase Sanitization: Purged internal third-party project references and hardcoded paths across all Swift source files.
 
 ## Active State & Next Steps
 - **Active State**: Version 1.0.7 released on GitHub with signed distribution assets (`szcast-1.0.7.dmg`, `szcast-1.0.7.zip`), installed to `/Applications/szcast.app`. All 118 test harnesses pass.

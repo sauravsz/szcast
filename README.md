@@ -41,10 +41,10 @@ open /Applications/szcast.app
 
 ### Advanced Offline Dictation
 - **Live Speech Preview**: Real-time speech preview displayed dynamically inside the floating glass pill while speaking.
-- **Single-Shot Paste Pipeline**: Zero document typing or chunk injection while speaking; pastes the complete finalized transcription all at once via ⌘V after on-device S1-mini speech normalization finishes.
-- **Local Speech Recognition**: Multi-root model discovery supporting Nvidia Parakeet Ultra with real-time Apple Neural Engine and Metal GPU execution.
-- **Embedded S1-mini Normalization**: Bundled `llama-server` running `s1-mini-1.0.gguf` on loopback with Metal offload (`-ngl 99`, `-t 4`), sub-300ms inference, idle memory unloading, automatic capitalization, leading space stripping, and Jinja thinking bypass.
-- **Vocabulary Packs & Custom Dictionary**: Preloaded domain dictionaries (Tech, Medical, Legal, Brands, Names) with phonetic alias matching and post-polish canonicalization.
+- **Single-Shot Paste Pipeline**: Zero document typing while speaking; pastes the complete cleaned transcription all at once after speech cleanup finishes.
+- **Local Speech Recognition**: Fast, private on-device speech recognition running fully offline with Apple Neural Engine and GPU acceleration.
+- **AI Speech Cleanup**: Built-in S1-mini AI normalization that fixes grammar, removes filler words, formats punctuation, and auto-capitalizes sentences in under 300ms.
+- **Vocabulary Packs & Custom Dictionary**: Preloaded domain dictionaries (Tech, Medical, Legal, Brands, Names) with phonetic alias matching.
 - **Dictation Hotkey Presets**: Instant triggers for `Fn key`, `⌥Space`, `⌃Space`, or custom keybinds.
 - **Audio Intelligence**: Automatic background audio ducking (Spotify and Apple Music), spoken emoji/punctuation expansion, filler word scrubbing, and compact live audio level meters.
 
