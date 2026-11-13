@@ -1,117 +1,731 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="szcast — a native macOS launcher for everyday productivity with offline S1-mini speech normalization. Lightweight and open source." />
-  <meta name="theme-color" content="#0b0b0f" />
-  <link rel="icon" type="image/png" href="favicon.png" />
-  <link rel="shortcut icon" href="favicon.ico" />
-  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-  <title>szcast — native macOS launcher</title>
-  <style>
-    :root { color-scheme: dark; --bg:#0b0b0f; --panel:#131318; --fg:#f2f2f5; --muted:#9aa3ad; --line:#24242e; --accent:#60a5fa; }
-    * { box-sizing: border-box; }
-    body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:var(--bg); color:var(--fg); }
-    a { color:var(--accent); text-decoration:none; }
-    a:hover { text-decoration:underline; }
-    .wrap { max-width:880px; margin:0 auto; padding:56px 20px 96px; }
-    header { display:flex; align-items:center; gap:16px; }
-    header img { width:64px; height:64px; border-radius:16px; }
-    h1 { font-size:40px; margin:0; letter-spacing:-.02em; }
-    .tag { color:var(--muted); font-size:17px; margin:6px 0 0; }
-    .badges img { height:20px; margin-right:6px; vertical-align:middle; }
-    .panel { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:20px; margin:24px 0; }
-    pre { overflow:auto; background:#0d0d11; border:1px solid var(--line); border-radius:10px; padding:14px; }
-    code { font:12.5px ui-monospace, SFMono-Regular, Menlo, monospace; }
-    .shot { width:100%; border-radius:12px; border:1px solid var(--line); }
-    .cols { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-    @media (max-width:640px){ .cols{grid-template-columns:1fr} h1{font-size:32px} }
-    footer { color:var(--muted); font-size:13px; margin-top:40px; }
-    nav a { margin-right:14px; }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>szcast — a native macOS launcher that runs Raycast extensions</title>
+<meta name="description" content="szcast is a native, keyboard-first macOS launcher: file and menu search, clipboard history, quicklinks, snippets, window management, offline dictation and a full local AI chat — plus your Raycast extensions. Zero Electron, zero telemetry." />
+<meta name="theme-color" content="#08080b" />
+<meta property="og:title" content="szcast — native macOS launcher" />
+<meta property="og:description" content="Keyboard-first launcher for macOS. Runs Raycast extensions. No Electron, no telemetry." />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="assets/hero.webp" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" type="image/png" href="favicon.png" />
+<link rel="shortcut icon" href="favicon.ico" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #08080b;
+    --bg-raised: #0d0d12;
+    --panel: #111117;
+    --panel-2: #16161d;
+    --fg: #f4f4f7;
+    --muted: #9aa1ad;
+    --muted-2: #6c7382;
+    --line: #22222c;
+    --line-soft: #1a1a22;
+    --accent: #8b5cf6;
+    --accent-2: #a78bfa;
+    --accent-dim: #6d28d9;
+    --radius: 18px;
+    --max: 1120px;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+  }
+  a { color: var(--accent-2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  img { max-width: 100%; display: block; }
+  .wrap { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
+
+  /* ── nav ─────────────────────────────────────── */
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(16px) saturate(180%);
+    background: color-mix(in srgb, var(--bg) 78%, transparent);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .nav-in {
+    max-width: var(--max); margin: 0 auto; padding: 14px 24px;
+    display: flex; align-items: center; gap: 28px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: -.01em; color: var(--fg); }
+  .brand img { width: 26px; height: 26px; border-radius: 7px; }
+  .nav-links { display: flex; gap: 22px; margin-left: auto; font-size: 14px; }
+  .nav-links a { color: var(--muted); }
+  .nav-links a:hover { color: var(--fg); text-decoration: none; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 16px; border-radius: 9px; font-size: 14px; font-weight: 550;
+    background: var(--fg); color: #0a0a0c; border: 1px solid transparent;
+    transition: transform .12s ease, opacity .12s ease;
+  }
+  .btn:hover { text-decoration: none; opacity: .88; }
+  .btn:active { transform: scale(.985); }
+  .btn-ghost { background: transparent; color: var(--fg); border-color: var(--line); }
+  .btn-ghost:hover { background: var(--panel); }
+  @media (max-width: 860px) { .nav-links { display: none; } }
+
+  /* ── hero ────────────────────────────────────── */
+  .hero { position: relative; padding: 84px 0 40px; text-align: center; overflow: hidden; }
+  .hero::before {
+    content: ""; position: absolute; left: 50%; top: -260px; width: 900px; height: 620px;
+    transform: translateX(-50%);
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 26%, transparent), transparent 72%);
+    pointer-events: none; filter: blur(10px);
+  }
+  .hero > * { position: relative; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 5px 12px 5px 8px; border-radius: 999px; font-size: 12.5px;
+    background: var(--panel); border: 1px solid var(--line); color: var(--muted);
+  }
+  .pill b { color: var(--fg); font-weight: 550; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: #34d399; box-shadow: 0 0 8px #34d399; }
+  h1 {
+    font-size: clamp(38px, 6.4vw, 68px); line-height: 1.04; letter-spacing: -.035em;
+    margin: 22px auto 0; max-width: 15ch; font-weight: 640;
+  }
+  h1 em { font-style: normal; color: var(--accent-2); }
+  .lede {
+    font-size: clamp(16px, 2.1vw, 19px); color: var(--muted);
+    max-width: 62ch; margin: 20px auto 0;
+  }
+  .cta { display: flex; gap: 12px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
+  .cta .btn { padding: 12px 22px; font-size: 15px; }
+  .meta { margin-top: 16px; font-size: 13px; color: var(--muted-2); }
+
+  /* ── screenshot frame ────────────────────────── */
+  .frame {
+    position: relative; margin: 46px auto 0; max-width: 940px;
+    border-radius: var(--radius); overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    box-shadow: 0 40px 120px -40px rgba(0,0,0,.9), 0 0 0 1px rgba(255,255,255,.03);
+  }
+  .frame img { width: 100%; height: auto; }
+  .frame-cap {
+    display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+    border-bottom: 1px solid var(--line-soft); background: var(--panel-2);
+    font-size: 12px; color: var(--muted-2);
+  }
+  .frame-cap .dot { box-shadow: none; background: var(--line); width: 8px; height: 8px; }
+
+  /* ── sections ────────────────────────────────── */
+  section { padding: 76px 0; }
+  .sec-head { text-align: center; margin-bottom: 48px; }
+  .eyebrow {
+    font-size: 12.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--accent-2); margin: 0 0 12px;
+  }
+  h2 { font-size: clamp(27px, 3.6vw, 40px); letter-spacing: -.025em; margin: 0; font-weight: 620; line-height: 1.15; }
+  .sec-head p { color: var(--muted); max-width: 58ch; margin: 14px auto 0; font-size: 16.5px; }
+
+  /* feature rows */
+  .row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center;
+    margin-bottom: 92px;
+  }
+  .row:last-child { margin-bottom: 0; }
+  .row.flip .row-copy { order: 2; }
+  .row.flip .row-shot { order: 1; }
+  .row-copy h3 { font-size: 26px; letter-spacing: -.02em; margin: 0 0 12px; font-weight: 620; }
+  .row-copy p { color: var(--muted); margin: 0 0 18px; font-size: 15.5px; }
+  .row-shot {
+    border-radius: 14px; overflow: hidden; border: 1px solid var(--line);
+    background: var(--panel); box-shadow: 0 24px 60px -30px rgba(0,0,0,.85);
+  }
+  .row-shot img { width: 100%; height: auto; }
+
+  /* A slot reserves its image's aspect ratio so nothing reflows while it loads. */
+  .row-shot { aspect-ratio: var(--ratio, 1650 / 1046); }
+
+  /* ── dictation pill ──────────────────────────── */
+  .pill-stage {
+    position: relative; border-radius: var(--radius); overflow: hidden;
+    border: 1px solid var(--line); background: #0b0b10;
+    padding: 46px 0 104px; text-align: center;
+  }
+  .pill-stage::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(520px 300px at 50% 78%, color-mix(in srgb, var(--accent) 15%, transparent), transparent 72%),
+      linear-gradient(to bottom, #0d0d13, #08080c);
+  }
+  .pill-stage > * { position: relative; }
+  .pill-doc {
+    max-width: 620px; margin: 0 auto; text-align: left;
+    font-size: 15px; line-height: 1.85; color: #8e93a0;
+  }
+  .pill-doc b { color: var(--fg); font-weight: 560; }
+  .pill-caret {
+    display: inline-block; width: 2px; height: 17px; vertical-align: -3px;
+    background: var(--accent-2); margin-left: 1px;
+    animation: blink 1.15s steps(1) infinite;
+  }
+  @keyframes blink { 0%,49% { opacity: 1 } 50%,100% { opacity: 0 } }
+  @media (prefers-reduced-motion: reduce) { .pill-caret { animation: none } }
+
+  /* The real capsule is a fixed height and only grows sideways, so both states share one height. */
+  .pill-float {
+    position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%);
+    filter: drop-shadow(0 16px 34px rgba(0,0,0,.75));
+  }
+  .pill-float img { display: block; height: 46px; width: auto; max-width: none; }
+
+  .pill-states { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 18px; }
+  @media (max-width: 760px) {
+    .pill-states { grid-template-columns: 1fr; }
+    .pill-stage { padding: 30px 18px 76px; }
+    .pill-float img { height: 36px; }
+    .pill-doc { font-size: 13.5px; line-height: 1.7; }
+  }
+  .pill-card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    padding: 18px; display: flex; flex-direction: column; gap: 12px;
+  }
+  .pill-card img { width: 100%; height: auto; }
+  .pill-card span { font-size: 12.5px; color: var(--muted-2); }
+  .pill-card b { color: var(--muted); font-weight: 560; }
+  .ticks { list-style: none; padding: 0; margin: 0; display: grid; gap: 9px; }
+  .ticks li { position: relative; padding-left: 24px; color: var(--muted); font-size: 14.5px; }
+  .ticks li::before {
+    content: ""; position: absolute; left: 0; top: 8px; width: 13px; height: 13px;
+    border-radius: 4px; background: color-mix(in srgb, var(--accent) 22%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+  .ticks li b { color: var(--fg); font-weight: 560; }
+  code.kbd {
+    font-family: var(--mono); font-size: 12.5px; padding: 2px 6px; border-radius: 5px;
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--fg); white-space: nowrap;
+  }
+  /* Long paths in prose must wrap rather than push the layout wider than the viewport. */
+  .steps code, .card code, .row-copy code { white-space: normal; overflow-wrap: anywhere; }
+  /* Grid and flex children default to min-width:auto and refuse to shrink below their content. */
+  .install-grid > *, .row > *, .grid > *, .foot > * { min-width: 0; }
+  pre { max-width: 100%; }
+  @media (max-width: 880px) {
+    .row { grid-template-columns: 1fr; gap: 26px; margin-bottom: 64px; }
+    .row.flip .row-copy, .row.flip .row-shot { order: initial; }
+  }
+
+  /* grid of small features */
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 880px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    padding: 22px;
+  }
+  .card h4 { margin: 0 0 8px; font-size: 15.5px; font-weight: 600; letter-spacing: -.01em; }
+  .card p { margin: 0; color: var(--muted); font-size: 14px; }
+  .card .ico {
+    width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center;
+    background: color-mix(in srgb, var(--accent) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+    margin-bottom: 14px; font-size: 15px;
+  }
+
+  /* install */
+  .install { background: var(--bg-raised); border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); }
+  .install-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 40px; align-items: start; }
+  @media (max-width: 880px) { .install-grid { grid-template-columns: 1fr; } }
+  .steps { list-style: none; padding: 0; margin: 0; counter-reset: s; }
+  .steps li { position: relative; padding-left: 42px; margin-bottom: 22px; counter-increment: s; }
+  .steps li::before {
+    content: counter(s); position: absolute; left: 0; top: 0;
+    width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center;
+    background: var(--panel-2); border: 1px solid var(--line);
+    font-size: 12.5px; font-weight: 600; color: var(--muted);
+  }
+  .steps h4 { margin: 2px 0 6px; font-size: 15px; font-weight: 600; }
+  .steps p { margin: 0; color: var(--muted); font-size: 14px; }
+  pre {
+    margin: 0; padding: 16px 18px; overflow: auto; border-radius: 12px;
+    background: #0a0a0e; border: 1px solid var(--line);
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.75; color: #cfd3dc;
+  }
+  pre .c { color: var(--muted-2); }
+  .note {
+    margin-top: 16px; padding: 12px 14px; border-radius: 10px; font-size: 13.5px;
+    background: color-mix(in srgb, #f59e0b 9%, transparent);
+    border: 1px solid color-mix(in srgb, #f59e0b 26%, transparent);
+    color: #e5c588;
+  }
+
+  /* facts strip */
+  .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line-soft); border-radius: 14px; overflow: hidden; }
+  .facts div { background: var(--bg-raised); padding: 24px 20px; text-align: center; }
+  .facts b { display: block; font-size: 24px; letter-spacing: -.02em; font-weight: 620; }
+  .facts span { font-size: 12.5px; color: var(--muted-2); }
+  @media (max-width: 720px) { .facts { grid-template-columns: 1fr 1fr; } }
+
+  footer { border-top: 1px solid var(--line-soft); padding: 48px 0 64px; }
+  .foot { display: flex; justify-content: space-between; gap: 32px; flex-wrap: wrap; }
+  .foot-links { display: grid; grid-template-columns: repeat(2, auto); gap: 8px 44px; font-size: 14px; }
+  .foot-links a { color: var(--muted); }
+  .foot-note { color: var(--muted-2); font-size: 12.5px; margin-top: 32px; max-width: 76ch; }
+  .foot-note a { color: var(--muted); }
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <img src="docs-images/icon.png" alt="szcast app icon" />
-      <div>
-        <h1>szcast</h1>
-        <p class="tag">A native macOS launcher for everyday productivity. Lightweight and open source.</p>
-      </div>
-    </header>
 
-    <p class="badges" aria-label="badges">
-      <a href="https://github.com/sauravsz/szcast/releases/latest"><img alt="Latest release" src="https://shieldcn.dev/github/release/sauravsz/szcast.svg?variant=ghost&amp;font=geist-mono&amp;mode=light&amp;label=RELEASE&amp;logo=lu:Tag&amp;valueColor=2563EB" /></a>
-      <img alt="macOS 26 or later" src="https://shieldcn.dev/badge/MACOS-26%2B.svg?variant=ghost&amp;font=geist-mono&amp;mode=light&amp;logo=apple" />
-      <img alt="Swift 6" src="https://shieldcn.dev/badge/SWIFT-6.svg?variant=ghost&amp;font=geist-mono&amp;mode=light&amp;logo=swift&amp;valueColor=EA580C" />
-      <a href="https://github.com/sauravsz/szcast/blob/main/LICENSE"><img alt="License: AGPL-3.0" src="https://shieldcn.dev/badge/LICENSE-AGPL--3.0.svg?variant=ghost&amp;font=geist-mono&amp;mode=light&amp;logo=lu:Scale" /></a>
+<nav class="nav">
+  <div class="nav-in">
+    <a class="brand" href="#top"><img src="docs-images/icon.png" alt="" />szcast</a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#extensions">Extensions</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/sauravsz/szcast/tree/main/docs">Docs</a>
+      <a href="https://github.com/sauravsz/szcast">GitHub</a>
+    </div>
+    <a class="btn" href="https://github.com/sauravsz/szcast/releases/latest">Download</a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <span class="pill"><span class="dot"></span><b>v1.0.7</b> · macOS 26+ · Apple silicon</span>
+    <h1>The launcher that <em>stays native</em>.</h1>
+    <p class="lede">
+      szcast is a keyboard-first launcher for macOS, written in Swift and SwiftUI with no
+      dependencies and no Electron shell. Search everything, run your Raycast extensions,
+      dictate offline, and never leave the keyboard.
+    </p>
+    <div class="cta">
+      <a class="btn" href="https://github.com/sauravsz/szcast/releases/latest">Download for macOS</a>
+      <a class="btn btn-ghost" href="https://github.com/sauravsz/szcast">View source</a>
+    </div>
+    <p class="meta"><code class="kbd">⌘ Space</code> to open · AGPL-3.0 · 0 telemetry</p>
+
+    <div class="frame">
+      <div class="frame-cap"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+      <img src="assets/hero.webp" width="1650" height="1046"
+           alt="szcast command palette filtering as you type, showing Clipboard History, applications and system settings" />
+    </div>
+  </div>
+</header>
+
+<section id="features">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Everything in one palette</p>
+      <h2>One keystroke, the whole Mac</h2>
+      <p>Every surface below is the real app, running on a clean install. No mockups.</p>
+    </div>
+
+    <div class="row">
+      <div class="row-copy">
+        <h3>Clipboard history that survives</h3>
+        <p>Every copy is indexed in a local SQLite FTS5 database and searchable the moment you
+           open the palette. Pins stay resident forever; the rest rotates through a bounded window.</p>
+        <ul class="ticks">
+          <li><b>Full-text search</b> across the last 1,000 entries</li>
+          <li><b>Type filters</b> for text, links, images and files</li>
+          <li><b>Pin</b> what matters so it never ages out</li>
+          <li>Excluded apps never record at all</li>
+        </ul>
+      </div>
+      <div class="row-shot">
+        <img src="assets/clipboard.webp" width="1650" height="1046" loading="lazy"
+             alt="szcast clipboard history with searchable entries grouped by day" />
+      </div>
+    </div>
+
+    <div class="row flip">
+      <div class="row-copy">
+        <h3>Quicklinks with real favicons</h3>
+        <p>Turn any URL into a search target with <code class="kbd">{argument name="Query"}</code>
+           placeholders. szcast fetches and caches favicons from Google, DuckDuckGo and the
+           origin itself, so the list reads like an app drawer instead of a bookmark folder.</p>
+        <ul class="ticks">
+          <li>Parameterised links with named arguments</li>
+          <li>Favicon cache with three-tier fallback</li>
+          <li>Import an existing Raycast set in one pass</li>
+        </ul>
+      </div>
+      <div class="row-shot">
+        <img src="assets/quicklinks.webp" width="1650" height="1046" loading="lazy"
+             alt="szcast quicklinks browser listing parameterised web searches with favicons" />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row-copy">
+        <h3>Emoji and symbols, without the lag</h3>
+        <p>The full Unicode set with skin-tone variants, keyword aliases and category filters.
+           Frequently used entries rise to the top and stay there.</p>
+        <ul class="ticks">
+          <li>Every category, 559 in Smileys &amp; People alone</li>
+          <li>Search by name or alias, not just glyph</li>
+          <li>Pastes straight into the frontmost app</li>
+        </ul>
+      </div>
+      <div class="row-shot">
+        <img src="assets/emoji.webp" width="1650" height="1046" loading="lazy"
+             alt="szcast emoji picker showing frequently used and category filters" />
+      </div>
+    </div>
+
+    <div class="row flip">
+      <div class="row-copy">
+        <h3>Notes that hold actual media</h3>
+        <p>A TextKit 2 editor with inline image attachments, drag and drop, and Markdown that
+           reveals itself at the cursor. Files land on disk as plain <code>.md</code> — yours to
+           read, sync or grep.</p>
+        <ul class="ticks">
+          <li>YAML frontmatter for tags and folders</li>
+          <li>Paste screenshots straight into a note</li>
+          <li>Plain Markdown in <code>~/Library/Application Support</code></li>
+        </ul>
+      </div>
+      <div class="row-shot" style="--ratio: 1291 / 1046">
+        <img src="assets/notes.webp" alt="Notes window" loading="lazy" />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row-copy">
+        <h3>A calculator you never had to open</h3>
+        <p>Type the expression into the palette and the answer is already there, above your other
+           results. Units, dates and currency conversions use the same engine.</p>
+        <ul class="ticks">
+          <li>Inline result — no separate window, no Return</li>
+          <li>Units, time spans and date arithmetic</li>
+          <li>Currency via an injectable rate table</li>
+          <li>History, searchable from the launcher</li>
+        </ul>
+      </div>
+      <div class="row-shot">
+        <img src="assets/calc.webp" width="1650" height="1046" loading="lazy"
+             alt="szcast inline calculator showing the evaluated expression above search results" />
+      </div>
+    </div>
+
+    <div class="row flip">
+      <div class="row-copy">
+        <h3>Local AI chat</h3>
+        <p>Chat against a model you own, with conversations stored on this Mac in SQLite. Point it
+           at a local runtime or your own API key — nothing is routed through us, because there is
+           no us.</p>
+        <ul class="ticks">
+          <li>Conversations stay on disk, never uploaded</li>
+          <li>Web search grounding via Tavily, Exa or Jina</li>
+          <li>MCP servers expose their tools to the model</li>
+        </ul>
+      </div>
+      <div class="row-shot">
+        <img src="assets/aichat.webp" width="1920" height="1320" loading="lazy"
+             alt="szcast AI chat window with a model picker and message composer" />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row-copy">
+        <h3>Focus timer that stays out of the way</h3>
+        <p>Pomodoro cycles with a menu bar countdown and non-blocking audio cues. Start it from the
+           palette, forget about it, get told when to stop.</p>
+        <ul class="ticks">
+          <li>Work, short break and long break cycles</li>
+          <li>Countdown lives in the menu bar</li>
+          <li>Cues never steal focus</li>
+        </ul>
+      </div>
+      <div class="row-shot">
+        <img src="assets/focus.webp" width="1650" height="1046" loading="lazy"
+             alt="szcast focus timer screen with work and break durations" />
+      </div>
+    </div>
+
+    <div class="row flip">
+      <div class="row-copy">
+        <h3>File search across the whole disk</h3>
+        <p>A SQLite-backed index of your files, filtered by type and previewed with native
+           Quick Look. Selection changes update the preview without a keystroke.</p>
+        <ul class="ticks">
+          <li><code class="kbd">⌘Y</code> opens Quick Look on the highlighted file</li>
+          <li>Type filters for documents, images, code and folders</li>
+          <li>Scope to specific roots instead of indexing everything</li>
+        </ul>
+      </div>
+      <div class="row-shot" style="--ratio: 1664 / 1063">
+        <img src="assets/file-search.webp" alt="File search results" loading="lazy" />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row-copy">
+        <h3>Windows where you want them</h3>
+        <p>Halves, quarters, maximise and reasonable-size, all on global shortcuts. Save a
+           multi-display arrangement as a Layout and rebuild it in one action.</p>
+        <ul class="ticks">
+          <li>Saved layouts across multiple displays</li>
+          <li>Rooms: switch a whole desk setup at once</li>
+          <li>Sizes stored as fractions, so they survive a monitor change</li>
+        </ul>
+      </div>
+      <div class="row-shot" style="--ratio: 2212 / 1620">
+        <img src="assets/window-management.webp" alt="Window management" loading="lazy" />
+      </div>
+    </div>
+
+    <div class="row flip">
+      <div class="row-copy">
+        <h3>Dictation, entirely on this Mac</h3>
+        <p>A global shortcut records from your chosen microphone, transcribes locally and pastes
+           the cleaned text once. No model is bundled — the pane downloads a pinned Core ML
+           conversion when you ask it to.</p>
+        <ul class="ticks">
+          <li>Parakeet and Qwen3-ASR model families</li>
+          <li>Live preview in a floating pill while you speak</li>
+          <li>Local cleanup fixes grammar and filler words before pasting</li>
+        </ul>
+      </div>
+      <div class="row-shot" style="--ratio: 2212 / 1620">
+        <img src="assets/dictation.webp" alt="Dictation settings" loading="lazy" />
+      </div>
+    </div>
+
+    <div class="sec-head" style="margin:96px 0 34px;">
+      <h2 style="max-width:24ch; margin:0 auto;">It listens in a pill, not a window</h2>
+      <p>Press the dictation shortcut and a glass capsule drops over whatever you are doing.
+         It shows a level meter, then your words as they are recognised, then the transcription
+         pass — and disappears when the text is pasted.</p>
+    </div>
+
+    <div class="pill-stage">
+      <p class="pill-doc">
+        The migration ran clean on the staging cluster this morning. I have attached the timing
+        breakdown to the ticket, along with the <b>slowest three queries</b> and what I changed
+        in each one. Nothing needs a second pass before Thursday.<span class="pill-caret"></span>
+      </p>
+      <div class="pill-float">
+        <img id="pill-live" src="assets/pill-preview.webp" width="720" height="72"
+             alt="szcast dictation pill showing live speech preview" />
+      </div>
+    </div>
+    <p style="text-align:center; color:var(--muted-2); font-size:12.5px; margin:12px 0 0;">
+      The pill above cycles through its three real states — hover to hold one.
     </p>
 
-    <img class="shot" src="docs-screenshot.jpg" alt="szcast command palette" />
-
-    <div class="panel">
-      <p>Built with SwiftUI and AppKit. No dependencies, no Electron, no telemetry. It runs your Raycast extensions, too.</p>
-      <nav>
-        <a href="https://github.com/sauravsz/szcast/releases">Releases</a>
-        <a href="#build">Build</a>
-        <a href="https://github.com/sauravsz/szcast/tree/main/docs">Docs</a>
-        <a href="https://github.com/sauravsz/szcast/issues">Support</a>
-        <a href="https://github.com/sauravsz/szcast">GitHub</a>
-      </nav>
-    </div>
-
-    <div class="cols">
-      <div class="panel" id="build">
-        <h2>Install</h2>
-        <p>Grab the DMG from <a href="https://github.com/sauravsz/szcast/releases/latest">Releases</a>,
-          open it, and drag <strong>szcast</strong> into <code>/Applications</code>.</p>
-        <ul>
-          <li>The build is <strong>self-signed, not notarized</strong> — right-click → <strong>Open</strong>
-            the first time, and macOS will not ask again.</li>
-          <li>Requires macOS 26 or newer on Apple silicon.</li>
-          <li>No Homebrew cask yet.</li>
-        </ul>
-        <h2>Or build from source</h2>
-        <p>Requires macOS 26 or newer and Xcode 27 (Swift 6, macOS 26 SDK).</p>
-        <pre><code>git clone https://github.com/sauravsz/szcast.git
-cd szcast
-open szcast.xcodeproj    # scheme: Szcast, then ⌘R</code></pre>
-        <ul>
-          <li>Debug builds install as <strong>szcast Dev</strong>, side by side with a release build.</li>
-          <li>Run the harnesses with <code>./Scripts/run-tests.sh</code>.</li>
-        </ul>
+    <div class="pill-states">
+      <div class="pill-card">
+        <img src="assets/pill-listening.webp" width="384" height="72"
+             alt="Dictation pill in the listening state with an input level meter" />
+        <span><b>Listening</b> — level meter, before a word is recognised.</span>
       </div>
-      <div class="panel">
-        <h2>Features &amp; Enhancements</h2>
-        <ul>
-          <li><strong>Quick Look File Preview (⌘Y)</strong>: Native floating Quick Look preview for any file in File Search or Launcher, with real-time selection updates.</li>
-          <li><strong>Live Speech Dictation Preview</strong>: Real-time speech preview displayed dynamically inside the floating glass pill while speaking.</li>
-          <li><strong>Single-Shot Paste Pipeline</strong>: Zero document typing while speaking; pastes the complete cleaned transcription all at once after speech cleanup finishes.</li>
-          <li><strong>AI Speech Cleanup</strong>: Built-in local AI normalization that fixes grammar, removes filler words, formats punctuation, and auto-capitalizes sentences in under 300ms.</li>
-          <li><strong>Advanced Dictation Suite</strong>: Multi-root Parakeet Ultra discovery, spoken emoji/punctuation conversion, filler word removal, and domain vocabulary packs.</li>
-          <li><strong>Quicklink Favicons Auto-Fetch</strong>: High-res icon caching via Google CDN, DuckDuckGo, and direct origin fallbacks.</li>
-          <li><strong>Raycast Store Updates &amp; Extensions</strong>: Trusted release CDN policy for one-click extension installs and updates directly in-app.</li>
-          <li><strong>Dynamic Font Scaling</strong>: Real-time typography scaling from 12pt to 22pt across palette rows and chat.</li>
-          <li><strong>Focus Timer &amp; Sensory Suite</strong>: Native Pomodoro cycles, menu bar countdown, and non-blocking sound cues.</li>
-          <li><strong>Native AI Web Search</strong>: Live web citations with Tavily, Exa, and Jina integration.</li>
-          <li><strong>Rich Notes &amp; Snippets</strong>: Inline images, YAML tagging, folder filters, and <code>⌘D</code> duplication.</li>
-        </ul>
+      <div class="pill-card">
+        <img src="assets/pill-preview.webp" width="720" height="72"
+             alt="Dictation pill showing recognised text as a live preview" />
+        <span><b>Live preview</b> — text appears as it is transcribed.</span>
+      </div>
+      <div class="pill-card">
+        <img src="assets/pill-transcribing.webp" width="384" height="72"
+             alt="Dictation pill in the transcribing state with an animated indicator" />
+        <span><b>Transcribing</b> — cleanup runs, then one paste.</span>
       </div>
     </div>
-
-    <div class="panel">
-      <h2>Acknowledgements &amp; attribution</h2>
-      <p>szcast is a fork of <a href="https://github.com/abue-ammar/tinycast">Tinycast</a> by Abue Ammar, under the GNU AGPL v3 license.</p>
-      <p>Special credit to <a href="https://github.com/saurabhav88/EnviousWispr">EnviousWispr</a> by saurabhav88 for dictation architecture patterns, vocabulary packs, and speech normalization workflows, and to <a href="https://raycast.com">Raycast</a> for the extension API and community extension ecosystem.</p>
-      <p><a href="https://github.com/sauravsz/szcast/blob/main/LICENSE">LICENSE</a> ·
-         <a href="https://github.com/sauravsz/szcast/blob/main/NOTICE.md">NOTICE</a></p>
-    </div>
-
-    <footer>
-      <p>szcast is free and stays free. AGPL-3.0 — see the repo for details.</p>
-      <p>Hosted on <a href="https://github.com/sauravsz/szcast">GitHub</a>, deployed to Vercel.</p>
-    </footer>
   </div>
+</section>
+
+<section id="extensions" style="background:var(--bg-raised); border-top:1px solid var(--line-soft); border-bottom:1px solid var(--line-soft);">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Raycast compatibility</p>
+      <h2>Your extensions already work here</h2>
+      <p>szcast runs community Raycast extensions through an embedded JavaScriptCore runtime.
+         Install from a store link, keep them updated, and import your existing export.</p>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="ico">▦</div>
+        <h4>Install from a link</h4>
+        <p>Paste a Raycast store URL and szcast resolves, verifies and installs the package from
+           the trusted release CDN.</p>
+      </div>
+      <div class="card">
+        <div class="ico">↻</div>
+        <h4>Updates in place</h4>
+        <p>Extension updates arrive without a restart and without a second app to keep running.</p>
+      </div>
+      <div class="card">
+        <div class="ico">⇪</div>
+        <h4>Import your export</h4>
+        <p>Reads the <code>.rayconfig</code> written by Raycast 2.x — an authenticated AES-256-GCM
+           container — and rebuilds quicklinks, snippets and settings.</p>
+      </div>
+      <div class="card">
+        <div class="ico">⌘</div>
+        <h4>Hotkeys in-house</h4>
+        <p>A Carbon <code>RegisterEventHotKey</code> layer with combos, double-taps, sided modifiers
+           and a Hyper key. Zero dependencies.</p>
+      </div>
+      <div class="card">
+        <div class="ico">⌥</div>
+        <h4>Custom commands</h4>
+        <p>Name a shell command, give it arguments if it needs them, and it becomes a searchable
+           launcher row with its own shortcut.</p>
+      </div>
+      <div class="card">
+        <div class="ico">◫</div>
+        <h4>Window management</h4>
+        <p>Halves, quarters, maximise and saved multi-display layouts — resolved as fractions of the
+           visible frame, so they survive a monitor change.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="install" id="install">
+  <div class="wrap">
+    <div class="sec-head" style="text-align:left; margin-bottom:36px;">
+      <p class="eyebrow">Get started</p>
+      <h2>Install in about a minute</h2>
+    </div>
+    <div class="install-grid">
+      <div>
+        <ol class="steps">
+          <li>
+            <h4>Download the DMG</h4>
+            <p>Grab the latest build from <a href="https://github.com/sauravsz/szcast/releases/latest">Releases</a>.</p>
+          </li>
+          <li>
+            <h4>Drag szcast to Applications</h4>
+            <p>Open the DMG and move <strong>szcast</strong> into <code>/Applications</code>.</p>
+          </li>
+          <li>
+            <h4>Open it once, manually</h4>
+            <p>Right-click → <strong>Open</strong> the first time. The build is self-signed, so
+               macOS asks once and then remembers.</p>
+          </li>
+          <li>
+            <h4>Press ⌘ Space</h4>
+            <p>Grant Accessibility when asked — window management and menu search need it.</p>
+          </li>
+        </ol>
+        <div class="note">
+          Requires macOS 26 or newer on Apple silicon. There is no Homebrew cask yet.
+        </div>
+      </div>
+      <div>
+        <p style="margin:0 0 10px; font-size:13px; color:var(--muted-2); text-transform:uppercase; letter-spacing:.08em; font-weight:600;">Or build from source</p>
+        <pre><span class="c"># requires Xcode 27 and the macOS 26 SDK</span>
+git clone https://github.com/sauravsz/szcast.git
+cd szcast
+open szcast.xcodeproj
+
+<span class="c"># scheme: Szcast, then ⌘R
+# debug builds install as "szcast Dev", side by side</span>
+./Scripts/run-tests.sh</pre>
+        <div style="margin-top:20px;">
+          <a class="btn" href="https://github.com/sauravsz/szcast/releases/latest">Download</a>
+          <a class="btn btn-ghost" href="https://github.com/sauravsz/szcast/tree/main/docs" style="margin-left:8px;">Read the docs</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="padding:64px 0;">
+  <div class="wrap">
+    <div class="facts">
+      <div><b>0</b><span>runtime dependencies</span></div>
+      <div><b>Swift 6</b><span>SwiftUI + AppKit</span></div>
+      <div><b>SQLite FTS5</b><span>local search index</span></div>
+      <div><b>AGPL-3.0</b><span>free and open</span></div>
+    </div>
+  </div>
+</section>
+
+<section style="padding:20px 0 84px; text-align:center;">
+  <div class="wrap">
+    <h2 style="max-width:20ch; margin:0 auto;">Everything above, one download, no account.</h2>
+    <p style="color:var(--muted); max-width:52ch; margin:16px auto 0;">
+      szcast is AGPL-3.0 and self-signed — no notarization, no licensing server, no sign-in.
+    </p>
+    <div class="cta" style="margin-top:26px;">
+      <a class="btn" href="https://github.com/sauravsz/szcast/releases/latest">Download for macOS</a>
+      <a class="btn btn-ghost" href="https://github.com/sauravsz/szcast">Star on GitHub</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <a class="brand" href="#top" style="margin-bottom:12px;"><img src="docs-images/icon.png" alt="" />szcast</a>
+        <p style="color:var(--muted); font-size:14px; max-width:34ch; margin:10px 0 0;">
+          A native, keyboard-first macOS launcher. Free and stays free.
+        </p>
+      </div>
+      <div class="foot-links">
+        <a href="https://github.com/sauravsz/szcast/releases/latest">Releases</a>
+        <a href="https://github.com/sauravsz/szcast/tree/main/docs">Documentation</a>
+        <a href="https://github.com/sauravsz/szcast/issues">Issues</a>
+        <a href="https://github.com/sauravsz/szcast">GitHub</a>
+        <a href="https://github.com/sauravsz/szcast/blob/main/LICENSE">License</a>
+        <a href="https://github.com/sauravsz/szcast/blob/main/NOTICE.md">Notices</a>
+      </div>
+    </div>
+    <p class="foot-note">
+      szcast is a fork of <a href="https://github.com/abue-ammar/tinycast">Tinycast</a> by Abue Ammar,
+      distributed under the GNU AGPL v3. Dictation architecture, vocabulary packs and speech
+      normalization were inspired by <a href="https://github.com/saurabhav88/EnviousWispr">EnviousWispr</a>
+      by saurabhav88. Extension compatibility is built against the
+      <a href="https://raycast.com">Raycast</a> API and community ecosystem. Full third-party
+      attribution lives in <a href="https://github.com/sauravsz/szcast/blob/main/NOTICE.md">NOTICE.md</a>.
+    </p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var live = document.getElementById('pill-live');
+  var stage = document.querySelector('.pill-stage');
+  if (!live || !stage) return;
+
+  // The same three assets shown in the state cards below, in the order the app shows them.
+  var frames = [
+    { src: 'assets/pill-listening.webp', w: 384 },
+    { src: 'assets/pill-preview.webp', w: 720 },
+    { src: 'assets/pill-transcribing.webp', w: 384 }
+  ];
+  frames.forEach(function (f) { new Image().src = f.src; });
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  var i = 1, timer = null;
+  function show(n) {
+    var f = frames[n];
+    live.src = f.src;
+    live.setAttribute('width', f.w);
+  }
+  function start() {
+    stop();
+    timer = setInterval(function () { i = (i + 1) % frames.length; show(i); }, 2600);
+  }
+  function stop() { if (timer) { clearInterval(timer); timer = null; } }
+
+  stage.addEventListener('mouseenter', stop);
+  stage.addEventListener('mouseleave', start);
+  document.addEventListener('visibilitychange', function () {
+    document.hidden ? stop() : start();
+  });
+  start();
+})();
+</script>
+
 </body>
 </html>
