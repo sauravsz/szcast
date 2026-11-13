@@ -285,6 +285,28 @@
   .foot-links a { color: var(--muted); }
   .foot-note { color: var(--muted-2); font-size: 12.5px; margin-top: 32px; max-width: 76ch; }
   .foot-note a { color: var(--muted); }
+
+  /* ── what szcast adds over tinycast ─────────── */
+  .yours { background: var(--bg-raised); border-top: 1px solid var(--line-soft); }
+  .yours .sec-head { margin-bottom: 40px; }
+  .badge {
+    display: inline-block; font-size: 11px; font-weight: 650; letter-spacing: .07em;
+    text-transform: uppercase; padding: 3px 8px; border-radius: 5px; margin-bottom: 12px;
+    color: #34d399; background: color-mix(in srgb, #34d399 12%, transparent);
+    border: 1px solid color-mix(in srgb, #34d399 30%, transparent);
+  }
+  .badge.plus { color: var(--accent-2); background: color-mix(in srgb, var(--accent) 14%, transparent); border-color: color-mix(in srgb, var(--accent) 34%, transparent); }
+  .yours .grid { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 880px) { .yours .grid { grid-template-columns: 1fr; } }
+  .yours .card { padding: 26px; }
+  .yours .card h4 { font-size: 17px; margin-bottom: 10px; }
+  .yours .card p { font-size: 14.5px; line-height: 1.62; }
+  .yours .card p + p { margin-top: 10px; }
+  .yours .card em { font-style: normal; color: var(--fg); font-weight: 550; }
+  .yours .card .detail {
+    margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--line-soft);
+    font-family: var(--mono); font-size: 12px; color: var(--muted-2); line-height: 1.7;
+  }
 </style>
 </head>
 <body>
@@ -294,6 +316,7 @@
     <a class="brand" href="#top"><img src="docs-images/icon.png" alt="" />szcast</a>
     <div class="nav-links">
       <a href="#features">Features</a>
+      <a href="#beyond">Beyond Tinycast</a>
       <a href="#extensions">Extensions</a>
       <a href="#install">Install</a>
       <a href="https://github.com/sauravsz/szcast/tree/main/docs">Docs</a>
@@ -309,12 +332,13 @@
     <h1>The launcher that <em>stays native</em>.</h1>
     <p class="lede">
       szcast is a keyboard-first launcher for macOS, written in Swift and SwiftUI with no
-      dependencies and no Electron shell. Search everything, run your Raycast extensions,
-      dictate offline, and never leave the keyboard.
+      dependencies and no Electron shell. Search everything, run your Raycast extensions, and
+      never leave the keyboard — with offline dictation that formats what you said, and a focus
+      timer that keeps out of the way.
     </p>
     <div class="cta">
       <a class="btn" href="https://github.com/sauravsz/szcast/releases/latest">Download for macOS</a>
-      <a class="btn btn-ghost" href="https://github.com/sauravsz/szcast">View source</a>
+      <a class="btn btn-ghost" href="#beyond">What szcast adds</a>
     </div>
     <p class="meta"><code class="kbd">⌘ Space</code> to open · AGPL-3.0 · 0 telemetry</p>
 
@@ -499,6 +523,7 @@
           <li>Parakeet and Qwen3-ASR model families</li>
           <li>Live preview in a floating pill while you speak</li>
           <li>Local cleanup fixes grammar and filler words before pasting</li>
+          <li><a href="#beyond">Vocabulary packs and a custom word list</a> — grown well past upstream</li>
         </ul>
       </div>
       <div class="row-shot" style="--ratio: 2212 / 1620">
@@ -543,6 +568,69 @@
         <img src="assets/pill-transcribing.webp" width="384" height="72"
              alt="Dictation pill in the transcribing state with an animated indicator" />
         <span><b>Transcribing</b> — cleanup runs, then one paste.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="yours" id="beyond">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Beyond the fork</p>
+      <h2>What szcast adds that Tinycast doesn't have</h2>
+      <p>szcast started from <a href="https://github.com/abue-ammar/tinycast">Tinycast</a> and kept
+         its licence, its shape and its best ideas. Everything below was built here — a focus
+         timer and its cue engine that did not exist upstream, and three shared features grown
+         well past the point we forked.</p>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <span class="badge plus">Extended</span>
+        <h4>Dictation with vocabulary and a local cleanup pass</h4>
+        <p>Tinycast ships dictation on Parakeet and Qwen3-ASR. szcast keeps both and grew the
+           feature to <em>41 source files from 27</em>: vocabulary packs, a custom word list,
+           transcription history, a hotkey preset picker, an idle-release policy, and audio
+           ducking so your music steps back while you speak.</p>
+        <p>The cleanup pass is the part worth pointing at. A pinned <em>S1-mini</em> model runs
+           locally through llama.cpp to fix grammar and filler words — with tone, structure and
+           sign-off controls — so the text lands formatted instead of raw.</p>
+        <div class="detail">DictationS1Polisher · DictationLlamaServerManager · VocabularyPack<br />
+          Tech · Medical · Legal · Brands · Names</div>
+      </div>
+
+      <div class="card">
+        <span class="badge">New module</span>
+        <h4>Focus timer with ambient cues</h4>
+        <p>A Pomodoro timer that lives in the menu bar and never steals focus. Work, short and
+           long break cycles, each with its own cue, plus a confetti burst where the moment
+           deserves one.</p>
+        <p>It is the only feature in szcast that did not exist in any form upstream — the
+           <em>Sensory</em> module was written to support it, then reused everywhere else.</p>
+        <div class="detail">FocusTimerEngine · SensoryCoordinator · ConfettiWindowController<br />
+          start it from ⌘Space — no window, no dock icon</div>
+      </div>
+
+      <div class="card">
+        <span class="badge plus">Extended</span>
+        <h4>Live web search in AI chat</h4>
+        <p>Upstream carries a boolean that says whether a provider <em>offers</em> search. szcast
+           implements the search itself: <em>Tavily</em>, <em>Exa</em> and <em>Jina</em> behind one
+           service, with results folded back into the reply as numbered citations you can open.</p>
+        <p>Point it at your own API key or leave it off entirely — nothing is proxied.</p>
+        <div class="detail">WebSearchService · WebSearchAIProvider · ChatCitations<br />
+          279 lines · three providers · one search box</div>
+      </div>
+
+      <div class="card">
+        <span class="badge plus">Extended</span>
+        <h4>Quicklink favicons that actually resolve</h4>
+        <p>Tinycast stores a quicklink as a name and a URL. szcast resolves a real favicon for each
+           one through a three-tier fallback — Google, then DuckDuckGo, then the origin's own
+           <code>/favicon.ico</code> — and caches it so the list loads without a network round trip.</p>
+        <p>It also ships a starter set, so a fresh install has somewhere to go.</p>
+        <div class="detail">QuicklinkFaviconService · DefaultQuicklinks<br />
+          Google → DuckDuckGo → origin, cached to disk</div>
       </div>
     </div>
   </div>
