@@ -1,6 +1,6 @@
 # szcast — MEMORY
 
-Fork of [Tinycast](https://github.com/abue-ammar/tinycast) by Abue Ammar, renamed **szcast**. GitHub: `sauravsz/szcast` (fork of `abue-ammar/tinycast`). Clone: `Github Repos/szcast` (`upstream` remote → abue-ammar/tinycast).
+Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `sauravsz/szcast`. Clone: `Github Repos/szcast` (`upstream` remote tracked for weekly audit via `skills/szcast-upstream-radar`).
 
 ## Layout
 - Source root `szcast/`, Xcode package `szcast.xcodeproj`, scheme `szcast`, entry `szcast/App/szcastApp.swift`, icon `szcast/szcast.icon`.
