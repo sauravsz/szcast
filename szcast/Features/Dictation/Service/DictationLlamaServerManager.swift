@@ -70,6 +70,8 @@ final class DictationLlamaServerManager {
         let candidates = [
             home.appendingPathComponent("Library/Application Support/szcast/Models/s1-mini/s1-mini-1.0.gguf"),
             home.appendingPathComponent("Library/Application Support/szcast/Models/s1-mini-1.0.gguf"),
+            home.appendingPathComponent("Library/Application Support/EnviousWispr/Models/s1-mini/s1-mini-1.0.gguf"),
+            home.appendingPathComponent("Library/Application Support/EnviousWispr/Models/s1-mini.gguf"),
             AppPaths.caches().appendingPathComponent("Dictation/s1-mini/s1-mini-1.0.gguf")
         ]
         for url in candidates {

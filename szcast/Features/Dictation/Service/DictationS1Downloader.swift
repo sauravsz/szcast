@@ -100,55 +100,16 @@ final class DictationS1Downloader {
                 var request = URLRequest(url: DictationLlamaServerManager.directHuggingFaceURL)
                 request.timeoutInterval = 1200.0
 
-                let (asyncBytes, response) = try await URLSession.shared.bytes(for: request)
+                self.status = .downloading(progress: 0.1, statusText: "Downloading directly from Hugging Face...")
+                let (downloadedURL, response) = try await URLSession.shared.download(for: request)
                 guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
                     throw URLError(.badServerResponse)
                 }
 
-                let totalBytes = http.expectedContentLength > 0 ? http.expectedContentLength : 484_219_808
-                let tempURL = destination.deletingLastPathComponent().appendingPathComponent("s1-mini-\(UUID().uuidString).tmp")
-                defer {
-                    if FileManager.default.fileExists(atPath: tempURL.path) {
-                        try? FileManager.default.removeItem(at: tempURL)
-                    }
-                }
-
-                FileManager.default.createFile(atPath: tempURL.path, contents: nil)
-                guard let fileHandle = try? FileHandle(forWritingTo: tempURL) else {
-                    throw NSError(domain: "DictationS1Download", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to open temporary file"])
-                }
-
-                var receivedBytes: Int64 = 0
-                var buffer = Data()
-                buffer.reserveCapacity(65536)
-
-                for try await byte in asyncBytes {
-                    try Task.checkCancellation()
-                    buffer.append(byte)
-                    if buffer.count >= 65536 {
-                        try fileHandle.write(contentsOf: buffer)
-                        receivedBytes += Int64(buffer.count)
-                        buffer.removeAll(keepingCapacity: true)
-
-                        let progress = Double(receivedBytes) / Double(totalBytes)
-                        let mbReceived = Double(receivedBytes) / (1024 * 1024)
-                        let mbTotal = Double(totalBytes) / (1024 * 1024)
-                        let text = String(format: "Downloading: %.1f MB / %.1f MB", mbReceived, mbTotal)
-                        self.status = .downloading(progress: progress, statusText: text)
-                    }
-                }
-
-                if !buffer.isEmpty {
-                    try fileHandle.write(contentsOf: buffer)
-                    receivedBytes += Int64(buffer.count)
-                }
-
-                try fileHandle.close()
-
                 if FileManager.default.fileExists(atPath: destination.path) {
                     try FileManager.default.removeItem(at: destination)
                 }
-                try FileManager.default.moveItem(at: tempURL, to: destination)
+                try FileManager.default.moveItem(at: downloadedURL, to: destination)
 
                 await self.checkStatus()
             } catch is CancellationError {
