@@ -18,6 +18,7 @@ final class DictationS1Downloader {
     private(set) var status: Status = .idle
     private(set) var installedModelName: String?
     @ObservationIgnored private var pullTask: Task<Void, Never>?
+    @ObservationIgnored private var downloadCoordinator: DirectDownloadCoordinator?
 
     static let defaultModelID = "hf.co/superwhisper/s1-mini-gguf:Q4_K_M"
     static let baseURL = URL(string: "http://localhost:11434")!
@@ -82,6 +83,13 @@ final class DictationS1Downloader {
         status = .notInstalled
     }
 
+    func cancelDownload() {
+        pullTask?.cancel()
+        pullTask = nil
+        downloadCoordinator?.cancel()
+        downloadCoordinator = nil
+    }
+
     /// Download s1-mini-1.0.gguf directly from Hugging Face (Default standalone method)
     func download() {
         downloadDirectGGUF()
@@ -89,35 +97,41 @@ final class DictationS1Downloader {
 
     func downloadDirectGGUF() {
         cancelDownload()
-        status = .downloading(progress: 0.0, statusText: "Starting direct download from Hugging Face...")
+        status = .downloading(progress: 0.0, statusText: "Connecting to Hugging Face...")
 
-        pullTask = Task { [weak self] in
-            guard let self else { return }
-            do {
-                let destination = DictationLlamaServerManager.defaultDestinationURL()
-                try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let destination = DictationLlamaServerManager.defaultDestinationURL()
+        try? FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
 
-                var request = URLRequest(url: DictationLlamaServerManager.directHuggingFaceURL)
-                request.timeoutInterval = 1200.0
-
-                self.status = .downloading(progress: 0.1, statusText: "Downloading directly from Hugging Face...")
-                let (downloadedURL, response) = try await URLSession.shared.download(for: request)
-                guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
-                    throw URLError(.badServerResponse)
+        let coordinator = DirectDownloadCoordinator(
+            onProgress: { [weak self] progress, statusText in
+                self?.status = .downloading(progress: progress, statusText: statusText)
+            },
+            onCompletion: { [weak self] result in
+                guard let self else { return }
+                self.downloadCoordinator = nil
+                switch result {
+                case .success(let tempURL):
+                    do {
+                        if FileManager.default.fileExists(atPath: destination.path) {
+                            try FileManager.default.removeItem(at: destination)
+                        }
+                        try FileManager.default.moveItem(at: tempURL, to: destination)
+                        Task { await self.checkStatus() }
+                    } catch {
+                        self.status = .error("Failed to install model: \(error.localizedDescription)")
+                    }
+                case .failure(let error):
+                    if (error as NSError).code == NSURLErrorCancelled {
+                        Task { await self.checkStatus() }
+                    } else {
+                        self.status = .error(error.localizedDescription)
+                    }
                 }
-
-                if FileManager.default.fileExists(atPath: destination.path) {
-                    try FileManager.default.removeItem(at: destination)
-                }
-                try FileManager.default.moveItem(at: downloadedURL, to: destination)
-
-                await self.checkStatus()
-            } catch is CancellationError {
-                await self.checkStatus()
-            } catch {
-                self.status = .error(error.localizedDescription)
             }
-        }
+        )
+
+        self.downloadCoordinator = coordinator
+        coordinator.start(url: DictationLlamaServerManager.directHuggingFaceURL)
     }
 
     /// Pull model through local Ollama daemon
@@ -182,9 +196,78 @@ final class DictationS1Downloader {
             }
         }
     }
+}
 
-    func cancelDownload() {
-        pullTask?.cancel()
-        pullTask = nil
+private final class DirectDownloadCoordinator: NSObject, URLSessionDownloadDelegate, @unchecked Sendable {
+    private let onProgress: @MainActor (Double, String) -> Void
+    private let onCompletion: @MainActor (Result<URL, Error>) -> Void
+    private var session: URLSession?
+    private var task: URLSessionDownloadTask?
+
+    init(
+        onProgress: @escaping @MainActor (Double, String) -> Void,
+        onCompletion: @escaping @MainActor (Result<URL, Error>) -> Void
+    ) {
+        self.onProgress = onProgress
+        self.onCompletion = onCompletion
+        super.init()
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 60.0
+        config.timeoutIntervalForResource = 3600.0
+        self.session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
+    }
+
+    func start(url: URL) {
+        task = session?.downloadTask(with: url)
+        task?.resume()
+    }
+
+    func cancel() {
+        task?.cancel()
+        task = nil
+        session?.invalidateAndCancel()
+        session = nil
+    }
+
+    func urlSession(
+        _ session: URLSession,
+        downloadTask: URLSessionDownloadTask,
+        didWriteData bytesWritten: Int64,
+        totalBytesWritten: Int64,
+        totalBytesExpectedToWrite: Int64
+    ) {
+        let expected = totalBytesExpectedToWrite > 0 ? totalBytesExpectedToWrite : 484_219_808
+        let progress = min(1.0, max(0.0, Double(totalBytesWritten) / Double(expected)))
+        let mbReceived = Double(totalBytesWritten) / (1024 * 1024)
+        let mbTotal = Double(expected) / (1024 * 1024)
+        let text = String(format: "%.1f MB / %.1f MB", mbReceived, mbTotal)
+        Task { @MainActor in
+            onProgress(progress, text)
+        }
+    }
+
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+        let tempTarget = FileManager.default.temporaryDirectory.appendingPathComponent("s1-mini-\(UUID().uuidString).gguf")
+        do {
+            if FileManager.default.fileExists(atPath: tempTarget.path) {
+                try FileManager.default.removeItem(at: tempTarget)
+            }
+            try FileManager.default.moveItem(at: location, to: tempTarget)
+            Task { @MainActor in
+                onCompletion(.success(tempTarget))
+            }
+        } catch {
+            Task { @MainActor in
+                onCompletion(.failure(error))
+            }
+        }
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        if let error {
+            Task { @MainActor in
+                onCompletion(.failure(error))
+            }
+        }
     }
 }
