@@ -83,6 +83,10 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - In-Place Flight Tracker Card: Keyless live FlightRadar24 tracker with flight designators (e.g. `flight BA1444`, `AI101`), origin/destination IATA tags, departure/arrival local times, and status badges.
   - Complete Launcher Integration: Dispatched via `LauncherList.LeadCard` with seamless in-place UI (no external browser or Maps popups required). Test harness expanded to 121 suites (all pass).
 
+- **Compact Bar Shadow & S1-Mini Resolution** (`7ae6b6b3`):
+  - Compact Bar Shadow Crescent Fix: Eliminated the double dark shadow crescent clipping artifact under the search pill and circular shortcut buttons on macOS 27 by setting `Theme.glassCastsShadow = true`, restoring the crisp silhouette mask over the glass container, and triggering settled window shadow invalidation.
+  - S1-Mini Model Discovery & Fast Download: Discovered pre-existing 462MB `s1-mini-1.0.gguf` in EnviousWispr directory and synced it to `~/Library/Application Support/szcast/Models/s1-mini/s1-mini-1.0.gguf`. Added EnviousWispr candidate paths to `DictationLlamaServerManager` and `DictationModelStore`. Replaced slow byte-by-byte download sequence with native `URLSession.shared.download`.
+
 ## Active State & Next Steps
 - **Active State**: All 121 test harnesses pass. Long-form dictation scaled to 20 minutes, security and crash bugs patched, upstream sync complete, and Raycast Calculator & live intelligence suite fully operational.
 - **Immediate Next Steps**:
