@@ -34,6 +34,12 @@ struct SystemAction: Identifiable, Hashable, Sendable {
         case quitAllApps = "quit-all-apps"
         case dismissNotifications = "dismiss-notifications"
         case toggleBluetooth = "toggle-bluetooth"
+        case switchAudioOutput = "switch-audio-output"
+        case switchAudioInput = "switch-audio-input"
+        case brightnessUp = "brightness-up"
+        case brightnessDown = "brightness-down"
+        case brightness50 = "brightness-50"
+        case brightness100 = "brightness-100"
     }
 
     /// Whether it confirms first, and the copy; every such action is destructive.
@@ -110,6 +116,12 @@ enum SystemActionCatalog {
         case .quitAllApps: return "Quit All Applications"
         case .dismissNotifications: return "Dismiss Notifications"
         case .toggleBluetooth: return "Toggle Bluetooth"
+        case .switchAudioOutput: return "Switch Audio Output"
+        case .switchAudioInput: return "Switch Audio Input"
+        case .brightnessUp: return "Increase Display Brightness"
+        case .brightnessDown: return "Decrease Display Brightness"
+        case .brightness50: return "Set Brightness to 50%"
+        case .brightness100: return "Set Brightness to 100%"
         }
     }
 
@@ -142,6 +154,11 @@ enum SystemActionCatalog {
         case .unhideAllApps: return "eye.circle"
         case .quitAllApps: return "xmark.circle"
         case .dismissNotifications: return "bell.slash"
+        case .switchAudioOutput: return "speaker.wave.2"
+        case .switchAudioInput: return "mic"
+        case .brightnessUp: return "sun.max"
+        case .brightnessDown: return "sun.min"
+        case .brightness50, .brightness100: return "sun.max.fill"
         // Not an SF Symbol: the logo is a trademark, so this is a bundled asset.
         case .toggleBluetooth: return "bluetooth"
         }

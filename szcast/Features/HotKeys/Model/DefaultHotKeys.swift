@@ -21,9 +21,17 @@ enum DefaultHotKeys {
                 carbonModifiers: KeyShortcut.carbonModifiers(from: hyperModifiers)))
     }
 
+    static func optionShiftCombo(_ keyCode: Int) -> HotKeyBinding {
+        .combo(
+            KeyShortcut(
+                carbonKeyCode: keyCode,
+                carbonModifiers: KeyShortcut.carbonModifiers(from: [.option, .shift])))
+    }
+
     /// Search Snippets, window halves, maximise and reasonable size.
     static var bindings: [(HotKeyAction, HotKeyBinding)] {
         [
+            (.command(.captureScreenText), optionShiftCombo(kVK_ANSI_2)),
             (.command(.searchSnippets), combo(kVK_ANSI_S)),
             (.windowCommand(id: .leftHalf), combo(kVK_ANSI_J)),
             (.windowCommand(id: .rightHalf), combo(kVK_ANSI_L)),

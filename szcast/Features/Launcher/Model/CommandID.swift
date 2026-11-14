@@ -48,6 +48,8 @@ enum CommandID: String, CaseIterable, Sendable {
     case about = "command:about"
     case support = "command:support"
     case focusTimer = "command:focus-timer"
+    case captureScreenText = "command:capture-screen-text"
+    case scanQRCode = "command:scan-qr-code"
     case quit = "command:quit"
 
     static let defaultCompactBarCommands: [CommandID] = [
@@ -124,6 +126,8 @@ enum CommandID: String, CaseIterable, Sendable {
         case .about: return "About szcast"
         case .support: return "Support szcast"
         case .focusTimer: return "Focus Timer"
+        case .captureScreenText: return "Capture Screen Text (OCR)"
+        case .scanQRCode: return "Scan QR Code"
         case .quit: return "Quit szcast"
         }
     }
@@ -175,6 +179,8 @@ enum CommandID: String, CaseIterable, Sendable {
         case .about: return "info.circle"
         case .support: return "heart"
         case .focusTimer: return "timer"
+        case .captureScreenText: return "text.viewfinder"
+        case .scanQRCode: return "qrcode.viewfinder"
         case .quit: return "power"
         }
     }
@@ -205,6 +211,8 @@ enum CommandID: String, CaseIterable, Sendable {
         case .quickAI: ["ai"]
         case .aiChat: ["chat"]
         case .focusTimer: ["focus", "pomodoro", "timer"]
+        case .captureScreenText: ["ocr", "screen text", "grab text", "text recognition"]
+        case .scanQRCode: ["qr", "scan qr", "barcode", "scan barcode"]
         default: []
         }
     }

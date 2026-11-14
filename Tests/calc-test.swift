@@ -1867,6 +1867,14 @@ struct CalcTests {
         expectDisplay("1.71 to nearest eighth", "1.75")
         expectDisplay("3.14159 to nearest hundredth", "3.14")
 
+        // Developer & Data Transformers
+        expectDisplay("sha256 hello", "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824")
+        expectDisplay("md5 hello", "5d41402abc4b2a76b9719d911017c592")
+        expectDisplay("base64 hello world", "aGVsbG8gd29ybGQ=")
+        expectDisplay("base64 decode aGVsbG8gd29ybGQ=", "hello world")
+        expectDisplay("urlencode hello world!", "hello%20world%21")
+        expectDisplay("urldecode hello%20world%21", "hello world!")
+
         localeTests()
         chainTests()
         phraseTests()

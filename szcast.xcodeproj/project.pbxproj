@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C1C4E3A20001000000000099 /* CalcDataTransformers.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10001000000000099 /* CalcDataTransformers.swift */; };
+		C1C4E3A20005000000000001 /* AudioDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10005000000000001 /* AudioDevice.swift */; };
+		C1C4E3A20005000000000002 /* AudioDeviceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10005000000000002 /* AudioDeviceService.swift */; };
+		C1C4E3A20005000000000003 /* DisplayBrightnessService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10005000000000003 /* DisplayBrightnessService.swift */; };
+		C1C4E3A20006000000000001 /* ScreenCaptureResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10006000000000001 /* ScreenCaptureResult.swift */; };
+		C1C4E3A20006000000000002 /* ScreenCaptureService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10006000000000002 /* ScreenCaptureService.swift */; };
 		B0FDE84036CE4A1716EFDAE2 /* CustomWord.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED159326D2C4D1A06F130487 /* CustomWord.swift */; };
 		DDFE113C33B885AFD38D0079 /* DictationHistoryItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F727C9F571DD9C97701F40FD /* DictationHistoryItem.swift */; };
 		5EB8A9CB49EBF740CC59EF24 /* DictationOtherAudioMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E34F1F824C8572E36B11C16 /* DictationOtherAudioMode.swift */; };
@@ -990,6 +996,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		C1C4E3A10001000000000099 /* CalcDataTransformers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalcDataTransformers.swift; sourceTree = "<group>"; };
+		C1C4E3A10005000000000001 /* AudioDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioDevice.swift; sourceTree = "<group>"; };
+		C1C4E3A10005000000000002 /* AudioDeviceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioDeviceService.swift; sourceTree = "<group>"; };
+		C1C4E3A10005000000000003 /* DisplayBrightnessService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayBrightnessService.swift; sourceTree = "<group>"; };
+		C1C4E3A10006000000000001 /* ScreenCaptureResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenCaptureResult.swift; sourceTree = "<group>"; };
+		C1C4E3A10006000000000002 /* ScreenCaptureService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenCaptureService.swift; sourceTree = "<group>"; };
 		ED159326D2C4D1A06F130487 /* CustomWord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomWord.swift; sourceTree = "<group>"; };
 		F727C9F571DD9C97701F40FD /* DictationHistoryItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationHistoryItem.swift; sourceTree = "<group>"; };
 		9E34F1F824C8572E36B11C16 /* DictationOtherAudioMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationOtherAudioMode.swift; sourceTree = "<group>"; };
@@ -2106,6 +2118,7 @@
 				38A97022BE0F95B5D19F0C26 /* CalcDateTime.swift */,
 				666E0A469BE1984BEF1A9A50 /* CalcDimension.swift */,
 				7817B7A8760B36FDA43F48FC /* CalcEngine.swift */,
+				C1C4E3A10001000000000099 /* CalcDataTransformers.swift */,
 				934DBE501F116131DC1BF5CE /* CalcExpressionParser.swift */,
 				86881DC289D026B2C0BC4442 /* CalcFinance.swift */,
 				E582B93EFB1A2AA85B048A87 /* CalcFormatter.swift */,
@@ -3299,6 +3312,57 @@
 			path = UI;
 			sourceTree = "<group>";
 		};
+				C1C4E3A00005000000000001 /* Hardware */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A00005000000000010 /* Model */,
+				C1C4E3A00005000000000020 /* Service */,
+			);
+			path = Hardware;
+			sourceTree = "<group>";
+		};
+		C1C4E3A00005000000000010 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A10005000000000001 /* AudioDevice.swift */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		C1C4E3A00005000000000020 /* Service */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A10005000000000002 /* AudioDeviceService.swift */,
+				C1C4E3A10005000000000003 /* DisplayBrightnessService.swift */,
+			);
+			path = Service;
+			sourceTree = "<group>";
+		};
+		C1C4E3A00006000000000001 /* ScreenCapture */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A00006000000000010 /* Model */,
+				C1C4E3A00006000000000020 /* Service */,
+			);
+			path = ScreenCapture;
+			sourceTree = "<group>";
+		};
+		C1C4E3A00006000000000010 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A10006000000000001 /* ScreenCaptureResult.swift */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		C1C4E3A00006000000000020 /* Service */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A10006000000000002 /* ScreenCaptureService.swift */,
+			);
+			path = Service;
+			sourceTree = "<group>";
+		};
 		C1C4E3A00003000000000001 /* Travel */ = {
 			isa = PBXGroup;
 			children = (
@@ -3374,6 +3438,8 @@
 			children = (
 				C1C4E3A00002000000000001 /* Weather */,
 				C1C4E3A00003000000000001 /* Travel */,
+				C1C4E3A00005000000000001 /* Hardware */,
+				C1C4E3A00006000000000001 /* ScreenCapture */,
 				C1C4E3A00004000000000001 /* Flights */,
 				87070A80E9E3AB3E4B0A9E54 /* AI */,
 				6E106BD79223C45E7D102798 /* AppleShortcuts */,
@@ -4593,6 +4659,12 @@
 				C1C4E3A20003000000000002 /* TravelTimeService.swift in Sources */,
 				C1C4E3A20003000000000003 /* TravelCardView.swift in Sources */,
 				C1C4E3A20003000000000004 /* TravelActionsMenu.swift in Sources */,
+				C1C4E3A20001000000000099 /* CalcDataTransformers.swift in Sources */,
+				C1C4E3A20005000000000001 /* AudioDevice.swift in Sources */,
+				C1C4E3A20005000000000002 /* AudioDeviceService.swift in Sources */,
+				C1C4E3A20005000000000003 /* DisplayBrightnessService.swift in Sources */,
+				C1C4E3A20006000000000001 /* ScreenCaptureResult.swift in Sources */,
+				C1C4E3A20006000000000002 /* ScreenCaptureService.swift in Sources */,
 				C1C4E3A20004000000000001 /* FlightResult.swift in Sources */,
 				C1C4E3A20004000000000002 /* FlightTrackerService.swift in Sources */,
 				C1C4E3A20004000000000003 /* FlightCardView.swift in Sources */,

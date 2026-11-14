@@ -1030,9 +1030,9 @@ final class AppSettings {
         menuBarEvents =
             MenuBarEvents(rawValue: defaults.integer(forKey: Key.menuBarEvents.rawValue)) ?? .today
         calendarMenuBarDisplay =
-            CalendarMenuBarDisplay(
-                rawValue: defaults.integer(forKey: Key.calendarMenuBarDisplay.rawValue))
-            ?? .disabled
+            defaults.object(forKey: Key.calendarMenuBarDisplay.rawValue) != nil
+                ? (CalendarMenuBarDisplay(rawValue: defaults.integer(forKey: Key.calendarMenuBarDisplay.rawValue)) ?? .meetingTitle)
+                : .meetingTitle
         menuBarLinkedEventsOnly =
             defaults.object(forKey: Key.menuBarLinkedEventsOnly.rawValue) == nil
             || defaults.bool(forKey: Key.menuBarLinkedEventsOnly.rawValue)

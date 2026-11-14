@@ -184,6 +184,8 @@ run calc-test              Szcast/Features/Calculator/Model/*.swift
 run weather-test           Szcast/Features/Weather/Model/*.swift Szcast/Features/Weather/Service/*.swift
 run travel-test            Szcast/Features/Travel/Model/*.swift Szcast/Features/Travel/Service/*.swift
 run flight-test            Szcast/Features/Flights/Model/*.swift Szcast/Features/Flights/Service/*.swift
+run hardware-test          Szcast/Features/Hardware/Model/*.swift Szcast/Features/Hardware/Service/*.swift Szcast/Features/SystemActions/Model/*.swift Szcast/Platform/LocalizedResource.swift
+run screen-capture-test    Szcast/Features/ScreenCapture/Model/*.swift Szcast/Features/ScreenCapture/Service/*.swift Szcast/Features/Launcher/Model/CommandID.swift Szcast/Features/HotKeys/Model/HotKeyAction.swift Szcast/Features/SystemActions/Model/SystemAction.swift Szcast/Features/WindowManagement/Model/WindowCommand.swift Szcast/Features/Snippets/Model/Snippet.swift Szcast/Features/QuickActions/Model/BuiltInQuickAction.swift Szcast/Features/Quicklinks/Model/Quicklink.swift Szcast/Features/Quicklinks/Model/QuicklinkDestination.swift Szcast/Platform/LocalizedResource.swift
 run index calc-performance Szcast/Features/Calculator/Model/*.swift
 run calendar-test          Szcast/Features/Calendar/Model/*.swift \
                            Szcast/Features/Calendar/UI/EventEditorSession.swift

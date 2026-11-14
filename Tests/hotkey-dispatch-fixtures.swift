@@ -4,6 +4,7 @@ enum CommandID: String, CaseIterable, Sendable {
     case sample
     /// Named so DefaultHotKeys compiles against the stub; no behaviour attaches to it.
     case searchSnippets
+    case captureScreenText
     var name: String { rawValue }
     var hotKeyAction: HotKeyAction? { .command(self) }
 }

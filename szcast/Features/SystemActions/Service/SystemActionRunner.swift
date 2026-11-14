@@ -165,6 +165,28 @@ enum SystemActionRunner {
             let on = try await toggleBluetooth()
             return SystemActionFeedback(
                 on ? String(localized: "Bluetooth On") : String(localized: "Bluetooth Off"))
+        case .switchAudioOutput:
+            if let next = AudioDeviceService.shared.cycleNextOutputDevice() {
+                return SystemActionFeedback(String(localized: "Audio Output: \(next.name)"))
+            }
+        case .switchAudioInput:
+            if let next = AudioDeviceService.shared.cycleNextInputDevice() {
+                return SystemActionFeedback(String(localized: "Audio Input: \(next.name)"))
+            }
+        case .brightnessUp:
+            if let b = DisplayBrightnessService.shared.stepBrightness(by: 0.1) {
+                return SystemActionFeedback(String(localized: "Brightness: \(Int(b * 100))%"))
+            }
+        case .brightnessDown:
+            if let b = DisplayBrightnessService.shared.stepBrightness(by: -0.1) {
+                return SystemActionFeedback(String(localized: "Brightness: \(Int(b * 100))%"))
+            }
+        case .brightness50:
+            DisplayBrightnessService.shared.setBrightness(0.5)
+            return SystemActionFeedback(String(localized: "Brightness: 50%"))
+        case .brightness100:
+            DisplayBrightnessService.shared.setBrightness(1.0)
+            return SystemActionFeedback(String(localized: "Brightness: 100%"))
         }
         return nil
     }

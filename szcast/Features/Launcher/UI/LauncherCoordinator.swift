@@ -279,6 +279,16 @@ final class LauncherCoordinator {
             core.supportCoordinator.showSupport()
         case .focusTimer:
             paletteCoordinator.togglePalette(mode: .focusTimer, seeding: searchQuery)
+        case .captureScreenText:
+            dismissPalette()
+            ScreenCaptureService.shared.capture(mode: .textOCR, showMessage: { [weak core] msg in
+                core?.showMessage(msg)
+            })
+        case .scanQRCode:
+            dismissPalette()
+            ScreenCaptureService.shared.capture(mode: .qrCode, showMessage: { [weak core] msg in
+                core?.showMessage(msg)
+            })
         case .quit:
             NSApp.terminate(nil)
         }

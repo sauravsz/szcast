@@ -115,6 +115,10 @@ enum CalcEngine {
             return pace
         }
 
+        if let transformer = CalcDataTransformers.evaluate(query: query) {
+            return transformer
+        }
+
         guard let typed = CalcTokenizer.tokenize(query), !typed.isEmpty else { return nil }
         let tokens = CalcQuestion.conversion(typed) ?? typed
 
