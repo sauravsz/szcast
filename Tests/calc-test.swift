@@ -1874,6 +1874,10 @@ struct CalcTests {
         expectDisplay("base64 decode aGVsbG8gd29ybGQ=", "hello world")
         expectDisplay("urlencode hello world!", "hello%20world%21")
         expectDisplay("urldecode hello%20world%21", "hello world!")
+        expectDisplay("clean https://www.youtube.com/watch?v=dQw4w9WgXcQ&si=12345", "Removed 1 tracking param: https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+        expectCopy("clean https://www.youtube.com/watch?v=dQw4w9WgXcQ&si=12345", "https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+        expectDisplay("cleanurl https://example.com?utm_source=twitter&utm_medium=social", "Removed 2 tracking params: https://example.com")
+        expectDisplay("sanitize https://example.com/item", "Already clean: https://example.com/item")
 
         localeTests()
         chainTests()

@@ -289,6 +289,17 @@ final class LauncherCoordinator {
             ScreenCaptureService.shared.capture(mode: .qrCode, showMessage: { [weak core] msg in
                 core?.showMessage(msg)
             })
+        case .cleanClipboardURL:
+            dismissPalette()
+            Task {
+                do {
+                    if let feedback = try await SystemActionRunner.run(.cleanClipboardURL, previousApp: nil) {
+                        core.showMessage(feedback.title)
+                    }
+                } catch {
+                    core.showMessage(error.localizedDescription)
+                }
+            }
         case .quit:
             NSApp.terminate(nil)
         }

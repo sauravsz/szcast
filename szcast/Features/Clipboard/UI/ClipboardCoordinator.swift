@@ -211,6 +211,23 @@ final class ClipboardCoordinator {
         core.showMessage(String(localized: "Copied path"))
     }
 
+    func cleanAndCopyURL(_ item: ClipboardItem) {
+        guard let text = item.text, !text.isEmpty else { return }
+        paletteCoordinator.hidePalette(restoreFocus: false)
+        let result = URLSanitizer.sanitize(text)
+        Paster.copyPlainText(result.cleanURL)
+        if result.hasModifications {
+            let count = result.removedParameters.count
+            if result.wasUnwrapped {
+                core.showMessage(String(localized: "Unwrapped & Copied Clean URL"))
+            } else {
+                core.showMessage(String(localized: "Removed \(count) tracking param\(count == 1 ? "" : "s") & copied"))
+            }
+        } else {
+            core.showMessage(String(localized: "Copied clean URL"))
+        }
+    }
+
     func copyImageText(_ item: ClipboardItem) {
         guard let path = item.imagePath ?? item.filePath else { return }
         paletteCoordinator.hidePalette(restoreFocus: false)

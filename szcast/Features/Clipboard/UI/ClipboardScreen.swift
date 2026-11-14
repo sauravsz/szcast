@@ -45,6 +45,11 @@ struct ClipboardScreen: PaletteScreen {
             return true
         case .pin: return pin(at: selection)
         case .favoriteSlot(let index): return activatePinned(at: index)
+        case .copyFile:
+            guard let item = item(at: selection), item.kind == .text,
+                  let text = item.text, URLSanitizer.containsURL(text) else { return false }
+            core.clipboardCoordinator.cleanAndCopyURL(item)
+            return true
         case .copyText:
             guard let item = item(at: selection), item.offersTextExtraction else { return false }
             core.clipboardCoordinator.copyImageText(item)
@@ -200,6 +205,15 @@ enum ClipboardActionsMenu {
                 ) {
                     Task { await core.clipboardCoordinator.editClip(item) }
                 })
+            if let text = item.text, URLSanitizer.containsURL(text) {
+                items.append(
+                    PopoverMenuItem(
+                        title: String(localized: "Copy Clean URL"), systemImage: "link.badge.plus",
+                        shortcut: "⇧⌘C"
+                    ) {
+                        core.clipboardCoordinator.cleanAndCopyURL(item)
+                    })
+            }
         }
         items.append(
             PopoverMenuItem(

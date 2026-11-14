@@ -40,6 +40,7 @@ struct SystemAction: Identifiable, Hashable, Sendable {
         case brightnessDown = "brightness-down"
         case brightness50 = "brightness-50"
         case brightness100 = "brightness-100"
+        case cleanClipboardURL = "clean-clipboard-url"
     }
 
     /// Whether it confirms first, and the copy; every such action is destructive.
@@ -122,6 +123,7 @@ enum SystemActionCatalog {
         case .brightnessDown: return "Decrease Display Brightness"
         case .brightness50: return "Set Brightness to 50%"
         case .brightness100: return "Set Brightness to 100%"
+        case .cleanClipboardURL: return "Clean URL in Clipboard"
         }
     }
 
@@ -159,6 +161,7 @@ enum SystemActionCatalog {
         case .brightnessUp: return "sun.max"
         case .brightnessDown: return "sun.min"
         case .brightness50, .brightness100: return "sun.max.fill"
+        case .cleanClipboardURL: return "link.badge.plus"
         // Not an SF Symbol: the logo is a trademark, so this is a bundled asset.
         case .toggleBluetooth: return "bluetooth"
         }

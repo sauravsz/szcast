@@ -112,6 +112,30 @@ enum CalcDataTransformers {
             )
         }
 
+        // 6. URL Sanitization & Tracking Parameter Stripper
+        if let text = matchPrefix(lower: lower, original: trimmed, prefixes: ["cleanurl ", "clean url ", "clean ", "sanitize ", "untrack ", "strip "]) {
+            let targetURL = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            if URLSanitizer.containsURL(targetURL) || targetURL.contains("?") {
+                let result = URLSanitizer.sanitize(targetURL)
+                let count = result.removedParameters.count
+                let summary: String
+                if result.hasModifications {
+                    if result.wasUnwrapped {
+                        summary = "Unwrapped & cleaned: \(result.cleanURL)"
+                    } else {
+                        summary = "Removed \(count) tracking param\(count == 1 ? "" : "s"): \(result.cleanURL)"
+                    }
+                } else {
+                    summary = "Already clean: \(result.cleanURL)"
+                }
+                return CalcResult(
+                    expression: trimmed,
+                    payload: .value(display: summary, copyText: result.cleanURL),
+                    canChain: false
+                )
+            }
+        }
+
         // 6. JWT Inspection
         if let text = matchPrefix(lower: lower, original: trimmed, prefixes: ["jwt ", "jwt decode ", "inspect jwt "]) {
             if let jwtResult = inspectJWT(text.trimmingCharacters(in: .whitespacesAndNewlines), query: trimmed) {

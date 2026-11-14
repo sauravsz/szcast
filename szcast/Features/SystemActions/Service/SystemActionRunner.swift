@@ -187,6 +187,26 @@ enum SystemActionRunner {
         case .brightness100:
             DisplayBrightnessService.shared.setBrightness(1.0)
             return SystemActionFeedback(String(localized: "Brightness: 100%"))
+        case .cleanClipboardURL:
+            guard let text = NSPasteboard.general.string(forType: .string),
+                  !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                return SystemActionFeedback(String(localized: "Clipboard Is Empty"), isNoOp: true)
+            }
+            let result = URLSanitizer.sanitize(text)
+            if result.hasModifications {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(result.cleanURL, forType: .string)
+                let count = result.removedParameters.count
+                if result.wasUnwrapped {
+                    return SystemActionFeedback(String(localized: "URL Unwrapped & Cleaned"))
+                } else {
+                    return SystemActionFeedback(String(localized: "Cleaned \(count) Tracking Param\(count == 1 ? "" : "s")"))
+                }
+            } else if URLSanitizer.containsURL(text) {
+                return SystemActionFeedback(String(localized: "URL Already Clean"), isNoOp: true)
+            } else {
+                return SystemActionFeedback(String(localized: "No URL in Clipboard"), isNoOp: true)
+            }
         }
         return nil
     }

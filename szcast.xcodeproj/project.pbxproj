@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C1C4E3A20007000000000001 /* URLSanitizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10007000000000001 /* URLSanitizer.swift */; };
 		C1C4E3A20001000000000099 /* CalcDataTransformers.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10001000000000099 /* CalcDataTransformers.swift */; };
 		C1C4E3A20005000000000001 /* AudioDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10005000000000001 /* AudioDevice.swift */; };
 		C1C4E3A20005000000000002 /* AudioDeviceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10005000000000002 /* AudioDeviceService.swift */; };
@@ -996,6 +997,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		C1C4E3A10007000000000001 /* URLSanitizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSanitizer.swift; sourceTree = "<group>"; };
 		C1C4E3A10001000000000099 /* CalcDataTransformers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalcDataTransformers.swift; sourceTree = "<group>"; };
 		C1C4E3A10005000000000001 /* AudioDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioDevice.swift; sourceTree = "<group>"; };
 		C1C4E3A10005000000000002 /* AudioDeviceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioDeviceService.swift; sourceTree = "<group>"; };
@@ -2064,6 +2066,7 @@
 				F9044F107ADD5896746DBC35 /* Signposts.swift */,
 				A17578C6E16B1688D7140582 /* SystemLanguages.swift */,
 				2A6CA1C9AE38B1A036988BC0 /* WindowLevel.swift */,
+				C1C4E3A10007000000000001 /* URLSanitizer.swift */,
 			);
 			path = Platform;
 			sourceTree = "<group>";
@@ -4665,6 +4668,7 @@
 				C1C4E3A20005000000000003 /* DisplayBrightnessService.swift in Sources */,
 				C1C4E3A20006000000000001 /* ScreenCaptureResult.swift in Sources */,
 				C1C4E3A20006000000000002 /* ScreenCaptureService.swift in Sources */,
+				C1C4E3A20007000000000001 /* URLSanitizer.swift in Sources */,
 				C1C4E3A20004000000000001 /* FlightResult.swift in Sources */,
 				C1C4E3A20004000000000002 /* FlightTrackerService.swift in Sources */,
 				C1C4E3A20004000000000003 /* FlightCardView.swift in Sources */,
