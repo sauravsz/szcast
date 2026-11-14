@@ -144,7 +144,9 @@ struct QuicklinkEditorView: View {
     }
 
     private var insertMenu: some View {
-        Button("Insert…") {
+        PlaceholderMenuButton(
+            isOpen: openMenuCorner == .belowControl(insertMenuFrame), frame: $insertMenuFrame
+        ) {
             let items = [
                 placeholder(String(localized: "Argument"), "{argument}"),
                 placeholder(String(localized: "Named Argument"), "{argument name=\"Query\"}"),
@@ -158,18 +160,6 @@ struct QuicklinkEditorView: View {
             ]
             openInputMenu(PopoverMenuContent(items: items), .belowControl(insertMenuFrame), 0)
         }
-        .buttonStyle(.plain)
-        .fixedSize()
-        .onGeometryChange(for: CGRect.self) {
-            $0.frame(in: .global)
-        } action: {
-            insertMenuFrame = $0
-        }
-        .tooltip(
-            String(localized: "Insert a dynamic placeholder"), alignment: .trailing,
-            dismissOnPress: true
-        )
-        .accessibilityLabel("Insert a placeholder")
     }
 
     private func placeholder(

@@ -232,6 +232,23 @@ final class SnippetCoordinator {
         AppLauncher.showInFinder(record.fileURL)
     }
 
+    func toggleSnippetPinned(id: StoredSnippet.ID) async {
+        guard settings.snippetsEnabled, var record = store.record(id: id) else { return }
+        record.snippet.isPinned.toggle()
+        do {
+            try await store.save(record)
+        } catch {
+            await core.showNotice(
+                title: String(localized: "Couldn’t Save the Change"),
+                message: error.localizedDescription, symbol: "pin", tone: .danger)
+            return
+        }
+        guard palette.mode == .snippets,
+            let index = store.browserRows(matching: palette.query).firstIndex(where: { $0.id == id })
+        else { return }
+        palette.selection = index
+    }
+
     func deleteSnippet(id: StoredSnippet.ID) async {
         guard settings.snippetsEnabled, let record = store.record(id: id) else { return }
         guard
@@ -291,6 +308,10 @@ final class SnippetCoordinator {
         // One of our own editors is only reachable again once the palette hands key back to it.
         paletteCoordinator.hidePalette(restoreFocus: target?.ownEditor != nil)
         expandSnippet(id: id, target: target, action: action)
+    }
+
+    func performFromPalette(_ action: SnippetDefaultAction, id: StoredSnippet.ID) {
+        expandSnippetFromPalette(id: id, action: action)
     }
 
     /// A shortcut lands where the caret is; over the palette, that's what the palette covered.

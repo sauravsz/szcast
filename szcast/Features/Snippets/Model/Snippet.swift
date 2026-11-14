@@ -14,6 +14,8 @@ enum SnippetDefaultAction: String, CaseIterable, Identifiable, Sendable {
         case .copyAndPaste: return String(localized: "Copy and Paste")
         }
     }
+
+    var alternate: Self { self == .paste ? .copy : .paste }
 }
 
 struct Snippet: Sendable, Hashable {
@@ -22,6 +24,7 @@ struct Snippet: Sendable, Hashable {
     var keyword: String?
     var isEnabled: Bool
     var showsConfirmation: Bool
+    var isPinned: Bool
     var folder: String?
 
     init(
@@ -30,6 +33,7 @@ struct Snippet: Sendable, Hashable {
         keyword: String? = nil,
         isEnabled: Bool = true,
         showsConfirmation: Bool = false,
+        isPinned: Bool = false,
         folder: String? = nil
     ) {
         self.name = name
@@ -37,6 +41,7 @@ struct Snippet: Sendable, Hashable {
         self.keyword = keyword
         self.isEnabled = isEnabled
         self.showsConfirmation = showsConfirmation
+        self.isPinned = isPinned
         self.folder = folder
     }
 }

@@ -37,12 +37,17 @@ struct SnippetsScreen: PaletteScreen {
             filtered = enabled
         }
         let query = vm.query.trimmingCharacters(in: .whitespaces)
-        guard !query.isEmpty else { return filtered }
-        return filtered.filter { record in
-            record.snippet.name.localizedCaseInsensitiveContains(query)
-                || record.snippet.keyword?.localizedCaseInsensitiveContains(query) == true
-                || record.snippet.folder?.localizedCaseInsensitiveContains(query) == true
+        let matches: [StoredSnippet]
+        if query.isEmpty {
+            matches = filtered
+        } else {
+            matches = filtered.filter { record in
+                record.snippet.name.localizedCaseInsensitiveContains(query)
+                    || record.snippet.keyword?.localizedCaseInsensitiveContains(query) == true
+                    || record.snippet.folder?.localizedCaseInsensitiveContains(query) == true
+            }
         }
+        return matches.filter(\.snippet.isPinned) + matches.filter { !$0.snippet.isPinned }
     }
 
     var primaryActionTitle: String {
@@ -68,10 +73,9 @@ struct SnippetsScreen: PaletteScreen {
         core.snippetCoordinator.expandSnippetFromPalette(id: record.id)
     }
 
-    /// ⌘↵ reveals the file, as it does on a snippet's launcher row.
     func secondary(at selection: Int) -> Bool {
         guard let record = record(at: selection) else { return false }
-        core.snippetCoordinator.showSnippetInFinder(record)
+        core.snippetCoordinator.performFromPalette(core.settings.snippetsDefaultAction.alternate, id: record.id)
         return true
     }
 
@@ -86,6 +90,10 @@ struct SnippetsScreen: PaletteScreen {
             core.snippetCoordinator.duplicateSnippet(record)
         case .edit:
             core.snippetCoordinator.editSnippet(record)
+        case .pin:
+            Task { await core.snippetCoordinator.toggleSnippetPinned(id: record.id) }
+        case .showInFinder:
+            core.snippetCoordinator.showSnippetInFinder(record)
         case .delete:
             Task { await core.snippetCoordinator.deleteSnippet(id: record.id) }
         default: return false
@@ -238,8 +246,14 @@ enum SnippetActionsMenu {
                 core.snippetCoordinator.editSnippet(nil)
             },
             PopoverMenuItem(
+                title: record.snippet.isPinned ? String(localized: "Unpin Snippet") : String(localized: "Pin Snippet"),
+                systemImage: record.snippet.isPinned ? "pin.slash" : "pin", shortcut: "⌘."
+            ) {
+                Task { await core.snippetCoordinator.toggleSnippetPinned(id: record.id) }
+            },
+            PopoverMenuItem(
                 title: String(localized: "Show in Finder"), systemImage: "folder", startsSection: true,
-                shortcut: "⌘↵"
+                shortcut: "⌘F"
             ) {
                 core.snippetCoordinator.showSnippetInFinder(record)
             },

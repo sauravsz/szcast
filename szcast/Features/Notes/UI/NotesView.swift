@@ -55,7 +55,7 @@ struct NotesView: View {
                 rendersMarkdown: notes.rendersMarkdown,
                 notesDirectory: notes.notesDirectory,
                 onSourceChange: notes.updateSource,
-                onCharacterCountChange: notes.updateCharacterCount,
+                onCharacterCountChange: notes.updateCounts,
                 onFormattingChange: notes.updateFormatting,
                 onReady: notes.editorReady
             )
@@ -71,7 +71,7 @@ struct NotesView: View {
     private var formattingBand: some View {
         HStack(spacing: Theme.Spacing.md) {
             ViewThatFits(in: .horizontal) {
-                characterCount
+                counts
                 Color.clear.frame(width: 0, height: 0)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -102,17 +102,23 @@ struct NotesView: View {
     }
 
     private var footer: some View {
-        characterCount
+        counts
             .frame(maxWidth: .infinity)
             .frame(height: Theme.Size.noteFooterHeight)
     }
 
-    private var characterCount: some View {
-        Text(notes.characterCountLabel)
-            .font(Theme.Typography.rowTrailing)
-            .foregroundStyle(Theme.Colors.textTertiary)
-            .lineLimit(1)
-            .accessibilityLabel("\(notes.characterCount) characters in this note")
+    private var counts: some View {
+        HStack(spacing: Theme.Spacing.xs) {
+            Text(notes.wordCountLabel)
+                .accessibilityLabel("\(notes.wordCount) words in this note")
+            Text(verbatim: "·")
+                .accessibilityHidden(true)
+            Text(notes.characterCountLabel)
+                .accessibilityLabel("\(notes.characterCount) characters in this note")
+        }
+        .font(Theme.Typography.rowTrailing)
+        .foregroundStyle(Theme.Colors.textTertiary)
+        .lineLimit(1)
     }
 }
 

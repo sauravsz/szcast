@@ -98,7 +98,8 @@ Template body
 ```
 
 `name` is optional when reading and defaults from the filename, and `keyword` is optional. `enabled`
-defaults to `true`; `show_confirmation` defaults to `false`.
+defaults to `true`; `show_confirmation` defaults to `false`. `pinned` defaults to `false` and is
+written, last, only when `true`, so an unpinned snippet serializes exactly as before.
 
 String values must use double quotes. The codec escapes and decodes `\\`, `\"`, `\n`, `\r`, and
 `\t`; unsupported escapes, unquoted strings, duplicate or unknown keys, non-exact delimiters, and

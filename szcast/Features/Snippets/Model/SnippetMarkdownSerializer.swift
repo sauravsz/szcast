@@ -26,6 +26,7 @@ struct SnippetMarkdownSerializer {
         var keyword: String?
         var isEnabled = true
         var showsConfirmation = false
+        var isPinned = false
         var folder: String?
         var seenKeys = Set<String>()
 
@@ -61,6 +62,8 @@ struct SnippetMarkdownSerializer {
                 isEnabled = try decodeBoolean(rawValue, fileURL: fileURL, line: lineNumber)
             case "show_confirmation":
                 showsConfirmation = try decodeBoolean(rawValue, fileURL: fileURL, line: lineNumber)
+            case "pinned":
+                isPinned = try decodeBoolean(rawValue, fileURL: fileURL, line: lineNumber)
             case "folder", "group", "tag", "tags":
                 let decoded = try decodeScalar(rawValue, fileURL: fileURL, line: lineNumber)
                 let trimmed = decoded.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -77,6 +80,7 @@ struct SnippetMarkdownSerializer {
             keyword: keyword,
             isEnabled: isEnabled,
             showsConfirmation: showsConfirmation,
+            isPinned: isPinned,
             folder: folder
         )
     }
@@ -91,6 +95,8 @@ struct SnippetMarkdownSerializer {
         }
         lines.append("enabled: \(snippet.isEnabled)")
         lines.append("show_confirmation: \(snippet.showsConfirmation)")
+        // Only when set, so an unpinned snippet's file stays byte-identical.
+        if snippet.isPinned { lines.append("pinned: true") }
         if let folder = snippet.folder?.trimmingCharacters(in: .whitespacesAndNewlines), !folder.isEmpty {
             lines.append("folder: \(encodeScalar(folder))")
         }
@@ -143,7 +149,7 @@ struct SnippetMarkdownSerializer {
     private static func canonicalKey(for rawKey: String) -> String? {
         let key = rawKey.lowercased()
         switch key {
-        case "name", "keyword", "enabled", "show_confirmation", "folder", "group", "tag", "tags":
+        case "name", "keyword", "enabled", "show_confirmation", "pinned", "folder", "group", "tag", "tags":
             return key
         default:
             return nil
