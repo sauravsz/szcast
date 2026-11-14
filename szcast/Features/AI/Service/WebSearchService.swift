@@ -95,7 +95,9 @@ public struct WebSearchService: Sendable {
     }
 
     private func searchJina(query: String, apiKey: String) async throws -> [WebSearchResult] {
-        guard let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) else {
+        var allowed = CharacterSet.urlPathAllowed
+        allowed.remove(charactersIn: "/?#&")
+        guard let encoded = query.addingPercentEncoding(withAllowedCharacters: allowed) else {
             return []
         }
         guard let url = URL(string: "https://s.jina.ai/\(encoded)") else { return [] }

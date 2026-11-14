@@ -90,11 +90,14 @@ public enum QuicklinkFaviconService {
     // MARK: - Network Fetching
 
     private static func downloadFavicon(forHost host: String) async -> Data? {
+        guard let encodedHost = host.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed),
+              !encodedHost.isEmpty else { return nil }
+
         let candidateURLs: [URL] = [
-            URL(string: "https://www.google.com/s2/favicons?domain=\(host)&sz=128")!,
-            URL(string: "https://icons.duckduckgo.com/ip3/\(host).ico")!,
-            URL(string: "https://\(host)/favicon.ico")!,
-        ]
+            URL(string: "https://www.google.com/s2/favicons?domain=\(encodedHost)&sz=128"),
+            URL(string: "https://icons.duckduckgo.com/ip3/\(encodedHost).ico"),
+            URL(string: "https://\(encodedHost)/favicon.ico")
+        ].compactMap { $0 }
 
         for url in candidateURLs {
             if let data = await fetchImageData(from: url),

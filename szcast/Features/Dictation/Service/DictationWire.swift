@@ -13,7 +13,7 @@ nonisolated enum DictationWire {
     }
 
     static let sampleRate = 16_000
-    static let maximumSamples = sampleRate * 60 * 5
+    static let maximumSamples = sampleRate * 60 * 20
     static let maximumMessageBytes = 64_000
 
     struct Request: Codable, Sendable {

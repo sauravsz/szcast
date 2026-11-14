@@ -15,6 +15,7 @@ final class FocusTimerCoordinator {
     private(set) var totalSeconds: Int = 25 * 60
 
     @ObservationIgnored private var tickTask: Task<Void, Never>?
+    @ObservationIgnored private var targetEndDate: Date?
 
     var isActive: Bool {
         status == .running || status == .paused
@@ -63,6 +64,7 @@ final class FocusTimerCoordinator {
     func pause() {
         guard status == .running else { return }
         tickTask?.cancel()
+        targetEndDate = nil
         status = .paused
         sensory.playActionSound()
     }
@@ -87,6 +89,7 @@ final class FocusTimerCoordinator {
 
     func reset() {
         tickTask?.cancel()
+        targetEndDate = nil
         status = .idle
         sensory.playActionSound()
         let resetDuration: Int = {
@@ -102,14 +105,17 @@ final class FocusTimerCoordinator {
 
     private func startTicking() {
         tickTask?.cancel()
+        let target = Date().addingTimeInterval(Double(remainingSeconds))
+        targetEndDate = target
         tickTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
                 guard let self, !Task.isCancelled, self.status == .running else { break }
 
-                if self.remainingSeconds > 1 {
-                    self.remainingSeconds = FocusTimerEngine.nextSeconds(remaining: self.remainingSeconds)
-                } else {
+                let remaining = max(0, Int(ceil(target.timeIntervalSinceNow)))
+                self.remainingSeconds = remaining
+
+                if remaining <= 0 {
                     self.finishCurrentSession()
                     break
                 }

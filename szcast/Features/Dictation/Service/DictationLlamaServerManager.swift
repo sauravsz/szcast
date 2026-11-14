@@ -135,7 +135,7 @@ final class DictationLlamaServerManager {
             "-m", modelURL.path,
             "--host", "127.0.0.1",
             "--port", String(port),
-            "-c", "2048",
+            "-c", "8192",
             "-fa", "on",
             "--cache-type-k", "q8_0",
             "--cache-type-v", "q8_0",

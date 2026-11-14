@@ -107,6 +107,11 @@ final class DictationS1Downloader {
 
                 let totalBytes = http.expectedContentLength > 0 ? http.expectedContentLength : 484_219_808
                 let tempURL = destination.deletingLastPathComponent().appendingPathComponent("s1-mini-\(UUID().uuidString).tmp")
+                defer {
+                    if FileManager.default.fileExists(atPath: tempURL.path) {
+                        try? FileManager.default.removeItem(at: tempURL)
+                    }
+                }
 
                 FileManager.default.createFile(atPath: tempURL.path, contents: nil)
                 guard let fileHandle = try? FileHandle(forWritingTo: tempURL) else {

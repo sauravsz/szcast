@@ -6,8 +6,8 @@ actor DictationS1Polisher {
 
     private static let session: URLSession = {
         let config = URLSessionConfiguration.ephemeral
-        config.timeoutIntervalForRequest = 8.0
-        config.timeoutIntervalForResource = 10.0
+        config.timeoutIntervalForRequest = 60.0
+        config.timeoutIntervalForResource = 120.0
         return URLSession(configuration: config)
     }()
 
@@ -99,6 +99,7 @@ actor DictationS1Polisher {
                     model: effectiveModel,
                     systemPrompt: DictationS1Settings.systemPrompt,
                     userMessage: userMessage,
+                    transcriptWordCount: transcriptWordCount,
                     baseURL: baseURL
                 ) {
                     return output
@@ -137,10 +138,12 @@ actor DictationS1Polisher {
         model: String,
         systemPrompt: String,
         userMessage: String,
+        transcriptWordCount: Int,
         baseURL: URL
     ) async throws -> String? {
         let generateURL = baseURL.appendingPathComponent("api/generate")
         let prompt = Self.makeRawPrompt(systemPrompt: systemPrompt, userMessage: userMessage)
+        let cap = max(24, min(4096, transcriptWordCount * 2 + 32))
 
         let body: [String: Any] = [
             "model": model,
@@ -149,7 +152,7 @@ actor DictationS1Polisher {
             "stream": false,
             "keep_alive": "60m",
             "options": [
-                "num_predict": 512,
+                "num_predict": cap,
                 "temperature": 0.1,
                 "stop": ["<|im_end|>"]
             ]
@@ -158,7 +161,7 @@ actor DictationS1Polisher {
         var request = URLRequest(url: generateURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = 8.0
+        request.timeoutInterval = max(10.0, Double(transcriptWordCount) * 0.05 + 10.0)
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let (data, response) = try await Self.session.data(for: request)
@@ -204,7 +207,7 @@ actor DictationS1Polisher {
             let choices: [Choice]
         }
 
-        let cap = max(24, min(512, transcriptWordCount * 2 + 16))
+        let cap = max(24, min(4096, transcriptWordCount * 2 + 32))
         let body = RequestBody(
             model: model,
             messages: [
@@ -220,7 +223,7 @@ actor DictationS1Polisher {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("keep-alive", forHTTPHeaderField: "Connection")
-        request.timeoutInterval = 8.0
+        request.timeoutInterval = max(10.0, Double(transcriptWordCount) * 0.05 + 10.0)
         request.httpBody = try JSONEncoder().encode(body)
 
         let (data, response) = try await Self.session.data(for: request)
