@@ -51,4 +51,10 @@ rm -f "$DMG"
 diskutil image create from "$STAGE" --format UDZO --volumeName "szcast" "$DMG" >/dev/null
 rm -rf "$STAGE"
 
+ZIP="build/szcast-${VERSION}.zip"
+echo "▸ Packaging ${ZIP}"
+rm -f "$ZIP"
+ditto -c -k --keepParent --sequesterRsrc "$APP" "$ZIP"
+
 echo "✓ $DMG"
+echo "✓ $ZIP"

@@ -102,8 +102,17 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - Clipboard history integration: Context menu item "Copy Clean URL" (`⇧⌘C`) on any text clipboard entry containing links.
   - Test suite expanded to 124 suites (`url-sanitizer-test` added); all 124 harnesses pass in 169s.
 
+- **Release 1.0.8**:
+  - URL Sanitizer & Tracking Stripper: Native zero-dependency engine (`URLSanitizer.swift`) removing marketing and telemetry parameters (`utm_*`, `fbclid`, `gclid`, `si`, `twclid`, `msclkid`, `mc_eid`, `tag`, `ref_`, `pd_rd_*`, `pf_rd_*`) and recursively unwrapping Google, Slack, and Outlook SafeLinks redirects. Integrated into search (`clean <url>`), clipboard history (`⇧⌘C`), and launcher commands (`Clean URL in Clipboard`).
+  - Native Screen OCR & QR Scanner: Direct-to-memory screen marquee capture (`ScreenCaptureService.swift`, `⌥⇧2`) via Vision framework with zero disk footprint.
+  - Developer & Data Transformers: Offline hashing (`sha256`, `md5`), base64/urlencode, JWT inspector, UUID v4 generator, and Lorem Ipsum word generator.
+  - Audio & Display Hardware Switcher: CoreAudio peripheral cycling and display brightness controls hooked into System Actions.
+  - Menu Bar Meeting Countdown HUD: Real-time upcoming meeting awareness and one-click join.
+  - In-Place Live Intelligence Cards: Open-Meteo Weather, MapKit Travel Route Estimator, and FlightRadar24 flight tracker cards in root launcher.
+  - Version bump to 1.0.8, signed release DMG & ZIP distribution assets packaged, 124 test suites pass.
+
 ## Active State & Next Steps
-- **Active State**: All 124 test harnesses pass in 169s. URL Sanitizer and tracking parameter stripper operational across search, clipboard history (`⇧⌘C`), and system actions. Native screen OCR and QR scanner operational, developer data transformer suite live in search, CoreAudio and display brightness controls hooked into System Actions, menu bar meeting HUD enabled by default, and Xcode debug build compiles cleanly.
+- **Active State**: Release 1.0.8 tagged and published. All 124 test harnesses pass in 169s. URL Sanitizer, Screen OCR/QR, Dev Transformers, Hardware Switcher, Meeting HUD, and 20-min dictation operational. Xcode Release and Debug builds clean.
 - **Immediate Next Steps**:
   1. Test long continuous dictation (5+ minutes) in real-world workflows.
   2. Perform weekly upstream radar audit (`./Scripts/upstream-radar.sh`).
