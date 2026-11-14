@@ -94,8 +94,16 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - Menu Bar Meeting Countdown HUD: Default `calendarMenuBarDisplay` set to `.meetingTitle` (`[Title] • in 12m`) with 1-click meeting join and action card integration.
   - Test Harness Suite: Expanded to 123 suites (`hardware-test`, `screen-capture-test` added); all 123 harnesses pass in 179s.
 
+- **URL Sanitizer & Tracking Parameter Stripper** (`35ec1bc1`):
+  - Pure offline URL cleaner (`URLSanitizer.swift`) stripping marketing and telemetry query parameters (`utm_*`, `fbclid`, `gclid`, `si`, `twclid`, `msclkid`, `mc_eid`, `tag`, `ref_`, `pd_rd_*`, `pf_rd_*`, etc.) while retaining authentic routing parameters.
+  - Recursive unwrap of nested redirects for Google (`/url?q=`), Slack (`slack-redir.net/link?url=`), and Outlook SafeLinks.
+  - Root search data transformer (`clean <url>`, `cleanurl <url>`, `sanitize <url>`, `untrack <url>`).
+  - System action & launcher command: `Clean URL in Clipboard` (`CommandID.cleanClipboardURL` / `SystemAction.cleanClipboardURL`) with descriptive HUD message and parameter removal count.
+  - Clipboard history integration: Context menu item "Copy Clean URL" (`⇧⌘C`) on any text clipboard entry containing links.
+  - Test suite expanded to 124 suites (`url-sanitizer-test` added); all 124 harnesses pass in 169s.
+
 ## Active State & Next Steps
-- **Active State**: All 123 test harnesses pass. Native screen OCR and QR scanner operational, developer data transformer suite live in search, CoreAudio and display brightness controls hooked into System Actions, menu bar meeting HUD enabled by default, and debug build compiles cleanly.
+- **Active State**: All 124 test harnesses pass in 169s. URL Sanitizer and tracking parameter stripper operational across search, clipboard history (`⇧⌘C`), and system actions. Native screen OCR and QR scanner operational, developer data transformer suite live in search, CoreAudio and display brightness controls hooked into System Actions, menu bar meeting HUD enabled by default, and Xcode debug build compiles cleanly.
 - **Immediate Next Steps**:
   1. Test long continuous dictation (5+ minutes) in real-world workflows.
   2. Perform weekly upstream radar audit (`./Scripts/upstream-radar.sh`).
