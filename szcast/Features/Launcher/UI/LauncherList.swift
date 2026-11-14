@@ -47,12 +47,18 @@ struct LauncherList: View {
         case calc(CalcResult)
         case meeting(MeetingEvent, now: Date)
         case color(ColorValue)
+        case weather(WeatherResult)
+        case travel(TravelResult)
+        case flight(FlightResult)
 
         var sectionTitle: String {
             switch self {
             case .calc: return String(localized: "Calculator")
             case .meeting: return String(localized: "Meeting")
             case .color: return String(localized: "Color")
+            case .weather: return String(localized: "Weather")
+            case .travel: return String(localized: "Travel Time")
+            case .flight: return String(localized: "Flight Tracker")
             }
         }
 
@@ -61,6 +67,9 @@ struct LauncherList: View {
             case .calc: return "calc-card"
             case .meeting: return "meeting-card"
             case .color: return "color-card"
+            case .weather: return "weather-card"
+            case .travel: return "travel-card"
+            case .flight: return "flight-card"
             }
         }
     }
@@ -292,6 +301,12 @@ private struct LeadCardView: View {
             MeetingCard(meeting: meeting, now: now, selected: selected)
         case .color(let color):
             ColorCard(color: color, selected: selected)
+        case .weather(let weather):
+            WeatherCardView(weather: weather, selected: selected)
+        case .travel(let travel):
+            TravelCardView(travel: travel, selected: selected)
+        case .flight(let flight):
+            FlightCardView(flight: flight, selected: selected)
         }
     }
 }

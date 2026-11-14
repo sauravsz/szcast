@@ -1838,6 +1838,35 @@ struct CalcTests {
         expectDisplay("1kg + 1kg to g", "2,000 g")
         expectDisplay("2hr + 30min to min", "150 min")
 
+        // Phase 1: Chemistry Molar Mass
+        expectDisplay("molar mass of C6H12O6", "180.156 g/mol")
+        expectDisplay("molar mass of H2O", "18.015 g/mol")
+        expectDisplay("molar mass of Ca(OH)2", "74.092 g/mol")
+        expectDisplay("molar mass of NaCl", "58.44 g/mol")
+        expectDisplay("molecular weight of glucose", "180.156 g/mol")
+
+        // Phase 1: Running Pace Conversions
+        expectDisplay("5:00 min/km in km/h", "12 km/h")
+        expectDisplay("13:24 min/mile in mph", "4.48 mph")
+        expectDisplay("10 km/h in min/km", "6 min/km")
+        expectDisplay("5:00 min/km for 10 km", "50 min")
+        expectDisplay("6:30 min/km for 10 km", "1 hr 5 min")
+
+        // Phase 1: Physical Constants & Specialized Units
+        expectDisplay("1 chain in yards", "22 yd")
+        expectDisplay("491.67 rankine in celsius", "0 °C")
+        expectDisplay("1 nibble in bits", "4 bit")
+        expectDisplay("1 legal cup in milliliters", "240 mL")
+        expectDisplay("30 dBm in watts", "1 W")
+        expectDisplay("0 dBm in watts", "0.001 W")
+        expectDisplay("1 W in dBm", "30 dBm")
+        expectDisplay("1 au / speed of light in minutes", "8.316746397 min")
+
+        // Phase 1: Stepped Rounding
+        expectDisplay("3.3 to nearest quarter", "3.25")
+        expectDisplay("1.71 to nearest eighth", "1.75")
+        expectDisplay("3.14159 to nearest hundredth", "3.14")
+
         localeTests()
         chainTests()
         phraseTests()

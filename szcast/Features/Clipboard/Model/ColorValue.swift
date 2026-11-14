@@ -131,11 +131,20 @@ extension ColorValue {
         guard let open = token.firstIndex(of: "("), token.hasSuffix(")") else { return nil }
         let function = token[token.startIndex..<open].lowercased()
         let body = token[token.index(after: open)..<token.index(before: token.endIndex)]
-        // `rgba` is an alias of `rgb` rather than its own function, so alpha is always optional.
-        guard let parts = arguments(of: body), parts.count == 3 || parts.count == 4,
-            let alpha = parts.count == 4 ? component(parts[3], scale: 1) : 1
-        else { return nil }
+        guard let rawParts = arguments(of: body), rawParts.count == 3 || rawParts.count == 4 else { return nil }
+        let isCodeColor = function == "nscolor" || function == "uicolor"
+        let parts = isCodeColor
+            ? rawParts.map { $0.components(separatedBy: ":").last?.trimmingCharacters(in: .whitespaces) ?? $0 }
+            : rawParts
+        guard let alpha = parts.count == 4 ? component(parts[3], scale: 1) : 1 else { return nil }
         switch function {
+        case "nscolor", "uicolor":
+            guard parts.count == 4,
+                let red = component(parts[0], scale: 1),
+                let green = component(parts[1], scale: 1),
+                let blue = component(parts[2], scale: 1)
+            else { return nil }
+            return ColorValue(red: red, green: green, blue: blue, alpha: alpha)
         case "rgb", "rgba":
             guard let red = component(parts[0], scale: 255),
                 let green = component(parts[1], scale: 255),
@@ -158,6 +167,28 @@ extension ColorValue {
             return ColorValue(
                 lightness: lightness, chroma: parts[1].hasSuffix("%") ? chroma * 0.4 : chroma,
                 hue: hue, alpha: alpha)
+        case "hwb":
+            guard let hue = angle(parts[0]),
+                let whiteness = percentage(parts[1]),
+                let blackness = percentage(parts[2])
+            else { return nil }
+            let w = whiteness
+            let b = blackness
+            if w + b >= 1 {
+                let gray = w / (w + b)
+                return ColorValue(red: gray, green: gray, blue: gray, alpha: alpha)
+            }
+            let base = ColorValue(hue: hue, saturation: 1.0, lightness: 0.5)
+            let r = base.red * (1 - w - b) + w
+            let g = base.green * (1 - w - b) + w
+            let bl = base.blue * (1 - w - b) + w
+            return ColorValue(red: r, green: g, blue: bl, alpha: alpha)
+        case "lab":
+            guard let lVal = component(parts[0], scale: 100),
+                let aVal = component(parts[1], scale: 1),
+                let bVal = component(parts[2], scale: 1)
+            else { return nil }
+            return ColorValue(cielabL: lVal * 100, a: aVal, b: bVal, alpha: alpha)
         default:
             return nil
         }

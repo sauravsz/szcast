@@ -107,6 +107,14 @@ enum CalcEngine {
             return unchained(zone)
         }
 
+        if let chemistry = CalcChemistry.evaluate(query: query) {
+            return chemistry
+        }
+
+        if let pace = CalcPace.evaluate(query: query) {
+            return pace
+        }
+
         guard let typed = CalcTokenizer.tokenize(query), !typed.isEmpty else { return nil }
         let tokens = CalcQuestion.conversion(typed) ?? typed
 

@@ -82,6 +82,8 @@ enum CalcUnitCatalog {
         au|Astronomical Units|149597870700.0|au,astronomical unit,astronomical units
         fathom|Fathoms|1.8288|fathom,fathoms
         furlong|Furlongs|201.168|furlong,furlongs
+        ch|Chains|20.1168|ch,chain,chains
+        link|Links|0.201168|link,links
         pixels
         px|Pixels|1.0|px,pixel,pixels
         rem|REM|16.0|rem,rems
@@ -109,6 +111,7 @@ enum CalcUnitCatalog {
         °C|Celsius|1.0|c,°c,celsius,centigrade|273.15
         °F|Fahrenheit|0.5555555555555556|f,°f,fahrenheit|255.3722222222222
         K|Kelvin|1.0|k,kelvin,kelvins
+        °R|Rankine|0.5555555555555556|°r,rankine|0.0
         time
         ms|Milliseconds|0.001|ms,millisecond,milliseconds
         s|Seconds|1.0|s,sec,secs,second,seconds
@@ -140,6 +143,7 @@ enum CalcUnitCatalog {
         kL|Kiloliters|1.0|kl,kiloliter,kiloliters,kilolitre,kilolitres
         ML|Megaliters|1000.0|megaliter,megaliters,megalitre,megalitres
         metric cup|Metric Cups|0.00025|metric cup,metric cups
+        legal cup|US Legal Cups|0.00024|legal cup,legal cups,us legal cup,us legal cups
         bu|Bushels|0.03523907016688|bu,bushel,bushels
         bbl|Barrels|0.158987294928|bbl,barrel,barrels
         acre ft|Acre-Feet|1233.48183754752|acre foot,acre feet
@@ -173,6 +177,7 @@ enum CalcUnitCatalog {
         L/100km|Liters per 100 Kilometers|1e-08|l/100km
         digitalStorage
         bit|Bits|0.125|bit,bits
+        nibble|Nibbles|0.5|nibble,nibbles
         B|Bytes|1.0|b,byte,bytes
         kB|Kilobytes|1000.0|kb,kilobyte,kilobytes
         MB|Megabytes|1000000.0|mb,megabyte,megabytes
@@ -202,6 +207,7 @@ enum CalcUnitCatalog {
         ft/s|Feet per Second|0.3048|fps,ft/s,ft/sec
         kn|Knots|0.5144444444444445|kn,knot,knots
         km/s|Kilometers per Second|1000.0|km/s,km/sec
+        c|Speed of Light|299792458.0|speed of light,speed-of-light,c_light
         pressure
         Pa|Pascals|1.0|pa,pascal,pascals
         hPa|Hectopascals|100.0|hpa
@@ -244,6 +250,7 @@ enum CalcUnitCatalog {
         mW|Milliwatts|0.001|mw,milliwatt,milliwatts
         kW|Kilowatts|1000.0|kw,kilowatt,kilowatts
         MW|Megawatts|1000000.0|MW,megawatt,megawatts
+        dBm|Decibel-Milliwatts|1.0|dbm
         electricCurrent
         A|Amperes|1.0|a,amp,amps,ampere,amperes
         mA|Milliamperes|0.001|ma,milliamp,milliamps,milliampere,milliamperes

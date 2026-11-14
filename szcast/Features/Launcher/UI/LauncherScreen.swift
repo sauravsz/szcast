@@ -20,6 +20,9 @@ struct LauncherScreen: PaletteScreen {
     private let results: [AppEntry]
     private let calc: CalcResult?
     private let color: ColorValue?
+    private let weather: WeatherResult?
+    private let travel: TravelResult?
+    private let flight: FlightResult?
     /// Only the empty query pins favorites — a category shows its sections without one of its own.
     private let pinsFavorites: Bool
     private let pinnedFavorites: [FavoritesStore.Item]
@@ -69,11 +72,14 @@ struct LauncherScreen: PaletteScreen {
             matchCount += 1
         }
         // No card over a pinned row: its fields hang off the selection, which must start on it.
+        let weather = pinned == nil ? WeatherService.shared.resolveWeather(query: vm.query) : nil
+        let travel = pinned == nil && weather == nil ? TravelTimeService.shared.resolveTravel(query: vm.query) : nil
+        let flight = pinned == nil && weather == nil && travel == nil ? FlightTrackerService.shared.resolveFlight(query: vm.query) : nil
         let calc =
-            pinned == nil
+            (pinned == nil && weather == nil && travel == nil && flight == nil)
             ? CalcMemo.evaluate(vm.query, rates: currencyRates.rates, format: core.calcNumberFormat) : nil
         // After the calculator: `#FF5733` is never arithmetic, so the two can't both answer.
-        let color = calc == nil && pinned == nil ? ColorValue.parse(vm.query) : nil
+        let color = calc == nil && pinned == nil && weather == nil && travel == nil && flight == nil ? ColorValue.parse(vm.query) : nil
         let files = pinned == nil ? core.fileSearchCoordinator.launcherFiles(for: vm.query) : []
         let fallbacks = core.fallbackCoordinator.entries(for: vm.query)
         let pinsFavorites = vm.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -88,6 +94,9 @@ struct LauncherScreen: PaletteScreen {
         let meeting = pinsFavorites ? meeting : nil
         self.meeting = meeting
         self.results = results
+        self.weather = weather
+        self.travel = travel
+        self.flight = flight
         self.calc = calc
         self.files = files
         self.fallbacks = fallbacks
@@ -97,7 +106,13 @@ struct LauncherScreen: PaletteScreen {
         self.meetingCount = pinsFavorites ? ordered.meetingCount : 0
         self.suggestionCount = pinsFavorites ? ordered.suggestionCount : 0
         self.matchCount = matchCount
-        if let calc {
+        if let weather {
+            self.rows = [.weather(weather)] + entries
+        } else if let travel {
+            self.rows = [.travel(travel)] + entries
+        } else if let flight {
+            self.rows = [.flight(flight)] + entries
+        } else if let calc {
             self.rows = [.calc(calc)] + entries
         } else if let color {
             self.rows = [.color(color)] + entries
@@ -113,6 +128,9 @@ struct LauncherScreen: PaletteScreen {
         case calc(CalcResult)
         case meeting(MeetingEvent)
         case color(ColorValue)
+        case weather(WeatherResult)
+        case travel(TravelResult)
+        case flight(FlightResult)
         case entry(AppEntry)
         /// Prefixed, because an application's entry id is the same bundle path a file hit carries.
         case file(FileSearchResult)
@@ -140,6 +158,9 @@ struct LauncherScreen: PaletteScreen {
             case .calc: return "calc-card"
             case .meeting: return "meeting-card"
             case .color: return "color-card"
+            case .weather: return "weather-card"
+            case .travel: return "travel-card"
+            case .flight: return "flight-card"
             case .entry(let app): return app.id
             case .file(let result): return "file-" + result.id
             case .fallback(let fallback, _): return "fallback-" + fallback.id
@@ -157,6 +178,9 @@ struct LauncherScreen: PaletteScreen {
         switch row(at: clampedSelection) {
         case .calc: return String(localized: "Copy Answer")
         case .color: return String(localized: "Copy Color")
+        case .weather: return String(localized: "Copy Weather")
+        case .travel: return String(localized: "Copy Travel Time")
+        case .flight: return String(localized: "Copy Flight Status")
         case .meeting(let meeting):
             return meeting.link == nil
                 ? String(localized: "Open in Calendar") : String(localized: "Join Meeting")
@@ -228,12 +252,15 @@ struct LauncherScreen: PaletteScreen {
 
     private func isCardSelected(_ selection: Int) -> Bool {
         switch row(at: selection) {
-        case .calc, .meeting, .color: return true
+        case .calc, .meeting, .color, .weather, .travel, .flight: return true
         case .entry, .file, .fallback, nil: return false
         }
     }
 
     private var leadCard: LauncherList.LeadCard? {
+        if let weather { return .weather(weather) }
+        if let travel { return .travel(travel) }
+        if let flight { return .flight(flight) }
         if let calc { return .calc(calc) }
         if let color { return .color(color) }
         return meeting.map { .meeting($0, now: now) }
@@ -251,6 +278,12 @@ struct LauncherScreen: PaletteScreen {
             return result.isActionable ? CalcActionsMenu.content(result: result, core: core) : nil
         case .color(let color):
             return ColorActionsMenu.content(color: color, core: core)
+        case .weather(let weather):
+            return WeatherActionsMenu.content(weather: weather, core: core)
+        case .travel(let travel):
+            return TravelActionsMenu.content(travel: travel, core: core)
+        case .flight(let flight):
+            return FlightActionsMenu.content(flight: flight, core: core)
         case .meeting(let meeting):
             return MeetingActionsMenu.content(meeting: meeting, core: core)
         case .entry(let app):
@@ -281,6 +314,17 @@ struct LauncherScreen: PaletteScreen {
         case .calc(let result): core.calculatorCoordinator.copyCalculatorResult(result)
         case .color(let color):
             core.clipboardCoordinator.copyColor(color, as: ColorFormat.primary(for: color))
+        case .weather(let weather):
+            Paster.copyPlainText(weather.summaryText)
+            core.paletteCoordinator.hidePalette(restoreFocus: false)
+        case .travel(let travel):
+            if let best = travel.fastestOption {
+                Paster.copyPlainText(best.durationFormatted)
+            }
+            core.paletteCoordinator.hidePalette(restoreFocus: false)
+        case .flight(let flight):
+            Paster.copyPlainText(flight.summaryText)
+            core.paletteCoordinator.hidePalette(restoreFocus: false)
         case .meeting(let meeting): core.calendarCoordinator.activateMeeting(id: meeting.id)
         case .entry(let app):
             core.launcherCoordinator.launch(

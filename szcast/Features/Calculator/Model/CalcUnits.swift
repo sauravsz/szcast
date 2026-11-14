@@ -74,14 +74,33 @@ enum CalcUnits {
             return nil
         }
 
-        if from.category != to.category, reciprocal(from, to) {
-            guard let output = reciprocalValue(input, from: from, to: to) else { return nil }
-            return .value(input: input, from: from, to: to, output: output)
+        var effectiveFrom = from
+        if fromName == "c", to.category == .speed, let cLight = byName["speed of light"] {
+            effectiveFrom = cLight
         }
-        guard from.category == to.category else { return .mismatch(from: from, to: to) }
-        let output = (input * from.factor + from.offset - to.offset) / to.factor
+
+        if effectiveFrom.symbol == "dBm", to.category == .power {
+            let output = pow(10.0, (input - 30.0) / 10.0) / to.factor
+            guard output.isFinite else { return nil }
+            return .value(input: input, from: effectiveFrom, to: to, output: output)
+        }
+        if to.symbol == "dBm", effectiveFrom.category == .power {
+            let watts = input * effectiveFrom.factor
+            guard watts > 0 else { return nil }
+            let output = 10.0 * log10(watts) + 30.0
+            guard output.isFinite else { return nil }
+            return .value(input: input, from: effectiveFrom, to: to, output: output)
+        }
+
+        if effectiveFrom.category != to.category, reciprocal(effectiveFrom, to) {
+            guard let output = reciprocalValue(input, from: effectiveFrom, to: to) else { return nil }
+            return .value(input: input, from: effectiveFrom, to: to, output: output)
+        }
+        guard effectiveFrom.category == to.category else { return .mismatch(from: effectiveFrom, to: to) }
+        let output = (input * effectiveFrom.factor + effectiveFrom.offset - to.offset) / to.factor
         guard output.isFinite else { return nil }
-        return .value(input: input, from: from, to: to, output: output)
+        let cleanOutput = abs(output) < 1e-12 ? 0 : output
+        return .value(input: input, from: effectiveFrom, to: to, output: cleanOutput)
     }
 
     private static let speed = CalcDimension(length: 1, time: -1)

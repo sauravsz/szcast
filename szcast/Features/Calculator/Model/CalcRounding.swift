@@ -120,7 +120,8 @@ enum CalcRounding {
 
     private static let stepWords: [String: Double] = [
         "ten": 10, "hundred": 100, "thousand": 1_000, "million": 1_000_000,
-        "half": 0.5, "third": 1.0 / 3, "quarter": 0.25, "tenth": 0.1, "hundredth": 0.01, "thousandth": 0.001
+        "half": 0.5, "third": 1.0 / 3, "quarter": 0.25, "eighth": 0.125, "sixteenth": 0.0625,
+        "tenth": 0.1, "hundredth": 0.01, "thousandth": 0.001, "integer": 1.0, "whole": 1.0
     ]
 
     private static let placeWords: [[CalcToken]] = [

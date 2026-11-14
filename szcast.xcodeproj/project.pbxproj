@@ -346,6 +346,20 @@
 		5A91C58340D02ED0939BCAE2 /* CurrencyFeed.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE35B5E7B1CC94F759116097 /* CurrencyFeed.swift */; };
 		5B42E560E21E016CEFC33BAF /* ExtensionLaunchError.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB40137D0539CB3BB9A305C8 /* ExtensionLaunchError.swift */; };
 		5B5BCDD482A9058D38C49314 /* CalcUnits.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC67BADEB6FEC76C88585361 /* CalcUnits.swift */; };
+		C1C4E3A20001000000000001 /* CalcChemistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10001000000000001 /* CalcChemistry.swift */; };
+		C1C4E3A20001000000000002 /* CalcPace.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10001000000000002 /* CalcPace.swift */; };
+		C1C4E3A20002000000000001 /* WeatherResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10002000000000001 /* WeatherResult.swift */; };
+		C1C4E3A20002000000000002 /* WeatherService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10002000000000002 /* WeatherService.swift */; };
+		C1C4E3A20002000000000003 /* WeatherCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10002000000000003 /* WeatherCardView.swift */; };
+		C1C4E3A20002000000000004 /* WeatherActionsMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10002000000000004 /* WeatherActionsMenu.swift */; };
+		C1C4E3A20003000000000001 /* TravelResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10003000000000001 /* TravelResult.swift */; };
+		C1C4E3A20003000000000002 /* TravelTimeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10003000000000002 /* TravelTimeService.swift */; };
+		C1C4E3A20003000000000003 /* TravelCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10003000000000003 /* TravelCardView.swift */; };
+		C1C4E3A20003000000000004 /* TravelActionsMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10003000000000004 /* TravelActionsMenu.swift */; };
+		C1C4E3A20004000000000001 /* FlightResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10004000000000001 /* FlightResult.swift */; };
+		C1C4E3A20004000000000002 /* FlightTrackerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10004000000000002 /* FlightTrackerService.swift */; };
+		C1C4E3A20004000000000003 /* FlightCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10004000000000003 /* FlightCardView.swift */; };
+		C1C4E3A20004000000000004 /* FlightActionsMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10004000000000004 /* FlightActionsMenu.swift */; };
 		5B90A314CF4801995EA0EE01 /* ExtensionHostBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38765BC6C35D03659655BD2B /* ExtensionHostBridge.swift */; };
 		5BF11E6F921BF8ED5CA10878 /* AutoJoinPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65353481F5F8684CB8A6BC8 /* AutoJoinPolicy.swift */; };
 		5C801A9043908577FB99A555 /* DialogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32733B27AE0BD75742D1394F /* DialogView.swift */; };
@@ -1731,6 +1745,20 @@
 		CC39721B6964B279FB5D5DC3 /* FileIconStamp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileIconStamp.swift; sourceTree = "<group>"; };
 		CC407C844BE73916C6C526F1 /* SettingsScrollTarget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsScrollTarget.swift; sourceTree = "<group>"; };
 		CC67BADEB6FEC76C88585361 /* CalcUnits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalcUnits.swift; sourceTree = "<group>"; };
+		C1C4E3A10001000000000001 /* CalcChemistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalcChemistry.swift; sourceTree = "<group>"; };
+		C1C4E3A10001000000000002 /* CalcPace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalcPace.swift; sourceTree = "<group>"; };
+		C1C4E3A10002000000000001 /* WeatherResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherResult.swift; sourceTree = "<group>"; };
+		C1C4E3A10002000000000002 /* WeatherService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherService.swift; sourceTree = "<group>"; };
+		C1C4E3A10002000000000003 /* WeatherCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherCardView.swift; sourceTree = "<group>"; };
+		C1C4E3A10002000000000004 /* WeatherActionsMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherActionsMenu.swift; sourceTree = "<group>"; };
+		C1C4E3A10003000000000001 /* TravelResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelResult.swift; sourceTree = "<group>"; };
+		C1C4E3A10003000000000002 /* TravelTimeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelTimeService.swift; sourceTree = "<group>"; };
+		C1C4E3A10003000000000003 /* TravelCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelCardView.swift; sourceTree = "<group>"; };
+		C1C4E3A10003000000000004 /* TravelActionsMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelActionsMenu.swift; sourceTree = "<group>"; };
+		C1C4E3A10004000000000001 /* FlightResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightResult.swift; sourceTree = "<group>"; };
+		C1C4E3A10004000000000002 /* FlightTrackerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightTrackerService.swift; sourceTree = "<group>"; };
+		C1C4E3A10004000000000003 /* FlightCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightCardView.swift; sourceTree = "<group>"; };
+		C1C4E3A10004000000000004 /* FlightActionsMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightActionsMenu.swift; sourceTree = "<group>"; };
 		CCA0FFBA690EF8846A934C64 /* CalcUnitCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalcUnitCatalog.swift; sourceTree = "<group>"; };
 		CCCBDD92DEAD780A1DC423CA /* ExtensionScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionScreen.swift; sourceTree = "<group>"; };
 		CD0A6DDC1C30A6E2C6DF7E7D /* WindowManagementSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowManagementSettingsView.swift; sourceTree = "<group>"; };
@@ -2107,6 +2135,8 @@
 				CCA0FFBA690EF8846A934C64 /* CalcUnitCatalog.swift */,
 				639F73227BB0A4B9CD889D81 /* CalcUnitExpression.swift */,
 				CC67BADEB6FEC76C88585361 /* CalcUnits.swift */,
+				C1C4E3A10001000000000001 /* CalcChemistry.swift */,
+				C1C4E3A10001000000000002 /* CalcPace.swift */,
 				7592579B976CA7BCA03E2815 /* CalcValue.swift */,
 				084B46DFC8EC4EF456B734E4 /* CalcZoneSchedule.swift */,
 				58D62BFB4EC604AE6171BBA3 /* CountryZoneData.generated.swift */,
@@ -3234,9 +3264,117 @@
 			path = Service;
 			sourceTree = "<group>";
 		};
+		C1C4E3A00002000000000001 /* Weather */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A00002000000000010 /* Model */,
+				C1C4E3A00002000000000020 /* Service */,
+				C1C4E3A00002000000000030 /* UI */,
+			);
+			path = Weather;
+			sourceTree = "<group>";
+		};
+		C1C4E3A00002000000000010 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A10002000000000001 /* WeatherResult.swift */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		C1C4E3A00002000000000020 /* Service */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A10002000000000002 /* WeatherService.swift */,
+			);
+			path = Service;
+			sourceTree = "<group>";
+		};
+		C1C4E3A00002000000000030 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A10002000000000003 /* WeatherCardView.swift */,
+				C1C4E3A10002000000000004 /* WeatherActionsMenu.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		C1C4E3A00003000000000001 /* Travel */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A00003000000000010 /* Model */,
+				C1C4E3A00003000000000020 /* Service */,
+				C1C4E3A00003000000000030 /* UI */,
+			);
+			path = Travel;
+			sourceTree = "<group>";
+		};
+		C1C4E3A00003000000000010 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A10003000000000001 /* TravelResult.swift */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		C1C4E3A00003000000000020 /* Service */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A10003000000000002 /* TravelTimeService.swift */,
+			);
+			path = Service;
+			sourceTree = "<group>";
+		};
+		C1C4E3A00003000000000030 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A10003000000000003 /* TravelCardView.swift */,
+				C1C4E3A10003000000000004 /* TravelActionsMenu.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		C1C4E3A00004000000000001 /* Flights */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A00004000000000010 /* Model */,
+				C1C4E3A00004000000000020 /* Service */,
+				C1C4E3A00004000000000030 /* UI */,
+			);
+			path = Flights;
+			sourceTree = "<group>";
+		};
+		C1C4E3A00004000000000010 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A10004000000000001 /* FlightResult.swift */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		C1C4E3A00004000000000020 /* Service */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A10004000000000002 /* FlightTrackerService.swift */,
+			);
+			path = Service;
+			sourceTree = "<group>";
+		};
+		C1C4E3A00004000000000030 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A10004000000000003 /* FlightCardView.swift */,
+				C1C4E3A10004000000000004 /* FlightActionsMenu.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
 		95CA98985928A88B33F82556 /* Features */ = {
 			isa = PBXGroup;
 			children = (
+				C1C4E3A00002000000000001 /* Weather */,
+				C1C4E3A00003000000000001 /* Travel */,
+				C1C4E3A00004000000000001 /* Flights */,
 				87070A80E9E3AB3E4B0A9E54 /* AI */,
 				6E106BD79223C45E7D102798 /* AppleShortcuts */,
 				4852DB90D637B9D8E0B2556C /* Backup */,
@@ -4445,6 +4583,20 @@
 				4C62EC86A9A6DE11C57D4747 /* CalcUnitCatalog.swift in Sources */,
 				ECD777BD408E9DC2C93CFC1B /* CalcUnitExpression.swift in Sources */,
 				5B5BCDD482A9058D38C49314 /* CalcUnits.swift in Sources */,
+				C1C4E3A20001000000000001 /* CalcChemistry.swift in Sources */,
+				C1C4E3A20001000000000002 /* CalcPace.swift in Sources */,
+				C1C4E3A20002000000000001 /* WeatherResult.swift in Sources */,
+				C1C4E3A20002000000000002 /* WeatherService.swift in Sources */,
+				C1C4E3A20002000000000003 /* WeatherCardView.swift in Sources */,
+				C1C4E3A20002000000000004 /* WeatherActionsMenu.swift in Sources */,
+				C1C4E3A20003000000000001 /* TravelResult.swift in Sources */,
+				C1C4E3A20003000000000002 /* TravelTimeService.swift in Sources */,
+				C1C4E3A20003000000000003 /* TravelCardView.swift in Sources */,
+				C1C4E3A20003000000000004 /* TravelActionsMenu.swift in Sources */,
+				C1C4E3A20004000000000001 /* FlightResult.swift in Sources */,
+				C1C4E3A20004000000000002 /* FlightTrackerService.swift in Sources */,
+				C1C4E3A20004000000000003 /* FlightCardView.swift in Sources */,
+				C1C4E3A20004000000000004 /* FlightActionsMenu.swift in Sources */,
 				67B643D55D0F8E428AD1BA51 /* CalcValue.swift in Sources */,
 				E6B54A0550D60B6B2D7B4B06 /* CalcZoneSchedule.swift in Sources */,
 				137A3474D4734DF43E6412D2 /* CalculatorCardView.swift in Sources */,

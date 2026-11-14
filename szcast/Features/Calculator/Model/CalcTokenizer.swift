@@ -403,18 +403,29 @@ enum CalcTokenizer {
         _ chars: [Unicode.Scalar], after index: Int, prefix: String
     ) -> (name: String, end: Int)? {
         guard index < chars.count, chars[index] == "/" || chars[index].isWhitespace else { return nil }
-        let separator = chars[index] == "/" ? "/" : " "
-        var rightStart = index + 1
-        while rightStart < chars.count, chars[rightStart].isWhitespace { rightStart += 1 }
-        var end = rightStart
-        while end < chars.count, chars[end].isLetter || chars[end].isNumber { end += 1 }
-        guard end > rightStart else { return nil }
-        let spelling = (prefix + separator + String(String.UnicodeScalarView(chars[rightStart..<end])))
-            .replacingOccurrences(of: "²", with: "2")
-            .replacingOccurrences(of: "³", with: "3")
-        let name = CalcUnits.byName[spelling] != nil ? spelling : spelling.lowercased()
-        guard CalcUnits.byName[name] != nil else { return nil }
-        return (name, end)
+        var currentPrefix = prefix
+        var currentIdx = index
+        var bestMatch: (name: String, end: Int)? = nil
+
+        for _ in 0..<3 {
+            guard currentIdx < chars.count, chars[currentIdx] == "/" || chars[currentIdx].isWhitespace else { break }
+            let separator = chars[currentIdx] == "/" ? "/" : " "
+            var rightStart = currentIdx + 1
+            while rightStart < chars.count, chars[rightStart].isWhitespace { rightStart += 1 }
+            var nextEnd = rightStart
+            while nextEnd < chars.count, chars[nextEnd].isLetter || chars[nextEnd].isNumber { nextEnd += 1 }
+            guard nextEnd > rightStart else { break }
+            let nextWord = String(String.UnicodeScalarView(chars[rightStart..<nextEnd]))
+            currentPrefix = (currentPrefix + separator + nextWord)
+                .replacingOccurrences(of: "²", with: "2")
+                .replacingOccurrences(of: "³", with: "3")
+            currentIdx = nextEnd
+            let checkName = CalcUnits.byName[currentPrefix] != nil ? currentPrefix : currentPrefix.lowercased()
+            if CalcUnits.byName[checkName] != nil {
+                bestMatch = (checkName, currentIdx)
+            }
+        }
+        return bestMatch
     }
 
     /// Short scale only: the engine reads canonical English, where a billion is 10⁹.

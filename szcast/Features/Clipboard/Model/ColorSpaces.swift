@@ -31,6 +31,27 @@ extension ColorValue {
         )
     }
 
+    /// CIELAB (D65 illuminant, 2° observer)
+    var lab: (l: Double, a: Double, b: Double) {
+        let (r, g, b) = linearComponents
+        let x = (0.4124564 * r + 0.3575761 * g + 0.1804375 * b) / 0.95047
+        let y = (0.2126729 * r + 0.7151522 * g + 0.0721750 * b) / 1.00000
+        let z = (0.0193339 * r + 0.1191920 * g + 0.9503041 * b) / 1.08883
+
+        func f(_ t: Double) -> Double {
+            t > 0.008856451679 ? pow(t, 1.0 / 3.0) : (7.787037037 * t + 16.0 / 116.0)
+        }
+
+        let fx = f(x)
+        let fy = f(y)
+        let fz = f(z)
+
+        let l = max(0, 116.0 * fy - 16.0)
+        let a = 500.0 * (fx - fy)
+        let bVal = 200.0 * (fy - fz)
+        return (l, a, bVal)
+    }
+
     /// `pow` is undefined for a negative base at a fractional exponent, and a channel can be one.
     private static func cubeRoot(_ value: Double) -> Double {
         value < 0 ? -pow(-value, 1.0 / 3) : pow(value, 1.0 / 3)
@@ -55,6 +76,36 @@ extension ColorValue {
             red: Self.gamma(4.0767416621 * long - 3.3077115913 * medium + 0.2309699292 * short),
             green: Self.gamma(-1.2684380046 * long + 2.6097574011 * medium - 0.3413193965 * short),
             blue: Self.gamma(-0.0041960863 * long - 0.7034186147 * medium + 1.7076147010 * short),
+            alpha: alpha)
+    }
+
+    /// Inverse CIELAB to sRGB
+    init(cielabL l: Double, a: Double, b: Double, alpha: Double = 1) {
+        let fy = (l + 16.0) / 116.0
+        let fx = a / 500.0 + fy
+        let fz = fy - b / 200.0
+
+        func invF(_ t: Double) -> Double {
+            let t3 = t * t * t
+            return t3 > 0.008856451679 ? t3 : (t - 16.0 / 116.0) / 7.787037037
+        }
+
+        let xr = invF(fx)
+        let yr = invF(fy)
+        let zr = invF(fz)
+
+        let x = xr * 0.95047
+        let y = yr * 1.00000
+        let z = zr * 1.08883
+
+        let rLin = 3.2404542 * x - 1.5371385 * y - 0.4985314 * z
+        let gLin = -0.9692660 * x + 1.8760108 * y + 0.0415560 * z
+        let bLin = 0.0556434 * x - 0.2040259 * y + 1.0572252 * z
+
+        self.init(
+            red: Self.gamma(rLin),
+            green: Self.gamma(gLin),
+            blue: Self.gamma(bLin),
             alpha: alpha)
     }
 

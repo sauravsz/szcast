@@ -181,6 +181,9 @@ run launcher-settings-file-test \
                            Szcast/Platform/LocalizedResource.swift
 run apple-shortcut-test    Szcast/Features/AppleShortcuts/Model/*.swift
 run calc-test              Szcast/Features/Calculator/Model/*.swift
+run weather-test           Szcast/Features/Weather/Model/*.swift Szcast/Features/Weather/Service/*.swift
+run travel-test            Szcast/Features/Travel/Model/*.swift Szcast/Features/Travel/Service/*.swift
+run flight-test            Szcast/Features/Flights/Model/*.swift Szcast/Features/Flights/Service/*.swift
 run index calc-performance Szcast/Features/Calculator/Model/*.swift
 run calendar-test          Szcast/Features/Calendar/Model/*.swift \
                            Szcast/Features/Calendar/UI/EventEditorSession.swift

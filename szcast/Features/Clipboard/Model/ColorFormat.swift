@@ -7,7 +7,11 @@ enum ColorFormat: CaseIterable, Hashable, Sendable {
     case rgba
     case hsl
     case hslWithAlpha
+    case hwb
+    case lab
     case oklch
+    case nsColor
+    case uiColor
 
     var title: String {
         switch self {
@@ -16,7 +20,11 @@ enum ColorFormat: CaseIterable, Hashable, Sendable {
         case .rgba: return "RGBA"
         case .hsl: return "HSL"
         case .hslWithAlpha: return String(localized: "HSL with Alpha")
+        case .hwb: return "HWB"
+        case .lab: return "Lab"
         case .oklch: return "Oklch"
+        case .nsColor: return "NSColor"
+        case .uiColor: return "UIColor"
         }
     }
 
@@ -32,11 +40,23 @@ enum ColorFormat: CaseIterable, Hashable, Sendable {
             let alpha = carriesAlpha ? ", \(ColorDigits.decimal(color.alpha))" : ""
             return "hsl(\(ColorDigits.angle(hsl.hue)), \(ColorDigits.percent(hsl.saturation)), "
                 + "\(ColorDigits.percent(hsl.lightness))\(alpha))"
+        case .hwb:
+            let w = min(color.red, color.green, color.blue)
+            let b = 1.0 - max(color.red, color.green, color.blue)
+            return "hwb(\(ColorDigits.angle(color.hsl.hue)) \(ColorDigits.percent(w)) \(ColorDigits.percent(b))\(ColorDigits.slashAlpha(color)))"
+        case .lab:
+            let lab = color.lab
+            return "lab(\(ColorDigits.percent(lab.l / 100)) \(ColorDigits.decimal(lab.a)) "
+                + "\(ColorDigits.decimal(lab.b))\(ColorDigits.slashAlpha(color)))"
         case .oklch:
             let oklch = color.oklch
             // Oklab's axes run to about ±0.4, so a tenth would state most colours as zero.
             return "oklch(\(ColorDigits.percent(oklch.l)) \(ColorDigits.decimal(oklch.c)) "
                 + "\(ColorDigits.angle(oklch.h))\(ColorDigits.slashAlpha(color)))"
+        case .nsColor:
+            return "NSColor(srgbRed: \(ColorDigits.decimal(color.red)), green: \(ColorDigits.decimal(color.green)), blue: \(ColorDigits.decimal(color.blue)), alpha: \(ColorDigits.decimal(color.alpha)))"
+        case .uiColor:
+            return "UIColor(red: \(ColorDigits.decimal(color.red)), green: \(ColorDigits.decimal(color.green)), blue: \(ColorDigits.decimal(color.blue)), alpha: \(ColorDigits.decimal(color.alpha)))"
         }
     }
 
