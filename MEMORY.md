@@ -88,5 +88,6 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
 - **Immediate Next Steps**:
   1. Test long continuous dictation (5+ minutes) in real-world workflows.
   2. Perform weekly upstream radar audit (`./Scripts/upstream-radar.sh`).
+  3. Implement Screen Text OCR & QR Code Scanner (AppKit + Vision) from the feature backlog.
 
 Attribution: AGPL-3.0. Copyright © 2026 Abue Ammar in LICENSE; NOTICE.md keeps third-party material. Fork of Tinycast; no affiliation implied.
