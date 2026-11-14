@@ -87,11 +87,17 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - Compact Bar Shadow Crescent Fix: Eliminated the double dark shadow crescent clipping artifact under the search pill and circular shortcut buttons on macOS 27 by setting `Theme.glassCastsShadow = true`, restoring the crisp silhouette mask over the glass container, and triggering settled window shadow invalidation.
   - S1-Mini Model Discovery & Fast Download: Discovered pre-existing 462MB `s1-mini-1.0.gguf` in EnviousWispr directory and synced it to `~/Library/Application Support/szcast/Models/s1-mini/s1-mini-1.0.gguf`. Added EnviousWispr candidate paths to `DictationLlamaServerManager` and `DictationModelStore`. Replaced slow byte-by-byte download sequence with native `URLSession.shared.download`.
 
+- **OCR, Data Transformers, Hardware Switcher & Calendar HUD** (`bdd9d535`):
+  - Native Screen Text OCR & QR Scanner: Interactive crosshair marquee selection directly to in-memory pasteboard buffer via `/usr/sbin/screencapture -i -c` with zero filesystem footprint; Vision `VNRecognizeTextRequest` and `VNDetectBarcodesRequest` detection; HUD confirmation and clipboard delivery; `⌥⇧2` default global hotkey and `Capture Screen Text` / `Scan QR Code` launcher commands.
+  - Developer & Data Transformers: Pure offline evaluation in root search for cryptographic hashes (`sha256`, `sha1`, `sha512`, `md5`), base64 encode/decode, urlencode/urldecode, JWT token inspection with human-readable expiration, UUID v4 generator, and Cicero Lorem Ipsum word/paragraph generator.
+  - Audio & Display Hardware Switcher: CoreAudio native device discovery, default input/output setting, and cycling; dynamic `DisplayServicesSetBrightness` linking + Lunar CLI external monitor fallback; 6 new system actions.
+  - Menu Bar Meeting Countdown HUD: Default `calendarMenuBarDisplay` set to `.meetingTitle` (`[Title] • in 12m`) with 1-click meeting join and action card integration.
+  - Test Harness Suite: Expanded to 123 suites (`hardware-test`, `screen-capture-test` added); all 123 harnesses pass in 179s.
+
 ## Active State & Next Steps
-- **Active State**: All 121 test harnesses pass. Long-form dictation scaled to 20 minutes, security and crash bugs patched, upstream sync complete, and Raycast Calculator & live intelligence suite fully operational.
+- **Active State**: All 123 test harnesses pass. Native screen OCR and QR scanner operational, developer data transformer suite live in search, CoreAudio and display brightness controls hooked into System Actions, menu bar meeting HUD enabled by default, and debug build compiles cleanly.
 - **Immediate Next Steps**:
   1. Test long continuous dictation (5+ minutes) in real-world workflows.
   2. Perform weekly upstream radar audit (`./Scripts/upstream-radar.sh`).
-  3. Implement Screen Text OCR & QR Code Scanner (AppKit + Vision) from the feature backlog.
 
 Attribution: AGPL-3.0. Copyright © 2026 Abue Ammar in LICENSE; NOTICE.md keeps third-party material. Fork of Tinycast; no affiliation implied.
