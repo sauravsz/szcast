@@ -62,7 +62,7 @@ open /Applications/szcast.app
 - **Clean Keyboard Mode**: Physical keyboard cleaning lock via `CGEventTap` input interception, dark-glass countdown HUD, and hold Escape (3s) or `Ctrl + U` safe unlocks.
 - **KeePassXC Password Manager**: Offline password vault integration wrapping `keepassxc-cli`. Supports instant search, persistent account window resumption across palette toggles, and dedicated shortcut keys (`⌘C` password, `⌘T` TOTP, `⌘B` username, `⌘U` URL).
 - **Display Tweaks & Hardware LUT Calibration**: Hardware look-up table calibration via `CGSetDisplayTransferByTable` with RGB gains, shadows, highlights, black floor lifting, and one-key display mirroring toggle.
-- **Groq Cloud Dictation & Polish**: Ultra-low-latency Whisper transcription and Llama-3.3 speech normalization alongside local Parakeet and S1-mini engines.
+- **Groq Cloud Dictation & Polish**: Ultra-low-latency Whisper-large-v3-turbo transcription and speech normalization (openai/gpt-oss-120b, openai/gpt-oss-20b, qwen/qwen3.8-27b) alongside local Parakeet and S1-mini engines.
 - **Live AI Search**: Native chat with Tavily, Exa, and Jina search providers featuring interactive inline Markdown citation badges.
 - **Focus Timer**: Full Pomodoro cycles (Work, Short Break, Long Break) with menu bar countdown and non-blocking audio cues.
 - **Rich Media Notes**: TextKit 2 image attachments with inline paste, drag-and-drop, and cursor-revealed Markdown.

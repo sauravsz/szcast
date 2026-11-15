@@ -1176,6 +1176,27 @@ struct CalcTests {
             "feed reported failure",
             fiat: Data(#"{"success":false,"source":"USD","quotes":{"USDEUR":0.9}}"#.utf8))
 
+        // Open CC0 unified feed (both fiat and crypto in one payload)
+        let openApiJSON = Data(#"{"date":"2026-11-15","usd":{"eur":0.907,"btc":0.000015,"inr":94.25,"bad":-5}}"#.utf8)
+        if let openSnapshot = try? CurrencyFeed.snapshot(openApi: openApiJSON, now: clock.now) {
+            check("openApi USD rate", expected: "1.0", got: "\(openSnapshot.rates.rate(for: "USD") ?? 0)")
+            check("openApi EUR rate", expected: "0.907", got: "\(openSnapshot.rates.rate(for: "EUR") ?? 0)")
+            check("openApi BTC rate", expected: "1.5e-05", got: "\(openSnapshot.rates.rate(for: "BTC") ?? 0)")
+            check("openApi bad rate dropped", expected: "nil", got: "\(openSnapshot.rates.rate(for: "BAD").map { "\($0)" } ?? "nil")")
+            check("openApi complete", expected: "true", got: "\(openSnapshot.complete)")
+            check("openApi pricesCoins", expected: "true", got: "\(CurrencyFeed.pricesCoins(openSnapshot.rates))")
+        } else {
+            fail("openApi snapshot", expected: "success", got: "threw")
+        }
+
+        // OpenApi throws on empty/missing map
+        let emptyOpenApi = Data(#"{"date":"2026-11-15","usd":{}}"#.utf8)
+        if let _ = try? CurrencyFeed.snapshot(openApi: emptyOpenApi, now: clock.now) {
+            fail("empty openApi", expected: "throws", got: "succeeded")
+        } else {
+            passes += 1
+        }
+
         // Slashed rate spellings — the tokenizer keeps a known `unit/unit` whole
         expectDisplay("100 km/h to mph", "62.13711922 mph")
         expectDisplay("60 mph in km/h", "96.56064 km/h")

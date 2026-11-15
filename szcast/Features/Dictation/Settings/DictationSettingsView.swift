@@ -415,9 +415,7 @@ struct DictationSettingsView: View {
                     }
                 } else {
                     Picker(selection: $bSettings.dictationGroqTranscriptionModel) {
-                        Text("whisper-large-v3-turbo (Free · Recommended)").tag("whisper-large-v3-turbo")
-                        Text("whisper-large-v3 (Free · State-of-the-Art)").tag("whisper-large-v3")
-                        Text("distil-whisper-large-v3-en (Free · English)").tag("distil-whisper-large-v3-en")
+                        Text("whisper-large-v3-turbo (Free)").tag("whisper-large-v3-turbo")
                     } label: {
                         SettingsRowTitle(.dictationModel, "Groq STT model")
                         Text("Cloud speech recognition powered by Groq LPU hardware (~250ms).")
@@ -606,11 +604,12 @@ struct DictationSettingsView: View {
                     s1ModelStatusRow
                 } else {
                     Picker(selection: $bSettings.dictationGroqPolishModel) {
-                        Text("llama-3.1-8b-instant (Free · ~120ms)").tag("llama-3.1-8b-instant")
-                        Text("llama-3.3-70b-versatile (Free · 70B)").tag("llama-3.3-70b-versatile")
+                        Text("openai/gpt-oss-120b (Free · Large)").tag("openai/gpt-oss-120b")
+                        Text("openai/gpt-oss-20b (Free · Fast)").tag("openai/gpt-oss-20b")
+                        Text("qwen/qwen3.8-27b (Free)").tag("qwen/qwen3.8-27b")
                     } label: {
                         SettingsRowTitle(.dictationOutput, "Groq polish model")
-                        Text("Speech cleanup and normalization at 1,000 tokens/sec.")
+                        Text("Speech cleanup and normalization via Groq cloud.")
                     }
                 }
 

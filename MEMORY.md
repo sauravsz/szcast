@@ -10,7 +10,7 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
 - Bundle IDs: `com.sauravsz.szcast` (stable), `.beta`, dev config `.dev`. Helpers `com.sauravsz.szcast.*`.
 - URL schemes: `szcast` / `szcast-dev` (plist key `SzcastURLScheme`, build vars `SZCAST_BUNDLE_IDENTIFIER` / `SZCAST_URL_SCHEME`).
 - Updater: `ReleaseFeed.repository = sauravsz/szcast`; stable/beta channels are wired, but `SzcastUpdatePublicKey` now carries a real Ed25519 key (`IwtZDpOb…vac=`, private half out of the repo); no update feed is published, so nothing installs over itself yet. Releases are built and signed locally — CI needs a Developer ID, which this fork does not buy.
-- Currency rates still call `https://tinycast.dev/api/v1/currencies` (upstream-hosted; kept on purpose). Needs a `GET /api/v1/currencies` and `/currencies/crypto?symbols=` JSON shape if self-hosting.
+- Currency rates fetch directly from open CC0 exchange-api CDN (`latest.currency-api.pages.dev/v1/currencies/usd.min.json` with `cdn.jsdelivr.net` fallback) in a single unified GET covering fiat and crypto. Zero tinycast.dev or middleman dependency.
 - Support/About/changelog links point at the fork repo; upstream Discord, funding URL and release team secrets removed.
 
 ## Web / deploy

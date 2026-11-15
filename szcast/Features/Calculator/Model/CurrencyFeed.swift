@@ -2,6 +2,12 @@ import Foundation
 
 /// Decodes the rate feeds into one snapshot. Pure, so the harness covers it; the store does the IO.
 enum CurrencyFeed {
+    /// Direct open CC0 feed: {"date": "...", "usd": {"eur": 0.907, "btc": 0.000015, ...}}
+    private struct OpenApiPayload: Decodable {
+        let date: String?
+        let usd: [String: Double]?
+    }
+
     /// Fiat quotes are keyed `<base><code>` and omit the base's own row.
     private struct FiatPayload: Decodable {
         let success: Bool
@@ -16,10 +22,35 @@ enum CurrencyFeed {
         let rates: [String: Double]
     }
 
+    /// One units-per-base table from the open CC0 exchange-api daily snapshot.
+    static func snapshot(
+        openApi data: Data, now: Date
+    ) throws -> (rates: CurrencyRates, complete: Bool) {
+        let payload = try JSONDecoder().decode(OpenApiPayload.self, from: data)
+        guard let map = payload.usd, !map.isEmpty else {
+            throw URLError(.cannotParseResponse)
+        }
+
+        var rates: [String: Double] = [:]
+        rates.reserveCapacity(map.count + 1)
+        for (code, rate) in map where usable(rate) {
+            rates[code.uppercased()] = rate
+        }
+        guard !rates.isEmpty else { throw URLError(.cannotParseResponse) }
+        rates["USD"] = 1.0
+
+        let coins = CalcCurrency.cryptoCodes.filter { rates[$0] != nil }.count
+        return (CurrencyRates(base: "USD", rates: rates, fetchedAt: now), coins > 0)
+    }
+
     /// One units-per-base table from both feeds; `complete` is false when the coins didn't land.
     static func snapshot(
         fiat: Data, crypto: Data?, now: Date
     ) throws -> (rates: CurrencyRates, complete: Bool) {
+        if let openSnapshot = try? snapshot(openApi: fiat, now: now) {
+            return openSnapshot
+        }
+
         let payload = try JSONDecoder().decode(FiatPayload.self, from: fiat)
         let base = payload.source
         guard payload.success, base.count == 3 else { throw URLError(.cannotParseResponse) }

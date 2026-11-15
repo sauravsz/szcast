@@ -843,24 +843,18 @@ The fetch runs on a private **cacheless** `URLSession` (`.ephemeral`, `urlCache 
 `Cache-Control: public, max-age=…`, so the shared session would keep a second copy in the on-disk
 `URLCache` that deleting the snapshot doesn't touch.
 
-Both feeds are served by the website's Worker at `szcast.dev/api/v1/currencies`, which reshapes the
-CC0 [exchange-api](https://github.com/fawazahmed0/exchange-api) daily snapshot and edge-caches it
-(see `website/worker/currencies.ts`).
+Both fiat and cryptocurrency rates are fetched directly from the open CC0 [exchange-api](https://github.com/fawazahmed0/exchange-api)
+daily snapshot served via Cloudflare Pages (`https://latest.currency-api.pages.dev/v1/currencies/usd.min.json`) with an automatic
+fallback to jsDelivr (`https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.min.json`).
 
-Rates come from `CurrencyRateStore` (`Calculator/Service/`, owned by `AppCore`), which issues two
-requests concurrently: the fiat table, keyed `<base><code>` with the base's own row omitted, and the
-coin table, which quotes the **inverse** — one coin priced in the base. `CurrencyFeed` folds both
-into the single units-per-base map `CurrencyRates` stores, inverting the coins on the way in and
-merging them last so a symbol both feeds quote takes the coin feed's own price. One flat table means
-`convert(_:from:to:)` cross-rates fiat against crypto with no special case anywhere downstream.
+Rates come from `CurrencyRateStore` (`Calculator/Service/`, owned by `AppCore`), which issues a single
+lightweight GET request covering all global fiat currencies and major cryptocurrencies in unified units-per-USD.
+`CurrencyFeed` decodes both fiat and crypto into the single units-per-base map `CurrencyRates` stores.
+One flat table means `convert(_:from:to:)` cross-rates fiat against crypto with no special case anywhere downstream.
 
-> **Third-party dependency, accepted.** Both requests go to **`tinycast.dev`**, the upstream
-> project's server — szcast does not host a rates service. The calculator's FX is therefore
-> dependent on an endpoint this project does not control: if `tinycast.dev` is retired, renamed,
-> or rate-limited, fiat and crypto conversions stop updating and the last cached snapshot is
-> served until it ages out. Nothing else in the app talks to that host. Replacing it means
-> pointing the two constants (`CurrencyRateStore.fiatEndpoint`, `cryptoEndpoint`) at any server
-> that answers the same two shapes.
+> **Open CC0 CDN Architecture.** Rates are fetched directly by the client with zero intermediary backend or server dependencies.
+> If the primary Cloudflare Pages CDN fails or times out, `CurrencyRateStore` immediately falls back to the jsDelivr CDN snapshot.
+> If the user is completely offline, the last cached snapshot is served from `currency-rates.json` until reconnect.
 
 The fiat half is required; the coins are best-effort. A run that misses them still answers for the
 session but is **not** written to disk, and retries in **30 minutes** rather than waiting out the day.

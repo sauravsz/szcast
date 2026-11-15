@@ -351,7 +351,7 @@ final class AppSettings {
     var dictationTranscriptionProvider = DictationTranscriptionProvider.parakeet
     var dictationPolishProvider = DictationPolishProvider.localS1
     var dictationGroqTranscriptionModel = "whisper-large-v3-turbo"
-    var dictationGroqPolishModel = "llama-3.1-8b-instant"
+    var dictationGroqPolishModel = "openai/gpt-oss-120b"
     var groqAPIKey = ""
 }
 

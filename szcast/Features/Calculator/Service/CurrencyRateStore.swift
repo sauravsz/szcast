@@ -4,12 +4,12 @@ import Foundation
 @MainActor
 @Observable
 final class CurrencyRateStore {
-    private nonisolated static let fiatEndpoint = URL(
-        string: "https://tinycast.dev/api/v1/currencies")!
-    /// Asked for by the app's own crypto table, so the request and the table cannot drift apart.
-    private nonisolated static let cryptoEndpoint = URL(
-        string: "https://tinycast.dev/api/v1/currencies/crypto?symbols="
-            + CalcCurrency.cryptoCodes.joined(separator: ","))!
+    /// Direct open CC0 currency snapshot on Cloudflare Pages.
+    private nonisolated static let primaryEndpoint = URL(
+        string: "https://latest.currency-api.pages.dev/v1/currencies/usd.min.json")!
+    /// Fastly/jsDelivr fallback in case Cloudflare Pages experiences an outage.
+    private nonisolated static let fallbackEndpoint = URL(
+        string: "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.min.json")!
     /// Daily, measured from `completedAt`, so relaunching never re-fetches a snapshot still fresh.
     private static let refreshInterval: TimeInterval = 24 * 3600
     /// Shorter retry, so a machine offline at launch picks rates up soon after it reconnects.
@@ -80,11 +80,18 @@ final class CurrencyRateStore {
 
     /// Off-main via `URLSession`; only the plain-value `CurrencyRates` crosses back.
     private nonisolated static func fetch() async -> (rates: CurrencyRates, complete: Bool)? {
-        async let fiat = body(of: fiatEndpoint)
-        async let crypto = body(of: cryptoEndpoint)
-        let (fiatData, cryptoData) = await (fiat, crypto)
-        guard let fiatData else { return nil }
-        return try? CurrencyFeed.snapshot(fiat: fiatData, crypto: cryptoData, now: Date())
+        let now = Date()
+        if let primaryData = await body(of: primaryEndpoint),
+            let snapshot = try? CurrencyFeed.snapshot(openApi: primaryData, now: now)
+        {
+            return snapshot
+        }
+        if let fallbackData = await body(of: fallbackEndpoint),
+            let snapshot = try? CurrencyFeed.snapshot(openApi: fallbackData, now: now)
+        {
+            return snapshot
+        }
+        return nil
     }
 
     private nonisolated static func body(of url: URL) async -> Data? {

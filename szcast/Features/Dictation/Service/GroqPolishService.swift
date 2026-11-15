@@ -30,7 +30,7 @@ actor GroqPolishService {
         _ transcript: String,
         apiKey: String,
         settings: DictationS1Settings,
-        model: String = "llama-3.1-8b-instant"
+        model: String = "openai/gpt-oss-120b"
     ) async throws -> String {
         let key = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !key.isEmpty else {

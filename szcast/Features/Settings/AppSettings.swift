@@ -1045,10 +1045,16 @@ final class AppSettings {
         dictationPolishProvider =
             defaults.string(forKey: Key.dictationPolishProvider.rawValue)
             .flatMap(DictationPolishProvider.init(rawValue:)) ?? .localS1
-        dictationGroqTranscriptionModel =
-            defaults.string(forKey: Key.dictationGroqTranscriptionModel.rawValue) ?? "whisper-large-v3-turbo"
-        dictationGroqPolishModel =
-            defaults.string(forKey: Key.dictationGroqPolishModel.rawValue) ?? "llama-3.1-8b-instant"
+        let savedStt = defaults.string(forKey: Key.dictationGroqTranscriptionModel.rawValue)
+        dictationGroqTranscriptionModel = (savedStt == "whisper-large-v3" || savedStt == nil) ? "whisper-large-v3-turbo" : savedStt!
+
+        let validPolishModels = ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"]
+        let savedPolish = defaults.string(forKey: Key.dictationGroqPolishModel.rawValue)
+        if let savedPolish, validPolishModels.contains(savedPolish) {
+            dictationGroqPolishModel = savedPolish
+        } else {
+            dictationGroqPolishModel = "openai/gpt-oss-120b"
+        }
 
         displayTweaksEnabled = defaults.bool(forKey: Key.displayTweaksEnabled.rawValue)
         displayTweaksDisplayID = UInt32(defaults.integer(forKey: Key.displayTweaksDisplayID.rawValue))
