@@ -22,6 +22,15 @@ final class DictationLlamaServerManager {
         }
     }
 
+    func startDaemon(idleRelease: DictationIdleRelease? = nil) {
+        guard isModelAvailable, isBinaryAvailable else { return }
+        Task { [weak self] in
+            guard let self else { return }
+            _ = try? await self.ensureRunning(idleRelease: idleRelease ?? .never)
+            self.prewarm(idleRelease: idleRelease ?? .never)
+        }
+    }
+
     func prewarm(idleRelease: DictationIdleRelease? = nil) {
         guard isModelAvailable, isBinaryAvailable else { return }
         Task { [weak self] in
@@ -33,7 +42,7 @@ final class DictationLlamaServerManager {
                 request.httpMethod = "POST"
                 request.setValue("application/json", forHTTPHeaderField: "Content-Type")
                 request.setValue("keep-alive", forHTTPHeaderField: "Connection")
-                request.timeoutInterval = 2.0
+                request.timeoutInterval = 10.0
                 let prewarmPayload: [String: Any] = [
                     "model": "s1-mini",
                     "messages": [
@@ -50,11 +59,19 @@ final class DictationLlamaServerManager {
     }
 
     var isModelAvailable: Bool {
-        Self.resolveGGUFModel() != nil
+        Self.isModelAvailable
     }
 
     var isBinaryAvailable: Bool {
-        Self.resolveServerBinary() != nil
+        Self.isBinaryAvailable
+    }
+
+    nonisolated static var isModelAvailable: Bool {
+        resolveGGUFModel() != nil
+    }
+
+    nonisolated static var isBinaryAvailable: Bool {
+        resolveServerBinary() != nil
     }
 
     var isRunning: Bool {
@@ -66,7 +83,7 @@ final class DictationLlamaServerManager {
         return home.appendingPathComponent("Library/Application Support/szcast/Models/s1-mini/s1-mini-1.0.gguf")
     }
 
-    static func resolveGGUFModel() -> URL? {
+    nonisolated static func resolveGGUFModel() -> URL? {
         let home = FileManager.default.homeDirectoryForCurrentUser
         let candidates = [
             home.appendingPathComponent("Library/Application Support/szcast/Models/s1-mini/s1-mini-1.0.gguf"),
@@ -83,7 +100,7 @@ final class DictationLlamaServerManager {
         return nil
     }
 
-    static func resolveServerBinary() -> URL? {
+    nonisolated static func resolveServerBinary() -> URL? {
         if let bundled = Bundle.main.url(forResource: "llama-server", withExtension: nil),
            FileManager.default.isExecutableFile(atPath: bundled.path) {
             return bundled
@@ -139,10 +156,16 @@ final class DictationLlamaServerManager {
             "--host", "127.0.0.1",
             "--port", String(port),
             "-ngl", "99",
-            "-c", "2048",
+            "-np", "1",
+            "-c", "1024",
+            "-b", "512",
+            "-ub", "512",
             "-fa", "on",
             "--cache-type-k", "q8_0",
             "--cache-type-v", "q8_0",
+            "--cache-prompt",
+            "--spec-type", "ngram-simple",
+            "--reasoning", "off",
             "--jinja",
             "--chat-template-kwargs", "{\"enable_thinking\":false}"
         ]
@@ -154,9 +177,10 @@ final class DictationLlamaServerManager {
         self.process = p
         self.runningPort = port
 
-        // Wait up to 5s for health check
-        for _ in 0..<25 {
-            try? await Task.sleep(for: .milliseconds(200))
+        // Wait up to 15s for health check (with -np 1, ready in ~0.5s; 15s budget prevents premature kill on slow disks)
+        for i in 0..<75 {
+            let sleepMs = i < 20 ? 100 : 200
+            try? await Task.sleep(for: .milliseconds(sleepMs))
             if await checkHealth(baseURL: baseURL) {
                 Self.logger.info("llama-server running on \(baseURL.absoluteString)")
                 scheduleIdleShutdown(idleRelease: currentIdleRelease)

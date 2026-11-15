@@ -63,62 +63,69 @@ actor DictationS1Polisher {
 
         // Priority 1 (DEFAULT): Direct local s1-mini-1.0.gguf via embedded/managed llama-server
         let transcriptWordCount = transcript.split(separator: " ").count
-        if let llamaServerURL = try? await DictationLlamaServerManager.shared.ensureRunning(idleRelease: settings.idleRelease) {
-            let chatEndpoint = llamaServerURL.appendingPathComponent("v1/chat/completions")
-            if let output = try? await sendChatRequest(
-                model: "s1-mini",
-                systemPrompt: DictationS1Settings.systemPrompt,
-                userMessage: userMessage,
-                transcriptWordCount: transcriptWordCount,
-                endpointURL: chatEndpoint
-            ) {
-                return output
-            } else if let retryURL = try? await DictationLlamaServerManager.shared.ensureRunning(idleRelease: settings.idleRelease, forceRestart: true) {
-                let retryEndpoint = retryURL.appendingPathComponent("v1/chat/completions")
+        if DictationLlamaServerManager.isModelAvailable && DictationLlamaServerManager.isBinaryAvailable {
+            if let llamaServerURL = try? await DictationLlamaServerManager.shared.ensureRunning(idleRelease: settings.idleRelease) {
+                let chatEndpoint = llamaServerURL.appendingPathComponent("v1/chat/completions")
                 if let output = try? await sendChatRequest(
                     model: "s1-mini",
                     systemPrompt: DictationS1Settings.systemPrompt,
                     userMessage: userMessage,
                     transcriptWordCount: transcriptWordCount,
-                    endpointURL: retryEndpoint
+                    endpointURL: chatEndpoint
                 ) {
                     return output
+                } else if let retryURL = try? await DictationLlamaServerManager.shared.ensureRunning(idleRelease: settings.idleRelease, forceRestart: true) {
+                    let retryEndpoint = retryURL.appendingPathComponent("v1/chat/completions")
+                    if let output = try? await sendChatRequest(
+                        model: "s1-mini",
+                        systemPrompt: DictationS1Settings.systemPrompt,
+                        userMessage: userMessage,
+                        transcriptWordCount: transcriptWordCount,
+                        endpointURL: retryEndpoint
+                    ) {
+                        return output
+                    }
                 }
+            }
+            // If embedded model is present but inference failed, return unpolished text immediately without stalling
+            if endpointURL == nil {
+                return transcript
             }
         }
 
-        // Priority 2: Local Ollama with S1-mini ChatML raw transport (or caller-specified endpointURL)
-        let targetURL = endpointURL ?? URL(string: "http://localhost:11434")!
-        let baseURL = Self.normalizedBaseURL(targetURL)
-        let effectiveModel = await resolveModel(preferred: model, baseURL: baseURL)
+        // Priority 2: Custom Ollama endpoint (only when explicitly provided or when embedded model is absent)
+        if let targetURL = endpointURL ?? (DictationLlamaServerManager.isModelAvailable ? nil : URL(string: "http://localhost:11434")) {
+            let baseURL = Self.normalizedBaseURL(targetURL)
+            let effectiveModel = await resolveModel(preferred: model, baseURL: baseURL)
 
-        do {
-            if Self.isS1Mini(effectiveModel) {
-                // S1-mini raw transport with closed think block
-                if let output = try await sendRawGenerateRequest(
-                    model: effectiveModel,
-                    systemPrompt: DictationS1Settings.systemPrompt,
-                    userMessage: userMessage,
-                    transcriptWordCount: transcriptWordCount,
-                    baseURL: baseURL
-                ) {
-                    return output
+            do {
+                if Self.isS1Mini(effectiveModel) {
+                    // S1-mini raw transport with closed think block
+                    if let output = try await sendRawGenerateRequest(
+                        model: effectiveModel,
+                        systemPrompt: DictationS1Settings.systemPrompt,
+                        userMessage: userMessage,
+                        transcriptWordCount: transcriptWordCount,
+                        baseURL: baseURL
+                    ) {
+                        return output
+                    }
+                } else {
+                    // General fallback model (e.g. llama3.2:3b) via standard chat completions
+                    let chatURL = baseURL.appendingPathComponent("v1/chat/completions")
+                    if let output = try await sendChatRequest(
+                        model: effectiveModel,
+                        systemPrompt: DictationS1Settings.generalSystemPrompt,
+                        userMessage: transcript,
+                        transcriptWordCount: transcriptWordCount,
+                        endpointURL: chatURL
+                    ) {
+                        return output
+                    }
                 }
-            } else {
-                // General fallback model (e.g. llama3.2:3b) via standard chat completions
-                let chatURL = baseURL.appendingPathComponent("v1/chat/completions")
-                if let output = try await sendChatRequest(
-                    model: effectiveModel,
-                    systemPrompt: DictationS1Settings.generalSystemPrompt,
-                    userMessage: transcript,
-                    transcriptWordCount: transcriptWordCount,
-                    endpointURL: chatURL
-                ) {
-                    return output
-                }
+            } catch {
+                Self.logger.notice("S1 polish unavailable or timed out; using deterministic text: \(error.localizedDescription)")
             }
-        } catch {
-            Self.logger.notice("S1 polish unavailable or timed out; using deterministic text: \(error.localizedDescription)")
         }
 
         return transcript

@@ -192,7 +192,7 @@ final class DictationCoordinator {
             }
         }
         if settings.dictationS1Enabled && settings.dictationPolishProvider == .localS1 {
-            DictationLlamaServerManager.shared.prewarm(idleRelease: settings.dictationS1IdleRelease)
+            DictationLlamaServerManager.shared.startDaemon(idleRelease: settings.dictationS1IdleRelease)
         }
         token = UUID()
         let current = token

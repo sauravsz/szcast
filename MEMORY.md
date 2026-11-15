@@ -127,8 +127,15 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - Third-Party Acknowledgements: Updated `NOTICE.md`, `README.md`, and `site/index.html` acknowledging FreeDisplay, gamma-control, duckduckgo-email, clean-keyboard, and keepassxc.
   - Test Suite: Expanded to 130 test harnesses (`duckduckgo-email-test`, `clean-keyboard-test`, `keepassxc-test` added; `system-action-test` updated); all 130 harnesses pass in 173s. Full clean debug & release builds verified.
 
+- **S1-Mini Persistent Local Daemon & Latency Optimization**:
+  - Persistent Local Daemon: Converted `DictationLlamaServerManager` into a persistent daemon launched at app startup (`startDaemon`), maintaining S1-mini hot in memory with 0ms launch overhead across dictations.
+  - Single-Slot Metal Execution: Configured `-np 1` (eliminating the multi-slot allocation delay that previously caused 10s stalls on Metal), `-c 1024`, `-b 512`, `-ub 512`, `-fa on`, `--cache-type-k q8_0`, `--cache-type-v q8_0`, `--cache-prompt`, `--spec-type ngram-simple`, and `--reasoning off`.
+  - Stalling Prevention & Fast Fallback: Extended health-check budget to 15s to avoid premature kills on heavy I/O, added clean shutdown hooks on app termination (`prepareForTermination` and `stopDictationForTermination`), and guarded against phantom localhost Ollama fallback stalls when embedded GGUF is available.
+  - Active Settings Status: Updated `DictationSettingsView` to reflect live single-slot Metal daemon status and memory footprint.
+  - Test Suite & Packaging: 130 test harnesses pass; Debug and signed Release builds verified; local `/Applications/szcast.app` deployed.
+
 ## Active State & Next Steps
-- **Active State**: 130 test harnesses pass cleanly in 173s. DuckDuckGo Email (`Hyper + D`), Clean Keyboard, KeePassXC (with `⌥Space` persistent window resumption and `⌘C`/`⌘T`/`⌘B`/`⌘U`), Settings Categorization, Ente Auth (`Hyper + T`), Finder File Actions (`Hyper + M`), and Display Tweaks fully integrated and verified.
+- **Active State**: 130 test harnesses pass cleanly in 173s. S1-mini persistent daemon active with ~140ms warm cleanup latency; DuckDuckGo Email (`Hyper + D`), Clean Keyboard, KeePassXC (with `⌥Space` persistent window resumption and `⌘C`/`⌘T`/`⌘B`/`⌘U`), Settings Categorization, Ente Auth (`Hyper + T`), Finder File Actions (`Hyper + M`), and Display Tweaks fully integrated and verified.
 - **Immediate Next Steps**:
   1. Test long continuous dictation (5+ minutes) in real-world workflows.
   2. Perform weekly upstream radar audit (`./Scripts/upstream-radar.sh`).

@@ -675,9 +675,9 @@ struct DictationSettingsView: View {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundColor(.green)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("S1-mini Direct Model Active (Default)")
+                    Text(DictationLlamaServerManager.shared.isRunning ? "S1-mini Daemon Active (Hot in RAM · 0ms latency)" : "S1-mini Direct Model Active")
                         .font(.system(size: 12, weight: .medium))
-                    Text(path)
+                    Text(DictationLlamaServerManager.shared.isRunning ? "Single-slot Metal GPU offload (~460 MB RAM) · \(path)" : path)
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
                         .lineLimit(1)

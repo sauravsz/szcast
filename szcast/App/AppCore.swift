@@ -408,7 +408,7 @@ final class AppCore {
             }
 
             if settings.dictationEnabled && settings.dictationS1Enabled {
-                DictationLlamaServerManager.shared.prewarm(idleRelease: settings.dictationS1IdleRelease)
+                DictationLlamaServerManager.shared.startDaemon(idleRelease: settings.dictationS1IdleRelease)
             }
             hotKeys.onRunWindowCommand = { [weak self] id in
                 self?.windowCommandCoordinator.runWindowCommand(id: id)
@@ -621,6 +621,7 @@ final class AppCore {
 
     func stopDictationForTermination() async {
         if settings.dictationEnabled { dictationCoordinator.prepareForTermination() }
+        DictationLlamaServerManager.shared.stop()
         dictationAudioDucker.restoreImmediately()
         await dictationAudioDucker.waitForTransition()
         await dictationModels.stop()
@@ -665,6 +666,7 @@ final class AppCore {
 
     func prepareForTermination() {
         if settings.dictationEnabled { dictationCoordinator.prepareForTermination() }
+        DictationLlamaServerManager.shared.stop()
         settingsFile?.flush()
         clipboardTextIndexer?.stop()
         // HID remaps first: they outlive the process.
