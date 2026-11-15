@@ -141,10 +141,15 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - Indic Phonetic Romanization: Implemented Bengali (Banglish) and Hindi (Hinglish) transliteration pickers in Dictation Settings (Option 1 S1-mini prompt vs Option 2 Avro/Hinglish deterministic converters).
   - Lunar Display Pill Sliders: Reworked `LunarPillSlider` in `DisplayTweaksSettingsView` with tinted tracks and traveling pill thumb containing active 0..100 value.
   - Settings Scaling Fix: Enforced strict 840x600 minimum bounds in `AppWindowController` and `SettingsRootView` `WindowReader`.
+  - Raycast Vibrant Squircle Icon System: Implemented `RaycastIconTheme.swift` mapping system and custom symbols to vibrant, theme-colored squircle backgrounds with crisp white glyphs across launcher results, submenus, settings sidebar (`SettingsSidebarView`), and action panels, eliminating dull monochrome grey tiles.
+  - Custom Snippet Favicons & Icons: Added `icon: String?` to `Snippet.swift`, YAML frontmatter serialization in `SnippetMarkdownSerializer`, live squircle preview in `SnippetEditorView`, and automated web favicon resolution/caching in `SnippetFaviconService.swift` supporting website domains, URLs, and SF symbols in launcher results and library lists.
+  - Persistent S1-mini & Parakeet Launch on Any MacBook: Ensured `dictationModels.ensurePrewarmed()` and `DictationLlamaServerManager.shared.startDaemon()` run unconditionally on launch and reopen, with automated background downloading of `s1-mini-1.0.gguf` (mirrors) and Parakeet models if missing on a fresh machine, keeping both models alive in memory with Metal GPU acceleration.
+  - Native Grouped Settings Alignment: Converted Clean Keyboard, Display Tweaks, Ente Auth, KeePassXC, DuckDuckGo Email, and Finder File Actions to `.formStyle(.grouped)` with native two-line labeled pickers and card sections.
+  - Updated Documentation Screenshot: Replaced `docs/screenshot.jpg` with the official dark command palette screenshot.
   - Release Packaging & Distribution: Version bumped to 1.0.9; signed Release DMG (`build/szcast-1.0.9.dmg`) and ZIP (`build/szcast-1.0.9.zip`) packaged and deployed to `/Applications/szcast.app`.
 
 ## Active State & Next Steps
-- **Active State**: Release 1.0.9 signed, verified, and deployed to `/Applications/szcast.app`. All features committed and pushed to `origin/main`.
+- **Active State**: Release 1.0.9 signed, verified, and deployed to `/Applications/szcast.app`. Persistent daemon (`llama-server`) and Parakeet worker running in memory. All features committed and pushed to `origin/main`.
 - **Immediate Next Steps**:
   1. Test long continuous dictation (5+ minutes) in real-world workflows.
   2. Perform weekly upstream radar audit (`./Scripts/upstream-radar.sh`).
