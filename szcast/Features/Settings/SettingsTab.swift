@@ -101,7 +101,7 @@ enum SettingsTab: CaseIterable, Identifiable {
 
 /// Declaration order is display order; not `.Section`, which would shadow SwiftUI's `Section`.
 enum SettingsSection: CaseIterable, Identifiable {
-    case general, launcher, features, advanced
+    case general, launcher, productivity, windowAndDisplay, aiAndVoice, systemAndAbout
     /// See `SettingsTab.id`: distinct types keep the two namespaces from colliding.
     var id: Self { self }
 
@@ -109,26 +109,27 @@ enum SettingsSection: CaseIterable, Identifiable {
         switch self {
         case .general: return String(localized: "General")
         case .launcher: return String(localized: "Launcher")
-        case .features: return String(localized: "Features")
-        case .advanced: return String(localized: "Advanced")
+        case .productivity: return String(localized: "Productivity")
+        case .windowAndDisplay: return String(localized: "Window & Display")
+        case .aiAndVoice: return String(localized: "AI & Voice")
+        case .systemAndAbout: return String(localized: "System & About")
         }
     }
 
     var tabs: [SettingsTab] {
         switch self {
-        case .general: return [.general, .permissions]
+        case .general:
+            return [.general, .permissions, .navigation]
         case .launcher:
-            return [
-                .applications, .systemSettings, .systemActions, .commands, .quicklinks,
-                .appleShortcuts, .fallbacks
-            ]
-        case .features:
-            // Everyday tools first; AI and extensions are opt-in extras.
-            return [
-                .clipboard, .snippets, .fileSearch, .windowManagement, .displayTweaks, .navigation, .notes,
-                .calendar, .emoji, .dictation, .ai, .quickActions, .extensions
-            ]
-        case .advanced: return [.backup, .about]
+            return [.applications, .commands, .quicklinks, .appleShortcuts, .fallbacks]
+        case .productivity:
+            return [.clipboard, .snippets, .notes, .fileSearch, .calendar, .emoji]
+        case .windowAndDisplay:
+            return [.windowManagement, .displayTweaks, .systemActions, .systemSettings]
+        case .aiAndVoice:
+            return [.ai, .dictation, .quickActions]
+        case .systemAndAbout:
+            return [.extensions, .backup, .about]
         }
     }
 }

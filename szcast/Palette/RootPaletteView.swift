@@ -140,6 +140,10 @@ struct RootPaletteView: View {
             return EnteAuthScreen(store: core.enteAuthStore, core: core, vm: vm)
         case .moveFileToFolder:
             return MoveFileToFolderScreen(service: core.finderFileActionsService, core: core, vm: vm)
+        case .duckDuckGoEmail:
+            return DuckDuckGoEmailScreen(service: core.duckDuckGoEmailService, core: core, vm: vm)
+        case .keepassxc:
+            return KeePassXCScreen(service: core.keepassXCService, core: core, vm: vm)
         }
     }
 

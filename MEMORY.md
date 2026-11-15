@@ -119,8 +119,16 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - Attribution & Acknowledgements: Updated `NOTICE.md` and `AboutView.swift` crediting FreeDisplay (huberdf), gamma-control (Qiueyed), ente-auth (chkpwd / Ente), and finder-file-actions (pa1ar).
   - Test Suite: Expanded from 124 to 127 test harnesses (`display-tweaks-test`, `ente-auth-test`, `finder-file-actions-test`); all 127 harnesses pass in 206s.
 
+- **DuckDuckGo Email, Clean Keyboard, KeePassXC & Simplified Settings**:
+  - Settings Categorization Overhaul: Re-categorized settings into 6 balanced domains (`general`, `launcher`, `productivity`, `windowAndDisplay`, `aiAndVoice`, `systemAndAbout`) across `SettingsTab.swift` while preserving all existing deeplink slugs, search catalog anchors, and history.
+  - Built-in DuckDuckGo Email Protection: REST integration calling `quack.duckduckgo.com/api/email/addresses` with Keychain Bearer token storage, `DuckDuckGoEmailScreen` palette setup, and global hotkey `Hyper + D` (`⌃⌥⇧⌘D`) generating and copying `@duck.com` addresses with native HUD confirmation.
+  - Built-in Clean Keyboard Mode: Physical keyboard cleaning lock using `CGEventTap` keystroke filtering, floating dark-glass countdown HUD (`CleanKeyboardWindowController`), dual escape-hold (3s) and `Control + U` safe unlocks, time extension (`+30s`), and system action `.cleanKeyboard`.
+  - Built-in KeePassXC Password Manager: CLI integration wrapping `/opt/homebrew/bin/keepassxc-cli` with database path and master password in Keychain. Features persistent account window resumption across launcher toggles: copying hides the palette, and re-summoning szcast (`⌥Space`) immediately re-opens the exact same account view without re-searching. Dedicated in-view keyboard shortcuts: `⌘C` (copy password), `⌘T` (copy TOTP), `⌘B` (copy username), `⌘U` (open URL), and `Esc` (return to list).
+  - Third-Party Acknowledgements: Updated `NOTICE.md`, `README.md`, and `site/index.html` acknowledging FreeDisplay, gamma-control, duckduckgo-email, clean-keyboard, and keepassxc.
+  - Test Suite: Expanded to 130 test harnesses (`duckduckgo-email-test`, `clean-keyboard-test`, `keepassxc-test` added; `system-action-test` updated); all 130 harnesses pass in 173s. Full clean debug & release builds verified.
+
 ## Active State & Next Steps
-- **Active State**: 127 test harnesses pass cleanly in 206s. Ente Auth (`Hyper + T`), Finder File Actions (`Hyper + M`), Display Tweaks, Display Mirroring toggle, and Groq dictation fully integrated and verified with clean Xcode debug builds.
+- **Active State**: 130 test harnesses pass cleanly in 173s. DuckDuckGo Email (`Hyper + D`), Clean Keyboard, KeePassXC (with `⌥Space` persistent window resumption and `⌘C`/`⌘T`/`⌘B`/`⌘U`), Settings Categorization, Ente Auth (`Hyper + T`), Finder File Actions (`Hyper + M`), and Display Tweaks fully integrated and verified.
 - **Immediate Next Steps**:
   1. Test long continuous dictation (5+ minutes) in real-world workflows.
   2. Perform weekly upstream radar audit (`./Scripts/upstream-radar.sh`).

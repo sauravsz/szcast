@@ -44,6 +44,7 @@ struct SystemAction: Identifiable, Hashable, Sendable {
         case displayTweaks = "display-tweaks"
         case resetDisplayGamma = "reset-display-gamma"
         case toggleDisplayMirroring = "toggle-display-mirroring"
+        case cleanKeyboard = "clean-keyboard"
     }
 
     /// Whether it confirms first, and the copy; every such action is destructive.
@@ -130,6 +131,7 @@ enum SystemActionCatalog {
         case .displayTweaks: return "Display Tweaks"
         case .resetDisplayGamma: return "Reset Display Gamma"
         case .toggleDisplayMirroring: return "Toggle Display Mirroring"
+        case .cleanKeyboard: return "Clean Keyboard"
         }
     }
 
@@ -171,6 +173,7 @@ enum SystemActionCatalog {
         case .displayTweaks: return "sun.max"
         case .resetDisplayGamma: return "arrow.counterclockwise"
         case .toggleDisplayMirroring: return "rectangle.on.rectangle"
+        case .cleanKeyboard: return "lock.shield"
         // Not an SF Symbol: the logo is a trademark, so this is a bundled asset.
         case .toggleBluetooth: return "bluetooth"
         }

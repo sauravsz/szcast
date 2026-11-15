@@ -220,6 +220,9 @@ enum SystemActionRunner {
             let mirrored = try toggleDisplayMirroring()
             return SystemActionFeedback(
                 mirrored ? String(localized: "Display Mirroring On") : String(localized: "Display Mirroring Off"))
+        case .cleanKeyboard:
+            CleanKeyboardService.shared.startCleaning(duration: 60)
+            return SystemActionFeedback(String(localized: "Clean Keyboard Activated"))
         }
         return nil
     }

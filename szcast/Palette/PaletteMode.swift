@@ -29,6 +29,8 @@ enum PaletteMode: String, CaseIterable, Identifiable {
     case focusTimer
     case enteAuth
     case moveFileToFolder
+    case duckDuckGoEmail
+    case keepassxc
 
     var id: String { rawValue }
 
@@ -62,6 +64,8 @@ enum PaletteMode: String, CaseIterable, Identifiable {
         case .focusTimer: return "timer"
         case .enteAuth: return "key.fill"
         case .moveFileToFolder: return "folder.badge.gearshape"
+        case .duckDuckGoEmail: return "envelope.badge.shield.half.filled"
+        case .keepassxc: return "lock.fill"
         }
     }
     var placeholder: String {
@@ -94,6 +98,8 @@ enum PaletteMode: String, CaseIterable, Identifiable {
         case .focusTimer: return String(localized: "Focus Timer")
         case .enteAuth: return String(localized: "Search 2FA accounts…")
         case .moveFileToFolder: return String(localized: "Search destination folder…")
+        case .duckDuckGoEmail: return String(localized: "DuckDuckGo Email Protection…")
+        case .keepassxc: return String(localized: "Search KeePassXC passwords…")
         }
     }
 }

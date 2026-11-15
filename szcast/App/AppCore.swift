@@ -247,6 +247,22 @@ final class AppCore {
         showMessage: { [unowned self] in self.showMessage($0, tone: $1) })
     @ObservationIgnored private(set) lazy var enteAuthStore = EnteAuthStore()
     @ObservationIgnored private(set) lazy var finderFileActionsService = FinderFileActionsService()
+    @ObservationIgnored private(set) lazy var duckDuckGoEmailService = DuckDuckGoEmailService()
+    @ObservationIgnored private(set) lazy var cleanKeyboardService: CleanKeyboardService = {
+        let service = CleanKeyboardService.shared
+        _ = CleanKeyboardWindowController(service: service)
+        return service
+    }()
+    @ObservationIgnored private(set) lazy var keepassXCService: KeePassXCService = {
+        let service = KeePassXCService()
+        service.onHidePalette = { [weak self] in
+            self?.paletteCoordinator.hidePalette(restoreFocus: false)
+        }
+        service.onShowMessage = { [weak self] msg in
+            self?.showMessage(msg, tone: .success)
+        }
+        return service
+    }()
 
     @ObservationIgnored private lazy var windowController = PaletteWindowController(core: self)
     @ObservationIgnored private lazy var messageHUD = MessageHUDController(settings: settings)

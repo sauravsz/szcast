@@ -189,6 +189,9 @@ run hardware-test          Szcast/Features/Hardware/Model/*.swift Szcast/Feature
 run display-tweaks-test    Szcast/Features/DisplayTweaks/Model/*.swift Szcast/Features/DisplayTweaks/Service/*.swift
 run ente-auth-test         Szcast/Features/EnteAuth/Model/*.swift Szcast/Features/EnteAuth/Service/*.swift
 run finder-file-actions-test Szcast/Features/FinderFileActions/Model/*.swift Szcast/Features/FinderFileActions/Service/*.swift
+run duckduckgo-email-test  Szcast/Features/DuckDuckGoEmail/Service/*.swift Szcast/Platform/KeychainSecretStore.swift
+run clean-keyboard-test    Szcast/Features/CleanKeyboard/Service/*.swift
+run keepassxc-test         Szcast/Features/KeePassXC/Model/*.swift Szcast/Features/KeePassXC/Service/*.swift Szcast/Platform/KeychainSecretStore.swift
 run screen-capture-test    Szcast/Features/ScreenCapture/Model/*.swift Szcast/Features/ScreenCapture/Service/*.swift Szcast/Features/Launcher/Model/CommandID.swift Szcast/Features/HotKeys/Model/HotKeyAction.swift Szcast/Features/SystemActions/Model/SystemAction.swift Szcast/Features/WindowManagement/Model/WindowCommand.swift Szcast/Features/Snippets/Model/Snippet.swift Szcast/Features/QuickActions/Model/BuiltInQuickAction.swift Szcast/Features/Quicklinks/Model/Quicklink.swift Szcast/Features/Quicklinks/Model/QuicklinkDestination.swift Szcast/Platform/LocalizedResource.swift
 run index calc-performance Szcast/Features/Calculator/Model/*.swift Szcast/Platform/URLSanitizer.swift
 run calendar-test          Szcast/Features/Calendar/Model/*.swift \

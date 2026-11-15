@@ -192,6 +192,7 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
 
     private func schedulePopToRoot() {
         guard !core.extensions.isSigningIn else { return }
+        if core.keepassXCService.resumedEntry != nil { return }
         popToRootTimer?.invalidate()
         let timeout = core.settings.popToRootTimeout
         guard timeout != .immediately else {
@@ -217,6 +218,9 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
 
     /// Skip the Pop to Root Search delay, for a close that means to reset as well as hide.
     func popToRootNow() {
+        if core.keepassXCService.resumedEntry != nil {
+            core.keepassXCService.clearResumedEntry()
+        }
         popToRootTimer?.invalidate()
         popToRootTimer = nil
         popToRoot()
@@ -224,6 +228,10 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
 
     /// True while a hidden palette keeps its screen: a reset is pending, or a sign-in holds it.
     func consumePreservedState() -> Bool {
+        if core.keepassXCService.resumedEntry != nil {
+            queryWasPreserved = true
+            return true
+        }
         guard let timer = popToRootTimer else { return core.extensions.isSigningIn }
         timer.invalidate()
         popToRootTimer = nil
@@ -429,6 +437,12 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
                 core.snippetCoordinator.cancelSnippetEditing()
                 return true
             }
+            if core.palette.mode == .keepassxc, !core.palette.isComposing {
+                if core.keepassXCService.resumedEntry != nil {
+                    core.keepassXCService.clearResumedEntry()
+                    return true
+                }
+            }
             return false
         }
         // Handled at the panel: the field editor or a missing main menu eats these first.
@@ -455,6 +469,25 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
             if self.core.palette.mode == .emoji, let zoom = Self.emojiGridZoom(from: event) {
                 self.core.palette.noteEmojiGridZoom(zoom)
                 return true
+            }
+            if self.core.palette.mode == .keepassxc,
+                let character = Self.commandCharacter(from: event)
+            {
+                switch character.lowercased() {
+                case "c":
+                    self.core.keepassXCService.handleShortcutCopyPassword()
+                    return true
+                case "t":
+                    self.core.keepassXCService.handleShortcutCopyTOTP()
+                    return true
+                case "b":
+                    self.core.keepassXCService.handleShortcutCopyUsername()
+                    return true
+                case "u":
+                    self.core.keepassXCService.handleShortcutOpenURL()
+                    return true
+                default: break
+                }
             }
             guard Self.commandCharacter(from: event) != nil else { return false }
             if self.core.palette.mode == .launcher || self.core.palette.mode == .clipboard,

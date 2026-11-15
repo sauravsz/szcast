@@ -424,3 +424,34 @@ The corresponding implementations reside in:
 - `szcast/Features/FinderFileActions/Model/FinderFolderDestination.swift`
 - `szcast/Features/FinderFileActions/Service/FinderFileActionsService.swift`
 - `szcast/Features/FinderFileActions/UI/MoveFileToFolderScreen.swift`
+
+## DuckDuckGo Email Protection
+
+szcast's native `@duck.com` private email alias generator adopts architecture and API patterns from:
+
+- **duckduckgo-email** (<https://github.com/raycast/extensions/tree/main/extensions/duckduckgo-email>) by `kudrykv`: REST integration with `quack.duckduckgo.com/api/email/addresses`, secure Keychain Bearer token storage, and global `Hyper + D` (`⌃⌥⇧⌘D`) single-shot alias generation with automatic clipboard copy.
+
+The corresponding implementations reside in:
+- `szcast/Features/DuckDuckGoEmail/Service/DuckDuckGoEmailService.swift`
+- `szcast/Features/DuckDuckGoEmail/UI/DuckDuckGoEmailScreen.swift`
+
+## Clean Keyboard
+
+szcast's physical keyboard cleaning mode draws from:
+
+- **clean-keyboard** (<https://github.com/raycast/extensions/tree/main/extensions/clean-keyboard>) by `georgerrm`: Input suspension during keyboard wipe-downs, low-level `CGEventTap` keystroke filtering, floating dark-glass countdown HUD, and dual escape-hold (3s) / `Ctrl + U` safe unlocks.
+
+The corresponding implementations reside in:
+- `szcast/Features/CleanKeyboard/Service/CleanKeyboardService.swift`
+- `szcast/Features/CleanKeyboard/UI/CleanKeyboardWindowController.swift`
+
+## KeePassXC Password Manager
+
+szcast's native KeePassXC password manager integration is inspired by:
+
+- **keepassxc** (<https://github.com/raycast/extensions/tree/main/extensions/keepassxc>) by `kudrykv`: CLI integration with `/opt/homebrew/bin/keepassxc-cli`, local database search and attribute inspection, and persistent account window resumption across palette toggles with direct keystrokes (`⌘C` password, `⌘T` TOTP, `⌘B` username, `⌘U` URL).
+
+The corresponding implementations reside in:
+- `szcast/Features/KeePassXC/Model/KeePassXCEntry.swift`
+- `szcast/Features/KeePassXC/Service/KeePassXCService.swift`
+- `szcast/Features/KeePassXC/UI/KeePassXCScreen.swift`

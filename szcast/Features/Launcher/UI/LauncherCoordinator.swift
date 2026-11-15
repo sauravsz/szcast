@@ -304,6 +304,21 @@ final class LauncherCoordinator {
                     core.showMessage(error.localizedDescription)
                 }
             }
+        case .generateDuckAddress:
+            if core.duckDuckGoEmailService.hasToken {
+                dismissPalette()
+                Task {
+                    let result = await core.duckDuckGoEmailService.generateAndCopy()
+                    core.showMessage(result.message, tone: result.success ? .success : .danger)
+                }
+            } else {
+                paletteCoordinator.togglePalette(mode: .duckDuckGoEmail)
+            }
+        case .cleanKeyboard:
+            dismissPalette()
+            core.cleanKeyboardService.startCleaning(duration: 60)
+        case .keepassxc:
+            paletteCoordinator.togglePalette(mode: .keepassxc, seeding: searchQuery)
         case .quit:
             NSApp.terminate(nil)
         }

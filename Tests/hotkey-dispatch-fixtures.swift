@@ -7,6 +7,9 @@ enum CommandID: String, CaseIterable, Sendable {
     case captureScreenText
     case enteAuth
     case moveFileToFolder
+    case generateDuckAddress
+    case cleanKeyboard
+    case keepassxc
     var name: String { rawValue }
     var hotKeyAction: HotKeyAction? { .command(self) }
 }

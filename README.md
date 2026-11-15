@@ -56,6 +56,13 @@ open /Applications/szcast.app
 - **Raycast Store Compatibility**: Direct install and updates for community Raycast extensions with full package CDN trust.
 
 ### Productivity Tools
+- **Ente Auth 2FA Authenticator (`Hyper + T`)**: Instant TOTP code generation and clipboard copy with countdown ring indicators and automatic discovery of `ente_auth.txt`.
+- **Finder File Actions (`Hyper + M`)**: Instant file moving for frontmost Finder selections into pinned or recent destination folders with collision-safe renaming.
+- **DuckDuckGo Email Protection (`Hyper + D`)**: Generate and copy private `@duck.com` forwarding aliases on demand with Keychain Bearer token security.
+- **Clean Keyboard Mode**: Physical keyboard cleaning lock via `CGEventTap` input interception, dark-glass countdown HUD, and hold Escape (3s) or `Ctrl + U` safe unlocks.
+- **KeePassXC Password Manager**: Offline password vault integration wrapping `keepassxc-cli`. Supports instant search, persistent account window resumption across palette toggles, and dedicated shortcut keys (`⌘C` password, `⌘T` TOTP, `⌘B` username, `⌘U` URL).
+- **Display Tweaks & Hardware LUT Calibration**: Hardware look-up table calibration via `CGSetDisplayTransferByTable` with RGB gains, shadows, highlights, black floor lifting, and one-key display mirroring toggle.
+- **Groq Cloud Dictation & Polish**: Ultra-low-latency Whisper transcription and Llama-3.3 speech normalization alongside local Parakeet and S1-mini engines.
 - **Live AI Search**: Native chat with Tavily, Exa, and Jina search providers featuring interactive inline Markdown citation badges.
 - **Focus Timer**: Full Pomodoro cycles (Work, Short Break, Long Break) with menu bar countdown and non-blocking audio cues.
 - **Rich Media Notes**: TextKit 2 image attachments with inline paste, drag-and-drop, and cursor-revealed Markdown.
@@ -73,6 +80,13 @@ szcast is engineered natively on macOS technologies:
 - **[Tinycast](https://github.com/abue-ammar/tinycast)** by Abue Ammar: The native macOS launcher foundation upon which szcast is built.
 - **[EnviousWispr](https://github.com/saurabhav88/EnviousWispr)** by saurabhav88: Dictation architecture inspiration, domain vocabulary packs, audio ducking, and speech normalization workflows rebuilt natively in szcast.
 - **[Raycast](https://raycast.com)**: The extension API and community extension ecosystem supported by szcast.
+- **[FreeDisplay](https://github.com/huberdf/FreeDisplay)** by huberdf: Display management, virtual displays, and display mirroring architecture.
+- **[gamma-control](https://github.com/Qiueyed/gamma-control)** by Qiueyed: Display gamma transfer curve mathematics, RGB balance, and hardware LUT calibration via `CGSetDisplayTransferByTable`.
+- **[Ente Auth](https://github.com/raycast/extensions/tree/main/extensions/ente-auth)** & Alfred workflow: Built-in 2FA authenticator suite with TOTP calculation and single-keystroke `Hyper + T` invocation.
+- **[Finder File Actions](https://github.com/raycast/extensions/tree/main/extensions/finder-file-actions)** & Alfred workflow: Built-in file management with `Hyper + M` instant file move to destination folders.
+- **[DuckDuckGo Email Protection](https://github.com/raycast/extensions/tree/main/extensions/duckduckgo-email)** by kudrykv: Built-in private `@duck.com` forwarding address generation with `Hyper + D`.
+- **[Clean Keyboard](https://github.com/raycast/extensions/tree/main/extensions/clean-keyboard)** by georgerrm: Built-in keyboard cleaning lock mode with `CGEventTap` input blocking and countdown HUD.
+- **[KeePassXC](https://github.com/raycast/extensions/tree/main/extensions/keepassxc)** by kudrykv: Built-in KeePassXC password manager integration with account window resumption and direct field copying shortcuts.
 
 Third-party licenses and notices are documented in [NOTICE.md](NOTICE.md).
 

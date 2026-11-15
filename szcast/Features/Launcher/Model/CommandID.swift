@@ -53,6 +53,9 @@ enum CommandID: String, CaseIterable, Sendable {
     case cleanClipboardURL = "command:clean-clipboard-url"
     case enteAuth = "command:ente-auth"
     case moveFileToFolder = "command:move-file-to-folder"
+    case generateDuckAddress = "command:generate-duck-address"
+    case cleanKeyboard = "command:clean-keyboard"
+    case keepassxc = "command:keepassxc"
     case quit = "command:quit"
 
     static let defaultCompactBarCommands: [CommandID] = [
@@ -134,6 +137,9 @@ enum CommandID: String, CaseIterable, Sendable {
         case .cleanClipboardURL: return "Clean URL in Clipboard"
         case .enteAuth: return "Ente Auth (2FA)"
         case .moveFileToFolder: return "Move File to Folder"
+        case .generateDuckAddress: return "Generate DuckDuckGo Email"
+        case .cleanKeyboard: return "Clean Keyboard Mode"
+        case .keepassxc: return "KeePassXC Passwords"
         case .quit: return "Quit szcast"
         }
     }
@@ -190,6 +196,9 @@ enum CommandID: String, CaseIterable, Sendable {
         case .cleanClipboardURL: return "link.badge.plus"
         case .enteAuth: return "key.fill"
         case .moveFileToFolder: return "arrow.right.doc.on.clipboard"
+        case .generateDuckAddress: return "envelope.badge.shield.half.filled"
+        case .cleanKeyboard: return "lock.shield"
+        case .keepassxc: return "lock.fill"
         case .quit: return "power"
         }
     }
@@ -225,6 +234,9 @@ enum CommandID: String, CaseIterable, Sendable {
         case .cleanClipboardURL: ["clean url", "clean link", "sanitize url", "strip tracking"]
         case .enteAuth: ["2fa", "totp", "ente", "authenticator", "otp", "auth"]
         case .moveFileToFolder: ["move", "folder", "organize", "files", "finder"]
+        case .generateDuckAddress: ["duck", "duckduckgo", "email", "alias", "private email", "duck address"]
+        case .cleanKeyboard: ["clean keyboard", "lock keyboard", "wipe keyboard", "clean"]
+        case .keepassxc: ["keepass", "keepassxc", "kdbx", "password", "passwords", "credentials", "vault"]
         default: []
         }
     }

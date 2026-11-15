@@ -21,6 +21,13 @@
 		C1C4E3A2000B000000000001 /* FinderFolderDestination.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000B000000000001 /* FinderFolderDestination.swift */; };
 		C1C4E3A2000B000000000002 /* FinderFileActionsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000B000000000002 /* FinderFileActionsService.swift */; };
 		C1C4E3A2000B000000000003 /* MoveFileToFolderScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000B000000000003 /* MoveFileToFolderScreen.swift */; };
+		C1C4E3A2000C000000000001 /* DuckDuckGoEmailService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000C000000000001 /* DuckDuckGoEmailService.swift */; };
+		C1C4E3A2000C000000000002 /* DuckDuckGoEmailScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000C000000000002 /* DuckDuckGoEmailScreen.swift */; };
+		C1C4E3A2000D000000000001 /* CleanKeyboardService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000D000000000001 /* CleanKeyboardService.swift */; };
+		C1C4E3A2000D000000000002 /* CleanKeyboardWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000D000000000002 /* CleanKeyboardWindowController.swift */; };
+		C1C4E3A2000E000000000001 /* KeePassXCEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000E000000000001 /* KeePassXCEntry.swift */; };
+		C1C4E3A2000E000000000002 /* KeePassXCService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000E000000000002 /* KeePassXCService.swift */; };
+		C1C4E3A2000E000000000003 /* KeePassXCScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000E000000000003 /* KeePassXCScreen.swift */; };
 		C1C4E3A20007000000000001 /* URLSanitizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10007000000000001 /* URLSanitizer.swift */; };
 		C1C4E3A20001000000000099 /* CalcDataTransformers.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10001000000000099 /* CalcDataTransformers.swift */; };
 		C1C4E3A20005000000000001 /* AudioDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10005000000000001 /* AudioDevice.swift */; };
@@ -1025,6 +1032,13 @@
 		C1C4E3A1000B000000000001 /* FinderFolderDestination.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderFolderDestination.swift; sourceTree = "<group>"; };
 		C1C4E3A1000B000000000002 /* FinderFileActionsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderFileActionsService.swift; sourceTree = "<group>"; };
 		C1C4E3A1000B000000000003 /* MoveFileToFolderScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveFileToFolderScreen.swift; sourceTree = "<group>"; };
+		C1C4E3A1000C000000000001 /* DuckDuckGoEmailService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuckDuckGoEmailService.swift; sourceTree = "<group>"; };
+		C1C4E3A1000C000000000002 /* DuckDuckGoEmailScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuckDuckGoEmailScreen.swift; sourceTree = "<group>"; };
+		C1C4E3A1000D000000000001 /* CleanKeyboardService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanKeyboardService.swift; sourceTree = "<group>"; };
+		C1C4E3A1000D000000000002 /* CleanKeyboardWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanKeyboardWindowController.swift; sourceTree = "<group>"; };
+		C1C4E3A1000E000000000001 /* KeePassXCEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeePassXCEntry.swift; sourceTree = "<group>"; };
+		C1C4E3A1000E000000000002 /* KeePassXCService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeePassXCService.swift; sourceTree = "<group>"; };
+		C1C4E3A1000E000000000003 /* KeePassXCScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeePassXCScreen.swift; sourceTree = "<group>"; };
 		C1C4E3A10007000000000001 /* URLSanitizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSanitizer.swift; sourceTree = "<group>"; };
 		C1C4E3A10001000000000099 /* CalcDataTransformers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalcDataTransformers.swift; sourceTree = "<group>"; };
 		C1C4E3A10005000000000001 /* AudioDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioDevice.swift; sourceTree = "<group>"; };
@@ -3501,6 +3515,90 @@
 			path = UI;
 			sourceTree = "<group>";
 		};
+		C1C4E3A0000C000000000001 /* DuckDuckGoEmail */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A0000C000000000020 /* Service */,
+				C1C4E3A0000C000000000030 /* UI */,
+			);
+			path = DuckDuckGoEmail;
+			sourceTree = "<group>";
+		};
+		C1C4E3A0000C000000000020 /* Service */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A1000C000000000001 /* DuckDuckGoEmailService.swift */,
+			);
+			path = Service;
+			sourceTree = "<group>";
+		};
+		C1C4E3A0000C000000000030 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A1000C000000000002 /* DuckDuckGoEmailScreen.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		C1C4E3A0000D000000000001 /* CleanKeyboard */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A0000D000000000020 /* Service */,
+				C1C4E3A0000D000000000030 /* UI */,
+			);
+			path = CleanKeyboard;
+			sourceTree = "<group>";
+		};
+		C1C4E3A0000D000000000020 /* Service */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A1000D000000000001 /* CleanKeyboardService.swift */,
+			);
+			path = Service;
+			sourceTree = "<group>";
+		};
+		C1C4E3A0000D000000000030 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A1000D000000000002 /* CleanKeyboardWindowController.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		C1C4E3A0000E000000000001 /* KeePassXC */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A0000E000000000010 /* Model */,
+				C1C4E3A0000E000000000020 /* Service */,
+				C1C4E3A0000E000000000030 /* UI */,
+			);
+			path = KeePassXC;
+			sourceTree = "<group>";
+		};
+		C1C4E3A0000E000000000010 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A1000E000000000001 /* KeePassXCEntry.swift */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		C1C4E3A0000E000000000020 /* Service */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A1000E000000000002 /* KeePassXCService.swift */,
+			);
+			path = Service;
+			sourceTree = "<group>";
+		};
+		C1C4E3A0000E000000000030 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A1000E000000000003 /* KeePassXCScreen.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
 		C1C4E3A00003000000000001 /* Travel */ = {
 			isa = PBXGroup;
 			children = (
@@ -3581,6 +3679,9 @@
 				C1C4E3A00009000000000001 /* DisplayTweaks */,
 				C1C4E3A0000A000000000001 /* EnteAuth */,
 				C1C4E3A0000B000000000001 /* FinderFileActions */,
+				C1C4E3A0000C000000000001 /* DuckDuckGoEmail */,
+				C1C4E3A0000D000000000001 /* CleanKeyboard */,
+				C1C4E3A0000E000000000001 /* KeePassXC */,
 				C1C4E3A00004000000000001 /* Flights */,
 				87070A80E9E3AB3E4B0A9E54 /* AI */,
 				6E106BD79223C45E7D102798 /* AppleShortcuts */,
@@ -4821,6 +4922,13 @@
 				C1C4E3A2000B000000000001 /* FinderFolderDestination.swift in Sources */,
 				C1C4E3A2000B000000000002 /* FinderFileActionsService.swift in Sources */,
 				C1C4E3A2000B000000000003 /* MoveFileToFolderScreen.swift in Sources */,
+				C1C4E3A2000C000000000001 /* DuckDuckGoEmailService.swift in Sources */,
+				C1C4E3A2000C000000000002 /* DuckDuckGoEmailScreen.swift in Sources */,
+				C1C4E3A2000D000000000001 /* CleanKeyboardService.swift in Sources */,
+				C1C4E3A2000D000000000002 /* CleanKeyboardWindowController.swift in Sources */,
+				C1C4E3A2000E000000000001 /* KeePassXCEntry.swift in Sources */,
+				C1C4E3A2000E000000000002 /* KeePassXCService.swift in Sources */,
+				C1C4E3A2000E000000000003 /* KeePassXCScreen.swift in Sources */,
 				C1C4E3A20004000000000001 /* FlightResult.swift in Sources */,
 				C1C4E3A20004000000000002 /* FlightTrackerService.swift in Sources */,
 				C1C4E3A20004000000000003 /* FlightCardView.swift in Sources */,
