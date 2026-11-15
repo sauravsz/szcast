@@ -220,6 +220,18 @@ struct ExtensionCommandScreen: PaletteScreen {
             .onChange(of: vm.query) { _, query in extensions.searchQueryChanged(to: query) })
     }
 
+    func perform(_ shortcut: PaletteShortcut, at selection: Int) -> Bool {
+        switch shortcut {
+        case .favoriteSlot(let index):
+            guard rows.indices.contains(index) else { return false }
+            vm.selection = index
+            activate(at: index)
+            return true
+        default:
+            return false
+        }
+    }
+
     /// Matched before the palette's own handling; true when an action fired.
     func dispatchShortcut(key: KeyEquivalent, modifiers: EventModifiers, at selection: Int) -> Bool {
         let actions = ExtensionScreen.actions(in: screen.actionPanel(forItemAt: selection))

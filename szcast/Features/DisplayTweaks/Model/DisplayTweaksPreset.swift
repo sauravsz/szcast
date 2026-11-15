@@ -53,4 +53,23 @@ enum DisplayTweaksPreset: String, CaseIterable, Identifiable, Sendable {
             return Values(red: 1.0, green: 1.0, blue: 1.0, blacks: 0.35, shadows: 0.45, highlights: 0.10, whites: 0.0, contrast: 0.10, brightness: 0.05)
         }
     }
+
+    var percentValues: Values {
+        switch self {
+        case .neutral:
+            return Values(red: 50.0, green: 50.0, blue: 50.0, blacks: 0.0, shadows: 50.0, highlights: 50.0, whites: 100.0, contrast: 50.0, brightness: 50.0)
+        case .sCurve:
+            return Values(red: 50.0, green: 50.0, blue: 50.0, blacks: 0.0, shadows: 50.0, highlights: 50.0, whites: 100.0, contrast: 65.0, brightness: 50.0)
+        case .shadowLift:
+            return Values(red: 50.0, green: 50.0, blue: 50.0, blacks: 18.0, shadows: 65.0, highlights: 52.0, whites: 95.0, contrast: 52.0, brightness: 52.0)
+        case .nightWarm:
+            return Values(red: 55.0, green: 48.0, blue: 36.0, blacks: 5.0, shadows: 55.0, highlights: 42.0, whites: 78.0, contrast: 48.0, brightness: 48.0)
+        case .highContrast:
+            return Values(red: 50.0, green: 50.0, blue: 50.0, blacks: 0.0, shadows: 45.0, highlights: 58.0, whites: 100.0, contrast: 70.0, brightness: 50.0)
+        case .softReading:
+            return Values(red: 52.0, green: 49.0, blue: 44.0, blacks: 8.0, shadows: 56.0, highlights: 40.0, whites: 72.0, contrast: 42.0, brightness: 46.0)
+        case .seeDark:
+            return Values(red: 50.0, green: 50.0, blue: 50.0, blacks: 35.0, shadows: 72.0, highlights: 55.0, whites: 100.0, contrast: 55.0, brightness: 55.0)
+        }
+    }
 }

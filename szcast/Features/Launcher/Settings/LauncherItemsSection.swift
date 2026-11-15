@@ -107,6 +107,7 @@ struct LauncherItemRow: View {
     var body: some View {
         SettingsRow(
             title: entry.name,
+            subtitle: entry.subtitle,
             labelOpacity: visibility.isItemVisible(entry) ? 1 : 0.45
         ) {
             // Keyed so a reused cell seeds the new entry's icon on its first frame.

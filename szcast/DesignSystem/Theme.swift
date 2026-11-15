@@ -423,6 +423,15 @@ enum Theme {
         }
 
         static let panelScrim = adaptive(dark: .srgbInk(0, alpha: 0.40), light: .srgbInk(1, alpha: 0.55))
+        static let panelOpaqueBackground = adaptive(
+            dark: .srgbInk(0.12, alpha: 1.0), light: .srgbInk(0.96, alpha: 1.0))
+
+        static func panelScrim(transparency: Double) -> Color {
+            let factor = max(0.0, min(100.0, transparency)) / 100.0
+            let darkAlpha = 0.95 - factor * (0.95 - 0.12)
+            let lightAlpha = 0.95 - factor * (0.95 - 0.20)
+            return adaptive(dark: .srgbInk(0, alpha: darkAlpha), light: .srgbInk(1, alpha: lightAlpha))
+        }
         static let dialogDimming = adaptive(
             dark: .srgbInk(0, alpha: 0.34), light: .srgbInk(0, alpha: 0.34))
         /// Find's marks, the Mac's own yellow: every match faint, the current one solid.

@@ -52,19 +52,25 @@ struct DictationS1Settings: Codable, Sendable, Equatable {
     var structure: S1Structure
     var context: S1Context
     var idleRelease: DictationIdleRelease
+    var bengaliMode: DictationBengaliMode
+    var hindiMode: DictationHindiMode
 
     init(
         enabled: Bool,
         tone: S1Tone,
         structure: S1Structure,
         context: S1Context,
-        idleRelease: DictationIdleRelease = .tenMinutes
+        idleRelease: DictationIdleRelease = .tenMinutes,
+        bengaliMode: DictationBengaliMode = .off,
+        hindiMode: DictationHindiMode = .off
     ) {
         self.enabled = enabled
         self.tone = tone
         self.structure = structure
         self.context = context
         self.idleRelease = idleRelease
+        self.bengaliMode = bengaliMode
+        self.hindiMode = hindiMode
     }
 
     static let `default` = DictationS1Settings(
@@ -72,15 +78,34 @@ struct DictationS1Settings: Codable, Sendable, Equatable {
         tone: .semiFormal,
         structure: .prose,
         context: .general,
-        idleRelease: .tenMinutes
+        idleRelease: .tenMinutes,
+        bengaliMode: .off,
+        hindiMode: .off
     )
 
     var controlLine: String {
-        "[Styling: \(tone.rawValue)] [Structure: \(structure.rawValue)] [Context: \(context.rawValue)]"
+        var line = "[Styling: \(tone.rawValue)] [Structure: \(structure.rawValue)] [Context: \(context.rawValue)]"
+        if bengaliMode == .s1MiniPrompt {
+            line += " [Language: Romanized Bengali (Banglish) - transliterate Bengali script to Latin alphabet without translating]"
+        }
+        if hindiMode == .s1MiniPrompt {
+            line += " [Language: Romanized Hindi (Hinglish) - transliterate Hindi Devanagari script to Latin alphabet without translating]"
+        }
+        return line
     }
 
     static let systemPrompt =
         "You are a text normalizer for speech-to-text transcripts. The input begins with a control line specifying the styling, structure, and context settings; clean the transcript to match those settings and output only the cleaned text."
+
+    func effectiveSystemPrompt(for text: String) -> String {
+        if bengaliMode == .s1MiniPrompt && AvroPhoneticConverter.containsBengali(text) {
+            return "You are a text normalizer for speech-to-text transcripts. Transliterate all Bengali script phonetically into Romanized Latin script (Banglish) as commonly typed on mobile messaging apps. Do not translate the meaning to English words; output phonetic Bengali in the English alphabet only. Example: 'কেমন আছো' -> 'kemon acho'."
+        }
+        if hindiMode == .s1MiniPrompt && HinglishPhoneticConverter.containsHindi(text) {
+            return "You are a text normalizer for speech-to-text transcripts. Transliterate all Hindi words into natural, standard phonetic Romanized Latin script (Hinglish) as commonly typed on mobile messaging apps. Do not translate the meaning to English words; output phonetic Hindi in the English alphabet only. Example: 'आप कैसे हैं' -> 'aap kaise ho', 'क्या चल रहा है' -> 'kya chal raha hai'."
+        }
+        return Self.systemPrompt
+    }
 
     static let generalSystemPrompt = """
         Clean dictated speech for direct paste. Output only the cleaned text, in the input language.

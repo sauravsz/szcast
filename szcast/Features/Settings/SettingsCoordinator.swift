@@ -14,8 +14,13 @@ final class SettingsCoordinator {
     init(core: AppCore) {
         self.core = core
         window = AppWindowController(
-            title: String(localized: "Settings"), contentSize: Theme.Size.settingsWindow, resizable: true,
-            autosaveName: "SettingsWindow", activation: core.activationPolicy)
+            title: String(localized: "Settings"),
+            contentSize: Theme.Size.settingsWindow,
+            minimumSize: CGSize(width: 840, height: 600),
+            resizable: true,
+            autosaveName: "SettingsWindow",
+            activation: core.activationPolicy
+        )
     }
 
     /// A fresh window mounts on `tab`; an open one navigates to it, recording the jump in history.
@@ -37,7 +42,7 @@ final class SettingsCoordinator {
         hosting.sizingOptions = []
         // The back/forward chevrons, the pane title and the sidebar's search field all ride on it.
         hosting.sceneBridgingOptions = [.toolbars, .title]
-        window.show(chrome: SettingsWindowChrome()) { hosting }
+        window.show(chrome: SettingsWindowChrome(settings: core.settings)) { hosting }
         editorPresenter.attach(to: hosting.view.window)
     }
 

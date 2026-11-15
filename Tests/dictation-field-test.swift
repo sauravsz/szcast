@@ -352,6 +352,8 @@ final class AppSettings {
     var dictationPolishProvider = DictationPolishProvider.localS1
     var dictationGroqTranscriptionModel = "whisper-large-v3-turbo"
     var dictationGroqPolishModel = "openai/gpt-oss-120b"
+    var dictationBengaliMode = DictationBengaliMode.off
+    var dictationHindiMode = DictationHindiMode.off
     var groqAPIKey = ""
 }
 

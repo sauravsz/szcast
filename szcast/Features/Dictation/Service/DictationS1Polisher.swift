@@ -60,15 +60,16 @@ actor DictationS1Polisher {
         }
 
         let userMessage = "\(settings.controlLine)\n\(transcript)"
+        let transcriptWordCount = transcript.split(separator: " ").count
+        let effectiveSystemPrompt = settings.effectiveSystemPrompt(for: transcript)
 
         // Priority 1 (DEFAULT): Direct local s1-mini-1.0.gguf via embedded/managed llama-server
-        let transcriptWordCount = transcript.split(separator: " ").count
         if DictationLlamaServerManager.isModelAvailable && DictationLlamaServerManager.isBinaryAvailable {
             if let llamaServerURL = try? await DictationLlamaServerManager.shared.ensureRunning(idleRelease: settings.idleRelease) {
                 let chatEndpoint = llamaServerURL.appendingPathComponent("v1/chat/completions")
                 if let output = try? await sendChatRequest(
                     model: "s1-mini",
-                    systemPrompt: DictationS1Settings.systemPrompt,
+                    systemPrompt: effectiveSystemPrompt,
                     userMessage: userMessage,
                     transcriptWordCount: transcriptWordCount,
                     endpointURL: chatEndpoint
@@ -78,7 +79,7 @@ actor DictationS1Polisher {
                     let retryEndpoint = retryURL.appendingPathComponent("v1/chat/completions")
                     if let output = try? await sendChatRequest(
                         model: "s1-mini",
-                        systemPrompt: DictationS1Settings.systemPrompt,
+                        systemPrompt: effectiveSystemPrompt,
                         userMessage: userMessage,
                         transcriptWordCount: transcriptWordCount,
                         endpointURL: retryEndpoint
@@ -103,7 +104,7 @@ actor DictationS1Polisher {
                     // S1-mini raw transport with closed think block
                     if let output = try await sendRawGenerateRequest(
                         model: effectiveModel,
-                        systemPrompt: DictationS1Settings.systemPrompt,
+                        systemPrompt: effectiveSystemPrompt,
                         userMessage: userMessage,
                         transcriptWordCount: transcriptWordCount,
                         baseURL: baseURL

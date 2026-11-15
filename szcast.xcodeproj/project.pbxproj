@@ -28,6 +28,16 @@
 		C1C4E3A2000E000000000001 /* KeePassXCEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000E000000000001 /* KeePassXCEntry.swift */; };
 		C1C4E3A2000E000000000002 /* KeePassXCService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000E000000000002 /* KeePassXCService.swift */; };
 		C1C4E3A2000E000000000003 /* KeePassXCScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000E000000000003 /* KeePassXCScreen.swift */; };
+		C1C4E3A2000A000000000005 /* EnteAuthSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000A000000000005 /* EnteAuthSettingsView.swift */; };
+		C1C4E3A2000B000000000004 /* FinderFileActionsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000B000000000004 /* FinderFileActionsSettingsView.swift */; };
+		C1C4E3A2000C000000000003 /* DuckDuckGoEmailSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000C000000000003 /* DuckDuckGoEmailSettingsView.swift */; };
+		C1C4E3A2000D000000000003 /* CleanKeyboardSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000D000000000003 /* CleanKeyboardSettingsView.swift */; };
+		C1C4E3A2000E000000000004 /* KeePassXCSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000E000000000004 /* KeePassXCSettingsView.swift */; };
+		C1C4E3A2000F000000000001 /* DictationBengaliMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000F000000000001 /* DictationBengaliMode.swift */; };
+		C1C4E3A2000F000000000002 /* AvroPhoneticConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000F000000000002 /* AvroPhoneticConverter.swift */; };
+		C1C4E3A2000F000000000003 /* DictationFileTranscriber.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000F000000000003 /* DictationFileTranscriber.swift */; };
+		C1C4E3A2000F000000000004 /* DictationHindiMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000F000000000004 /* DictationHindiMode.swift */; };
+		C1C4E3A2000F000000000005 /* HinglishPhoneticConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000F000000000005 /* HinglishPhoneticConverter.swift */; };
 		C1C4E3A20007000000000001 /* URLSanitizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10007000000000001 /* URLSanitizer.swift */; };
 		C1C4E3A20001000000000099 /* CalcDataTransformers.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10001000000000099 /* CalcDataTransformers.swift */; };
 		C1C4E3A20005000000000001 /* AudioDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10005000000000001 /* AudioDevice.swift */; };
@@ -1039,6 +1049,16 @@
 		C1C4E3A1000E000000000001 /* KeePassXCEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeePassXCEntry.swift; sourceTree = "<group>"; };
 		C1C4E3A1000E000000000002 /* KeePassXCService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeePassXCService.swift; sourceTree = "<group>"; };
 		C1C4E3A1000E000000000003 /* KeePassXCScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeePassXCScreen.swift; sourceTree = "<group>"; };
+		C1C4E3A1000A000000000005 /* EnteAuthSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnteAuthSettingsView.swift; sourceTree = "<group>"; };
+		C1C4E3A1000B000000000004 /* FinderFileActionsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderFileActionsSettingsView.swift; sourceTree = "<group>"; };
+		C1C4E3A1000C000000000003 /* DuckDuckGoEmailSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuckDuckGoEmailSettingsView.swift; sourceTree = "<group>"; };
+		C1C4E3A1000D000000000003 /* CleanKeyboardSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanKeyboardSettingsView.swift; sourceTree = "<group>"; };
+		C1C4E3A1000E000000000004 /* KeePassXCSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeePassXCSettingsView.swift; sourceTree = "<group>"; };
+		C1C4E3A1000F000000000001 /* DictationBengaliMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationBengaliMode.swift; sourceTree = "<group>"; };
+		C1C4E3A1000F000000000002 /* AvroPhoneticConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvroPhoneticConverter.swift; sourceTree = "<group>"; };
+		C1C4E3A1000F000000000003 /* DictationFileTranscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationFileTranscriber.swift; sourceTree = "<group>"; };
+		C1C4E3A1000F000000000004 /* DictationHindiMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationHindiMode.swift; sourceTree = "<group>"; };
+		C1C4E3A1000F000000000005 /* HinglishPhoneticConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HinglishPhoneticConverter.swift; sourceTree = "<group>"; };
 		C1C4E3A10007000000000001 /* URLSanitizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSanitizer.swift; sourceTree = "<group>"; };
 		C1C4E3A10001000000000099 /* CalcDataTransformers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalcDataTransformers.swift; sourceTree = "<group>"; };
 		C1C4E3A10005000000000001 /* AudioDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioDevice.swift; sourceTree = "<group>"; };
@@ -2467,6 +2487,7 @@
 		2F37DF33894D0E30B694B323 /* Service */ = {
 			isa = PBXGroup;
 			children = (
+				C1C4E3A1000F000000000003 /* DictationFileTranscriber.swift */,
 				C1C4E3A10008000000000002 /* GroqAudioService.swift */,
 				C1C4E3A10008000000000003 /* GroqPolishService.swift */,
 				5514468C4D18274EF07EE1E7 /* DictationDictionaryStore.swift */,
@@ -2696,6 +2717,10 @@
 		58F07CD16A5D35BECC10A00A /* Model */ = {
 			isa = PBXGroup;
 			children = (
+				C1C4E3A1000F000000000004 /* DictationHindiMode.swift */,
+				C1C4E3A1000F000000000005 /* HinglishPhoneticConverter.swift */,
+				C1C4E3A1000F000000000001 /* DictationBengaliMode.swift */,
+				C1C4E3A1000F000000000002 /* AvroPhoneticConverter.swift */,
 				C1C4E3A10008000000000001 /* DictationProvider.swift */,
 				ED159326D2C4D1A06F130487 /* CustomWord.swift */,
 				F727C9F571DD9C97701F40FD /* DictationHistoryItem.swift */,
@@ -3477,6 +3502,7 @@
 			isa = PBXGroup;
 			children = (
 				C1C4E3A1000A000000000004 /* EnteAuthScreen.swift */,
+				C1C4E3A1000A000000000005 /* EnteAuthSettingsView.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -3511,6 +3537,7 @@
 			isa = PBXGroup;
 			children = (
 				C1C4E3A1000B000000000003 /* MoveFileToFolderScreen.swift */,
+				C1C4E3A1000B000000000004 /* FinderFileActionsSettingsView.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -3536,6 +3563,7 @@
 			isa = PBXGroup;
 			children = (
 				C1C4E3A1000C000000000002 /* DuckDuckGoEmailScreen.swift */,
+				C1C4E3A1000C000000000003 /* DuckDuckGoEmailSettingsView.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -3561,6 +3589,7 @@
 			isa = PBXGroup;
 			children = (
 				C1C4E3A1000D000000000002 /* CleanKeyboardWindowController.swift */,
+				C1C4E3A1000D000000000003 /* CleanKeyboardSettingsView.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -3595,6 +3624,7 @@
 			isa = PBXGroup;
 			children = (
 				C1C4E3A1000E000000000003 /* KeePassXCScreen.swift */,
+				C1C4E3A1000E000000000004 /* KeePassXCSettingsView.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -4909,6 +4939,11 @@
 				C1C4E3A20006000000000002 /* ScreenCaptureService.swift in Sources */,
 				C1C4E3A20007000000000001 /* URLSanitizer.swift in Sources */,
 				C1C4E3A20008000000000001 /* DictationProvider.swift in Sources */,
+				C1C4E3A2000F000000000001 /* DictationBengaliMode.swift in Sources */,
+				C1C4E3A2000F000000000002 /* AvroPhoneticConverter.swift in Sources */,
+				C1C4E3A2000F000000000003 /* DictationFileTranscriber.swift in Sources */,
+				C1C4E3A2000F000000000004 /* DictationHindiMode.swift in Sources */,
+				C1C4E3A2000F000000000005 /* HinglishPhoneticConverter.swift in Sources */,
 				C1C4E3A20008000000000002 /* GroqAudioService.swift in Sources */,
 				C1C4E3A20008000000000003 /* GroqPolishService.swift in Sources */,
 				C1C4E3A20009000000000001 /* DisplayTweaksPreset.swift in Sources */,
@@ -4929,6 +4964,11 @@
 				C1C4E3A2000E000000000001 /* KeePassXCEntry.swift in Sources */,
 				C1C4E3A2000E000000000002 /* KeePassXCService.swift in Sources */,
 				C1C4E3A2000E000000000003 /* KeePassXCScreen.swift in Sources */,
+				C1C4E3A2000A000000000005 /* EnteAuthSettingsView.swift in Sources */,
+				C1C4E3A2000B000000000004 /* FinderFileActionsSettingsView.swift in Sources */,
+				C1C4E3A2000C000000000003 /* DuckDuckGoEmailSettingsView.swift in Sources */,
+				C1C4E3A2000D000000000003 /* CleanKeyboardSettingsView.swift in Sources */,
+				C1C4E3A2000E000000000004 /* KeePassXCSettingsView.swift in Sources */,
 				C1C4E3A20004000000000001 /* FlightResult.swift in Sources */,
 				C1C4E3A20004000000000002 /* FlightTrackerService.swift in Sources */,
 				C1C4E3A20004000000000003 /* FlightCardView.swift in Sources */,

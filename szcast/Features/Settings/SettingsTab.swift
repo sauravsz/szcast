@@ -1,7 +1,7 @@
 enum SettingsTab: CaseIterable, Identifiable {
     case general, applications, systemSettings, systemActions, commands, quicklinks, appleShortcuts,
-        fallbacks, clipboard, snippets, fileSearch, windowManagement, displayTweaks, navigation, notes, calendar, emoji,
-        dictation, ai, quickActions, extensions, permissions, backup, about
+        fallbacks, clipboard, snippets, fileSearch, windowManagement, displayTweaks, cleanKeyboard, navigation, notes, calendar, emoji,
+        dictation, ai, quickActions, extensions, permissions, backup, about, enteAuth, finderFileActions, duckDuckGoEmail, keepassxc
     /// The case, never an index: a selectable `List` flattens section and row IDs together.
     var id: Self { self }
 
@@ -37,6 +37,11 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .permissions: "permissions"
         case .backup: "backup"
         case .about: "about"
+        case .enteAuth: "ente-auth"
+        case .finderFileActions: "finder-file-actions"
+        case .duckDuckGoEmail: "duckduckgo-email"
+        case .cleanKeyboard: "clean-keyboard"
+        case .keepassxc: "keepassxc"
         }
     }
 
@@ -59,6 +64,7 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .navigation: return String(localized: "Navigation")
         case .windowManagement: return String(localized: "Window Management")
         case .displayTweaks: return String(localized: "Display Tweaks")
+        case .cleanKeyboard: return String(localized: "Clean Keyboard")
         case .clipboard: return String(localized: "Clipboard")
         case .emoji: return String(localized: "Emoji & Symbols")
         case .calendar: return String(localized: "Calendar")
@@ -66,6 +72,10 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .permissions: return String(localized: "Permissions")
         case .backup: return String(localized: "Backup")
         case .about: return String(localized: "About")
+        case .enteAuth: return String(localized: "Ente Auth")
+        case .finderFileActions: return String(localized: "Finder File Actions")
+        case .duckDuckGoEmail: return String(localized: "DuckDuckGo Email")
+        case .keepassxc: return String(localized: "KeePassXC")
         }
     }
 
@@ -88,6 +98,7 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .navigation: return "arrow.left.arrow.right"
         case .windowManagement: return "macwindow"
         case .displayTweaks: return "sun.max"
+        case .cleanKeyboard: return "keyboard"
         case .clipboard: return "doc.on.clipboard"
         case .emoji: return "face.smiling"
         case .calendar: return "calendar"
@@ -95,6 +106,10 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .permissions: return "lock.shield"
         case .backup: return "arrow.up.arrow.down.circle"
         case .about: return "info.circle"
+        case .enteAuth: return "key.fill"
+        case .finderFileActions: return "folder.badge.gearshape"
+        case .duckDuckGoEmail: return "envelope.badge.shield.half.filled"
+        case .keepassxc: return "lock.fill"
         }
     }
 }
@@ -123,9 +138,9 @@ enum SettingsSection: CaseIterable, Identifiable {
         case .launcher:
             return [.applications, .commands, .quicklinks, .appleShortcuts, .fallbacks]
         case .productivity:
-            return [.clipboard, .snippets, .notes, .fileSearch, .calendar, .emoji]
+            return [.clipboard, .snippets, .notes, .fileSearch, .enteAuth, .keepassxc, .duckDuckGoEmail, .finderFileActions, .calendar, .emoji]
         case .windowAndDisplay:
-            return [.windowManagement, .displayTweaks, .systemActions, .systemSettings]
+            return [.windowManagement, .displayTweaks, .cleanKeyboard, .systemActions, .systemSettings]
         case .aiAndVoice:
             return [.ai, .dictation, .quickActions]
         case .systemAndAbout:

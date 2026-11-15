@@ -17,6 +17,8 @@ struct CommandsSettingsView: View {
                 searchPrompt: "Search commands…",
                 emptyMessage: LocalizedStringResource("commands-empty", defaultValue: "Nothing here yet."))
 
+            ExtensionCommandsSettingsSection()
+
             FeatureSwitchSection(
                 anchor: .commandsCustomCommands,
                 enableTitle: "Enable custom commands",
@@ -123,6 +125,43 @@ private struct CustomCommandSettingsRow: View {
                 .toggleStyle(.checkbox)
                 .help("Enabled")
                 .accessibilityLabel("Enable \(command.name)")
+        }
+    }
+}
+
+private struct ExtensionCommandsSettingsSection: View {
+    @Environment(AppIndex.self) private var appIndex
+    @Environment(VisibilityStore.self) private var visibility
+    @State private var query = ""
+
+    private var entries: [AppEntry] {
+        let scoped = appIndex.apps.filter { $0.kind == .extensionCommand }
+        guard !query.isEmpty else { return scoped }
+        let matched = Set(appIndex.matches(query).map(\.id))
+        return scoped.filter { matched.contains($0.id) }
+    }
+
+    var body: some View {
+        Section {
+            if appIndex.apps.contains(where: { $0.kind == .extensionCommand }) {
+                SettingsFilterField(prompt: "Search extension commands…", query: $query)
+                LauncherItemsList(
+                    entries: entries,
+                    query: query,
+                    isEnabled: visibility.isKindEnabled(.extensionCommand),
+                    emptyMessage: LocalizedStringResource("No extension commands found.")
+                )
+            } else {
+                Text("No extension commands installed yet. Install extensions from the Extensions tab.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        } header: {
+            Text("Extension Commands")
+        } footer: {
+            Text("Assign aliases and hotkeys to commands from installed extensions in one central place.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
     }
 }

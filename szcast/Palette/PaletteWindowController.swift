@@ -490,9 +490,7 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
                 }
             }
             guard Self.commandCharacter(from: event) != nil else { return false }
-            if self.core.palette.mode == .launcher || self.core.palette.mode == .clipboard,
-                let index = FavoriteSlots.index(forKeyCode: event.keyCode)
-            {
+            if let index = FavoriteSlots.index(forKeyCode: event.keyCode) {
                 self.core.palette.noteFavoriteSlot(index)
                 return true
             }

@@ -81,6 +81,25 @@ struct GeneralSettingsView: View {
                 Toggle(isOn: $settings.animationsEnabled) {
                     SettingsRowTitle(.generalAppearance, "Show animations")
                 }
+                Toggle(isOn: $settings.liquidGlassEnabled) {
+                    SettingsRowTitle(.generalAppearance, "Liquid Glass UI")
+                    Text("Dynamic macOS liquid glass material and translucent vibrancy.")
+                }
+                if settings.liquidGlassEnabled {
+                    LabeledContent {
+                        HStack(spacing: Theme.Spacing.md) {
+                            Slider(value: $settings.liquidGlassTransparency, in: 0...100, step: 1)
+                                .frame(width: 160)
+                            Text("\(Int(settings.liquidGlassTransparency))%")
+                                .monospacedDigit()
+                                .foregroundStyle(.secondary)
+                                .frame(width: 42, alignment: .trailing)
+                        }
+                    } label: {
+                        SettingsRowTitle(.generalAppearance, "Glass transparency")
+                        Text("Adjust material translucency for the launcher and settings.")
+                    }
+                }
                 InterfaceSizeRow()
                 LauncherTypographyRows()
                 WindowModeRow()

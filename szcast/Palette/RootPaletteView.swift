@@ -364,10 +364,18 @@ struct RootPaletteView: View {
                 )
                 // The window's frame is the size source, so the glass and clip stay matched.
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                .background(isCollapsed ? .clear : Theme.Colors.panelScrim)
+                .background(
+                    isCollapsed
+                        ? .clear
+                        : (settings.liquidGlassEnabled
+                            ? Theme.Colors.panelScrim(transparency: settings.liquidGlassTransparency)
+                            : Theme.Colors.panelOpaqueBackground)
+                )
                 // Square, as rounded glass feathers its edge; the clip alone cuts a crisp corner.
                 .background {
-                    Color.clear.glassEffect(isCollapsed ? .identity : .regular, in: Rectangle())
+                    if settings.liquidGlassEnabled {
+                        Color.clear.glassEffect(isCollapsed ? .identity : .regular, in: Rectangle())
+                    }
                 }
                 .overlay {
                     Theme.Colors.dialogDimming

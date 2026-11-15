@@ -1,5 +1,6 @@
 import AppKit
 import AVFoundation
+import UniformTypeIdentifiers
 
 @MainActor
 @Observable
@@ -274,7 +275,10 @@ final class DictationCoordinator {
             }
             do {
                 let transcript: String
-                if settings.dictationTranscriptionProvider == .groq, !settings.groqAPIKey.isEmpty {
+                if settings.dictationTranscriptionProvider == .groq {
+                    guard !settings.groqAPIKey.isEmpty else {
+                        throw GroqAudioService.GroqAudioError.missingAPIKey
+                    }
                     transcript = try await groqAudio.transcribe(
                         samples: samples,
                         apiKey: settings.groqAPIKey,
@@ -311,7 +315,9 @@ final class DictationCoordinator {
                         tone: settings.dictationS1Tone,
                         structure: settings.dictationS1Structure,
                         context: settings.dictationS1Context,
-                        idleRelease: settings.dictationS1IdleRelease
+                        idleRelease: settings.dictationS1IdleRelease,
+                        bengaliMode: settings.dictationBengaliMode,
+                        hindiMode: settings.dictationHindiMode
                     )
                     if settings.dictationPolishProvider == .groq, !settings.groqAPIKey.isEmpty {
                         do {
@@ -332,6 +338,13 @@ final class DictationCoordinator {
                     // are never undone or mis-cased by the speech normalization model
                     processed = dictionaryStore.applyDictionaryAndPacks(processed)
                     processed = dictionaryStore.applySnippets(processed)
+                }
+
+                if settings.dictationBengaliMode == .avroPhonetic {
+                    processed = AvroPhoneticConverter.convert(processed)
+                }
+                if settings.dictationHindiMode == .phoneticEngine {
+                    processed = HinglishPhoneticConverter.convert(processed)
                 }
 
                 // A mic belongs to its field: the text goes in there, never to the clipboard.
@@ -504,6 +517,141 @@ final class DictationCoordinator {
             }
             self.dictionaryStore.addWord(canonical: word)
             self.showMessage(String(localized: "Added \"\(word)\" to Dictionary"), .success)
+        }
+    }
+
+    /// Superwhisper-style media file transcription
+    func transcribeFile(url: URL? = nil) {
+        if let url {
+            Task { @MainActor in
+                await executeFileTranscription(from: url)
+            }
+            return
+        }
+
+        let panel = NSOpenPanel()
+        panel.title = String(localized: "Select Audio or Video File to Transcribe")
+        panel.prompt = String(localized: "Transcribe")
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        panel.allowedContentTypes = [
+            UTType.audio,
+            UTType.movie,
+            UTType.mpeg4Movie,
+            UTType.quickTimeMovie,
+            UTType.mp3,
+            UTType.wav,
+            UTType.aiff,
+            UTType(filenameExtension: "m4a") ?? .audio,
+            UTType(filenameExtension: "flac") ?? .audio,
+            UTType(filenameExtension: "aac") ?? .audio,
+            UTType(filenameExtension: "ogg") ?? .audio
+        ]
+
+        NSApp.activate(ignoringOtherApps: true)
+        panel.begin { [weak self] response in
+            guard response == .OK, let selectedURL = panel.url else { return }
+            Task { @MainActor [weak self] in
+                await self?.executeFileTranscription(from: selectedURL)
+            }
+        }
+    }
+
+    private func executeFileTranscription(from url: URL) async {
+        showMessage(String(localized: "Transcribing \(url.lastPathComponent)…"), .neutral)
+        do {
+            let samples = try await DictationFileTranscriber.extractSamples(from: url)
+            guard !samples.isEmpty else {
+                showMessage(String(localized: "No audio data found in \(url.lastPathComponent)"), .danger)
+                return
+            }
+
+            let language = settings.dictationLanguage
+            let transcript: String
+            if settings.dictationTranscriptionProvider == .groq {
+                guard !settings.groqAPIKey.isEmpty else {
+                    throw GroqAudioService.GroqAudioError.missingAPIKey
+                }
+                transcript = try await groqAudio.transcribe(
+                    samples: samples,
+                    apiKey: settings.groqAPIKey,
+                    model: settings.dictationGroqTranscriptionModel,
+                    language: language
+                )
+            } else {
+                let model = settings.dictationModel
+                if !models.isInstalled(model) {
+                    showMessage(String(localized: "Download the dictation model in Settings first"), .danger)
+                    return
+                }
+                transcript = try await models.transcribe(samples, model: model, language: language)
+            }
+
+            var processed = transcript
+            if settings.dictationConvertSpokenEmoji {
+                processed = DictationTextFormatter.convertSpokenEmoji(processed)
+            }
+            if settings.dictationSpokenPunctuation {
+                processed = DictationTextFormatter.convertSpokenPunctuation(processed)
+            }
+            if settings.dictationRemoveFillerWords {
+                processed = DictationTextFormatter.removeFillerWords(processed)
+            }
+            processed = dictionaryStore.applyDictionaryAndPacks(processed)
+            processed = dictionaryStore.applySnippets(processed)
+
+            if settings.dictationS1Enabled {
+                let s1 = DictationS1Settings(
+                    enabled: true,
+                    tone: settings.dictationS1Tone,
+                    structure: settings.dictationS1Structure,
+                    context: settings.dictationS1Context,
+                    idleRelease: settings.dictationS1IdleRelease,
+                    bengaliMode: settings.dictationBengaliMode,
+                    hindiMode: settings.dictationHindiMode
+                )
+                if settings.dictationPolishProvider == .groq, !settings.groqAPIKey.isEmpty {
+                    do {
+                        processed = try await groqPolish.polish(
+                            processed,
+                            apiKey: settings.groqAPIKey,
+                            settings: s1,
+                            model: settings.dictationGroqPolishModel
+                        )
+                    } catch {
+                        processed = await s1Polisher.polish(processed, settings: s1)
+                    }
+                } else {
+                    processed = await s1Polisher.polish(processed, settings: s1)
+                }
+                processed = dictionaryStore.applyDictionaryAndPacks(processed)
+                processed = dictionaryStore.applySnippets(processed)
+            }
+
+            if settings.dictationBengaliMode == .avroPhonetic {
+                processed = AvroPhoneticConverter.convert(processed)
+            }
+            if settings.dictationHindiMode == .phoneticEngine {
+                processed = HinglishPhoneticConverter.convert(processed)
+            }
+
+            let text = DictationTextFormatter.format(
+                processed, context: nil,
+                adaptCapitalization: settings.dictationAdaptsCapitalization
+            )
+
+            guard !text.isEmpty else {
+                showMessage(String(localized: "No speech recognized in file"), .neutral)
+                return
+            }
+
+            lastDictation = text
+            historyStore.add(text: text, rawText: transcript, duration: Double(samples.count) / 16000.0)
+            Paster.copyPlainText(text)
+            showMessage(String(localized: "\(url.lastPathComponent) transcribed & copied to clipboard"), .success)
+        } catch {
+            showMessage(error.localizedDescription, .danger)
         }
     }
 }

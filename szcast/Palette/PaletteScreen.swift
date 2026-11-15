@@ -133,7 +133,14 @@ extension PaletteScreen {
     }
     func tertiary(at selection: Int) -> Bool { false }
     func pasteKeepingWindowOpen(at selection: Int) -> Bool { false }
-    func perform(_ shortcut: PaletteShortcut, at selection: Int) -> Bool { false }
+    func perform(_ shortcut: PaletteShortcut, at selection: Int) -> Bool {
+        if case .favoriteSlot(let index) = shortcut {
+            guard rows.indices.contains(index) else { return false }
+            activate(at: index)
+            return true
+        }
+        return false
+    }
     func move(_ delta: Int, axis: PaletteAxis, from selection: Int) -> Int? { nil }
     func headerAccessory(
         at selection: Int, focus: FocusState<String?>.Binding

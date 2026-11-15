@@ -176,7 +176,9 @@ struct AppEntry: Identifiable, Hashable, Sendable {
         case .command, .quickAction, .customCommand, .systemAction, .windowCommand, .windowLayout,
             .windowRoom, .quicklink, .appleShortcut, .snippet:
             return HotKeyAction(entryID: id)
-        case .extensionCommand, .meeting:
+        case .extensionCommand:
+            return .extensionCommand(entryID: id)
+        case .meeting:
             return nil
         }
     }

@@ -108,8 +108,8 @@ enum SettingsSearchCatalog {
     static let entries: [SettingsSearchEntry] =
         general + applications + systemSettings + systemActions + commands + quicklinks
         + appleShortcuts + fallbacks + clipboard + snippets + fileSearch + windowManagement
-        + navigation + notes + calendar + emoji + ai + quickActions + dictation + extensions + permissions
-        + backup + displayTweaks + about
+        + cleanKeyboard + navigation + notes + calendar + emoji + ai + quickActions + dictation + extensions + permissions
+        + backup + displayTweaks + enteAuth + finderFileActions + duckDuckGoEmail + keepassxc + about
 
     private static let general: [SettingsSearchEntry] = [
         .init(pane: .general, keywords: ["preferences", "settings"]),
@@ -143,6 +143,12 @@ enum SettingsSearchCatalog {
         .init(
             .generalAppearance, "Show animations",
             keywords: ["motion", "transitions", "reduce motion", "effects", "instant"]),
+        .init(
+            .generalAppearance, "Liquid Glass UI",
+            keywords: ["transparency", "glass", "blur", "vibrancy", "liquid", "tahoe"]),
+        .init(
+            .generalAppearance, "Glass transparency",
+            keywords: ["transparency", "opacity", "glass", "translucent", "liquid"]),
         .init(
             .generalAppearance, "Interface size",
             keywords: ["text size", "font size", "scale", "zoom", "bigger", "larger", "legible"]),
@@ -681,6 +687,36 @@ enum SettingsSearchCatalog {
         .init(
             group: .displayTweaksDisplayTweaks, "Display Tweaks",
             keywords: ["gamma", "lut", "hardware", "curve", "calibration"])
+    ]
+
+    private static let cleanKeyboard: [SettingsSearchEntry] = [
+        .init(
+            pane: .cleanKeyboard,
+            keywords: ["clean", "keyboard", "lock", "keys", "cleaning", "wipe"])
+    ]
+
+    private static let enteAuth: [SettingsSearchEntry] = [
+        .init(
+            pane: .enteAuth,
+            keywords: ["2fa", "totp", "authenticator", "ente", "code", "token", "otpauth"])
+    ]
+
+    private static let finderFileActions: [SettingsSearchEntry] = [
+        .init(
+            pane: .finderFileActions,
+            keywords: ["finder", "move", "copy", "folder", "pinned", "file actions", "organize"])
+    ]
+
+    private static let duckDuckGoEmail: [SettingsSearchEntry] = [
+        .init(
+            pane: .duckDuckGoEmail,
+            keywords: ["duck", "email", "alias", "duckduckgo", "private email", "protection", "relay"])
+    ]
+
+    private static let keepassxc: [SettingsSearchEntry] = [
+        .init(
+            pane: .keepassxc,
+            keywords: ["keepass", "password", "kdbx", "vault", "keepassxc", "credentials", "manager"])
     ]
 
     private static let about: [SettingsSearchEntry] = [

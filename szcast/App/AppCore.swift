@@ -407,8 +407,13 @@ final class AppCore {
                 self?.systemActionCoordinator.runSystemAction(id: id)
             }
 
-            if settings.dictationEnabled && settings.dictationS1Enabled {
-                DictationLlamaServerManager.shared.startDaemon(idleRelease: settings.dictationS1IdleRelease)
+            if settings.dictationEnabled {
+                if settings.dictationTranscriptionProvider == .parakeet {
+                    dictationModels.prewarm(settings.dictationModel)
+                }
+                if settings.dictationS1Enabled {
+                    DictationLlamaServerManager.shared.startDaemon(idleRelease: settings.dictationS1IdleRelease)
+                }
             }
             hotKeys.onRunWindowCommand = { [weak self] id in
                 self?.windowCommandCoordinator.runWindowCommand(id: id)

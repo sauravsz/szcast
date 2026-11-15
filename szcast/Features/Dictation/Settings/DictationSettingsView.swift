@@ -288,15 +288,6 @@ struct DictationSettingsView: View {
                     Text(settings.dictationOtherAudioMode.summary)
                 }
 
-                Picker(selection: $bSettings.dictationIdleRelease) {
-                    ForEach(DictationIdleRelease.allCases) { option in
-                        Text(option.title(locale: .current)).tag(option)
-                    }
-                } label: {
-                    SettingsRowTitle(.dictationMemory, "Unload model after")
-                    Text("Frees memory when you are not dictating. Next dictation reloads.")
-                }
-
                 Picker(selection: $bSettings.dictationDestination) {
                     ForEach(DictationDestination.allCases) { destination in
                         Text(destination.title).tag(destination)
@@ -393,23 +384,45 @@ struct DictationSettingsView: View {
                     let downloading = coordinator.models.downloading == settings.dictationModel
                     if downloading {
                         DownloadProgressView(models: coordinator.models)
+                    } else if installed {
+                        let isHot = coordinator.models.loadedModel == settings.dictationModel
+                        let path = coordinator.models.resolvedDirectory(for: settings.dictationModel)?.path ?? "Installed"
+                        let memoryMB = settings.dictationModel.approximateInstalledMegabytes
+                        HStack(spacing: Theme.Spacing.sm) {
+                            Circle()
+                                .fill(Color.green)
+                                .frame(width: 8, height: 8)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Parakeet (Local) Active")
+                                    .font(.system(size: 12, weight: .medium))
+                                Text(isHot ? "Apple Neural Engine & Metal GPU (~\(memoryMB) MB RAM) · \(path)" : "On-device CoreML (~\(memoryMB) MB) · \(path)")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.secondary)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                            }
+                            Spacer()
+                            if !isHot {
+                                Button("Prewarm") {
+                                    coordinator.models.prewarm(settings.dictationModel)
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                            }
+                            Button("Remove") {
+                                removeModel(settings.dictationModel)
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(coordinator.models.transcribing || coordinator.models.removing != nil)
+                        }
+                        .padding(.vertical, 2)
                     } else {
                         LabeledContent {
-                            if installed {
-                                HStack(spacing: Theme.Spacing.md) {
-                                    Text("Installed · FluidAudio / Local")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                    Button("Remove") { removeModel(settings.dictationModel) }
-                                        .disabled(
-                                            coordinator.models.transcribing || coordinator.models.removing != nil)
-                                }
-                            } else {
-                                Button("Download") { downloadModel(settings.dictationModel) }
-                                    .disabled(coordinator.models.downloading != nil || coordinator.models.removing == settings.dictationModel)
-                            }
+                            Button("Download") { downloadModel(settings.dictationModel) }
+                                .disabled(coordinator.models.downloading != nil || coordinator.models.removing == settings.dictationModel)
                         } label: {
-                            Text(installed ? "Installed" : "Not installed")
+                            Text("Not installed")
                             Text(modelDescription)
                         }
                     }
@@ -547,10 +560,6 @@ struct DictationSettingsView: View {
                     .font(.caption2)
                     .foregroundStyle(Color.accentColor)
             }
-        } footer: {
-            Text("Choose which engine shows words while you speak.")
-                .font(.caption)
-                .foregroundStyle(Theme.Colors.textSecondary)
         }
     }
 
@@ -640,19 +649,26 @@ struct DictationSettingsView: View {
                     Text("Format dictated greetings and sign-offs as email or general prose.")
                 }
 
-                Picker(selection: $bSettings.dictationS1IdleRelease) {
-                    ForEach(DictationIdleRelease.allCases) { option in
-                        Text(option.title(locale: .current)).tag(option)
+                Picker(selection: $bSettings.dictationBengaliMode) {
+                    ForEach(DictationBengaliMode.allCases) { mode in
+                        Text(mode.title).tag(mode)
                     }
                 } label: {
-                    SettingsRowTitle(.dictationMemory, "Unload model after")
-                    Text("Frees memory when S1-mini is not normalizing. Next polish reloads.")
+                    SettingsRowTitle(.dictationOutput, "Bengali Romanization (Banglish)")
+                    Text(settings.dictationBengaliMode.summary)
+                }
+
+                Picker(selection: $bSettings.dictationHindiMode) {
+                    ForEach(DictationHindiMode.allCases) { mode in
+                        Text(mode.title).tag(mode)
+                    }
+                } label: {
+                    SettingsRowTitle(.dictationOutput, "Hindi Romanization (Hinglish)")
+                    Text(settings.dictationHindiMode.summary)
                 }
             }
         } header: {
             Text("AI Polish (S1-mini)")
-        } footer: {
-            Text("AI polish normalizes text using local standalone S1-mini (default) or Ollama with the S1 control line.")
         }
     }
 
@@ -663,32 +679,21 @@ struct DictationSettingsView: View {
             HStack(spacing: Theme.Spacing.sm) {
                 ProgressView()
                     .controlSize(.small)
-                Text("Checking Ollama S1-mini status...")
+                Text("Checking S1-mini status...")
                     .font(.system(size: 12))
                     .foregroundColor(.secondary)
                 Spacer()
             }
             .padding(.vertical, 2)
 
-        case .installedDirect(let path):
+        case .installedDirect:
             HStack(spacing: Theme.Spacing.sm) {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(.green)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(DictationLlamaServerManager.shared.isRunning ? "S1-mini Daemon Active (Hot in RAM · 0ms latency)" : "S1-mini Direct Model Active")
-                        .font(.system(size: 12, weight: .medium))
-                    Text(DictationLlamaServerManager.shared.isRunning ? "Single-slot Metal GPU offload (~460 MB RAM) · \(path)" : path)
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                }
+                Circle()
+                    .fill(Color.green)
+                    .frame(width: 8, height: 8)
+                Text("S1-mini Active")
+                    .font(.system(size: 12, weight: .medium))
                 Spacer()
-                Button("Refresh") {
-                    Task { await coordinator.s1Downloader.checkStatus() }
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
             }
             .padding(.vertical, 2)
 

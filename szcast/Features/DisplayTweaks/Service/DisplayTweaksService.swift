@@ -45,6 +45,41 @@ final class DisplayTweaksService {
         return out
     }
 
+    /// Calculate 256-entry RGB transfer tables from 0..100 percentage settings.
+    func calculateTransferTablesPercent(
+        red: Double = 50.0,
+        green: Double = 50.0,
+        blue: Double = 50.0,
+        blacks: Double = 0.0,
+        shadows: Double = 50.0,
+        highlights: Double = 50.0,
+        whites: Double = 100.0,
+        contrast: Double = 50.0,
+        brightness: Double = 50.0
+    ) -> (r: [Float], g: [Float], b: [Float]) {
+        let rMul = red / 50.0
+        let gMul = green / 50.0
+        let bMul = blue / 50.0
+        let blk = (blacks / 100.0) * 0.5
+        let shd = ((shadows - 50.0) / 50.0) * 0.25
+        let hgh = ((highlights - 50.0) / 50.0) * 0.25
+        let wht = ((whites - 100.0) / 100.0) * 0.5
+        let cnt = ((contrast - 50.0) / 50.0) * 0.5
+        let brt = ((brightness - 50.0) / 50.0) * 0.3
+
+        return calculateTransferTables(
+            redGain: rMul,
+            greenGain: gMul,
+            blueGain: bMul,
+            blacks: blk,
+            shadows: shd,
+            highlights: hgh,
+            whites: wht,
+            contrast: cnt,
+            brightness: brt
+        )
+    }
+
     /// Calculate 256-entry RGB transfer tables from settings parameters.
     func calculateTransferTables(
         redGain: Double = 1.0,
@@ -117,6 +152,43 @@ final class DisplayTweaksService {
         }
 
         return (tableR, tableG, tableB)
+    }
+
+    /// Apply calculated gamma curves from 0..100 percentage parameters to targeted display.
+    func applyPercent(
+        displayID: CGDirectDisplayID? = nil,
+        red: Double = 50.0,
+        green: Double = 50.0,
+        blue: Double = 50.0,
+        blacks: Double = 0.0,
+        shadows: Double = 50.0,
+        highlights: Double = 50.0,
+        whites: Double = 100.0,
+        contrast: Double = 50.0,
+        brightness: Double = 50.0
+    ) {
+        let (r, g, b) = calculateTransferTablesPercent(
+            red: red,
+            green: green,
+            blue: blue,
+            blacks: blacks,
+            shadows: shadows,
+            highlights: highlights,
+            whites: whites,
+            contrast: contrast,
+            brightness: brightness
+        )
+        let target = (displayID != nil && displayID != 0) ? displayID! : CGMainDisplayID()
+        var redTable = r
+        var greenTable = g
+        var blueTable = b
+
+        let err = CGSetDisplayTransferByTable(target, 256, &redTable, &greenTable, &blueTable)
+        if err == .success {
+            isApplied = true
+        } else {
+            Self.logger.error("CGSetDisplayTransferByTable returned error: \(err.rawValue)")
+        }
     }
 
     /// Apply calculated gamma curves to the targeted display hardware LUT.

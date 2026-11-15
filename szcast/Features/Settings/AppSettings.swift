@@ -220,6 +220,16 @@ final class AppSettings {
         didSet { defaults.set(appearance.rawValue, forKey: Key.appearance.rawValue) }
     }
 
+    /// Whether native macOS Liquid Glass UI is enabled.
+    var liquidGlassEnabled: Bool {
+        didSet { defaults.set(liquidGlassEnabled, forKey: Key.liquidGlassEnabled.rawValue) }
+    }
+
+    /// Percentage of glass translucency (0% nearly opaque ... 100% maximum glass transparency).
+    var liquidGlassTransparency: Double {
+        didSet { defaults.set(liquidGlassTransparency, forKey: Key.liquidGlassTransparency.rawValue) }
+    }
+
     /// The per-app key System Settings writes too, so the two never disagree.
     var language: AppLanguage {
         didSet { defaults.set([language.rawValue], forKey: Key.language.rawValue) }
@@ -469,6 +479,14 @@ final class AppSettings {
 
     var dictationGroqPolishModel: String {
         didSet { defaults.set(dictationGroqPolishModel, forKey: Key.dictationGroqPolishModel.rawValue) }
+    }
+
+    var dictationBengaliMode: DictationBengaliMode {
+        didSet { defaults.set(dictationBengaliMode.rawValue, forKey: Key.dictationBengaliMode.rawValue) }
+    }
+
+    var dictationHindiMode: DictationHindiMode {
+        didSet { defaults.set(dictationHindiMode.rawValue, forKey: Key.dictationHindiMode.rawValue) }
     }
 
     var groqAPIKey: String {
@@ -922,6 +940,13 @@ final class AppSettings {
             ?? .navigateBackOrClose
         appearance =
             defaults.string(forKey: Key.appearance.rawValue).flatMap(AppAppearance.init) ?? .system
+        liquidGlassEnabled =
+            defaults.object(forKey: Key.liquidGlassEnabled.rawValue) == nil
+            || defaults.bool(forKey: Key.liquidGlassEnabled.rawValue)
+        liquidGlassTransparency =
+            defaults.object(forKey: Key.liquidGlassTransparency.rawValue) != nil
+            ? defaults.double(forKey: Key.liquidGlassTransparency.rawValue)
+            : 65.0
         language = Self.storedLanguage
         calcNumberStyle =
             defaults.string(forKey: Key.calcNumberStyle.rawValue).flatMap(CalcNumberStyle.init)
@@ -1055,18 +1080,33 @@ final class AppSettings {
         } else {
             dictationGroqPolishModel = "openai/gpt-oss-120b"
         }
+        dictationBengaliMode =
+            defaults.string(forKey: Key.dictationBengaliMode.rawValue)
+            .flatMap(DictationBengaliMode.init(rawValue:)) ?? .off
+        dictationHindiMode =
+            defaults.string(forKey: Key.dictationHindiMode.rawValue)
+            .flatMap(DictationHindiMode.init(rawValue:)) ?? .off
 
         displayTweaksEnabled = defaults.bool(forKey: Key.displayTweaksEnabled.rawValue)
         displayTweaksDisplayID = UInt32(defaults.integer(forKey: Key.displayTweaksDisplayID.rawValue))
-        displayTweaksRed = defaults.object(forKey: Key.displayTweaksRed.rawValue) == nil ? 1.0 : defaults.double(forKey: Key.displayTweaksRed.rawValue)
-        displayTweaksGreen = defaults.object(forKey: Key.displayTweaksGreen.rawValue) == nil ? 1.0 : defaults.double(forKey: Key.displayTweaksGreen.rawValue)
-        displayTweaksBlue = defaults.object(forKey: Key.displayTweaksBlue.rawValue) == nil ? 1.0 : defaults.double(forKey: Key.displayTweaksBlue.rawValue)
-        displayTweaksBlacks = defaults.double(forKey: Key.displayTweaksBlacks.rawValue)
-        displayTweaksShadows = defaults.double(forKey: Key.displayTweaksShadows.rawValue)
-        displayTweaksHighlights = defaults.double(forKey: Key.displayTweaksHighlights.rawValue)
-        displayTweaksWhites = defaults.double(forKey: Key.displayTweaksWhites.rawValue)
-        displayTweaksContrast = defaults.double(forKey: Key.displayTweaksContrast.rawValue)
-        displayTweaksBrightness = defaults.double(forKey: Key.displayTweaksBrightness.rawValue)
+        let rawRed = defaults.object(forKey: Key.displayTweaksRed.rawValue) == nil ? 50.0 : defaults.double(forKey: Key.displayTweaksRed.rawValue)
+        displayTweaksRed = rawRed <= 2.0 ? 50.0 : rawRed
+        let rawGreen = defaults.object(forKey: Key.displayTweaksGreen.rawValue) == nil ? 50.0 : defaults.double(forKey: Key.displayTweaksGreen.rawValue)
+        displayTweaksGreen = rawGreen <= 2.0 ? 50.0 : rawGreen
+        let rawBlue = defaults.object(forKey: Key.displayTweaksBlue.rawValue) == nil ? 50.0 : defaults.double(forKey: Key.displayTweaksBlue.rawValue)
+        displayTweaksBlue = rawBlue <= 2.0 ? 50.0 : rawBlue
+        let rawBlacks = defaults.double(forKey: Key.displayTweaksBlacks.rawValue)
+        displayTweaksBlacks = rawBlacks <= 1.0 && rawBlacks > 0.0 ? rawBlacks * 100.0 : rawBlacks
+        let rawShadows = defaults.object(forKey: Key.displayTweaksShadows.rawValue) == nil ? 50.0 : defaults.double(forKey: Key.displayTweaksShadows.rawValue)
+        displayTweaksShadows = rawShadows <= 1.0 && rawShadows >= -1.0 ? 50.0 + rawShadows * 50.0 : rawShadows
+        let rawHighlights = defaults.object(forKey: Key.displayTweaksHighlights.rawValue) == nil ? 50.0 : defaults.double(forKey: Key.displayTweaksHighlights.rawValue)
+        displayTweaksHighlights = rawHighlights <= 1.0 && rawHighlights >= -1.0 ? 50.0 + rawHighlights * 50.0 : rawHighlights
+        let rawWhites = defaults.object(forKey: Key.displayTweaksWhites.rawValue) == nil ? 100.0 : defaults.double(forKey: Key.displayTweaksWhites.rawValue)
+        displayTweaksWhites = rawWhites <= 1.0 ? 100.0 : rawWhites
+        let rawContrast = defaults.object(forKey: Key.displayTweaksContrast.rawValue) == nil ? 50.0 : defaults.double(forKey: Key.displayTweaksContrast.rawValue)
+        displayTweaksContrast = rawContrast <= 1.0 && rawContrast >= -1.0 ? 50.0 + rawContrast * 50.0 : rawContrast
+        let rawBrightness = defaults.object(forKey: Key.displayTweaksBrightness.rawValue) == nil ? 50.0 : defaults.double(forKey: Key.displayTweaksBrightness.rawValue)
+        displayTweaksBrightness = rawBrightness <= 1.0 && rawBrightness >= -1.0 ? 50.0 + rawBrightness * 50.0 : rawBrightness
         displayTweaksPreset = defaults.string(forKey: Key.displayTweaksPreset.rawValue) ?? "Default"
         notesRendersMarkdown =
             defaults.object(forKey: Key.notesRendersMarkdown.rawValue) == nil

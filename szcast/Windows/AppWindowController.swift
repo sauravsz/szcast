@@ -123,6 +123,7 @@ final class AppWindowController: NSObject, NSWindowDelegate {
         // AppKit would otherwise resurrect the window at launch, before anything is wired up.
         window.isRestorable = false
         window.contentMinSize = minimumSize
+        window.minSize = window.frameRect(forContentRect: NSRect(origin: .zero, size: minimumSize)).size
         window.delegate = self
         // Before the content: a bridged SwiftUI toolbar restores the title flags it mounted over.
         chrome?.install(in: window)
@@ -133,7 +134,14 @@ final class AppWindowController: NSObject, NSWindowDelegate {
 
         if let autosaveName {
             window.setFrameAutosaveName(autosaveName)
-            if !window.setFrameUsingName(autosaveName) { window.center() }
+            let restored = window.setFrameUsingName(autosaveName)
+            if !restored || window.frame.width < minimumSize.width || window.frame.height < minimumSize.height {
+                window.setContentSize(CGSize(
+                    width: max(contentSize.width, minimumSize.width),
+                    height: max(contentSize.height, minimumSize.height)
+                ))
+                window.center()
+            }
         } else {
             window.center()
         }

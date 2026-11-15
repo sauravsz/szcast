@@ -255,6 +255,10 @@ enum SettingsBackupCoverage {
             "Cloud transcription model selection stays local to this Mac.",
         AppSettingsKey.dictationGroqPolishModel.rawValue:
             "Cloud speech normalization model selection stays local to this Mac.",
+        AppSettingsKey.dictationBengaliMode.rawValue:
+            "Bengali phonetic Romanization mode preference stays local to this Mac.",
+        AppSettingsKey.dictationHindiMode.rawValue:
+            "Hindi phonetic Romanization (Hinglish) mode preference stays local to this Mac.",
         AppSettingsKey.displayTweaksEnabled.rawValue:
             "Display LUT calibration is local to this Mac's attached screens.",
         AppSettingsKey.displayTweaksDisplayID.rawValue:
@@ -278,6 +282,10 @@ enum SettingsBackupCoverage {
         AppSettingsKey.displayTweaksBrightness.rawValue:
             "Display tonal calibration is hardware-specific to this Mac.",
         AppSettingsKey.displayTweaksPreset.rawValue:
-            "Display calibration preset is hardware-specific to this Mac."
+            "Display calibration preset is hardware-specific to this Mac.",
+        AppSettingsKey.liquidGlassEnabled.rawValue:
+            "Window material rendering preference is specific to this Mac.",
+        AppSettingsKey.liquidGlassTransparency.rawValue:
+            "Window transparency level is specific to this Mac."
     ]
 }

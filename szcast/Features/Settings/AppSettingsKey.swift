@@ -136,6 +136,8 @@ enum AppSettingsKey: String, CaseIterable {
     case dictationPolishProvider = "dictationPolishProvider"
     case dictationGroqTranscriptionModel = "dictationGroqTranscriptionModel"
     case dictationGroqPolishModel = "dictationGroqPolishModel"
+    case dictationBengaliMode = "dictationBengaliMode"
+    case dictationHindiMode = "dictationHindiMode"
     case displayTweaksEnabled = "displayTweaksEnabled"
     case displayTweaksDisplayID = "displayTweaksDisplayID"
     case displayTweaksRed = "displayTweaksRed"
@@ -164,4 +166,6 @@ enum AppSettingsKey: String, CaseIterable {
     case chatFontSize = "chatFontSize"
     case chatFontFamily = "chatFontFamily"
     case chatCodeFontFamily = "chatCodeFontFamily"
+    case liquidGlassEnabled = "liquidGlassEnabled"
+    case liquidGlassTransparency = "liquidGlassTransparency"
 }

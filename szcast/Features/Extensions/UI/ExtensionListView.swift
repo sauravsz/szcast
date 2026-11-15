@@ -74,7 +74,8 @@ struct ExtensionListView: View {
                         case .item(let item):
                             ExtensionItemRow(
                                 node: item.node, selected: item.index == selection,
-                                assetsPath: assetsPath, compact: screen.showsDetail
+                                assetsPath: assetsPath, compact: screen.showsDetail,
+                                itemSlot: FavoriteSlots.digit(at: item.index)
                             )
                             .contentShape(Rectangle())
                             .onTapGesture {
@@ -168,10 +169,12 @@ struct ExtensionListView: View {
 private struct ExtensionItemRow: View {
     @Environment(\.metrics) private var metrics
     @Environment(\.isDarkAppearance) private var isDark
+    @Environment(PaletteState.self) private var palette
     let node: RenderNode
     let selected: Bool
     let assetsPath: String?
     let compact: Bool
+    var itemSlot: Character? = nil
     @State private var hovered = false
 
     private var fill: Color {
@@ -199,11 +202,18 @@ private struct ExtensionItemRow: View {
                     .lineLimit(1)
             }
             Spacer(minLength: metrics.spacing.sm)
-            // Raycast draws the accessories it is given, and a quota row's signal is all in them.
-            ExtensionAccessoriesView(
-                accessories: node.array("accessories"), assetsPath: assetsPath
-            )
-            .fixedSize(horizontal: true, vertical: false)
+            if let slot = itemSlot, palette.commandHeld {
+                HStack(spacing: metrics.spacing.xxs) {
+                    KeyCapChip(text: "⌘", style: .outline)
+                    KeyCapChip(text: String(slot), style: .outline)
+                }
+            } else {
+                // Raycast draws the accessories it is given, and a quota row's signal is all in them.
+                ExtensionAccessoriesView(
+                    accessories: node.array("accessories"), assetsPath: assetsPath
+                )
+                .fixedSize(horizontal: true, vertical: false)
+            }
         }
         .padding(.horizontal, metrics.spacing.md)
         .padding(.vertical, metrics.spacing.sm)

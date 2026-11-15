@@ -24,6 +24,7 @@ struct SettingsDetailView: View {
             case .navigation: NavigationSettingsView()
             case .windowManagement: WindowManagementSettingsView()
             case .displayTweaks: DisplayTweaksSettingsView()
+            case .cleanKeyboard: CleanKeyboardSettingsView()
             case .clipboard: ClipboardSettingsView()
             case .emoji: EmojiSettingsView()
             case .calendar: CalendarSettingsView()
@@ -31,6 +32,10 @@ struct SettingsDetailView: View {
             case .permissions: PermissionsSettingsView()
             case .backup: BackupSettingsView()
             case .about: AboutView()
+            case .enteAuth: EnteAuthSettingsView()
+            case .finderFileActions: FinderFileActionsSettingsView()
+            case .duckDuckGoEmail: DuckDuckGoEmailSettingsView()
+            case .keepassxc: KeePassXCSettingsView()
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

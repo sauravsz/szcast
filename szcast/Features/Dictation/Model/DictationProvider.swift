@@ -9,7 +9,7 @@ enum DictationTranscriptionProvider: String, CaseIterable, Identifiable, Sendabl
     var title: String {
         switch self {
         case .parakeet:
-            return String(localized: "Parakeet (Local Neural Engine)")
+            return String(localized: "Parakeet (Local)")
         case .groq:
             return String(localized: "Groq Whisper (Cloud)")
         }
@@ -32,9 +32,9 @@ enum DictationPolishProvider: String, CaseIterable, Identifiable, Sendable {
     var title: String {
         switch self {
         case .localS1:
-            return String(localized: "Local S1-mini (On-Device)")
+            return String(localized: "S1-mini (Local)")
         case .groq:
-            return String(localized: "Groq Llama (Cloud)")
+            return String(localized: "Groq Cloud")
         }
     }
 

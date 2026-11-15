@@ -118,6 +118,11 @@ final class FinderFileActionsService: Observable {
         saveRecent()
     }
 
+    func clearRecent() {
+        recentFolders.removeAll()
+        saveRecent()
+    }
+
     // MARK: - Finder Interop
 
     /// Retrieves current selection from the frontmost Finder window.
