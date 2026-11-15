@@ -13,6 +13,8 @@ final class DictationCoordinator {
     let historyStore = DictationHistoryStore()
     let s1Downloader = DictationS1Downloader()
     private let s1Polisher = DictationS1Polisher()
+    private let groqAudio = GroqAudioService()
+    private let groqPolish = GroqPolishService()
     private let livePreviewCoordinator = DictationLivePreviewCoordinator()
     private(set) var lastDictation: String?
     private let capture = DictationCapture()
@@ -175,13 +177,21 @@ final class DictationCoordinator {
     }
 
     private func begin(target: InjectionTarget?) {
-        guard models.isInstalled(settings.dictationModel) else {
-            field = nil
-            showMessage(String(localized: "Download the dictation model in Settings first"), .danger)
-            return
+        if settings.dictationTranscriptionProvider == .parakeet {
+            guard models.isInstalled(settings.dictationModel) else {
+                field = nil
+                showMessage(String(localized: "Download the dictation model in Settings first"), .danger)
+                return
+            }
+            models.prewarm(settings.dictationModel)
+        } else {
+            guard !settings.groqAPIKey.isEmpty else {
+                field = nil
+                showMessage(String(localized: "Set your Groq API key in Dictation Settings first"), .danger)
+                return
+            }
         }
-        models.prewarm(settings.dictationModel)
-        if settings.dictationS1Enabled {
+        if settings.dictationS1Enabled && settings.dictationPolishProvider == .localS1 {
             DictationLlamaServerManager.shared.prewarm(idleRelease: settings.dictationS1IdleRelease)
         }
         token = UUID()
@@ -263,9 +273,19 @@ final class DictationCoordinator {
                 return
             }
             do {
-                let transcript = try await models.transcribe(
-                    samples, model: model,
-                    language: language)
+                let transcript: String
+                if settings.dictationTranscriptionProvider == .groq, !settings.groqAPIKey.isEmpty {
+                    transcript = try await groqAudio.transcribe(
+                        samples: samples,
+                        apiKey: settings.groqAPIKey,
+                        model: settings.dictationGroqTranscriptionModel,
+                        language: language
+                    )
+                } else {
+                    transcript = try await models.transcribe(
+                        samples, model: model,
+                        language: language)
+                }
                 guard token == current else { return }
 
                 var processed = transcript
@@ -293,7 +313,21 @@ final class DictationCoordinator {
                         context: settings.dictationS1Context,
                         idleRelease: settings.dictationS1IdleRelease
                     )
-                    processed = await s1Polisher.polish(processed, settings: s1)
+                    if settings.dictationPolishProvider == .groq, !settings.groqAPIKey.isEmpty {
+                        do {
+                            processed = try await groqPolish.polish(
+                                processed,
+                                apiKey: settings.groqAPIKey,
+                                settings: s1,
+                                model: settings.dictationGroqPolishModel
+                            )
+                        } catch {
+                            // Fallback to local S1 on error
+                            processed = await s1Polisher.polish(processed, settings: s1)
+                        }
+                    } else {
+                        processed = await s1Polisher.polish(processed, settings: s1)
+                    }
                     // Authoritative post-pass: ensure user custom words, vocabulary packs, and snippets
                     // are never undone or mis-cased by the speech normalization model
                     processed = dictionaryStore.applyDictionaryAndPacks(processed)
@@ -336,6 +370,14 @@ final class DictationCoordinator {
                                 showMessage(String(localized: "Couldn't paste dictation into this app"), .danger)
                             })
                     } else {
+                        // Check accessibility permission for auto-paste into external app
+                        if !Permissions.isAccessibilityTrusted() {
+                            Paster.copyPlainText(text)
+                            reset(cancelTranscription: false)
+                            showMessage(String(localized: "Accessibility permission needed to auto-paste (Copied to clipboard)"), .neutral)
+                            return
+                        }
+
                         Paster.pasteString(text, previousApp: app) { [weak self] in
                             guard let self, token == current else { return }
                             if destination.copies || settings.dictationAutoCopyToClipboard {

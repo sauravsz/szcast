@@ -18,6 +18,8 @@ struct KeychainSecretStore: Sendable {
     static let extensionOAuthTokens = KeychainSecretStore(scope: "extension-oauth-tokens")
     /// Web search API keys (Tavily, Exa, Jina).
     static let webSearchAPIKeys = KeychainSecretStore(scope: "web-search-api-keys")
+    /// Groq Cloud API key.
+    static let groqAPIKeys = KeychainSecretStore(scope: "groq-api-keys")
 
     init(scope: String, bundleIdentifier: String? = Bundle.main.bundleIdentifier) {
         service = "\(bundleIdentifier ?? "com.sauravsz.szcast").\(scope)"

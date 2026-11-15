@@ -7,6 +7,20 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C1C4E3A20008000000000001 /* DictationProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10008000000000001 /* DictationProvider.swift */; };
+		C1C4E3A20008000000000002 /* GroqAudioService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10008000000000002 /* GroqAudioService.swift */; };
+		C1C4E3A20008000000000003 /* GroqPolishService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10008000000000003 /* GroqPolishService.swift */; };
+		C1C4E3A20009000000000001 /* DisplayTweaksPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10009000000000001 /* DisplayTweaksPreset.swift */; };
+		C1C4E3A20009000000000002 /* DisplayTweaksService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10009000000000002 /* DisplayTweaksService.swift */; };
+		C1C4E3A20009000000000003 /* GammaCurveCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10009000000000003 /* GammaCurveCanvas.swift */; };
+		C1C4E3A20009000000000004 /* DisplayTweaksSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10009000000000004 /* DisplayTweaksSettingsView.swift */; };
+		C1C4E3A2000A000000000001 /* EnteAuthAccount.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000A000000000001 /* EnteAuthAccount.swift */; };
+		C1C4E3A2000A000000000002 /* TOTPEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000A000000000002 /* TOTPEngine.swift */; };
+		C1C4E3A2000A000000000003 /* EnteAuthStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000A000000000003 /* EnteAuthStore.swift */; };
+		C1C4E3A2000A000000000004 /* EnteAuthScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000A000000000004 /* EnteAuthScreen.swift */; };
+		C1C4E3A2000B000000000001 /* FinderFolderDestination.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000B000000000001 /* FinderFolderDestination.swift */; };
+		C1C4E3A2000B000000000002 /* FinderFileActionsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000B000000000002 /* FinderFileActionsService.swift */; };
+		C1C4E3A2000B000000000003 /* MoveFileToFolderScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000B000000000003 /* MoveFileToFolderScreen.swift */; };
 		C1C4E3A20007000000000001 /* URLSanitizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10007000000000001 /* URLSanitizer.swift */; };
 		C1C4E3A20001000000000099 /* CalcDataTransformers.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10001000000000099 /* CalcDataTransformers.swift */; };
 		C1C4E3A20005000000000001 /* AudioDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10005000000000001 /* AudioDevice.swift */; };
@@ -997,6 +1011,20 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		C1C4E3A10008000000000001 /* DictationProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationProvider.swift; sourceTree = "<group>"; };
+		C1C4E3A10008000000000002 /* GroqAudioService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroqAudioService.swift; sourceTree = "<group>"; };
+		C1C4E3A10008000000000003 /* GroqPolishService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroqPolishService.swift; sourceTree = "<group>"; };
+		C1C4E3A10009000000000001 /* DisplayTweaksPreset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayTweaksPreset.swift; sourceTree = "<group>"; };
+		C1C4E3A10009000000000002 /* DisplayTweaksService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayTweaksService.swift; sourceTree = "<group>"; };
+		C1C4E3A10009000000000003 /* GammaCurveCanvas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GammaCurveCanvas.swift; sourceTree = "<group>"; };
+		C1C4E3A10009000000000004 /* DisplayTweaksSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayTweaksSettingsView.swift; sourceTree = "<group>"; };
+		C1C4E3A1000A000000000001 /* EnteAuthAccount.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnteAuthAccount.swift; sourceTree = "<group>"; };
+		C1C4E3A1000A000000000002 /* TOTPEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TOTPEngine.swift; sourceTree = "<group>"; };
+		C1C4E3A1000A000000000003 /* EnteAuthStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnteAuthStore.swift; sourceTree = "<group>"; };
+		C1C4E3A1000A000000000004 /* EnteAuthScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnteAuthScreen.swift; sourceTree = "<group>"; };
+		C1C4E3A1000B000000000001 /* FinderFolderDestination.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderFolderDestination.swift; sourceTree = "<group>"; };
+		C1C4E3A1000B000000000002 /* FinderFileActionsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderFileActionsService.swift; sourceTree = "<group>"; };
+		C1C4E3A1000B000000000003 /* MoveFileToFolderScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveFileToFolderScreen.swift; sourceTree = "<group>"; };
 		C1C4E3A10007000000000001 /* URLSanitizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSanitizer.swift; sourceTree = "<group>"; };
 		C1C4E3A10001000000000099 /* CalcDataTransformers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalcDataTransformers.swift; sourceTree = "<group>"; };
 		C1C4E3A10005000000000001 /* AudioDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioDevice.swift; sourceTree = "<group>"; };
@@ -2425,6 +2453,8 @@
 		2F37DF33894D0E30B694B323 /* Service */ = {
 			isa = PBXGroup;
 			children = (
+				C1C4E3A10008000000000002 /* GroqAudioService.swift */,
+				C1C4E3A10008000000000003 /* GroqPolishService.swift */,
 				5514468C4D18274EF07EE1E7 /* DictationDictionaryStore.swift */,
 				16DDD06310C52049BD45EA67 /* DictationHistoryStore.swift */,
 				5CFEC211592A3BDA09B00F05 /* DictationS1Polisher.swift */,
@@ -2652,6 +2682,7 @@
 		58F07CD16A5D35BECC10A00A /* Model */ = {
 			isa = PBXGroup;
 			children = (
+				C1C4E3A10008000000000001 /* DictationProvider.swift */,
 				ED159326D2C4D1A06F130487 /* CustomWord.swift */,
 				F727C9F571DD9C97701F40FD /* DictationHistoryItem.swift */,
 				9E34F1F824C8572E36B11C16 /* DictationOtherAudioMode.swift */,
@@ -3366,6 +3397,110 @@
 			path = Service;
 			sourceTree = "<group>";
 		};
+		C1C4E3A00009000000000001 /* DisplayTweaks */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A00009000000000010 /* Model */,
+				C1C4E3A00009000000000020 /* Service */,
+				C1C4E3A00009000000000030 /* UI */,
+			);
+			path = DisplayTweaks;
+			sourceTree = "<group>";
+		};
+		C1C4E3A00009000000000010 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A10009000000000001 /* DisplayTweaksPreset.swift */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		C1C4E3A00009000000000020 /* Service */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A10009000000000002 /* DisplayTweaksService.swift */,
+			);
+			path = Service;
+			sourceTree = "<group>";
+		};
+		C1C4E3A00009000000000030 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A10009000000000003 /* GammaCurveCanvas.swift */,
+				C1C4E3A10009000000000004 /* DisplayTweaksSettingsView.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		C1C4E3A0000A000000000001 /* EnteAuth */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A0000A000000000010 /* Model */,
+				C1C4E3A0000A000000000020 /* Service */,
+				C1C4E3A0000A000000000030 /* UI */,
+			);
+			path = EnteAuth;
+			sourceTree = "<group>";
+		};
+		C1C4E3A0000A000000000010 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A1000A000000000001 /* EnteAuthAccount.swift */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		C1C4E3A0000A000000000020 /* Service */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A1000A000000000002 /* TOTPEngine.swift */,
+				C1C4E3A1000A000000000003 /* EnteAuthStore.swift */,
+			);
+			path = Service;
+			sourceTree = "<group>";
+		};
+		C1C4E3A0000A000000000030 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A1000A000000000004 /* EnteAuthScreen.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		C1C4E3A0000B000000000001 /* FinderFileActions */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A0000B000000000010 /* Model */,
+				C1C4E3A0000B000000000020 /* Service */,
+				C1C4E3A0000B000000000030 /* UI */,
+			);
+			path = FinderFileActions;
+			sourceTree = "<group>";
+		};
+		C1C4E3A0000B000000000010 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A1000B000000000001 /* FinderFolderDestination.swift */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		C1C4E3A0000B000000000020 /* Service */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A1000B000000000002 /* FinderFileActionsService.swift */,
+			);
+			path = Service;
+			sourceTree = "<group>";
+		};
+		C1C4E3A0000B000000000030 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				C1C4E3A1000B000000000003 /* MoveFileToFolderScreen.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
 		C1C4E3A00003000000000001 /* Travel */ = {
 			isa = PBXGroup;
 			children = (
@@ -3443,6 +3578,9 @@
 				C1C4E3A00003000000000001 /* Travel */,
 				C1C4E3A00005000000000001 /* Hardware */,
 				C1C4E3A00006000000000001 /* ScreenCapture */,
+				C1C4E3A00009000000000001 /* DisplayTweaks */,
+				C1C4E3A0000A000000000001 /* EnteAuth */,
+				C1C4E3A0000B000000000001 /* FinderFileActions */,
 				C1C4E3A00004000000000001 /* Flights */,
 				87070A80E9E3AB3E4B0A9E54 /* AI */,
 				6E106BD79223C45E7D102798 /* AppleShortcuts */,
@@ -4669,6 +4807,20 @@
 				C1C4E3A20006000000000001 /* ScreenCaptureResult.swift in Sources */,
 				C1C4E3A20006000000000002 /* ScreenCaptureService.swift in Sources */,
 				C1C4E3A20007000000000001 /* URLSanitizer.swift in Sources */,
+				C1C4E3A20008000000000001 /* DictationProvider.swift in Sources */,
+				C1C4E3A20008000000000002 /* GroqAudioService.swift in Sources */,
+				C1C4E3A20008000000000003 /* GroqPolishService.swift in Sources */,
+				C1C4E3A20009000000000001 /* DisplayTweaksPreset.swift in Sources */,
+				C1C4E3A20009000000000002 /* DisplayTweaksService.swift in Sources */,
+				C1C4E3A20009000000000003 /* GammaCurveCanvas.swift in Sources */,
+				C1C4E3A20009000000000004 /* DisplayTweaksSettingsView.swift in Sources */,
+				C1C4E3A2000A000000000001 /* EnteAuthAccount.swift in Sources */,
+				C1C4E3A2000A000000000002 /* TOTPEngine.swift in Sources */,
+				C1C4E3A2000A000000000003 /* EnteAuthStore.swift in Sources */,
+				C1C4E3A2000A000000000004 /* EnteAuthScreen.swift in Sources */,
+				C1C4E3A2000B000000000001 /* FinderFolderDestination.swift in Sources */,
+				C1C4E3A2000B000000000002 /* FinderFileActionsService.swift in Sources */,
+				C1C4E3A2000B000000000003 /* MoveFileToFolderScreen.swift in Sources */,
 				C1C4E3A20004000000000001 /* FlightResult.swift in Sources */,
 				C1C4E3A20004000000000002 /* FlightTrackerService.swift in Sources */,
 				C1C4E3A20004000000000003 /* FlightCardView.swift in Sources */,

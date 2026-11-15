@@ -3,6 +3,7 @@ import SwiftUI
 struct GeneralSettingsView: View {
     @Environment(AppCore.self) private var core
     @Environment(AppSettings.self) private var settings
+    @Environment(SettingsNavigationState.self) private var navigation
     private var launcherRanking: LauncherRankingStore { core.launcherRanking }
     @State private var confirmingRankingReset = false
     @State private var inputSources: [InputSourceSwitcher.Option] = []
@@ -144,6 +145,41 @@ struct GeneralSettingsView: View {
             }
 
             AllowedDeepLinksSection()
+
+            Section {
+                Toggle(isOn: $settings.displayTweaksEnabled) {
+                    Text("Enable Display Tweaks")
+                    Text("Interactive RGB gamma curves, shadows, highlights, blacks, and whites.")
+                }
+                .onChange(of: settings.displayTweaksEnabled) { _, enabled in
+                    if enabled {
+                        DisplayTweaksService.shared.apply(
+                            displayID: settings.displayTweaksDisplayID,
+                            redGain: settings.displayTweaksRed,
+                            greenGain: settings.displayTweaksGreen,
+                            blueGain: settings.displayTweaksBlue,
+                            blacks: settings.displayTweaksBlacks,
+                            shadows: settings.displayTweaksShadows,
+                            highlights: settings.displayTweaksHighlights,
+                            whites: settings.displayTweaksWhites,
+                            contrast: settings.displayTweaksContrast,
+                            brightness: settings.displayTweaksBrightness
+                        )
+                    } else {
+                        DisplayTweaksService.shared.restoreGamma()
+                    }
+                }
+                LabeledContent {
+                    Button("Configure…") {
+                        navigation.select(.displayTweaks)
+                    }
+                } label: {
+                    Text("Sliders & Calibration")
+                    Text("Adjust RGB balance, blacks, shadows, highlights, whites, and presets.")
+                }
+            } header: {
+                Text("Display tweaks")
+            }
         }
         .formStyle(.grouped)
         .settingsScrollTarget(.general)

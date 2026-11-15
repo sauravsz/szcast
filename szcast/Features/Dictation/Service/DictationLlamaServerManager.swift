@@ -12,6 +12,7 @@ final class DictationLlamaServerManager {
     private(set) var currentIdleRelease: DictationIdleRelease = .never
 
     static let defaultPort: Int = 51143
+    static let primaryGitHubURL = URL(string: "https://github.com/sauravsz/szcast/releases/download/v1.0.8/s1-mini-1.0.gguf")!
     static let directHuggingFaceURL = URL(string: "https://huggingface.co/superwhisper/s1-mini-GGUF/resolve/34add00a48a2e5d24e5a4ee5405a99620a3a240c/s1-mini-q4_k_m.gguf")!
 
     func setIdleRelease(_ idleRelease: DictationIdleRelease) {
@@ -137,7 +138,8 @@ final class DictationLlamaServerManager {
             "-m", modelURL.path,
             "--host", "127.0.0.1",
             "--port", String(port),
-            "-c", "8192",
+            "-ngl", "99",
+            "-c", "2048",
             "-fa", "on",
             "--cache-type-k", "q8_0",
             "--cache-type-v", "q8_0",

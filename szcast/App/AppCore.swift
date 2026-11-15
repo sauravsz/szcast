@@ -245,6 +245,8 @@ final class AppCore {
     @ObservationIgnored private(set) lazy var focusTimerCoordinator = FocusTimerCoordinator(
         settings: settings, sensory: sensoryCoordinator,
         showMessage: { [unowned self] in self.showMessage($0, tone: $1) })
+    @ObservationIgnored private(set) lazy var enteAuthStore = EnteAuthStore()
+    @ObservationIgnored private(set) lazy var finderFileActionsService = FinderFileActionsService()
 
     @ObservationIgnored private lazy var windowController = PaletteWindowController(core: self)
     @ObservationIgnored private lazy var messageHUD = MessageHUDController(settings: settings)

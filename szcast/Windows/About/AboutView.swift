@@ -151,6 +151,10 @@ private struct AboutLink: Identifiable {
             id: "github", glyph: .brand("BrandGitHub"), title: "GitHub",
             detail: "github.com/sauravsz/szcast",
             url: URL(string: "https://github.com/sauravsz/szcast")!),
+        AboutLink(
+            id: "acknowledgements", glyph: .symbol("doc.text"), title: String(localized: "Acknowledgements"),
+            detail: "NOTICE.md",
+            url: URL(string: "https://github.com/sauravsz/szcast/blob/main/NOTICE.md")!),
     ]
 }
 

@@ -348,6 +348,11 @@ final class AppSettings {
     var dictationS1IdleRelease = DictationIdleRelease.tenMinutes
     var dictationPasteMode = DictationPasteMode.allAtOnce
     var dictationLivePreviewEnabled = true
+    var dictationTranscriptionProvider = DictationTranscriptionProvider.parakeet
+    var dictationPolishProvider = DictationPolishProvider.localS1
+    var dictationGroqTranscriptionModel = "whisper-large-v3-turbo"
+    var dictationGroqPolishModel = "llama-3.1-8b-instant"
+    var groqAPIKey = ""
 }
 
 enum HotKeyAction { case dictation, dictationAddWord, dictationPasteLast, dictationCopyLast }

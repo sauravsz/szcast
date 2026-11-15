@@ -58,9 +58,10 @@ enum Paster {
     static func pasteString(_ text: String, previousApp: NSRunningApplication?, completion: (@MainActor () -> Void)? = nil) {
         let app = previousApp ?? NSWorkspace.shared.frontmostApplication
         writeString(text)
-        app?.activate()
-        DispatchQueue.main.asyncAfter(deadline: .now() + activationDelay) {
-            postCommandV()
+        app?.activate(options: .activateIgnoringOtherApps)
+        let delay = app == nil || app?.bundleIdentifier == Bundle.main.bundleIdentifier ? directPostDelay : 0.12
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            postCommandV(toPid: app?.processIdentifier)
             if let completion {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) {
                     completion()

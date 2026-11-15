@@ -2,9 +2,10 @@ import SwiftUI
 
 /// Central design tokens; every dark colour is the literal the forced-dark build shipped.
 enum Theme {
-    /// Liquid Glass casts its own shadow contour; masking ensures the window shadow traces only the settled silhouette.
+    /// macOS 26 glass casts its own shadow; on 27 bare glass has none and needs the window's shadow without clipped alpha rims.
     static var glassCastsShadow: Bool {
-        true
+        if #available(macOS 27, *) { return false }
+        return true
     }
 
     enum Spacing {

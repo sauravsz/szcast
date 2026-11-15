@@ -279,6 +279,10 @@ final class LauncherCoordinator {
             core.supportCoordinator.showSupport()
         case .focusTimer:
             paletteCoordinator.togglePalette(mode: .focusTimer, seeding: searchQuery)
+        case .enteAuth:
+            paletteCoordinator.togglePalette(mode: .enteAuth, seeding: searchQuery)
+        case .moveFileToFolder:
+            paletteCoordinator.togglePalette(mode: .moveFileToFolder, seeding: searchQuery)
         case .captureScreenText:
             dismissPalette()
             ScreenCaptureService.shared.capture(mode: .textOCR, showMessage: { [weak core] msg in

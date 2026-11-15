@@ -386,3 +386,41 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+## Display Management & Hardware LUT Controls
+
+szcast's display gamma calibration and display management architectures draw inspiration from and adopt techniques from:
+
+- **FreeDisplay** by huberdf (<https://github.com/huberdf/FreeDisplay>): Open-source macOS display management, CoreGraphics display configuration, virtual display architecture, and display mirroring controls.
+- **gamma-control** by Qiueyed (<https://github.com/Qiueyed/gamma-control>): Mathematical transfer curve calculations for RGB channel gains, deep shadow/black floor lifting, highlight compression, and hardware look-up table (LUT) application via `CGSetDisplayTransferByTable`.
+
+The corresponding implementations reside in:
+- `szcast/Features/DisplayTweaks/Model/DisplayTweaksPreset.swift`
+- `szcast/Features/DisplayTweaks/Service/DisplayTweaksService.swift`
+- `szcast/Features/DisplayTweaks/UI/`
+- `szcast/Features/SystemActions/Service/SystemActionRunner.swift` (display mirroring toggle)
+
+## Ente Auth & 2FA Authenticator
+
+szcast's native 2FA authenticator suite adopts architecture and workflow patterns from:
+
+- **ente-auth** (<https://github.com/raycast/extensions/tree/main/extensions/ente-auth>) by `chkpwd` and the Ente team: RFC 6238 / RFC 4226 TOTP token calculation, countdown urgency indicators, and automatic `ente_auth.txt` discovery and import.
+- **Ente Auth Alfred Workflow**: Direct-copy TOTP shortcuts, frecency ranking, and single-keystroke `Hyper + T` invocation.
+
+The corresponding implementations reside in:
+- `szcast/Features/EnteAuth/Model/EnteAuthAccount.swift`
+- `szcast/Features/EnteAuth/Service/TOTPEngine.swift`
+- `szcast/Features/EnteAuth/Service/EnteAuthStore.swift`
+- `szcast/Features/EnteAuth/UI/EnteAuthScreen.swift`
+
+## Finder File Actions
+
+szcast's native Finder file management integration is modeled on:
+
+- **finder-file-actions** (<https://github.com/raycast/extensions/tree/main/extensions/finder-file-actions>) by `pa1ar`: Frontmost Finder selection query via AppleScript, Spotlight directory filtering, destination folder pinning, LRU recent folders, and collision-safe duplicate naming (`file 2.txt`).
+- **Finder File Actions Alfred Workflow**: Dedicated `Hyper + M` instant file move to chosen destination folder.
+
+The corresponding implementations reside in:
+- `szcast/Features/FinderFileActions/Model/FinderFolderDestination.swift`
+- `szcast/Features/FinderFileActions/Service/FinderFileActionsService.swift`
+- `szcast/Features/FinderFileActions/UI/MoveFileToFolderScreen.swift`

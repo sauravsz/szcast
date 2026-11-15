@@ -246,6 +246,38 @@ enum SettingsBackupCoverage {
         AppSettingsKey.chatFontFamily.rawValue:
             "AI Chat font family depends on fonts installed on this Mac.",
         AppSettingsKey.chatCodeFontFamily.rawValue:
-            "AI Chat code font family depends on fonts installed on this Mac."
+            "AI Chat code font family depends on fonts installed on this Mac.",
+        AppSettingsKey.dictationTranscriptionProvider.rawValue:
+            "Transcription provider preference stays local to this Mac.",
+        AppSettingsKey.dictationPolishProvider.rawValue:
+            "Speech normalization provider preference stays local to this Mac.",
+        AppSettingsKey.dictationGroqTranscriptionModel.rawValue:
+            "Cloud transcription model selection stays local to this Mac.",
+        AppSettingsKey.dictationGroqPolishModel.rawValue:
+            "Cloud speech normalization model selection stays local to this Mac.",
+        AppSettingsKey.displayTweaksEnabled.rawValue:
+            "Display LUT calibration is local to this Mac's attached screens.",
+        AppSettingsKey.displayTweaksDisplayID.rawValue:
+            "Display ID is hardware-specific to this Mac.",
+        AppSettingsKey.displayTweaksRed.rawValue:
+            "Display RGB calibration is hardware-specific to this Mac.",
+        AppSettingsKey.displayTweaksGreen.rawValue:
+            "Display RGB calibration is hardware-specific to this Mac.",
+        AppSettingsKey.displayTweaksBlue.rawValue:
+            "Display RGB calibration is hardware-specific to this Mac.",
+        AppSettingsKey.displayTweaksBlacks.rawValue:
+            "Display tonal calibration is hardware-specific to this Mac.",
+        AppSettingsKey.displayTweaksShadows.rawValue:
+            "Display tonal calibration is hardware-specific to this Mac.",
+        AppSettingsKey.displayTweaksHighlights.rawValue:
+            "Display tonal calibration is hardware-specific to this Mac.",
+        AppSettingsKey.displayTweaksWhites.rawValue:
+            "Display tonal calibration is hardware-specific to this Mac.",
+        AppSettingsKey.displayTweaksContrast.rawValue:
+            "Display tonal calibration is hardware-specific to this Mac.",
+        AppSettingsKey.displayTweaksBrightness.rawValue:
+            "Display tonal calibration is hardware-specific to this Mac.",
+        AppSettingsKey.displayTweaksPreset.rawValue:
+            "Display calibration preset is hardware-specific to this Mac."
     ]
 }

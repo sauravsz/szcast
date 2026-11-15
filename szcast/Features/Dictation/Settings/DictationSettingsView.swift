@@ -360,52 +360,74 @@ struct DictationSettingsView: View {
             }
 
             Section {
-                Picker(selection: familyBinding) {
-                    ForEach(DictationModel.Family.allCases) { family in
-                        Text(family.rawValue).tag(family)
+                Picker(selection: $bSettings.dictationTranscriptionProvider) {
+                    ForEach(DictationTranscriptionProvider.allCases) { provider in
+                        Text(provider.title).tag(provider)
                     }
                 } label: {
-                    SettingsRowTitle(.dictationModel, "Engine")
-                    Text(settings.dictationModel.family.summary + " · " + settings.dictationModel.coverage)
-                }
-                Picker(selection: $bSettings.dictationModel) {
-                    ForEach(
-                        DictationModel.allCases.filter { $0.family == settings.dictationModel.family }
-                    ) { model in
-                        Text(model.variantTitle).tag(model)
-                    }
-                } label: {
-                    SettingsRowTitle(.dictationModel, "Model")
-                    Text(settings.dictationModel.summary)
+                    SettingsRowTitle(.dictationModel, "Transcription engine")
+                    Text("Choose between on-device Nvidia Parakeet (recommended) or Groq Cloud Whisper.")
                 }
 
-                let installed = coordinator.models.isInstalled(settings.dictationModel)
-                let downloading = coordinator.models.downloading == settings.dictationModel
-                if downloading {
-                    DownloadProgressView(models: coordinator.models)
-                } else {
-                    LabeledContent {
-                        if installed {
-                            HStack(spacing: Theme.Spacing.md) {
-                                Text("Installed · FluidAudio / Local")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                Button("Remove") { removeModel(settings.dictationModel) }
-                                    .disabled(
-                                        coordinator.models.transcribing || coordinator.models.removing != nil)
-                            }
-                        } else {
-                            Button("Download") { downloadModel(settings.dictationModel) }
-                                .disabled(coordinator.models.downloading != nil || coordinator.models.removing == settings.dictationModel)
+                if settings.dictationTranscriptionProvider == .parakeet {
+                    Picker(selection: familyBinding) {
+                        ForEach(DictationModel.Family.allCases) { family in
+                            Text(family.rawValue).tag(family)
                         }
                     } label: {
-                        Text(installed ? "Installed" : "Not installed")
-                        Text(modelDescription)
+                        SettingsRowTitle(.dictationModel, "Engine family")
+                        Text(settings.dictationModel.family.summary + " · " + settings.dictationModel.coverage)
+                    }
+                    Picker(selection: $bSettings.dictationModel) {
+                        ForEach(
+                            DictationModel.allCases.filter { $0.family == settings.dictationModel.family }
+                        ) { model in
+                            Text(model.variantTitle).tag(model)
+                        }
+                    } label: {
+                        SettingsRowTitle(.dictationModel, "Model")
+                        Text(settings.dictationModel.summary)
+                    }
+
+                    let installed = coordinator.models.isInstalled(settings.dictationModel)
+                    let downloading = coordinator.models.downloading == settings.dictationModel
+                    if downloading {
+                        DownloadProgressView(models: coordinator.models)
+                    } else {
+                        LabeledContent {
+                            if installed {
+                                HStack(spacing: Theme.Spacing.md) {
+                                    Text("Installed · FluidAudio / Local")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    Button("Remove") { removeModel(settings.dictationModel) }
+                                        .disabled(
+                                            coordinator.models.transcribing || coordinator.models.removing != nil)
+                                }
+                            } else {
+                                Button("Download") { downloadModel(settings.dictationModel) }
+                                    .disabled(coordinator.models.downloading != nil || coordinator.models.removing == settings.dictationModel)
+                            }
+                        } label: {
+                            Text(installed ? "Installed" : "Not installed")
+                            Text(modelDescription)
+                        }
+                    }
+                } else {
+                    Picker(selection: $bSettings.dictationGroqTranscriptionModel) {
+                        Text("whisper-large-v3-turbo (Free · Recommended)").tag("whisper-large-v3-turbo")
+                        Text("whisper-large-v3 (Free · State-of-the-Art)").tag("whisper-large-v3")
+                        Text("distil-whisper-large-v3-en (Free · English)").tag("distil-whisper-large-v3-en")
+                    } label: {
+                        SettingsRowTitle(.dictationModel, "Groq STT model")
+                        Text("Cloud speech recognition powered by Groq LPU hardware (~250ms).")
                     }
                 }
             } header: {
                 SettingsSectionHeader(.dictationModel)
             }
+
+            groqCloudSection(settings: settings)
         }
     }
 
@@ -571,7 +593,26 @@ struct DictationSettingsView: View {
             }
 
             if settings.dictationS1Enabled {
-                s1ModelStatusRow
+                Picker(selection: $bSettings.dictationPolishProvider) {
+                    ForEach(DictationPolishProvider.allCases) { provider in
+                        Text(provider.title).tag(provider)
+                    }
+                } label: {
+                    SettingsRowTitle(.dictationOutput, "Normalization engine")
+                    Text("Select on-device S1-mini (default) or ultra-fast Groq Llama cloud.")
+                }
+
+                if settings.dictationPolishProvider == .localS1 {
+                    s1ModelStatusRow
+                } else {
+                    Picker(selection: $bSettings.dictationGroqPolishModel) {
+                        Text("llama-3.1-8b-instant (Free · ~120ms)").tag("llama-3.1-8b-instant")
+                        Text("llama-3.3-70b-versatile (Free · 70B)").tag("llama-3.3-70b-versatile")
+                    } label: {
+                        SettingsRowTitle(.dictationOutput, "Groq polish model")
+                        Text("Speech cleanup and normalization at 1,000 tokens/sec.")
+                    }
+                }
 
                 Picker(selection: $bSettings.dictationS1Tone) {
                     ForEach(S1Tone.allCases) { tone in
@@ -704,13 +745,21 @@ struct DictationSettingsView: View {
                         .foregroundColor(.secondary)
                 }
                 Spacer()
-                Button {
-                    coordinator.s1Downloader.downloadDirectGGUF()
-                } label: {
-                    Label("Download (484 MB)", systemImage: "arrow.down.circle")
+                HStack(spacing: Theme.Spacing.xs) {
+                    Button {
+                        coordinator.s1Downloader.downloadDirectGGUF()
+                    } label: {
+                        Label("Download", systemImage: "arrow.down.circle")
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+
+                    Button("Import…") {
+                        selectModelFileToImport()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
             }
             .padding(.vertical, 2)
 
@@ -751,13 +800,83 @@ struct DictationSettingsView: View {
                         .foregroundColor(.secondary)
                 }
                 Spacer()
-                Button("Retry") {
-                    coordinator.s1Downloader.downloadDirectGGUF()
+                HStack(spacing: Theme.Spacing.xs) {
+                    Button("Retry") {
+                        coordinator.s1Downloader.downloadDirectGGUF()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+
+                    Button("Import…") {
+                        selectModelFileToImport()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
             }
             .padding(.vertical, 2)
+        }
+    }
+
+    private func selectModelFileToImport() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        panel.message = "Select s1-mini-1.0.gguf"
+        if panel.runModal() == .OK, let url = panel.url {
+            Task {
+                try? await coordinator.s1Downloader.importModelFile(from: url)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func groqCloudSection(settings: AppSettings) -> some View {
+        @Bindable var bSettings = settings
+        if settings.dictationTranscriptionProvider == .groq || (settings.dictationS1Enabled && settings.dictationPolishProvider == .groq) {
+            Section {
+                HStack {
+                    SecureField("Groq API Key (gsk_...)", text: $bSettings.groqAPIKey)
+                        .textFieldStyle(.roundedBorder)
+
+                    Button {
+                        if let url = URL(string: "https://console.groq.com/keys") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    } label: {
+                        Label("Get Groq Key", systemImage: "arrow.up.right.square")
+                    }
+                    .buttonStyle(.bordered)
+                }
+
+                HStack(spacing: Theme.Spacing.sm) {
+                    let key = settings.groqAPIKey.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if key.hasPrefix("gsk_") {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                        Text("Valid Groq API key configured in Keychain.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else if key.isEmpty {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                        Text("An API key is required to use Groq cloud dictation.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Image(systemName: "info.circle")
+                            .foregroundStyle(.secondary)
+                        Text("Keys typically start with 'gsk_'. Stored securely in macOS Keychain.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            } header: {
+                Text("Groq Cloud Configuration")
+            } footer: {
+                Text("Groq provides free Whisper STT (2,000 req/day) and Llama 3.1 cleanup (14,400 req/day) with sub-second turnaround.")
+            }
         }
     }
 

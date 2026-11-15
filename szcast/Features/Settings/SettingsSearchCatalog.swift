@@ -109,7 +109,7 @@ enum SettingsSearchCatalog {
         general + applications + systemSettings + systemActions + commands + quicklinks
         + appleShortcuts + fallbacks + clipboard + snippets + fileSearch + windowManagement
         + navigation + notes + calendar + emoji + ai + quickActions + dictation + extensions + permissions
-        + backup + about
+        + backup + displayTweaks + about
 
     private static let general: [SettingsSearchEntry] = [
         .init(pane: .general, keywords: ["preferences", "settings"]),
@@ -672,6 +672,15 @@ enum SettingsSearchCatalog {
         .init(
             .backupSettingsFile, "Sync settings file",
             keywords: ["settings.json", "config", "json", "dotfiles", ".config", "edit"])
+    ]
+
+    private static let displayTweaks: [SettingsSearchEntry] = [
+        .init(
+            pane: .displayTweaks,
+            keywords: ["gamma", "display", "monitor", "rgb", "shadows", "highlights", "blacks", "whites", "contrast", "brightness", "lut"]),
+        .init(
+            group: .displayTweaksDisplayTweaks, "Display Tweaks",
+            keywords: ["gamma", "lut", "hardware", "curve", "calibration"])
     ]
 
     private static let about: [SettingsSearchEntry] = [

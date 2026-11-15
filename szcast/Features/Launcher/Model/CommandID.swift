@@ -51,6 +51,8 @@ enum CommandID: String, CaseIterable, Sendable {
     case captureScreenText = "command:capture-screen-text"
     case scanQRCode = "command:scan-qr-code"
     case cleanClipboardURL = "command:clean-clipboard-url"
+    case enteAuth = "command:ente-auth"
+    case moveFileToFolder = "command:move-file-to-folder"
     case quit = "command:quit"
 
     static let defaultCompactBarCommands: [CommandID] = [
@@ -130,6 +132,8 @@ enum CommandID: String, CaseIterable, Sendable {
         case .captureScreenText: return "Capture Screen Text (OCR)"
         case .scanQRCode: return "Scan QR Code"
         case .cleanClipboardURL: return "Clean URL in Clipboard"
+        case .enteAuth: return "Ente Auth (2FA)"
+        case .moveFileToFolder: return "Move File to Folder"
         case .quit: return "Quit szcast"
         }
     }
@@ -184,6 +188,8 @@ enum CommandID: String, CaseIterable, Sendable {
         case .captureScreenText: return "text.viewfinder"
         case .scanQRCode: return "qrcode.viewfinder"
         case .cleanClipboardURL: return "link.badge.plus"
+        case .enteAuth: return "key.fill"
+        case .moveFileToFolder: return "arrow.right.doc.on.clipboard"
         case .quit: return "power"
         }
     }
@@ -217,6 +223,8 @@ enum CommandID: String, CaseIterable, Sendable {
         case .captureScreenText: ["ocr", "screen text", "grab text", "text recognition"]
         case .scanQRCode: ["qr", "scan qr", "barcode", "scan barcode"]
         case .cleanClipboardURL: ["clean url", "clean link", "sanitize url", "strip tracking"]
+        case .enteAuth: ["2fa", "totp", "ente", "authenticator", "otp", "auth"]
+        case .moveFileToFolder: ["move", "folder", "organize", "files", "finder"]
         default: []
         }
     }

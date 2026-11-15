@@ -111,8 +111,16 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - In-Place Live Intelligence Cards: Open-Meteo Weather, MapKit Travel Route Estimator, and FlightRadar24 flight tracker cards in root launcher.
   - Version bump to 1.0.8, signed release DMG & ZIP distribution assets packaged, 124 test suites pass.
 
+- **Ente Auth, Finder File Actions & Display Management**:
+  - Built-in Ente Auth 2FA Authenticator: RFC 6238 / RFC 4226 TOTP engine with CommonCrypto HMAC (SHA1, SHA256, SHA512), Base32 decoder, live countdown ticker, formatted token (`123 456`), next code preview, auto-discovery of `ente_auth.txt`, `0600` owner-only JSON persistence, and dedicated global hotkey `Hyper + T` (`⌃⌥⇧⌘T`) copying raw TOTP digits directly on Return.
+  - Built-in Finder File Actions: Frontmost Finder selection query via AppleScript, atomic move and copy with collision-safe duplicate renaming (`file 2.txt`), pinned destinations (`~/Downloads`, `~/Documents`, `~/Desktop`, `~/Pictures`, `~/AIOS`), LRU recent folders, Spotlight live search, and dedicated global hotkey `Hyper + M` (`⌃⌥⇧⌘M`) specifically triggering "Move File to Folder".
+  - Display Tweaks & FreeDisplay Management: Hardware gamma transfer table calculations (`CGSetDisplayTransferByTable`) with RGB channel gains, deep shadow/black floor lifting, highlight compression, whites, brightness, and contrast curves in Settings (`DisplayTweaksSettingsView`); display mirroring toggle system action (`SystemAction.toggleDisplayMirroring`) via CoreGraphics display configuration APIs.
+  - Groq Speech Transcription & Polishing: Groq API integration (`GroqAudioService` with whisper-large-v3 / whisper-large-v3-turbo, `GroqPolishService` with llama-3.3-70b-versatile / llama-3.1-8b-instant), provider picker in Dictation Settings, Keychain API key storage, and direct signup link.
+  - Attribution & Acknowledgements: Updated `NOTICE.md` and `AboutView.swift` crediting FreeDisplay (huberdf), gamma-control (Qiueyed), ente-auth (chkpwd / Ente), and finder-file-actions (pa1ar).
+  - Test Suite: Expanded from 124 to 127 test harnesses (`display-tweaks-test`, `ente-auth-test`, `finder-file-actions-test`); all 127 harnesses pass in 206s.
+
 ## Active State & Next Steps
-- **Active State**: Release 1.0.8 tagged and published. All 124 test harnesses pass in 169s. URL Sanitizer, Screen OCR/QR, Dev Transformers, Hardware Switcher, Meeting HUD, and 20-min dictation operational. Xcode Release and Debug builds clean.
+- **Active State**: 127 test harnesses pass cleanly in 206s. Ente Auth (`Hyper + T`), Finder File Actions (`Hyper + M`), Display Tweaks, Display Mirroring toggle, and Groq dictation fully integrated and verified with clean Xcode debug builds.
 - **Immediate Next Steps**:
   1. Test long continuous dictation (5+ minutes) in real-world workflows.
   2. Perform weekly upstream radar audit (`./Scripts/upstream-radar.sh`).

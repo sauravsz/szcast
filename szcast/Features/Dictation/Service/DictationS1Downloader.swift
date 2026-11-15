@@ -97,10 +97,15 @@ final class DictationS1Downloader {
 
     func downloadDirectGGUF() {
         cancelDownload()
-        status = .downloading(progress: 0.0, statusText: "Connecting to Hugging Face...")
+        status = .downloading(progress: 0.0, statusText: "Connecting to model mirror...")
 
         let destination = DictationLlamaServerManager.defaultDestinationURL()
         try? FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+
+        let mirrors = [
+            DictationLlamaServerManager.primaryGitHubURL,
+            DictationLlamaServerManager.directHuggingFaceURL
+        ]
 
         let coordinator = DirectDownloadCoordinator(
             onProgress: { [weak self] progress, statusText in
@@ -131,7 +136,18 @@ final class DictationS1Downloader {
         )
 
         self.downloadCoordinator = coordinator
-        coordinator.start(url: DictationLlamaServerManager.directHuggingFaceURL)
+        coordinator.start(urls: mirrors)
+    }
+
+    /// Import existing model file from local disk
+    func importModelFile(from sourceURL: URL) async throws {
+        let destination = DictationLlamaServerManager.defaultDestinationURL()
+        try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+        if FileManager.default.fileExists(atPath: destination.path) {
+            try FileManager.default.removeItem(at: destination)
+        }
+        try FileManager.default.copyItem(at: sourceURL, to: destination)
+        await checkStatus()
     }
 
     /// Pull model through local Ollama daemon
@@ -203,6 +219,10 @@ private final class DirectDownloadCoordinator: NSObject, URLSessionDownloadDeleg
     private let onCompletion: @MainActor (Result<URL, Error>) -> Void
     private var session: URLSession?
     private var task: URLSessionDownloadTask?
+    private var urls: [URL] = []
+    private var currentIndex: Int = 0
+    private var resumeData: Data?
+    private var retryCount: Int = 0
 
     init(
         onProgress: @escaping @MainActor (Double, String) -> Void,
@@ -217,8 +237,36 @@ private final class DirectDownloadCoordinator: NSObject, URLSessionDownloadDeleg
         self.session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
     }
 
+    func start(urls: [URL]) {
+        self.urls = urls
+        self.currentIndex = 0
+        self.retryCount = 0
+        startCurrent()
+    }
+
     func start(url: URL) {
-        task = session?.downloadTask(with: url)
+        start(urls: [url])
+    }
+
+    private func startCurrent() {
+        guard currentIndex < urls.count else {
+            Task { @MainActor in
+                self.onCompletion(.failure(NSError(domain: "DictationS1Download", code: 404, userInfo: [NSLocalizedDescriptionKey: "All download mirrors failed"])))
+            }
+            return
+        }
+        let url = urls[currentIndex]
+        let mirrorName = url.host?.contains("github") == true ? "GitHub Mirror" : "Hugging Face"
+        Task { @MainActor in
+            self.onProgress(0.0, "Connecting to \(mirrorName)...")
+        }
+
+        if let resumeData {
+            self.resumeData = nil
+            task = session?.downloadTask(withResumeData: resumeData)
+        } else {
+            task = session?.downloadTask(with: url)
+        }
         task?.resume()
     }
 
@@ -264,10 +312,38 @@ private final class DirectDownloadCoordinator: NSObject, URLSessionDownloadDeleg
     }
 
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-        if let error {
+        guard let error else { return }
+        let nsError = error as NSError
+
+        if nsError.code == NSURLErrorCancelled {
             Task { @MainActor in
-                onCompletion(.failure(error))
+                self.onCompletion(.failure(error))
             }
+            return
+        }
+
+        // Check for resume data on socket drops
+        if let data = nsError.userInfo[NSURLSessionDownloadTaskResumeData] as? Data, retryCount < 3 {
+            retryCount += 1
+            self.resumeData = data
+            Task { @MainActor in
+                self.onProgress(0.1, "Connection dropped. Resuming download...")
+            }
+            startCurrent()
+            return
+        }
+
+        // Try next candidate mirror
+        if currentIndex + 1 < urls.count {
+            currentIndex += 1
+            retryCount = 0
+            self.resumeData = nil
+            startCurrent()
+            return
+        }
+
+        Task { @MainActor in
+            self.onCompletion(.failure(error))
         }
     }
 }

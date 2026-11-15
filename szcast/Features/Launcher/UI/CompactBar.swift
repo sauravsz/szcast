@@ -76,8 +76,7 @@ struct CompactBar: View {
         return GlassEffectContainer(spacing: metrics.scaled(BarMotion.blend)) {
             ZStack(alignment: .topLeading) {
                 capsule.fill(.clear)
-                    .frame(width: geometry.capsuleWidth(revealed: revealed))
-                    .frame(maxHeight: .infinity)
+                    .frame(width: geometry.capsuleWidth(revealed: revealed), height: geometry.height)
                     .glassEffect(.regular, in: capsule)
                     .animation(
                         reduceMotion ? nil : BarMotion.capsule.delay(BarMotion.revealDelay),
@@ -86,7 +85,7 @@ struct CompactBar: View {
                     button(command, at: index, geometry: geometry, revealed: revealed)
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .frame(width: geometry.width, height: geometry.height, alignment: .topLeading)
         }
     }
 

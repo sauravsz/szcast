@@ -136,6 +136,10 @@ struct RootPaletteView: View {
                 screen: extensionScreen, extensions: extensions, vm: vm, openActions: openActions)
         case .focusTimer:
             return FocusTimerScreen(coordinator: core.focusTimerCoordinator, core: core, vm: vm)
+        case .enteAuth:
+            return EnteAuthScreen(store: core.enteAuthStore, core: core, vm: vm)
+        case .moveFileToFolder:
+            return MoveFileToFolderScreen(service: core.finderFileActionsService, core: core, vm: vm)
         }
     }
 

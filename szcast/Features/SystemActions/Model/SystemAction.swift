@@ -41,6 +41,9 @@ struct SystemAction: Identifiable, Hashable, Sendable {
         case brightness50 = "brightness-50"
         case brightness100 = "brightness-100"
         case cleanClipboardURL = "clean-clipboard-url"
+        case displayTweaks = "display-tweaks"
+        case resetDisplayGamma = "reset-display-gamma"
+        case toggleDisplayMirroring = "toggle-display-mirroring"
     }
 
     /// Whether it confirms first, and the copy; every such action is destructive.
@@ -124,6 +127,9 @@ enum SystemActionCatalog {
         case .brightness50: return "Set Brightness to 50%"
         case .brightness100: return "Set Brightness to 100%"
         case .cleanClipboardURL: return "Clean URL in Clipboard"
+        case .displayTweaks: return "Display Tweaks"
+        case .resetDisplayGamma: return "Reset Display Gamma"
+        case .toggleDisplayMirroring: return "Toggle Display Mirroring"
         }
     }
 
@@ -162,6 +168,9 @@ enum SystemActionCatalog {
         case .brightnessDown: return "sun.min"
         case .brightness50, .brightness100: return "sun.max.fill"
         case .cleanClipboardURL: return "link.badge.plus"
+        case .displayTweaks: return "sun.max"
+        case .resetDisplayGamma: return "arrow.counterclockwise"
+        case .toggleDisplayMirroring: return "rectangle.on.rectangle"
         // Not an SF Symbol: the logo is a trademark, so this is a bundled asset.
         case .toggleBluetooth: return "bluetooth"
         }

@@ -27,6 +27,8 @@ enum PaletteMode: String, CaseIterable, Identifiable {
     case dictionary
     case extensionCommand
     case focusTimer
+    case enteAuth
+    case moveFileToFolder
 
     var id: String { rawValue }
 
@@ -58,6 +60,8 @@ enum PaletteMode: String, CaseIterable, Identifiable {
         case .dictionary: return "book.closed"
         case .extensionCommand: return "puzzlepiece.extension"
         case .focusTimer: return "timer"
+        case .enteAuth: return "key.fill"
+        case .moveFileToFolder: return "folder.badge.gearshape"
         }
     }
     var placeholder: String {
@@ -88,6 +92,8 @@ enum PaletteMode: String, CaseIterable, Identifiable {
         // Replaced by the command's own `searchBarPlaceholder` whenever it declares one.
         case .extensionCommand: return String(localized: "Search…")
         case .focusTimer: return String(localized: "Focus Timer")
+        case .enteAuth: return String(localized: "Search 2FA accounts…")
+        case .moveFileToFolder: return String(localized: "Search destination folder…")
         }
     }
 }

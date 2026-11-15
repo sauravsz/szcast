@@ -455,6 +455,82 @@ final class AppSettings {
         didSet { defaults.set(dictationS1IdleRelease.rawValue, forKey: Key.dictationS1IdleRelease.rawValue) }
     }
 
+    var dictationTranscriptionProvider: DictationTranscriptionProvider {
+        didSet { defaults.set(dictationTranscriptionProvider.rawValue, forKey: Key.dictationTranscriptionProvider.rawValue) }
+    }
+
+    var dictationPolishProvider: DictationPolishProvider {
+        didSet { defaults.set(dictationPolishProvider.rawValue, forKey: Key.dictationPolishProvider.rawValue) }
+    }
+
+    var dictationGroqTranscriptionModel: String {
+        didSet { defaults.set(dictationGroqTranscriptionModel, forKey: Key.dictationGroqTranscriptionModel.rawValue) }
+    }
+
+    var dictationGroqPolishModel: String {
+        didSet { defaults.set(dictationGroqPolishModel, forKey: Key.dictationGroqPolishModel.rawValue) }
+    }
+
+    var groqAPIKey: String {
+        get { (try? KeychainSecretStore.groqAPIKeys.secret(for: "groq")) ?? "" }
+        set {
+            let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.isEmpty {
+                try? KeychainSecretStore.groqAPIKeys.removeSecret(for: "groq")
+            } else {
+                try? KeychainSecretStore.groqAPIKeys.setSecret(trimmed, for: "groq")
+            }
+        }
+    }
+
+    var displayTweaksEnabled: Bool {
+        didSet { defaults.set(displayTweaksEnabled, forKey: Key.displayTweaksEnabled.rawValue) }
+    }
+
+    var displayTweaksDisplayID: UInt32 {
+        didSet { defaults.set(displayTweaksDisplayID, forKey: Key.displayTweaksDisplayID.rawValue) }
+    }
+
+    var displayTweaksRed: Double {
+        didSet { defaults.set(displayTweaksRed, forKey: Key.displayTweaksRed.rawValue) }
+    }
+
+    var displayTweaksGreen: Double {
+        didSet { defaults.set(displayTweaksGreen, forKey: Key.displayTweaksGreen.rawValue) }
+    }
+
+    var displayTweaksBlue: Double {
+        didSet { defaults.set(displayTweaksBlue, forKey: Key.displayTweaksBlue.rawValue) }
+    }
+
+    var displayTweaksBlacks: Double {
+        didSet { defaults.set(displayTweaksBlacks, forKey: Key.displayTweaksBlacks.rawValue) }
+    }
+
+    var displayTweaksShadows: Double {
+        didSet { defaults.set(displayTweaksShadows, forKey: Key.displayTweaksShadows.rawValue) }
+    }
+
+    var displayTweaksHighlights: Double {
+        didSet { defaults.set(displayTweaksHighlights, forKey: Key.displayTweaksHighlights.rawValue) }
+    }
+
+    var displayTweaksWhites: Double {
+        didSet { defaults.set(displayTweaksWhites, forKey: Key.displayTweaksWhites.rawValue) }
+    }
+
+    var displayTweaksContrast: Double {
+        didSet { defaults.set(displayTweaksContrast, forKey: Key.displayTweaksContrast.rawValue) }
+    }
+
+    var displayTweaksBrightness: Double {
+        didSet { defaults.set(displayTweaksBrightness, forKey: Key.displayTweaksBrightness.rawValue) }
+    }
+
+    var displayTweaksPreset: String {
+        didSet { defaults.set(displayTweaksPreset, forKey: Key.displayTweaksPreset.rawValue) }
+    }
+
     var notesRendersMarkdown: Bool {
         didSet { defaults.set(notesRendersMarkdown, forKey: Key.notesRendersMarkdown.rawValue) }
     }
@@ -963,6 +1039,29 @@ final class AppSettings {
             defaults.object(forKey: Key.dictationS1IdleRelease.rawValue)
             .flatMap { $0 as? Int }
             .flatMap(DictationIdleRelease.init(rawValue:)) ?? .never
+        dictationTranscriptionProvider =
+            defaults.string(forKey: Key.dictationTranscriptionProvider.rawValue)
+            .flatMap(DictationTranscriptionProvider.init(rawValue:)) ?? .parakeet
+        dictationPolishProvider =
+            defaults.string(forKey: Key.dictationPolishProvider.rawValue)
+            .flatMap(DictationPolishProvider.init(rawValue:)) ?? .localS1
+        dictationGroqTranscriptionModel =
+            defaults.string(forKey: Key.dictationGroqTranscriptionModel.rawValue) ?? "whisper-large-v3-turbo"
+        dictationGroqPolishModel =
+            defaults.string(forKey: Key.dictationGroqPolishModel.rawValue) ?? "llama-3.1-8b-instant"
+
+        displayTweaksEnabled = defaults.bool(forKey: Key.displayTweaksEnabled.rawValue)
+        displayTweaksDisplayID = UInt32(defaults.integer(forKey: Key.displayTweaksDisplayID.rawValue))
+        displayTweaksRed = defaults.object(forKey: Key.displayTweaksRed.rawValue) == nil ? 1.0 : defaults.double(forKey: Key.displayTweaksRed.rawValue)
+        displayTweaksGreen = defaults.object(forKey: Key.displayTweaksGreen.rawValue) == nil ? 1.0 : defaults.double(forKey: Key.displayTweaksGreen.rawValue)
+        displayTweaksBlue = defaults.object(forKey: Key.displayTweaksBlue.rawValue) == nil ? 1.0 : defaults.double(forKey: Key.displayTweaksBlue.rawValue)
+        displayTweaksBlacks = defaults.double(forKey: Key.displayTweaksBlacks.rawValue)
+        displayTweaksShadows = defaults.double(forKey: Key.displayTweaksShadows.rawValue)
+        displayTweaksHighlights = defaults.double(forKey: Key.displayTweaksHighlights.rawValue)
+        displayTweaksWhites = defaults.double(forKey: Key.displayTweaksWhites.rawValue)
+        displayTweaksContrast = defaults.double(forKey: Key.displayTweaksContrast.rawValue)
+        displayTweaksBrightness = defaults.double(forKey: Key.displayTweaksBrightness.rawValue)
+        displayTweaksPreset = defaults.string(forKey: Key.displayTweaksPreset.rawValue) ?? "Default"
         notesRendersMarkdown =
             defaults.object(forKey: Key.notesRendersMarkdown.rawValue) == nil
             || defaults.bool(forKey: Key.notesRendersMarkdown.rawValue)

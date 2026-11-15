@@ -207,6 +207,19 @@ enum SystemActionRunner {
             } else {
                 return SystemActionFeedback(String(localized: "No URL in Clipboard"), isNoOp: true)
             }
+        case .displayTweaks:
+            if let url = URL(string: "\(AppURLScheme.current)://settings/display-tweaks") {
+                NSWorkspace.shared.open(url)
+            }
+            return SystemActionFeedback(String(localized: "Display Tweaks Opened"))
+        case .resetDisplayGamma:
+            DisplayTweaksService.shared.restoreGamma()
+            UserDefaults.standard.set(false, forKey: AppSettingsKey.displayTweaksEnabled.rawValue)
+            return SystemActionFeedback(String(localized: "Display Gamma Reset to Default"))
+        case .toggleDisplayMirroring:
+            let mirrored = try toggleDisplayMirroring()
+            return SystemActionFeedback(
+                mirrored ? String(localized: "Display Mirroring On") : String(localized: "Display Mirroring Off"))
         }
         return nil
     }
@@ -358,6 +371,54 @@ enum SystemActionRunner {
         }
         lastNonZeroVolume = current
         try setVolume(0)
+    }
+
+    static func toggleDisplayMirroring() throws -> Bool {
+        let maxDisplays: UInt32 = 16
+        var onlineDisplays = [CGDirectDisplayID](repeating: 0, count: Int(maxDisplays))
+        var displayCount: UInt32 = 0
+        guard CGGetOnlineDisplayList(maxDisplays, &onlineDisplays, &displayCount) == .success, displayCount > 1 else {
+            throw SystemActionFailure(String(localized: "Multiple displays are required to toggle mirroring."))
+        }
+
+        let main = CGMainDisplayID()
+        var config: CGDisplayConfigRef?
+        guard CGBeginDisplayConfiguration(&config) == .success, let cfg = config else {
+            throw SystemActionFailure(String(localized: "Could not configure display."))
+        }
+
+        var isCurrentlyMirrored = false
+        for i in 0..<Int(displayCount) {
+            let d = onlineDisplays[i]
+            if d != main && CGDisplayIsInMirrorSet(d) != 0 {
+                isCurrentlyMirrored = true
+                break
+            }
+        }
+
+        if isCurrentlyMirrored {
+            for i in 0..<Int(displayCount) {
+                let d = onlineDisplays[i]
+                if d != main {
+                    CGConfigureDisplayMirrorOfDisplay(cfg, d, kCGNullDirectDisplay)
+                }
+            }
+        } else {
+            for i in 0..<Int(displayCount) {
+                let d = onlineDisplays[i]
+                if d != main {
+                    CGConfigureDisplayMirrorOfDisplay(cfg, d, main)
+                }
+            }
+        }
+
+        let result = CGCompleteDisplayConfiguration(cfg, .permanently)
+        if result != .success {
+            CGCancelDisplayConfiguration(cfg)
+            throw SystemActionFailure(String(localized: "Failed to apply display configuration."))
+        }
+
+        return !isCurrentlyMirrored
     }
 
     /// Restore level for the mute fallback, written only when a mute drops it to zero.
