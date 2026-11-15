@@ -27,7 +27,7 @@
 
 ## About
 
-szcast is a lightweight, keyboard-driven launcher for macOS. It combines fast app and file searching, local AI dictation, system tweaks, and Raycast extension support into a single native binary. Built with SwiftUI and AppKit with zero Electron overhead and zero analytics.
+szcast is a lightweight, keyboard-driven launcher and offline AI dictation engine for macOS. It combines fast app searching, local speech-to-text, custom system tweaks, and Raycast extension compatibility into a single native binary. Built in Swift with zero Electron overhead and zero analytics.
 
 ## Installation
 
@@ -38,39 +38,38 @@ xattr -cr /Applications/szcast.app
 open /Applications/szcast.app
 ```
 
-## Built-In Features
+## Key Features
 
-### Offline Dictation & Persistent S1 Daemon
-- **Persistent Local Daemon**: S1-mini normalization engine stays resident in RAM (~460 MB) for 0ms startup overhead when dictation finishes.
-- **Single-Shot Paste**: Transcribes speech quietly in a floating pill, runs AI grammar cleanup, and pastes the polished text all at once.
-- **Local & Cloud Engines**: Offline on-device transcription via Apple Neural Engine (Parakeet) or ultra-fast cloud fallback via Groq (`whisper-large-v3-turbo` with `openai/gpt-oss-120b`, `openai/gpt-oss-20b`, or `qwen/qwen3.8-27b`).
-- **Domain Vocabulary Packs**: Custom dictionary with phonetic alias matching for tech, medical, legal, and brand terms.
-- **Smart Audio Intelligence**: Automatic media ducking for Spotify and Apple Music, spoken punctuation expansion, and audio level metering.
+### Extension Customization & Fast Navigation
+- **Centralized Extension Aliases**: Set custom aliases and global hotkeys for any installed Raycast extension command from a single view in Settings &rarr; Commands.
+- **List & Submenu Shortcuts (`⌘1`..`⌘9`)**: Press `⌘1` through `⌘9` to instantly activate any item in search results, extension lists (e.g. `brew search`), and nested submenus, with dynamic keycap badges when holding `Command`.
 
-### Liquid Glass Design & Transparency Control
-- **macOS Liquid Glass UI**: Native light-bending refraction and translucent vibrancy across the launcher palette and settings window.
-- **Adjustable Transparency**: User-configurable glass transparency slider (0% to 100%) with instant on/off toggle.
+### Offline Speech Dictation & Indic Romanization
+- **Persistent Local S1 Daemon**: Local S1-mini normalization engine stays hot in Metal GPU memory (~460 MB RAM) for 0ms startup delay.
+- **Audio & Video File Transcription**: Transcribe media files directly from the menu bar using local Neural Engine or cloud Groq models, with S1 normalization and instant clipboard copy.
+- **Bengali & Hindi Romanization**: Dictate in Bengali or Hindi and receive clean Latin text (Banglish & Hinglish) via local S1-mini LLM or 0ms deterministic Avro/Hunterian rules.
+- **Quiet Dictation Pill & Single-Shot Paste**: Visual waveform feedback in a floating glass pill, with polished text pasted in one shot upon completion.
+- **Audio Ducking & Domain Vocabulary**: Automatic media volume lowering for Spotify and Apple Music, plus built-in domain dictionaries (tech, medical, legal, brands).
 
-### Display Tweaks & Hardware LUT Calibration
-- **0–100 Color Sliders**: Direct GPU gamma table manipulation (`CGSetDisplayTransferByTable`) with granular controls for Red, Green, Blue gains, Blacks, Whites, Brightness, and Contrast.
-- **Quick Mirroring**: Built-in one-key display mirroring toggle.
+### Liquid Glass Design & Display Tweaks
+- **macOS Liquid Glass UI**: Translucent vibrancy and light refraction across the launcher and settings, with a 0% to 100% transparency slider and instant toggle.
+- **Lunar-Style 0–100 Color Sliders**: Direct GPU gamma table controls (`CGSetDisplayTransferByTable`) for Red, Green, Blue channels, Blacks, Whites, Brightness, and Contrast.
+- **Display Mirroring**: One-key hardware display mirroring toggle.
 
-### Built-in Productivity Suites
-- **Ente Auth 2FA (`Hyper + T`)**: Instant TOTP code generation with live countdown ring tickers and automatic import from `ente_auth.txt`.
-- **Finder File Actions (`Hyper + M`)**: Move or copy selected Finder files to pinned or recent destinations with automatic collision-safe renaming.
-- **KeePassXC Password Manager**: Fast local vault lookups via `keepassxc-cli` with window state resumption and dedicated shortcuts (`⌘C` password, `⌘T` TOTP, `⌘B` username, `⌘U` URL).
-- **DuckDuckGo Email Protection (`Hyper + D`)**: Generate and copy private `@duck.com` forwarding addresses on demand with Keychain token storage.
-- **Clean Keyboard Mode**: Physical keyboard input suppression via `CGEventTap` with floating glass countdown HUD and safety release chords (Hold Escape 3s or `Ctrl + U`).
-- **Open Currency Rates Calculator**: Math evaluation and currency conversions backed by free, CC0 European Central Bank daily rates without requiring an API key.
+### Built-In Productivity Tools
+- **Ente Auth 2FA (`Hyper + T`)**: Instant TOTP generation with live countdown tickers and auto-discovery from `ente_auth.txt`.
+- **Finder File Actions (`Hyper + M`)**: Move or copy selected Finder files to pinned or recent folders with collision-safe duplicate renaming.
+- **KeePassXC Manager**: Fast password vault lookups via `keepassxc-cli` with window state resumption and dedicated shortcuts (`⌘C` password, `⌘T` TOTP, `⌘B` username, `⌘U` URL).
+- **DuckDuckGo Email (`Hyper + D`)**: Generate and copy private `@duck.com` alias addresses on demand.
+- **Clean Keyboard Mode**: Low-level keystroke suppression via `CGEventTap` for cleaning keyboards, with floating countdown HUD and safety unlocks (Hold Escape 3s or `Ctrl + U`).
 
 ### Core Launcher Capabilities
-- **Command Palette & Instant Aliases**: Fuzzy search across applications, system settings, and custom terminal scripts with alias triggers.
-- **Quick Look File Previews (`⌘Y`)**: Floating native file previews in search results that follow keyboard navigation.
+- **Universal Search & Aliases**: Fast fuzzy search across applications, system settings, files, and scripts.
+- **Quick Look Previews (`⌘Y`)**: Floating native file preview in search results that follows arrow navigation.
 - **Clipboard History**: Searchable text and image clipboard buffer with favorites and quick paste.
-- **Quicklinks**: Search bookmarks with automatic favicon resolution from DuckDuckGo, Google, and origin sites.
-- **Window Management**: Keyboard grid snapping, multi-display window cycling, and custom layout presets.
-- **Notes & Pomodoro Timer**: Markdown scratchpads with inline image attachments and menu bar focus countdowns.
-- **Raycast Store Extension Compatibility**: Direct installation and native execution of community Raycast extensions.
+- **Quicklinks**: Fast bookmark launcher with automatic favicon resolution.
+- **Window Snapping**: Keyboard grid snapping and multi-display window movement.
+- **Raycast Store Compatibility**: Install and run community Raycast extensions natively.
 
 ## Acknowledgements
 
@@ -79,6 +78,7 @@ open /Applications/szcast.app
 - **[Raycast](https://raycast.com)**: Extension runtime model and API specifications.
 - **[FreeDisplay](https://github.com/huberdf/FreeDisplay)** by huberdf: Display management and screen mirroring.
 - **[gamma-control](https://github.com/Qiueyed/gamma-control)** by Qiueyed: Display gamma transfer curve mathematics and hardware LUT calculation.
+- **[Avro Keyboard](https://github.com/omicronlab/avro-pad)** by Mehdi Hasan Khan & OmicronLab: Phonetic Bengali romanization rules.
 
 Third-party licenses are documented in [NOTICE.md](NOTICE.md).
 

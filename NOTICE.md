@@ -455,3 +455,17 @@ The corresponding implementations reside in:
 - `szcast/Features/KeePassXC/Model/KeePassXCEntry.swift`
 - `szcast/Features/KeePassXC/Service/KeePassXCService.swift`
 - `szcast/Features/KeePassXC/UI/KeePassXCScreen.swift`
+
+## Indic Phonetic Romanization & Transliteration
+
+szcast's native Bengali (Banglish) and Hindi (Hinglish) phonetic romanization engines adopt phonetic mappings and rule sets inspired by:
+
+- **Avro Keyboard** by Mehdi Hasan Khan & OmicronLab (<https://github.com/omicronlab/avro-pad>): Modern phonetic Bengali romanization and phonetic letter association dictionaries.
+- **Hinglish Phonetic Standards**: Hunterian / IAST-simplified phonetic romanization for conversational speech.
+
+The corresponding implementations reside in:
+- `szcast/Features/Dictation/Model/DictationBengaliMode.swift`
+- `szcast/Features/Dictation/Model/DictationHindiMode.swift`
+- `szcast/Features/Dictation/Service/AvroPhoneticConverter.swift`
+- `szcast/Features/Dictation/Service/HinglishPhoneticConverter.swift`
+
