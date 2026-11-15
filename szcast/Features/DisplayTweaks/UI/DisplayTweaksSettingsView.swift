@@ -28,8 +28,12 @@ struct DisplayTweaksSettingsView: View {
                             Text(display.name).tag(display.id)
                         }
                     } label: {
-                        Text("Target display")
-                        Text("Choose which screen to calibrate.")
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Target display")
+                            Text("Choose which screen to calibrate.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                     .onChange(of: settings.displayTweaksDisplayID) { _, _ in
                         if settings.displayTweaksEnabled {
@@ -44,56 +48,38 @@ struct DisplayTweaksSettingsView: View {
             // MARK: - Lunar Pro Style Gamma Box
             Section {
                 VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-                    // Header row: Gamma title, subtitle, and action buttons
-                    HStack(alignment: .top) {
+                    HStack(alignment: .center) {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Gamma")
-                                .font(.system(size: 15, weight: .bold))
-                            Text("Software Gamma tables alteration\nKeep this disabled when using f.lux")
-                                .font(.system(size: 11))
+                            Text("Software Gamma Tables")
+                                .font(.headline)
+                            Text("Direct GPU transfer curve adjustments. Keep disabled when using f.lux.")
+                                .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
 
                         Spacer()
 
                         HStack(spacing: 8) {
-                            Button {
+                            Button(settings.displayTweaksEnabled ? "Enabled" : "Disabled") {
                                 bSettings.displayTweaksEnabled.toggle()
                                 if settings.displayTweaksEnabled {
                                     applyCurrentSettings()
                                 } else {
                                     service.restoreGamma()
                                 }
-                            } label: {
-                                Text(settings.displayTweaksEnabled ? "Enabled" : "Disabled")
-                                    .font(.system(size: 11, weight: .semibold))
-                                    .foregroundStyle(settings.displayTweaksEnabled ? Color.green : Color.secondary)
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 4)
-                                    .background(
-                                        Capsule()
-                                            .fill(settings.displayTweaksEnabled ? Color.green.opacity(0.15) : Color.primary.opacity(0.08))
-                                    )
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(.bordered)
+                            .tint(settings.displayTweaksEnabled ? .green : .secondary)
+                            .controlSize(.regular)
 
-                            Button {
+                            Button("Reset") {
                                 resetToDefaults()
-                            } label: {
-                                Text("Reset")
-                                    .font(.system(size: 11, weight: .semibold))
-                                    .foregroundStyle(Color.red)
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 4)
-                                    .background(
-                                        Capsule()
-                                            .fill(Color.red.opacity(0.15))
-                                    )
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(.bordered)
+                            .controlSize(.regular)
                         }
                     }
-                    .padding(.bottom, 4)
+                    .padding(.vertical, 4)
 
                     // Sliders 0 to 100 like Lunar Pro
                     VStack(spacing: 10) {
@@ -224,6 +210,7 @@ struct DisplayTweaksSettingsView: View {
                 Text("Transfer Curve & Presets")
             }
         }
+        .formStyle(.grouped)
         .task {
             displays = service.enumerateDisplays()
             if settings.displayTweaksDisplayID == 0, let first = displays.first {

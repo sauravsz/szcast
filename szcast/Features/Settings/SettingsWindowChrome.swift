@@ -19,14 +19,13 @@ final class SettingsWindowChrome: WindowChrome {
         window.isMovableByWindowBackground = false
 
         let glassEnabled = settings?.liquidGlassEnabled ?? true
+        window.titlebarAppearsTransparent = false
         if glassEnabled {
             window.isOpaque = false
             window.backgroundColor = .clear
-            window.titlebarAppearsTransparent = true
         } else {
             window.isOpaque = true
             window.backgroundColor = .windowBackgroundColor
-            window.titlebarAppearsTransparent = false
         }
     }
 }

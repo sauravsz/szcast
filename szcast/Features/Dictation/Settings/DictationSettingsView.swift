@@ -386,16 +386,15 @@ struct DictationSettingsView: View {
                         DownloadProgressView(models: coordinator.models)
                     } else if installed {
                         let isHot = coordinator.models.loadedModel == settings.dictationModel
-                        let path = coordinator.models.resolvedDirectory(for: settings.dictationModel)?.path ?? "Installed"
                         let memoryMB = settings.dictationModel.approximateInstalledMegabytes
                         HStack(spacing: Theme.Spacing.sm) {
                             Circle()
                                 .fill(Color.green)
                                 .frame(width: 8, height: 8)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Parakeet (Local) Active")
+                                Text("Parakeet (Local)")
                                     .font(.system(size: 12, weight: .medium))
-                                Text(isHot ? "Apple Neural Engine & Metal GPU (~\(memoryMB) MB RAM) · \(path)" : "On-device CoreML (~\(memoryMB) MB) · \(path)")
+                                Text(isHot ? "Apple Neural Engine & Metal GPU (~\(memoryMB) MB RAM)" : "On-device CoreML (~\(memoryMB) MB)")
                                     .font(.system(size: 11))
                                     .foregroundColor(.secondary)
                                     .lineLimit(1)

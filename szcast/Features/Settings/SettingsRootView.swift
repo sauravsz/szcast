@@ -65,14 +65,13 @@ struct SettingsRootView: View {
             window.setContentSize(CGSize(width: max(window.frame.width, 840), height: max(window.frame.height, 600)))
             window.center()
         }
+        window.titlebarAppearsTransparent = false
         if enabled {
             window.isOpaque = false
             window.backgroundColor = .clear
-            window.titlebarAppearsTransparent = true
         } else {
             window.isOpaque = true
             window.backgroundColor = .windowBackgroundColor
-            window.titlebarAppearsTransparent = false
         }
     }
 }

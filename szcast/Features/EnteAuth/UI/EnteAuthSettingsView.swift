@@ -11,93 +11,86 @@ struct EnteAuthSettingsView: View {
     var body: some View {
         Form {
             Section {
-                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                    HStack(spacing: Theme.Spacing.md) {
-                        Image(systemName: "key.fill")
-                            .font(.system(size: 20))
-                            .foregroundStyle(Color.accentColor)
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Ente Auth 2FA Authenticator")
-                                .font(.system(size: 13, weight: .semibold))
-                            Text("Offline RFC 6238 TOTP generator. Press Hyper + T (⌃⌥⇧⌘T) to search and copy codes.")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
-                        }
+                HStack(spacing: Theme.Spacing.md) {
+                    Image(systemName: "key.fill")
+                        .font(.system(size: 24))
+                        .foregroundStyle(Color.accentColor)
+                        .frame(width: 32)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Ente Auth 2FA Authenticator")
+                            .font(.headline)
+                        Text("Offline RFC 6238 TOTP generator. Press Hyper + T (⌃⌥⇧⌘T) to search and copy codes.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
-                    .padding(.vertical, 2)
+                }
+                .padding(.vertical, 4)
 
-                    LabeledContent("Export file path") {
-                        HStack(spacing: 8) {
-                            Text(exportPath.isEmpty ? "No export file found" : exportPath)
-                                .font(.system(size: 11))
-                                .foregroundStyle(exportPath.isEmpty ? .secondary : .primary)
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-                                .frame(maxWidth: 240, alignment: .trailing)
-
-                            Button("Browse…") {
-                                browseForExport()
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
+                LabeledContent {
+                    HStack(spacing: 8) {
+                        Text(exportPath.isEmpty ? "No export file selected" : exportPath)
+                            .font(.subheadline)
+                            .foregroundStyle(exportPath.isEmpty ? .secondary : .primary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                        Button("Browse…") {
+                            browseForExport()
                         }
+                        .controlSize(.regular)
                     }
+                } label: {
+                    Text("Export file")
+                    Text("Path to decrypted ente_auth.txt file.")
+                }
 
-                    HStack(spacing: 12) {
-                        Button("Import / Refresh Accounts") {
+                LabeledContent {
+                    HStack(spacing: 8) {
+                        Button("Import / Refresh") {
                             let url = exportPath.isEmpty ? nil : URL(fileURLWithPath: exportPath)
                             let res = store.importSecrets(from: url)
                             importStatus = res.message
                             store.loadAccounts()
                         }
                         .buttonStyle(.borderedProminent)
-                        .controlSize(.small)
+                        .controlSize(.regular)
 
-                        Button("Paste otpauth URI…") {
+                        Button("Paste URI…") {
                             showingManualInputSheet = true
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
+                        .controlSize(.regular)
                     }
-
-                    if let status = importStatus {
-                        Text(status)
-                            .font(.system(size: 11))
-                            .foregroundStyle(status.contains("Successfully") ? Color.green : Color.orange)
-                    }
+                } label: {
+                    Text("Import secrets")
+                    Text(importStatus ?? "Import accounts from file or otpauth:// URI.")
                 }
-                .padding(.vertical, 4)
             } header: {
                 Text("Ente Auth Integration")
             }
 
             Section {
                 if store.accounts.isEmpty {
-                    Text("No 2FA accounts imported yet. Click 'Browse' to select your ente_auth.txt export file.")
-                        .font(.system(size: 12))
+                    Text("No 2FA accounts imported yet.")
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 2)
                 } else {
                     ForEach(store.accounts) { account in
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(account.issuer)
-                                    .font(.system(size: 13, weight: .medium))
+                                    .font(.headline)
                                 Text(account.username)
-                                    .font(.system(size: 11))
+                                    .font(.subheadline)
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
                             Text("\(account.digits) digits · \(account.period)s")
-                                .font(.system(size: 10, design: .monospaced))
+                                .font(.caption.monospaced())
                                 .foregroundStyle(.secondary)
-
-                            Button {
+                            Button(role: .destructive) {
                                 store.deleteAccount(id: account.id)
                             } label: {
                                 Image(systemName: "trash")
-                                    .font(.system(size: 11))
                                     .foregroundStyle(.red)
                             }
                             .buttonStyle(.plain)
@@ -113,20 +106,19 @@ struct EnteAuthSettingsView: View {
             }
 
             Section {
-                HStack(spacing: 12) {
-                    Text("Global Hotkey")
-                        .font(.system(size: 12, weight: .medium))
-                    Spacer()
+                LabeledContent {
                     Text("Hyper + T  (⌃⌥⇧⌘T)")
-                        .font(.system(size: 11, weight: .bold, design: .monospaced))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Capsule().fill(Color.primary.opacity(0.08)))
+                        .font(.subheadline.weight(.semibold).monospaced())
+                        .foregroundStyle(.secondary)
+                } label: {
+                    Text("Global shortcut")
+                    Text("Search accounts and copy TOTP code directly on Return.")
                 }
             } header: {
                 Text("Shortcuts")
             }
         }
+        .formStyle(.grouped)
         .task {
             store.loadAccounts()
             if let detected = store.findExportFile() {

@@ -11,115 +11,80 @@ struct DuckDuckGoEmailSettingsView: View {
     var body: some View {
         Form {
             Section {
-                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                    HStack(spacing: Theme.Spacing.md) {
-                        Image(systemName: "envelope.badge.shield.half.filled")
-                            .font(.system(size: 20))
-                            .foregroundStyle(Color.accentColor)
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("DuckDuckGo Email Protection")
-                                .font(.system(size: 13, weight: .semibold))
-                            Text("Generate private @duck.com forwarding addresses that strip email trackers.")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .padding(.vertical, 2)
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("DuckDuckGo API Token")
-                            .font(.system(size: 12, weight: .medium))
-
-                        HStack(spacing: 8) {
-                            SecureField("Enter your DuckDuckGo Bearer token", text: $tokenInput)
-                                .textFieldStyle(.roundedBorder)
-
-                            Button(service.hasToken ? "Update" : "Save") {
-                                service.token = tokenInput
-                                isSaved = true
-                                statusMessage = "Token saved to macOS Keychain."
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .controlSize(.small)
-                            .disabled(tokenInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-
-                            if service.hasToken {
-                                Button("Clear") {
-                                    service.token = nil
-                                    tokenInput = ""
-                                    statusMessage = "Token removed."
-                                }
-                                .buttonStyle(.bordered)
-                                .controlSize(.small)
-                            }
-                        }
-                    }
-
-                    if service.hasToken {
-                        HStack(spacing: 6) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(.green)
-                            Text("API token is configured in Keychain.")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-
-                    if let msg = statusMessage {
-                        Text(msg)
-                            .font(.system(size: 11))
-                            .foregroundStyle(msg.contains("error") || msg.contains("removed") ? Color.orange : Color.green)
+                HStack(spacing: Theme.Spacing.md) {
+                    Image(systemName: "envelope.badge.shield.half.filled")
+                        .font(.system(size: 24))
+                        .foregroundStyle(Color.accentColor)
+                        .frame(width: 32)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("DuckDuckGo Email Protection")
+                            .font(.headline)
+                        Text("Generate private @duck.com forwarding addresses that strip tracker scripts.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
                 }
                 .padding(.vertical, 4)
+
+                LabeledContent {
+                    HStack(spacing: 8) {
+                        SecureField("Bearer token", text: $tokenInput)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(maxWidth: 200)
+
+                        Button(service.hasToken ? "Update" : "Save") {
+                            service.token = tokenInput
+                            isSaved = true
+                            statusMessage = "Saved to Keychain."
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.regular)
+                        .disabled(tokenInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                        if service.hasToken {
+                            Button("Clear") {
+                                service.token = nil
+                                tokenInput = ""
+                                statusMessage = "Removed."
+                            }
+                            .controlSize(.regular)
+                        }
+                    }
+                } label: {
+                    Text("API token")
+                    Text(statusMessage ?? (service.hasToken ? "Configured in macOS Keychain." : "Paste your Bearer token from duckduckgo.com/email."))
+                }
             } header: {
                 Text("Account & Token")
             } footer: {
-                Text("To get your token: Log into duckduckgo.com/email in your browser, open Web Inspector Network tab, and copy the Bearer token from the addresses API request.")
+                Text("Log into duckduckgo.com/email in your browser, open Network inspector, and copy the Bearer token.")
             }
 
             Section {
-                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Test Alias Generator")
-                                .font(.system(size: 12, weight: .medium))
-                            Text("Test token and generate a fresh @duck.com address directly to clipboard.")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Button(isGenerating ? "Generating…" : "Generate Test Alias") {
-                            generateTestAlias()
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                        .disabled(!service.hasToken || isGenerating)
+                LabeledContent {
+                    Button(isGenerating ? "Generating…" : "Generate Test Alias") {
+                        generateTestAlias()
                     }
+                    .controlSize(.regular)
+                    .disabled(!service.hasToken || isGenerating)
+                } label: {
+                    Text("Test alias generator")
+                    Text("Verifies token and copies a new @duck.com alias to your clipboard.")
                 }
-                .padding(.vertical, 4)
-            } header: {
-                Text("Testing & Verification")
-            }
 
-            Section {
-                HStack(spacing: 12) {
-                    Text("Generate & Copy Duck Address")
-                        .font(.system(size: 12, weight: .medium))
-                    Spacer()
+                LabeledContent {
                     Text("Hyper + D  (⌃⌥⇧⌘D)")
-                        .font(.system(size: 11, weight: .bold, design: .monospaced))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Capsule().fill(Color.primary.opacity(0.08)))
+                        .font(.subheadline.weight(.semibold).monospaced())
+                        .foregroundStyle(.secondary)
+                } label: {
+                    Text("Global shortcut")
+                    Text("Generate and copy a fresh @duck.com alias anywhere.")
                 }
             } header: {
-                Text("Global Hotkey")
-            } footer: {
-                Text("Press Hyper + D anywhere to instantly generate a new private email address and copy it to your clipboard.")
+                Text("Shortcuts & Testing")
             }
         }
+        .formStyle(.grouped)
         .task {
             if let saved = service.token {
                 tokenInput = saved

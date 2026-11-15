@@ -13,182 +13,158 @@ struct KeePassXCSettingsView: View {
     var body: some View {
         Form {
             Section {
-                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                    HStack(spacing: Theme.Spacing.md) {
-                        Image(systemName: "lock.fill")
-                            .font(.system(size: 20))
-                            .foregroundStyle(Color.accentColor)
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("KeePassXC Password Manager")
-                                .font(.system(size: 13, weight: .semibold))
-                            Text("Pure offline password & TOTP retrieval wrapping keepassxc-cli with Keychain security.")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .padding(.vertical, 2)
-
-                    LabeledContent("Database (.kdbx)") {
-                        HStack(spacing: 8) {
-                            Text(databasePath.isEmpty ? "No database chosen" : databasePath)
-                                .font(.system(size: 11))
-                                .foregroundStyle(databasePath.isEmpty ? .secondary : .primary)
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-                                .frame(maxWidth: 240, alignment: .trailing)
-
-                            Button("Browse…") {
-                                browseForDatabase()
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
-                        }
-                    }
-
-                    LabeledContent("Keyfile (optional)") {
-                        HStack(spacing: 8) {
-                            Text(keyfilePath.isEmpty ? "None" : keyfilePath)
-                                .font(.system(size: 11))
-                                .foregroundStyle(keyfilePath.isEmpty ? .secondary : .primary)
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-                                .frame(maxWidth: 240, alignment: .trailing)
-
-                            Button("Browse…") {
-                                browseForKeyfile()
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
-
-                            if !keyfilePath.isEmpty {
-                                Button("Clear") {
-                                    keyfilePath = ""
-                                    service.keyfilePath = ""
-                                }
-                                .buttonStyle(.plain)
-                                .font(.system(size: 11))
-                                .foregroundStyle(.red)
-                            }
-                        }
-                    }
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Master Password")
-                            .font(.system(size: 12, weight: .medium))
-
-                        HStack(spacing: 8) {
-                            SecureField("Enter master password for automatic unlock", text: $passwordInput)
-                                .textFieldStyle(.roundedBorder)
-
-                            Button(service.isUnlocked ? "Update" : "Save") {
-                                service.masterPassword = passwordInput
-                                statusMessage = "Master password stored securely in Keychain."
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .controlSize(.small)
-                            .disabled(passwordInput.isEmpty)
-
-                            if service.isUnlocked {
-                                Button("Clear") {
-                                    service.masterPassword = nil
-                                    passwordInput = ""
-                                    statusMessage = "Master password removed from Keychain."
-                                }
-                                .buttonStyle(.bordered)
-                                .controlSize(.small)
-                            }
-                        }
-                    }
-
-                    if service.isUnlocked {
-                        HStack(spacing: 6) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(.green)
-                            Text("Database unlocked and cached in Keychain.")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-
-                    if let msg = statusMessage {
-                        Text(msg)
-                            .font(.system(size: 11))
-                            .foregroundStyle(msg.contains("removed") ? Color.orange : Color.green)
+                HStack(spacing: Theme.Spacing.md) {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 24))
+                        .foregroundStyle(Color.accentColor)
+                        .frame(width: 32)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("KeePassXC Password Manager")
+                            .font(.headline)
+                        Text("Offline credentials and TOTP retrieval via keepassxc-cli with macOS Keychain storage.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
                 }
                 .padding(.vertical, 4)
+
+                LabeledContent {
+                    HStack(spacing: 8) {
+                        Text(databasePath.isEmpty ? "No database chosen" : databasePath)
+                            .font(.subheadline)
+                            .foregroundStyle(databasePath.isEmpty ? .secondary : .primary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                        Button("Browse…") {
+                            browseForDatabase()
+                        }
+                        .controlSize(.regular)
+                    }
+                } label: {
+                    Text("Database (.kdbx)")
+                    Text("Path to your KeePassXC password database.")
+                }
+
+                LabeledContent {
+                    HStack(spacing: 8) {
+                        Text(keyfilePath.isEmpty ? "None" : keyfilePath)
+                            .font(.subheadline)
+                            .foregroundStyle(keyfilePath.isEmpty ? .secondary : .primary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                        Button("Browse…") {
+                            browseForKeyfile()
+                        }
+                        .controlSize(.regular)
+
+                        if !keyfilePath.isEmpty {
+                            Button("Clear") {
+                                keyfilePath = ""
+                                service.keyfilePath = ""
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(.red)
+                        }
+                    }
+                } label: {
+                    Text("Keyfile (optional)")
+                    Text("Optional encryption keyfile for database unlock.")
+                }
+
+                LabeledContent {
+                    HStack(spacing: 8) {
+                        SecureField("Master password", text: $passwordInput)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(maxWidth: 200)
+
+                        Button(service.isUnlocked ? "Update" : "Save") {
+                            service.masterPassword = passwordInput
+                            statusMessage = "Saved to Keychain."
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.regular)
+                        .disabled(passwordInput.isEmpty)
+
+                        if service.isUnlocked {
+                            Button("Clear") {
+                                service.masterPassword = nil
+                                passwordInput = ""
+                                statusMessage = "Removed."
+                            }
+                            .controlSize(.regular)
+                        }
+                    }
+                } label: {
+                    Text("Master password")
+                    Text(statusMessage ?? (service.isUnlocked ? "Database unlocked in Keychain." : "Stored securely in Keychain for instant access."))
+                }
             } header: {
                 Text("Database & Credentials")
             }
 
             Section {
-                LabeledContent("keepassxc-cli path") {
-                    Text(service.resolveCliPath() ?? "Not found (Install via 'brew install keepassxc')")
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundStyle(service.resolveCliPath() != nil ? Color.primary : Color.red)
+                LabeledContent {
+                    Text(service.resolveCliPath() ?? "Not found (brew install keepassxc)")
+                        .font(.subheadline.monospaced())
+                        .foregroundStyle(service.resolveCliPath() != nil ? Color.secondary : Color.red)
+                } label: {
+                    Text("CLI tool path")
+                    Text("Executable used to read database entries.")
                 }
             } header: {
                 Text("CLI Integration")
             }
 
             Section {
-                VStack(alignment: .leading, spacing: 8) {
-                    Toggle("Persistent Account Window Resumption", isOn: $windowResumptionEnabled)
-                        .font(.system(size: 12, weight: .medium))
-                    Text("When you copy a field, szcast hides itself. Toggling szcast open again (⌥Space) immediately restores the exact same account view so you can copy the password, TOTP, or username without re-searching.")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
+                Toggle(isOn: $windowResumptionEnabled) {
+                    Text("Persistent account resumption")
+                    Text("Toggling szcast open again (⌥Space) immediately restores the active account view to copy additional fields.")
                 }
-                .padding(.vertical, 2)
 
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("In-View Keyboard Shortcuts")
-                        .font(.system(size: 12, weight: .semibold))
-
-                    Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 6) {
-                        GridRow {
-                            Text("⌘C")
-                                .font(.system(size: 11, weight: .bold, design: .monospaced))
-                            Text("Copy Password & hide palette")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
-                        }
-                        GridRow {
-                            Text("⌘T")
-                                .font(.system(size: 11, weight: .bold, design: .monospaced))
-                            Text("Copy TOTP Code & hide palette")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
-                        }
-                        GridRow {
-                            Text("⌘B")
-                                .font(.system(size: 11, weight: .bold, design: .monospaced))
-                            Text("Copy Username & hide palette")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
-                        }
-                        GridRow {
-                            Text("⌘U")
-                                .font(.system(size: 11, weight: .bold, design: .monospaced))
-                            Text("Open Account URL in default browser")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
-                        }
-                        GridRow {
-                            Text("Esc")
-                                .font(.system(size: 11, weight: .bold, design: .monospaced))
-                            Text("Return to account search list")
-                                .font(.system(size: 11))
-                                .foregroundStyle(.secondary)
-                        }
-                    }
+                LabeledContent {
+                    Text("⌘C")
+                        .font(.subheadline.weight(.semibold).monospaced())
+                } label: {
+                    Text("Copy password")
+                    Text("Copies secret and dismisses launcher.")
                 }
-                .padding(.vertical, 4)
+
+                LabeledContent {
+                    Text("⌘T")
+                        .font(.subheadline.weight(.semibold).monospaced())
+                } label: {
+                    Text("Copy TOTP")
+                    Text("Copies 2FA digits and dismisses launcher.")
+                }
+
+                LabeledContent {
+                    Text("⌘B")
+                        .font(.subheadline.weight(.semibold).monospaced())
+                } label: {
+                    Text("Copy username")
+                    Text("Copies account username or email.")
+                }
+
+                LabeledContent {
+                    Text("⌘U")
+                        .font(.subheadline.weight(.semibold).monospaced())
+                } label: {
+                    Text("Open URL")
+                    Text("Opens entry website in default browser.")
+                }
+
+                LabeledContent {
+                    Text("Esc")
+                        .font(.subheadline.weight(.semibold).monospaced())
+                } label: {
+                    Text("Return to list")
+                    Text("Goes back to accounts search list.")
+                }
             } header: {
-                Text("Shortcuts & Resumption")
+                Text("Account Shortcuts & Resumption")
             }
         }
+        .formStyle(.grouped)
         .task {
             databasePath = service.databasePath
             keyfilePath = service.keyfilePath
