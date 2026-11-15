@@ -2,6 +2,7 @@ import Foundation
 
 enum DisplayTweaksPreset: String, CaseIterable, Identifiable, Sendable {
     case neutral = "Default"
+    case gammaControl = "Gamma Control"
     case sCurve = "S-Curve"
     case shadowLift = "Shadow Lift"
     case nightWarm = "Night Warm"
@@ -14,6 +15,7 @@ enum DisplayTweaksPreset: String, CaseIterable, Identifiable, Sendable {
     var summary: String {
         switch self {
         case .neutral: return "Stock linear gamma (1.0 across all channels)"
+        case .gammaControl: return "Gamma Control reference: 0.05 Black Point and 0.89 White Point Luminance"
         case .sCurve: return "Adds dynamic punch and clarity without color shifts"
         case .shadowLift: return "Lifts black floor and low shadows for dark scenes"
         case .nightWarm: return "Softens blue light and whites for night-time comfort"
@@ -39,6 +41,8 @@ enum DisplayTweaksPreset: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .neutral:
             return Values(red: 1.0, green: 1.0, blue: 1.0, blacks: 0.0, shadows: 0.0, highlights: 0.0, whites: 0.0, contrast: 0.0, brightness: 0.0)
+        case .gammaControl:
+            return Values(red: 1.0, green: 1.0, blue: 1.0, blacks: 0.05, shadows: 0.0, highlights: 0.0, whites: 0.89, contrast: 0.0, brightness: 0.0)
         case .sCurve:
             return Values(red: 1.0, green: 1.0, blue: 1.0, blacks: 0.0, shadows: 0.0, highlights: 0.0, whites: 0.0, contrast: 0.25, brightness: 0.0)
         case .shadowLift:
@@ -58,6 +62,8 @@ enum DisplayTweaksPreset: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .neutral:
             return Values(red: 50.0, green: 50.0, blue: 50.0, blacks: 0.0, shadows: 50.0, highlights: 50.0, whites: 100.0, contrast: 50.0, brightness: 50.0)
+        case .gammaControl:
+            return Values(red: 50.0, green: 50.0, blue: 50.0, blacks: 5.0, shadows: 50.0, highlights: 50.0, whites: 89.0, contrast: 50.0, brightness: 50.0)
         case .sCurve:
             return Values(red: 50.0, green: 50.0, blue: 50.0, blacks: 0.0, shadows: 50.0, highlights: 50.0, whites: 100.0, contrast: 65.0, brightness: 50.0)
         case .shadowLift:

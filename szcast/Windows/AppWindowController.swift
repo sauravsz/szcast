@@ -3,9 +3,24 @@ import SwiftUI
 
 private final class AppWindow: NSWindow {
     var closesOnEscape = false
+    var minimumContentSize: CGSize = .zero
 
     override func cancelOperation(_ sender: Any?) {
         if closesOnEscape { close() } else { super.cancelOperation(sender) }
+    }
+
+    override func setFrame(_ targetFrame: NSRect, display displayFlag: Bool) {
+        var adjusted = targetFrame
+        if minimumContentSize.width > 0 {
+            let minFrame = self.frameRect(forContentRect: NSRect(origin: .zero, size: minimumContentSize)).size
+            if adjusted.width < minFrame.width {
+                adjusted.size.width = minFrame.width
+            }
+            if adjusted.height < minFrame.height {
+                adjusted.size.height = minFrame.height
+            }
+        }
+        super.setFrame(adjusted, display: displayFlag)
     }
 }
 
@@ -95,6 +110,14 @@ final class AppWindowController: NSObject, NSWindowDelegate {
 
     // MARK: - NSWindowDelegate
 
+    func windowWillResize(_ sender: NSWindow, to frameSize: NSSize) -> NSSize {
+        let minFrame = sender.frameRect(forContentRect: NSRect(origin: .zero, size: minimumSize)).size
+        return NSSize(
+            width: max(frameSize.width, minFrame.width),
+            height: max(frameSize.height, minFrame.height)
+        )
+    }
+
     func windowWillClose(_ notification: Notification) {
         guard let window else { return }
         self.window = nil
@@ -122,8 +145,10 @@ final class AppWindowController: NSObject, NSWindowDelegate {
         window.isReleasedWhenClosed = false
         // AppKit would otherwise resurrect the window at launch, before anything is wired up.
         window.isRestorable = false
+        window.minimumContentSize = minimumSize
         window.contentMinSize = minimumSize
-        window.minSize = window.frameRect(forContentRect: NSRect(origin: .zero, size: minimumSize)).size
+        let minFrame = window.frameRect(forContentRect: NSRect(origin: .zero, size: minimumSize)).size
+        window.minSize = minFrame
         window.delegate = self
         // Before the content: a bridged SwiftUI toolbar restores the title flags it mounted over.
         chrome?.install(in: window)
@@ -135,7 +160,8 @@ final class AppWindowController: NSObject, NSWindowDelegate {
         if let autosaveName {
             window.setFrameAutosaveName(autosaveName)
             let restored = window.setFrameUsingName(autosaveName)
-            if !restored || window.frame.width < minimumSize.width || window.frame.height < minimumSize.height {
+            let minFrameSize = window.frameRect(forContentRect: NSRect(origin: .zero, size: minimumSize)).size
+            if !restored || window.frame.width < minFrameSize.width || window.frame.height < minFrameSize.height {
                 window.setContentSize(CGSize(
                     width: max(contentSize.width, minimumSize.width),
                     height: max(contentSize.height, minimumSize.height)

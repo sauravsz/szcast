@@ -15,11 +15,11 @@ struct SettingsRootView: View {
                 .navigationSplitViewColumnWidth(
                     min: Theme.Size.settingsSidebar, ideal: Theme.Size.settingsSidebar,
                     max: Theme.Size.settingsSidebar)
-                .scrollContentBackground(settings.liquidGlassEnabled ? .hidden : .automatic)
+                .scrollContentBackground(.automatic)
         } detail: {
             SettingsDetailView()
                 .frame(minWidth: 580)
-                .scrollContentBackground(settings.liquidGlassEnabled ? .hidden : .automatic)
+                .scrollContentBackground(.automatic)
         }
         .navigationSplitViewStyle(.balanced)
         .frame(minWidth: 840, minHeight: 600)
@@ -35,43 +35,33 @@ struct SettingsRootView: View {
                 .controlGroupStyle(.navigation)
             }
         }
-        .background {
-            if settings.liquidGlassEnabled {
-                ZStack {
-                    Color.clear
-                        .glassEffect(.regular, in: Rectangle())
-                    Theme.Colors.panelScrim(transparency: settings.liquidGlassTransparency)
-                }
-            } else {
-                Color(nsColor: .windowBackgroundColor)
-            }
-        }
+        .background(Color(nsColor: .windowBackgroundColor))
         .background(
             WindowReader { window in
                 hostWindow = window
-                applyWindowGlass(to: window, enabled: settings.liquidGlassEnabled)
+                configureWindow(window)
             }
         )
-        .onChange(of: settings.liquidGlassEnabled) { _, enabled in
-            applyWindowGlass(to: hostWindow, enabled: enabled)
+        .onChange(of: columnVisibility) { _, new in
+            if new != .all {
+                columnVisibility = .all
+            }
         }
     }
 
-    private func applyWindowGlass(to window: NSWindow?, enabled: Bool) {
+    private func configureWindow(_ window: NSWindow?) {
         guard let window else { return }
-        window.minSize = CGSize(width: 840, height: 600)
-        window.contentMinSize = CGSize(width: 840, height: 600)
-        if window.frame.width < 840 || window.frame.height < 600 {
-            window.setContentSize(CGSize(width: max(window.frame.width, 840), height: max(window.frame.height, 600)))
+        let minSize = CGSize(width: 840, height: 600)
+        let minFrame = window.frameRect(forContentRect: NSRect(origin: .zero, size: minSize)).size
+        window.minSize = minFrame
+        window.contentMinSize = minSize
+        if window.frame.width < minFrame.width || window.frame.height < minFrame.height {
+            window.setContentSize(CGSize(width: max(window.frame.width, minSize.width), height: max(window.frame.height, minSize.height)))
             window.center()
         }
+        window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = false
-        if enabled {
-            window.isOpaque = false
-            window.backgroundColor = .clear
-        } else {
-            window.isOpaque = true
-            window.backgroundColor = .windowBackgroundColor
-        }
+        window.isOpaque = true
+        window.backgroundColor = .windowBackgroundColor
     }
 }

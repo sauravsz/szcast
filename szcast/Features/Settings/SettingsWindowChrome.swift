@@ -10,22 +10,15 @@ final class SettingsWindowChrome: WindowChrome {
     }
 
     func install(in window: NSWindow) {
-        // All three together are what puts the title inline and leading rather than centred.
-        window.titleVisibility = .visible
+        // Hide AppKit's window title to prevent duplicate/ghost shadow text over SwiftUI's navigation title
+        window.titleVisibility = .hidden
         window.toolbarStyle = .unified
-        // `.automatic` draws a hairline once content scrolls under the bar, splitting the surface.
         window.titlebarSeparatorStyle = .none
-        // Stock Settings isn't dragged by its content — a drag on a `Form` shouldn't move the window.
         window.isMovableByWindowBackground = false
 
-        let glassEnabled = settings?.liquidGlassEnabled ?? true
+        // Settings window header and body are always 100% opaque native macOS surfaces
         window.titlebarAppearsTransparent = false
-        if glassEnabled {
-            window.isOpaque = false
-            window.backgroundColor = .clear
-        } else {
-            window.isOpaque = true
-            window.backgroundColor = .windowBackgroundColor
-        }
+        window.isOpaque = true
+        window.backgroundColor = .windowBackgroundColor
     }
 }

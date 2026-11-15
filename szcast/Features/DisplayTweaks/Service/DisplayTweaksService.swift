@@ -57,27 +57,52 @@ final class DisplayTweaksService {
         contrast: Double = 50.0,
         brightness: Double = 50.0
     ) -> (r: [Float], g: [Float], b: [Float]) {
-        let rMul = red / 50.0
-        let gMul = green / 50.0
-        let bMul = blue / 50.0
-        let blk = (blacks / 100.0) * 0.5
-        let shd = ((shadows - 50.0) / 50.0) * 0.25
-        let hgh = ((highlights - 50.0) / 50.0) * 0.25
-        let wht = ((whites - 100.0) / 100.0) * 0.5
-        let cnt = ((contrast - 50.0) / 50.0) * 0.5
-        let brt = ((brightness - 50.0) / 50.0) * 0.3
+        var tableR = [Float](repeating: 0, count: 256)
+        var tableG = [Float](repeating: 0, count: 256)
+        var tableB = [Float](repeating: 0, count: 256)
 
-        return calculateTransferTables(
-            redGain: rMul,
-            greenGain: gMul,
-            blueGain: bMul,
-            blacks: blk,
-            shadows: shd,
-            highlights: hgh,
-            whites: wht,
-            contrast: cnt,
-            brightness: brt
-        )
+        let rMul = Float(red / 50.0)
+        let gMul = Float(green / 50.0)
+        let bMul = Float(blue / 50.0)
+
+        // Exact Gamma Control Black Point & White Point Luminance mapping
+        // 0..100 maps to 0.00..0.40 for blacks (default 0% = 0.00, Gamma Control 5% = 0.05)
+        // 0..100 maps to 0.50..1.00 for whites (default 100% = 1.00, Gamma Control 89% = 0.89)
+        let blackFloor = Float(max(0.0, min(0.40, blacks / 100.0)))
+        let whiteCeiling = Float(max(0.50, min(1.0, whites / 100.0)))
+
+        let cnt = Float((contrast - 50.0) / 50.0)
+        let brt = Float((brightness - 50.0) / 50.0 * 0.20)
+
+        for i in 0..<256 {
+            let x = Float(i) / 255.0
+            var y = x
+
+            // Contrast adjustment (S-curve around midpoint 0.5)
+            if cnt != 0.0 {
+                let p = cnt > 0 ? max(0.20, 1.0 - cnt * 0.70) : 1.0 / max(0.20, 1.0 + abs(cnt) * 0.70)
+                let t = 2.0 * y - 1.0
+                let tp = copysign(pow(abs(t), p), t)
+                y = (tp + 1.0) / 2.0
+            }
+
+            // Brightness linear shift
+            if brt != 0.0 {
+                y += brt
+            }
+            y = max(0.0, min(1.0, y))
+
+            // Direct Black Point & White Point Luminance scaling:
+            // y_final = blackFloor + (whiteCeiling - blackFloor) * y
+            let yScaled = blackFloor + (whiteCeiling - blackFloor) * y
+
+            // Per-channel color gain and strict clamping to 0.0..1.0
+            tableR[i] = max(0.0, min(1.0, yScaled * rMul))
+            tableG[i] = max(0.0, min(1.0, yScaled * gMul))
+            tableB[i] = max(0.0, min(1.0, yScaled * bMul))
+        }
+
+        return (tableR, tableG, tableB)
     }
 
     /// Calculate 256-entry RGB transfer tables from settings parameters.
@@ -99,10 +124,8 @@ final class DisplayTweaksService {
         let rMul = Float(redGain)
         let gMul = Float(greenGain)
         let bMul = Float(blueGain)
-        let blk = Float(blacks)
-        let shd = Float(shadows)
-        let hgh = Float(highlights)
-        let wht = Float(whites)
+        let blackFloor = Float(max(0.0, min(0.40, blacks)))
+        let whiteCeiling = Float(max(0.50, min(1.0, whites > 0.0 ? whites : (1.0 + whites))))
         let cnt = Float(contrast)
         let brt = Float(brightness)
 
@@ -112,43 +135,22 @@ final class DisplayTweaksService {
 
             // Contrast (S-Curve)
             if cnt != 0.0 {
-                let p = cnt > 0 ? max(0.15, 1.0 - cnt * 0.85) : 1.0 / max(0.15, 1.0 + cnt * 0.85)
+                let p = cnt > 0 ? max(0.20, 1.0 - cnt * 0.70) : 1.0 / max(0.20, 1.0 + abs(cnt) * 0.70)
                 let t = 2.0 * y - 1.0
                 let tp = copysign(pow(abs(t), p), t)
                 y = (tp + 1.0) / 2.0
             }
 
-            // Blacks adjustment (affects deep shadow floor, bottom 25%)
-            if x < 0.25 {
-                let wb = (1.0 - x / 0.25) * (1.0 - x / 0.25)
-                y += blk * wb * 0.30
+            if brt != 0.0 {
+                y += brt
             }
+            y = max(0.0, min(1.0, y))
 
-            // Shadows adjustment (bell curve peaked at 25%)
-            if x < 0.60 {
-                let ws = sin(Float.pi * min(1.0, x / 0.60))
-                y += shd * ws * 0.25
-            }
+            let yScaled = blackFloor + (whiteCeiling - blackFloor) * y
 
-            // Highlights adjustment (bell curve peaked at 75%)
-            if x > 0.40 {
-                let wh = sin(Float.pi * max(0.0, (x - 0.40) / 0.60))
-                y += hgh * wh * 0.25
-            }
-
-            // Whites adjustment (affects peak white ceiling, top 25%)
-            if x > 0.75 {
-                let ww = ((x - 0.75) / 0.25) * ((x - 0.75) / 0.25)
-                y += wht * ww * 0.30
-            }
-
-            // Linear brightness offset
-            y += brt
-
-            // Apply per-channel gain and clamp
-            tableR[i] = max(0.0, min(1.0, y * rMul))
-            tableG[i] = max(0.0, min(1.0, y * gMul))
-            tableB[i] = max(0.0, min(1.0, y * bMul))
+            tableR[i] = max(0.0, min(1.0, yScaled * rMul))
+            tableG[i] = max(0.0, min(1.0, yScaled * gMul))
+            tableB[i] = max(0.0, min(1.0, yScaled * bMul))
         }
 
         return (tableR, tableG, tableB)
