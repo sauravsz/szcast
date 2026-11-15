@@ -167,13 +167,13 @@ final class DictationCoordinator {
 
     func prewarm() {
         guard settings.dictationEnabled else { return }
-        models.prewarm(settings.dictationModel)
+        models.ensurePrewarmed(settings.dictationModel)
         if settings.dictationLivePreviewEnabled {
             let lang = settings.dictationLanguage ?? "en-US"
             livePreviewCoordinator.prewarm(locale: Locale(identifier: lang))
         }
         if settings.dictationS1Enabled {
-            DictationLlamaServerManager.shared.prewarm(idleRelease: settings.dictationS1IdleRelease)
+            DictationLlamaServerManager.shared.startDaemon(idleRelease: settings.dictationS1IdleRelease)
         }
     }
 
