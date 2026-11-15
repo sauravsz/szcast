@@ -23,7 +23,12 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
 - `xcodebuild -project szcast.xcodeproj -scheme Szcast -configuration Debug build`
 - `Scripts/run-tests.sh` — all 121 harnesses pass. `Scripts/build-dmg.sh` → `build/szcast-0.1.0.dmg`; needs the `szcast Self-Signed` keychain identity (already created; without it Accessibility/TCC grants reset each build).
 
-## Recent Capabilities
+- **Release v1.0.9-hotfix**:
+  - Dictation Insights Dashboard: Wispr Flow-style analytics (WPM arc gauge with top percentile, S1-mini speech fixes and dictionary corrections, total words dictated with book equivalence, category distribution, 7x16 streak matrix).
+  - Window UI & Chrome Overhaul: Eliminated Settings titlebar transparent bleed-through by setting `window.titlebarAppearsTransparent = false`, `isOpaque = true`, and native background color. Eliminated embossed title ghost shadow by hiding AppKit title visibility (`window.titleVisibility = .hidden`).
+  - Window Resize Floor: Locked minimum window dimensions (840x600) via `AppWindow.setFrame` and `NSWindowDelegate.windowWillResize` to prevent windows being dragged or resized into narrow slivers.
+  - Display Tweaks & Gamma Control: Direct linear transfer curve scaling ($y_{\text{scaled}} = \text{blackFloor} + (\text{whiteCeiling} - \text{blackFloor}) \times y$) replacing ineffective localized damping. Added exact "Gamma Control" preset (0.05 Black Point, 0.89 White Point Luminance).
+  - Latency: Prewarmed speech recognition and daemon in background eliminating first dictation cold-start lag.
 - **EnviousWispr Advanced Dictation Suite**: Deep integration of features ported from EnviousWispr into szcast native design:
   - Multi-root model discovery across `~/Library/Application Support/FluidAudio/Models` and `~/Library/Application Support/EnviousWispr/Models` (immediate detection of installed Nvidia Parakeet Ultra).
   - Superwhisper S1-mini offline AI polishing with Control Line prompt formatting (`Tone`, `Structure`, `Context`).
