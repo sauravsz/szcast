@@ -56,6 +56,7 @@ enum CommandID: String, CaseIterable, Sendable {
     case generateDuckAddress = "command:generate-duck-address"
     case cleanKeyboard = "command:clean-keyboard"
     case keepassxc = "command:keepassxc"
+    case dictationInsights = "command:dictation-insights"
     case quit = "command:quit"
 
     static let defaultCompactBarCommands: [CommandID] = [
@@ -140,6 +141,7 @@ enum CommandID: String, CaseIterable, Sendable {
         case .generateDuckAddress: return "Generate DuckDuckGo Email"
         case .cleanKeyboard: return "Clean Keyboard Mode"
         case .keepassxc: return "KeePassXC Passwords"
+        case .dictationInsights: return "Dictation Insights"
         case .quit: return "Quit szcast"
         }
     }
@@ -199,6 +201,7 @@ enum CommandID: String, CaseIterable, Sendable {
         case .generateDuckAddress: return "envelope.badge.shield.half.filled"
         case .cleanKeyboard: return "lock.shield"
         case .keepassxc: return "lock.fill"
+        case .dictationInsights: return "chart.bar.xaxis"
         case .quit: return "power"
         }
     }
@@ -237,6 +240,7 @@ enum CommandID: String, CaseIterable, Sendable {
         case .generateDuckAddress: ["duck", "duckduckgo", "email", "alias", "private email", "duck address"]
         case .cleanKeyboard: ["clean keyboard", "lock keyboard", "wipe keyboard", "clean"]
         case .keepassxc: ["keepass", "keepassxc", "kdbx", "password", "passwords", "credentials", "vault"]
+        case .dictationInsights: ["insights", "wpm", "words per minute", "dictation insights", "dictation dashboard", "streak"]
         default: []
         }
     }

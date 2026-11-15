@@ -359,7 +359,10 @@ final class DictationCoordinator {
                 }
 
                 lastDictation = text
-                historyStore.add(text: text, rawText: transcript, duration: Double(samples.count) / 16000.0)
+                let frontApp = target?.externalApp ?? NSWorkspace.shared.frontmostApplication
+                historyStore.add(
+                    text: text, rawText: transcript, duration: Double(samples.count) / 16000.0,
+                    appName: frontApp?.localizedName, appBundleID: frontApp?.bundleIdentifier)
 
                 panel.close()
                 if destination.pastes {

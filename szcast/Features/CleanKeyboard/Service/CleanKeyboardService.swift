@@ -49,7 +49,10 @@ final class CleanKeyboardService: Observable {
             return
         }
 
-        installTap()
+        guard installTap() else {
+            Self.logger.error("Could not install keyboard event tap. Clean Keyboard mode aborted.")
+            return
+        }
         isCleaning = true
         remainingSeconds = max(duration, 10)
 
@@ -101,7 +104,7 @@ final class CleanKeyboardService: Observable {
         }
     }
 
-    private func installTap() {
+    private func installTap() -> Bool {
         let mask = (1 << CGEventType.keyDown.rawValue) |
                    (1 << CGEventType.keyUp.rawValue) |
                    (1 << CGEventType.flagsChanged.rawValue)
@@ -122,7 +125,7 @@ final class CleanKeyboardService: Observable {
             userInfo: refcon
         ) else {
             Self.logger.error("Failed to create CGEventTap for keyboard filtering")
-            return
+            return false
         }
 
         self.eventTap = tap
@@ -130,6 +133,7 @@ final class CleanKeyboardService: Observable {
         self.runLoopSource = source
         CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
+        return true
     }
 
     private func removeTap() {

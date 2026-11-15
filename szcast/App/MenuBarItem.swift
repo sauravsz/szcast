@@ -24,6 +24,9 @@ struct MenuBarMenu: View {
             }
         }
         if AppCore.shared.settings.dictationEnabled {
+            Button("Dictation Insights…") {
+                AppCore.shared.settingsCoordinator.showSettings(tab: .dictation)
+            }
             Button("Transcribe Audio/Video File…") {
                 AppCore.shared.dictationCoordinator.transcribeFile()
             }

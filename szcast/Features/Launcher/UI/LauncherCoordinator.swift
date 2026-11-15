@@ -319,6 +319,9 @@ final class LauncherCoordinator {
             core.cleanKeyboardService.startCleaning(duration: 60)
         case .keepassxc:
             paletteCoordinator.togglePalette(mode: .keepassxc, seeding: searchQuery)
+        case .dictationInsights:
+            dismissPalette()
+            core.settingsCoordinator.showSettings(tab: .dictation)
         case .quit:
             NSApp.terminate(nil)
         }

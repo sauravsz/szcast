@@ -140,8 +140,23 @@ final class KeePassXCService: Observable {
                     }
                     try? stdinPipe.fileHandleForWriting.close()
 
-                    let outData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-                    let errData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+                    var outData = Data()
+                    var errData = Data()
+                    let pipeGroup = DispatchGroup()
+
+                    pipeGroup.enter()
+                    DispatchQueue.global().async {
+                        outData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+                        pipeGroup.leave()
+                    }
+
+                    pipeGroup.enter()
+                    DispatchQueue.global().async {
+                        errData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+                        pipeGroup.leave()
+                    }
+
+                    pipeGroup.wait()
                     process.waitUntilExit()
 
                     let outString = String(data: outData, encoding: .utf8) ?? ""

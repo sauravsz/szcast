@@ -4,6 +4,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 enum DictationSettingsSection: String, CaseIterable, Identifiable {
+    case insights = "Insights"
     case general = "General"
     case livePreview = "Live Preview"
     case formatting = "Formatting & AI"
@@ -18,7 +19,7 @@ struct DictationSettingsView: View {
     @Environment(DictationCoordinator.self) private var coordinator
     @Environment(AppSettings.self) private var settings
     @Environment(HotKeyManager.self) private var hotKeys
-    @State private var selectedSection: DictationSettingsSection = .general
+    @State private var selectedSection: DictationSettingsSection = .insights
     @State private var microphones: [AVCaptureDevice] = []
     @State private var modelSize: Int64?
     @State private var microphoneAccess = Permissions.microphoneAccess()
@@ -73,23 +74,29 @@ struct DictationSettingsView: View {
 
             Divider()
 
-            Form {
-                switch selectedSection {
-                case .general:
-                    generalSection(settings: settings)
-                case .livePreview:
-                    livePreviewSection(settings: settings)
-                case .formatting:
-                    formattingSection(settings: settings)
-                case .dictionary:
-                    dictionarySection(settings: settings)
-                case .snippets:
-                    snippetsSection(settings: settings)
-                case .history:
-                    historySection(settings: settings)
+            if selectedSection == .insights {
+                DictationInsightsDashboardView()
+            } else {
+                Form {
+                    switch selectedSection {
+                    case .insights:
+                        EmptyView()
+                    case .general:
+                        generalSection(settings: settings)
+                    case .livePreview:
+                        livePreviewSection(settings: settings)
+                    case .formatting:
+                        formattingSection(settings: settings)
+                    case .dictionary:
+                        dictionarySection(settings: settings)
+                    case .snippets:
+                        snippetsSection(settings: settings)
+                    case .history:
+                        historySection(settings: settings)
+                    }
                 }
+                .formStyle(.grouped)
             }
-            .formStyle(.grouped)
         }
         .settingsScrollTarget(.dictation)
         .onAppear {
@@ -690,7 +697,7 @@ struct DictationSettingsView: View {
                 Circle()
                     .fill(Color.green)
                     .frame(width: 8, height: 8)
-                Text("S1-mini Active")
+                Text("S1-mini")
                     .font(.system(size: 12, weight: .medium))
                 Spacer()
             }

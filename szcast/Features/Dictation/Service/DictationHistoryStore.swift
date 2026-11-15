@@ -16,10 +16,11 @@ final class DictationHistoryStore {
         load()
     }
 
-    func add(text: String, rawText: String = "", duration: TimeInterval = 0) {
+    func add(text: String, rawText: String = "", duration: TimeInterval = 0, appName: String? = nil, appBundleID: String? = nil) {
         let clean = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty else { return }
-        let item = DictationHistoryItem(text: clean, rawText: rawText, duration: duration)
+        let item = DictationHistoryItem(
+            text: clean, rawText: rawText, duration: duration, appName: appName, appBundleID: appBundleID)
         items.insert(item, at: 0)
         // Keep latest 250 items
         if items.count > 250 {
