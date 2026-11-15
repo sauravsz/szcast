@@ -131,6 +131,30 @@ extension SettingsAnchor {
     static let backupSettingsFile = Self(tab: .backup, title: "Settings File")
 
     static let displayTweaksDisplayTweaks = Self(tab: .displayTweaks, title: "Display Tweaks")
+    static let displayTweaksSelection = Self(tab: .displayTweaks, title: "Display Selection")
+    static let displayTweaksGamma = Self(tab: .displayTweaks, title: "Hardware Gamma")
+    static let displayTweaksRange = Self(tab: .displayTweaks, title: "Display Range")
+    static let displayTweaksCurve = Self(tab: .displayTweaks, title: "Transfer Curve & Presets")
+
+    static let cleanKeyboardCleanKeyboard = Self(tab: .cleanKeyboard, title: "Clean Keyboard")
+    static let cleanKeyboardCommands = Self(tab: .cleanKeyboard, title: "Commands")
+    static let cleanKeyboardSafety = Self(tab: .cleanKeyboard, title: "Safety Unlock")
+
+    static let enteAuthEnteAuth = Self(tab: .enteAuth, title: "Ente Auth")
+    static let enteAuthCommands = Self(tab: .enteAuth, title: "Commands")
+    static let enteAuthAccounts = Self(tab: .enteAuth, title: "Accounts")
+
+    static let finderFileActionsFinderFileActions = Self(tab: .finderFileActions, title: "Finder File Actions")
+    static let finderFileActionsCommands = Self(tab: .finderFileActions, title: "Commands")
+    static let finderFileActionsPinned = Self(tab: .finderFileActions, title: "Pinned Destinations")
+
+    static let duckDuckGoEmailDuckDuckGoEmail = Self(tab: .duckDuckGoEmail, title: "DuckDuckGo Email")
+    static let duckDuckGoEmailCommands = Self(tab: .duckDuckGoEmail, title: "Commands")
+    static let duckDuckGoEmailAccount = Self(tab: .duckDuckGoEmail, title: "Account & Token")
+
+    static let keepassxcKeePassXC = Self(tab: .keepassxc, title: "KeePassXC")
+    static let keepassxcCommands = Self(tab: .keepassxc, title: "Commands")
+    static let keepassxcDatabase = Self(tab: .keepassxc, title: "Database & Master Password")
 
     static let aboutAbout = Self(tab: .about, title: "About")
     static let aboutLinks = Self(tab: .about, title: "Links")

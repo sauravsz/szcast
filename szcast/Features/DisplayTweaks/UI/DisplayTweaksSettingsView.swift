@@ -23,38 +23,35 @@ struct DisplayTweaksSettingsView: View {
         return Form {
             Section {
                 if !displays.isEmpty {
-                    Picker(selection: $bSettings.displayTweaksDisplayID) {
-                        ForEach(displays) { display in
-                            Text(display.name).tag(display.id)
+                    SettingsRow(
+                        title: "Target display",
+                        subtitle: "Choose which screen to calibrate."
+                    ) {
+                        Picker("", selection: $bSettings.displayTweaksDisplayID) {
+                            ForEach(displays) { display in
+                                Text(display.name).tag(display.id)
+                            }
                         }
-                    } label: {
-                        Text("Target display")
-                        Text("Choose which screen to calibrate.")
-                    }
-                    .onChange(of: settings.displayTweaksDisplayID) { _, _ in
-                        if settings.displayTweaksEnabled {
-                            applyCurrentSettings()
+                        .labelsHidden()
+                        .frame(width: 220)
+                        .onChange(of: settings.displayTweaksDisplayID) { _, _ in
+                            if settings.displayTweaksEnabled {
+                                applyCurrentSettings()
+                            }
                         }
                     }
                 }
             } header: {
-                Text("Display Selection")
+                SettingsSectionHeader(.displayTweaksSelection)
             }
 
             // MARK: - Lunar Pro Style Gamma Box
             Section {
                 VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-                    HStack(alignment: .center) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Software Gamma Tables")
-                                .font(.headline)
-                            Text("Direct GPU transfer curve adjustments. Keep disabled when using f.lux.")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-
-                        Spacer()
-
+                    SettingsRow(
+                        title: "Software Gamma Tables",
+                        subtitle: "Direct GPU transfer curve adjustments. Keep disabled when using f.lux."
+                    ) {
                         HStack(spacing: 8) {
                             Button(settings.displayTweaksEnabled ? "Enabled" : "Disabled") {
                                 bSettings.displayTweaksEnabled.toggle()
@@ -75,7 +72,7 @@ struct DisplayTweaksSettingsView: View {
                             .controlSize(.regular)
                         }
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 2)
 
                     // Sliders 0 to 100 like Lunar Pro
                     VStack(spacing: 10) {
@@ -133,7 +130,7 @@ struct DisplayTweaksSettingsView: View {
                 }
                 .padding(.vertical, 4)
             } header: {
-                Text("Hardware Gamma (0 to 100)")
+                SettingsSectionHeader(.displayTweaksGamma)
             }
 
             // MARK: - Brightness & Contrast (FaceLight Style)
@@ -174,7 +171,7 @@ struct DisplayTweaksSettingsView: View {
                 }
                 .padding(.vertical, 4)
             } header: {
-                Text("Display Range (0 to 100)")
+                SettingsSectionHeader(.displayTweaksRange)
             }
 
             // MARK: - Curve Preview & Presets
@@ -203,10 +200,11 @@ struct DisplayTweaksSettingsView: View {
                     .padding(.vertical, 2)
                 }
             } header: {
-                Text("Transfer Curve & Presets")
+                SettingsSectionHeader(.displayTweaksCurve)
             }
         }
         .formStyle(.grouped)
+        .settingsScrollTarget(.displayTweaks)
         .task {
             displays = service.enumerateDisplays()
             if settings.displayTweaksDisplayID == 0, let first = displays.first {

@@ -11,26 +11,31 @@ struct DuckDuckGoEmailSettingsView: View {
     var body: some View {
         Form {
             Section {
-                HStack(spacing: Theme.Spacing.md) {
-                    Image(systemName: "envelope.badge.shield.half.filled")
-                        .font(.system(size: 24))
-                        .foregroundStyle(Color.accentColor)
-                        .frame(width: 32)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("DuckDuckGo Email Protection")
-                            .font(.headline)
-                        Text("Generate private @duck.com forwarding addresses that strip tracker scripts.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                SettingsRow(
+                    title: "DuckDuckGo Email Protection",
+                    subtitle: "Generate private @duck.com forwarding addresses that strip tracker scripts."
+                ) {
+                    SettingsTabIcon(
+                        systemImage: "envelope.badge.shield.half.filled",
+                        tint: .accentColor,
+                        size: Theme.Size.settingsRowIcon * 1.5
+                    )
+                } trailing: {
+                    Button(isGenerating ? "Generating…" : "Generate Test") {
+                        generateTestAlias()
                     }
+                    .controlSize(.regular)
+                    .disabled(!service.hasToken || isGenerating)
                 }
-                .padding(.vertical, 4)
 
-                LabeledContent {
+                SettingsRow(
+                    title: "Bearer Token",
+                    subtitle: statusMessage ?? (service.hasToken ? "Configured in macOS Keychain." : "Paste your Bearer token from duckduckgo.com/email.")
+                ) {
                     HStack(spacing: 8) {
                         SecureField("Bearer token", text: $tokenInput)
                             .textFieldStyle(.roundedBorder)
-                            .frame(maxWidth: 200)
+                            .frame(width: 180)
 
                         Button(service.hasToken ? "Update" : "Save") {
                             service.token = tokenInput
@@ -50,41 +55,17 @@ struct DuckDuckGoEmailSettingsView: View {
                             .controlSize(.regular)
                         }
                     }
-                } label: {
-                    Text("API token")
-                    Text(statusMessage ?? (service.hasToken ? "Configured in macOS Keychain." : "Paste your Bearer token from duckduckgo.com/email."))
                 }
             } header: {
-                Text("Account & Token")
+                SettingsSectionHeader(.duckDuckGoEmailAccount)
             } footer: {
                 Text("Log into duckduckgo.com/email in your browser, open Network inspector, and copy the Bearer token.")
             }
 
-            Section {
-                LabeledContent {
-                    Button(isGenerating ? "Generating…" : "Generate Test Alias") {
-                        generateTestAlias()
-                    }
-                    .controlSize(.regular)
-                    .disabled(!service.hasToken || isGenerating)
-                } label: {
-                    Text("Test alias generator")
-                    Text("Verifies token and copies a new @duck.com alias to your clipboard.")
-                }
-
-                LabeledContent {
-                    Text("Hyper + D  (⌃⌥⇧⌘D)")
-                        .font(.subheadline.weight(.semibold).monospaced())
-                        .foregroundStyle(.secondary)
-                } label: {
-                    Text("Global shortcut")
-                    Text("Generate and copy a fresh @duck.com alias anywhere.")
-                }
-            } header: {
-                Text("Shortcuts & Testing")
-            }
+            FeatureCommandsSection(owner: .duckDuckGoEmail, anchor: .duckDuckGoEmailCommands)
         }
         .formStyle(.grouped)
+        .settingsScrollTarget(.duckDuckGoEmail)
         .task {
             if let saved = service.token {
                 tokenInput = saved

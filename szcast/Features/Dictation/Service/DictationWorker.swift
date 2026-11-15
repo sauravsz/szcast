@@ -100,6 +100,10 @@ final class DictationWorker: Sendable {
         }
     }
 
+    var isRunning: Bool {
+        process.isRunning
+    }
+
     func terminate() {
         if process.isRunning { process.terminate() }
     }

@@ -70,6 +70,14 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - S1-mini Post-Clean Delivery: The full audio recording is transcribed, normalized and cleaned via local S1-mini model, and pasted in a single shot via ⌘V (`Paster.pasteString`) only after cleanup completes.
   - Streamlined Pasting Mode: Standardized on "All at once after transcribing and cleaning"; removed legacy typewriter and word-by-word streaming modes and the "Insert while recording" setting.
 
+- **Release 1.0.9-hotfix**:
+  - Dictation Insights Dashboard: Wispr Flow-style analytics inside Dictation Settings (`.insights` tab) and launcher command (`Dictation Insights`). WPM gauge, AI speech normalization fixes breakdown, Total Words milestone with desktop/mobile segmented ratio, desktop app distribution, and 7x16 streak heatmap.
+  - S1-mini & Parakeet Always-On: Models prewarmed and persistent on launch/reopen with zero unload latency.
+  - Settings Visual Standardization: Ente Auth, KeePassXC, DuckDuckGo Mail, Finder File Actions, Display Tweaks, and Clean Keyboard aligned to macOS native grouped Form style.
+  - Custom Snippet Favicons: Domain favicons, custom local icon paths, and SF Symbols for snippets.
+  - Raycast-Style Icons: Vibrant squircle icon badges across launcher search, commands, and settings.
+  - Concurrency Safety: Concurrently drained stdout/stderr in `KeePassXCService` and `FinderFileActionsService` to eliminate child process pipe deadlocks; strictly verified CGEventTap registration in `CleanKeyboardService`.
+
 - **Upstream Ports & Defensive Hardening**:
   - Upstream Ports: Ported macOS 26 compact bar glass shadow fix (`5370cf64`), quicklink hotkey toggle dismissal (`142e3a06`), Yandex Telemost meeting link detection (`d9414598`), sandboxed clipboard image copy handling (`d153da15`), Notes ICU word count (`bc5cd0cc`), regional grouping widths for calculator supporting lakhs/crores (`e61ba33c`), and snippet selective pinning (`fd3c32fc` with `pinned: true` frontmatter, `⌘.` shortcut, and browser pinned section headers).
   - Stability & Accessibility Fixes: Eliminated fatal favicon force-unwrap crash on templated/non-ASCII URLs (`QuicklinkFaviconService`), resolved recursive AppKit accessibility stack overflow crash on attached document chips (`ChatTranscriptView`), and fixed Pomodoro focus timer sleep drift with wall-clock end-date calculation (`FocusTimerCoordinator`).

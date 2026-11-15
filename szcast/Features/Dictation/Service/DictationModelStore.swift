@@ -11,13 +11,28 @@ final class DictationModelStore {
     private(set) var transcribing = false
     private(set) var loadedModel: DictationModel?
     private(set) var installedModels: Set<DictationModel> = []
+    private(set) var isPrewarming = false
     @ObservationIgnored private var worker: DictationWorker?
     @ObservationIgnored private var releaseTask: Task<Void, Never>?
+    @ObservationIgnored private var prewarmTask: Task<Void, Never>?
     @ObservationIgnored private var idleRelease: DictationIdleRelease
     @ObservationIgnored private var downloadTask: Task<Void, Error>?
     @ObservationIgnored private var downloadID: UUID?
     private let root: URL
     private let makeWorker: () throws -> DictationWorker
+
+    var isWorkerRunning: Bool {
+        worker?.isRunning == true
+    }
+
+    private func getOrMakeWorker() throws -> DictationWorker {
+        if let worker = self.worker, worker.isRunning {
+            return worker
+        }
+        let newWorker = try makeWorker()
+        self.worker = newWorker
+        return newWorker
+    }
 
     init(
         idleRelease: DictationIdleRelease,
@@ -130,13 +145,20 @@ final class DictationModelStore {
         guard isInstalled(model) else { throw Failure.notInstalled }
         releaseTask?.cancel()
         releaseTask = nil
+
+        // If background prewarming is currently in flight, await it so we don't abort it and trigger a cold-restart
+        if let task = prewarmTask {
+            await task.value
+        }
+
         transcribing = true
         defer { transcribing = false; scheduleRelease() }
         do {
-            if loadedModel != model { await release() }
+            if loadedModel != model || worker?.isRunning != true {
+                await release()
+            }
             try Task.checkCancellation()
-            let worker = try self.worker ?? makeWorker()
-            self.worker = worker
+            let worker = try getOrMakeWorker()
             let request = DictationWire.Request(
                 id: UUID(), model: model, directory: directory(for: model),
                 sampleCount: samples.count, language: model.isQwen ? language : nil)
@@ -171,28 +193,46 @@ final class DictationModelStore {
         guard isInstalled(model), !transcribing else { return }
         releaseTask?.cancel()
         releaseTask = nil
-        Task { [weak self] in
+        if loadedModel == model, let worker = self.worker, worker.isRunning {
+            return
+        }
+        prewarmTask?.cancel()
+        isPrewarming = true
+        prewarmTask = Task { [weak self] in
             guard let self, !self.transcribing else { return }
+            defer {
+                self.isPrewarming = false
+                self.prewarmTask = nil
+            }
             do {
-                if self.loadedModel != model { await self.release() }
-                guard !self.transcribing else { return }
-                let worker = try self.worker ?? self.makeWorker()
-                self.worker = worker
+                if self.loadedModel != model || self.worker?.isRunning != true {
+                    let oldWorker = self.worker
+                    self.worker = nil
+                    self.loadedModel = nil
+                    await oldWorker?.stop()
+                }
+                guard !self.transcribing, !Task.isCancelled else { return }
+                let worker = try self.getOrMakeWorker()
                 if self.loadedModel != model {
-                    let dummySamples: [Float] = [0.0]
+                    let dummySamples = [Float](repeating: 0.0, count: 16_000)
                     let request = DictationWire.Request(
                         id: UUID(), model: model, directory: self.directory(for: model),
                         sampleCount: dummySamples.count, language: nil
                     )
-                    _ = try? await worker.transcribe(dummySamples, request: request) { [weak self] in
+                    _ = try await worker.transcribe(dummySamples, request: request) { [weak self] in
                         guard let self, self.worker === worker else { return }
                         self.loadedModel = model
                     }
                     self.loadedModel = model
                 }
                 self.scheduleRelease()
+            } catch is CancellationError {
+                // If prewarming was canceled by an in-flight transcribe or explicit release, keep state clean
             } catch {
-                // Prewarm failure is non-fatal
+                let staleWorker = self.worker
+                self.worker = nil
+                self.loadedModel = nil
+                await staleWorker?.stop()
             }
         }
     }
@@ -200,6 +240,9 @@ final class DictationModelStore {
     func release() async {
         releaseTask?.cancel()
         releaseTask = nil
+        prewarmTask?.cancel()
+        prewarmTask = nil
+        isPrewarming = false
         let worker = self.worker
         self.worker = nil
         loadedModel = nil
@@ -212,7 +255,11 @@ final class DictationModelStore {
         await release()
     }
 
-    func prepareForTermination() { downloadTask?.cancel(); worker?.terminate() }
+    func prepareForTermination() {
+        downloadTask?.cancel()
+        prewarmTask?.cancel()
+        worker?.terminate()
+    }
 
     private func scheduleRelease() {
         releaseTask?.cancel()

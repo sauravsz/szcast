@@ -46,6 +46,18 @@ public enum QuicklinkFaviconService {
     @discardableResult
     public static func fetchFavicon(for link: String, quicklinkID: UUID) async -> String? {
         guard let host = extractHost(from: link) else { return nil }
+
+        // Use proper high-contrast dual-mode compatible ChatGPT icon for all ChatGPT links
+        if host.contains("chatgpt") || host.contains("openai") || link.lowercased().contains("chatgpt.com") {
+            let directory = iconsDirectory
+            try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            let filePath = iconPath(for: quicklinkID)
+            if let pngData = ChatGPTIconProvider.generatePNGData() {
+                try? pngData.write(to: URL(fileURLWithPath: filePath), options: .atomic)
+                return filePath
+            }
+        }
+
         guard let pngData = await downloadFavicon(forHost: host) else { return nil }
 
         let directory = iconsDirectory

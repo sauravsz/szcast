@@ -87,6 +87,19 @@ extension Quicklink {
         if let iconPath, FileManager.default.fileExists(atPath: iconPath) {
             return .artwork(path: iconPath, extent: IconCache.appIconExtent)
         }
+        if link.lowercased().contains("chatgpt.com") || name.lowercased().contains("chatgpt") {
+            let path = QuicklinkFaviconService.iconPath(for: id)
+            if FileManager.default.fileExists(atPath: path) {
+                return .artwork(path: path, extent: IconCache.appIconExtent)
+            }
+            if let data = ChatGPTIconProvider.generatePNGData() {
+                let dir = QuicklinkFaviconService.iconsDirectory
+                try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+                try? data.write(to: URL(fileURLWithPath: path), options: .atomic)
+                return .artwork(path: path, extent: IconCache.appIconExtent)
+            }
+            return .symbol("BrandChatGPT")
+        }
         return .symbol(symbol)
     }
 }

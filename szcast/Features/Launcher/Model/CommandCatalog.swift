@@ -67,6 +67,11 @@ extension SettingsTab {
         case .calendar:
             [.joinNextMeeting, .mySchedule, .createEvent, .copyMeetingLink, .openInCalendar]
         case .dictation: [.dictationInsights]
+        case .cleanKeyboard: [.cleanKeyboard]
+        case .enteAuth: [.enteAuth]
+        case .finderFileActions: [.moveFileToFolder]
+        case .duckDuckGoEmail: [.generateDuckAddress]
+        case .keepassxc: [.keepassxc]
         default: []
         }
     }

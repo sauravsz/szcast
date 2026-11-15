@@ -617,6 +617,9 @@ enum QuicklinkDestination {
     static func detect(_ link: String) -> Self? { nil }
     var defaultSymbol: String { "" }
 }
+enum SnippetFaviconService {
+    static func resolveIcon(for snippet: StoredSnippet.Snippet) -> EntryIcon? { nil }
+}
 struct StoredSnippet {
     struct Snippet { var isEnabled = true; var name = ""; var keyword: String? }
     var snippet = Snippet()

@@ -10,6 +10,10 @@ enum SnippetFaviconService {
 
     /// Standard local file path for a snippet's favicon on disk.
     static func iconPath(for hostOrIdentifier: String) -> String {
+        let clean = hostOrIdentifier.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        if clean == "chatgpt" || clean == "openai" || clean.contains("chatgpt.com") || clean == "gpt" {
+            return chatGPTIconPath
+        }
         let safeName = hostOrIdentifier
             .lowercased()
             .components(separatedBy: CharacterSet.alphanumerics.inverted)
@@ -17,6 +21,52 @@ enum SnippetFaviconService {
             .joined(separator: "-")
         let filename = safeName.isEmpty ? "snippet-icon" : safeName
         return iconsDirectory.appending(path: "\(filename).png").path
+    }
+
+    /// Standard path for ChatGPT snippet icon.
+    static var chatGPTIconPath: String {
+        iconsDirectory.appending(path: "chatgpt.png").path
+    }
+
+    /// Checks if a snippet is related to ChatGPT
+    static func isChatGPT(snippet: Snippet) -> Bool {
+        let custom = (snippet.icon ?? "").lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        if custom == "chatgpt" || custom == "openai" || custom.contains("chatgpt.com") || custom == "gpt" {
+            return true
+        }
+        let name = snippet.name.lowercased()
+        let keyword = (snippet.keyword ?? "").lowercased()
+        let folder = (snippet.folder ?? "").lowercased()
+        if name.contains("chatgpt") || name.hasPrefix("gpt") || name.contains("openai") {
+            return true
+        }
+        if keyword.contains("chatgpt") || keyword == "gpt" {
+            return true
+        }
+        if folder.contains("chatgpt") || folder == "gpt" {
+            return true
+        }
+        return false
+    }
+
+    /// Ensures the high-contrast, dual-mode compatible ChatGPT icon exists and returns its EntryIcon.
+    static func ensureChatGPTArtworkIcon() -> EntryIcon {
+        let path = chatGPTIconPath
+        if !FileManager.default.fileExists(atPath: path) {
+            if let data = generateChatGPTIconPNG() {
+                try? FileManager.default.createDirectory(at: iconsDirectory, withIntermediateDirectories: true)
+                try? data.write(to: URL(fileURLWithPath: path), options: .atomic)
+            }
+        }
+        if FileManager.default.fileExists(atPath: path) {
+            return .artwork(path: path, extent: 24)
+        }
+        return .symbol("BrandChatGPT")
+    }
+
+    /// Generates a pixel-perfect, crisp ChatGPT squircle icon (256x256) with #10A37F emerald background and white rosette.
+    static func generateChatGPTIconPNG() -> Data? {
+        ChatGPTIconProvider.generatePNGData()
     }
 
     /// Checks if a string represents a domain, URL, or website reference.
@@ -49,35 +99,53 @@ enum SnippetFaviconService {
 
     /// Resolves the EntryIcon for a snippet.
     static func resolveIcon(for snippet: Snippet) -> EntryIcon {
-        guard let custom = snippet.icon?.trimmingCharacters(in: .whitespacesAndNewlines), !custom.isEmpty else {
-            return .symbol("curlybraces")
-        }
-
-        // If it is a web domain or URL
-        if let host = extractHost(from: custom) {
-            let path = iconPath(for: host)
-            if FileManager.default.fileExists(atPath: path) {
-                return .artwork(path: path, extent: 24)
+        // 1. If snippet explicitly provides a custom icon
+        if let custom = snippet.icon?.trimmingCharacters(in: .whitespacesAndNewlines), !custom.isEmpty {
+            let lower = custom.lowercased()
+            if lower == "chatgpt" || lower == "openai" || lower.contains("chatgpt.com") || lower == "gpt" {
+                return ensureChatGPTArtworkIcon()
             }
-            // Trigger asynchronous download in background
-            Task {
-                _ = await fetchFavicon(forHost: host)
+
+            // If it is a web domain or URL
+            if let host = extractHost(from: custom) {
+                if host.contains("chatgpt") || host.contains("openai") {
+                    return ensureChatGPTArtworkIcon()
+                }
+                let path = iconPath(for: host)
+                if FileManager.default.fileExists(atPath: path) {
+                    return .artwork(path: path, extent: 24)
+                }
+                // Trigger asynchronous download in background
+                Task {
+                    _ = await fetchFavicon(forHost: host)
+                }
+                return .symbol("globe")
             }
-            return .symbol("globe")
+
+            // Check if an existing cached file exists at the given path directly
+            if FileManager.default.fileExists(atPath: custom) {
+                return .artwork(path: custom, extent: 24)
+            }
+
+            // Default to symbol
+            return .symbol(custom)
         }
 
-        // Check if an existing cached file exists at the given path directly
-        if FileManager.default.fileExists(atPath: custom) {
-            return .artwork(path: custom, extent: 24)
+        // 2. Default resolution: use proper high-contrast ChatGPT icon for all ChatGPT snippets
+        if isChatGPT(snippet: snippet) {
+            return ensureChatGPTArtworkIcon()
         }
 
-        // Default to symbol
-        return .symbol(custom)
+        return .symbol("curlybraces")
     }
 
     /// Downloads and persists a favicon for the host, returning the local file path on success.
     @discardableResult
     static func fetchFavicon(forHost host: String) async -> String? {
+        if host.contains("chatgpt") || host.contains("openai") {
+            _ = ensureChatGPTArtworkIcon()
+            return chatGPTIconPath
+        }
         guard let pngData = await downloadFavicon(forHost: host) else { return nil }
         let directory = iconsDirectory
         do {

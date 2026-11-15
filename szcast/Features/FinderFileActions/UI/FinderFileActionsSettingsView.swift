@@ -7,22 +7,16 @@ struct FinderFileActionsSettingsView: View {
     var body: some View {
         Form {
             Section {
-                HStack(spacing: Theme.Spacing.md) {
-                    Image(systemName: "folder.badge.gearshape")
-                        .font(.system(size: 24))
-                        .foregroundStyle(Color.accentColor)
-                        .frame(width: 32)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Finder File Actions")
-                            .font(.headline)
-                        Text("Quickly move or copy files selected in Finder to pinned or searched folders.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .padding(.vertical, 4)
-
-                LabeledContent {
+                SettingsRow(
+                    title: "Finder File Actions",
+                    subtitle: "Quickly move or copy files selected in Finder to pinned or searched folders."
+                ) {
+                    SettingsTabIcon(
+                        systemImage: "folder.badge.gearshape",
+                        tint: .accentColor,
+                        size: Theme.Size.settingsRowIcon * 1.5
+                    )
+                } trailing: {
                     HStack(spacing: 8) {
                         Button("Add Folder…") {
                             addFolder()
@@ -37,13 +31,12 @@ struct FinderFileActionsSettingsView: View {
                             .controlSize(.regular)
                         }
                     }
-                } label: {
-                    Text("Manage destinations")
-                    Text("Pin frequently used folders to the top of the destination picker.")
                 }
             } header: {
-                Text("File Actions")
+                SettingsSectionHeader(.finderFileActionsFinderFileActions)
             }
+
+            FeatureCommandsSection(owner: .finderFileActions, anchor: .finderFileActionsCommands)
 
             Section {
                 if service.pinnedFolders.isEmpty {
@@ -53,16 +46,14 @@ struct FinderFileActionsSettingsView: View {
                         .padding(.vertical, 2)
                 } else {
                     ForEach(service.pinnedFolders, id: \.path) { folder in
-                        HStack {
-                            Label(folder.lastPathComponent, systemImage: "folder.fill")
-                                .font(.headline)
-                            Spacer()
-                            Text(folder.path)
-                                .font(.subheadline)
+                        SettingsRow(
+                            title: folder.lastPathComponent,
+                            subtitle: folder.path
+                        ) {
+                            Image(systemName: "folder.fill")
                                 .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-                                .frame(maxWidth: 240, alignment: .trailing)
+                                .frame(width: SettingsListMetrics.iconSize)
+                        } trailing: {
                             Button(role: .destructive) {
                                 _ = service.togglePin(folder: folder)
                             } label: {
@@ -72,29 +63,16 @@ struct FinderFileActionsSettingsView: View {
                             .buttonStyle(.plain)
                             .help("Unpin folder")
                         }
-                        .padding(.vertical, 2)
                     }
                 }
             } header: {
-                Text("Pinned Destinations (\(service.pinnedFolders.count))")
+                SettingsSectionHeader(.finderFileActionsPinned)
             } footer: {
                 Text("Pinned folders appear at the top of the destination picker when moving or copying files.")
             }
-
-            Section {
-                LabeledContent {
-                    Text("Hyper + M  (⌃⌥⇧⌘M)")
-                        .font(.subheadline.weight(.semibold).monospaced())
-                        .foregroundStyle(.secondary)
-                } label: {
-                    Text("Move file shortcut")
-                    Text("Select any file or folder in Finder, then press to trigger the move action.")
-                }
-            } header: {
-                Text("Shortcuts & Triggers")
-            }
         }
         .formStyle(.grouped)
+        .settingsScrollTarget(.finderFileActions)
         .task {
             service.loadPinned()
             service.loadRecent()

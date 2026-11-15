@@ -392,23 +392,24 @@ struct DictationSettingsView: View {
                     if downloading {
                         DownloadProgressView(models: coordinator.models)
                     } else if installed {
-                        let isHot = coordinator.models.loadedModel == settings.dictationModel
+                        let isHot = coordinator.models.loadedModel == settings.dictationModel && coordinator.models.isWorkerRunning
+                        let isPrewarming = coordinator.models.isPrewarming
                         let memoryMB = settings.dictationModel.approximateInstalledMegabytes
                         HStack(spacing: Theme.Spacing.sm) {
                             Circle()
-                                .fill(Color.green)
+                                .fill(isHot ? Color.green : (isPrewarming ? Color.orange : Color.secondary.opacity(0.5)))
                                 .frame(width: 8, height: 8)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Parakeet (Local)")
                                     .font(.system(size: 12, weight: .medium))
-                                Text(isHot ? "Apple Neural Engine & Metal GPU (~\(memoryMB) MB RAM)" : "On-device CoreML (~\(memoryMB) MB)")
+                                Text(isHot ? "Apple Neural Engine & Metal GPU (~\(memoryMB) MB RAM)" : (isPrewarming ? "Warming Apple Neural Engine & Metal GPU..." : "On-device CoreML (~\(memoryMB) MB)"))
                                     .font(.system(size: 11))
                                     .foregroundColor(.secondary)
                                     .lineLimit(1)
                                     .truncationMode(.middle)
                             }
                             Spacer()
-                            if !isHot {
+                            if !isHot && !isPrewarming {
                                 Button("Prewarm") {
                                     coordinator.models.prewarm(settings.dictationModel)
                                 }

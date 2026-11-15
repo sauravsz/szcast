@@ -251,6 +251,14 @@ enum IconCache {
         let key = symbolKey(name, tint)
         if let cached = cache.object(forKey: key) { return cached }
 
+        if name == "BrandChatGPT" || name.lowercased() == "chatgpt" {
+            if let asset = NSImage(named: "BrandChatGPT") {
+                let (icon, cost) = downsampled(asset)
+                cache.setObject(icon, forKey: key, cost: cost)
+                return icon
+            }
+        }
+
         let resolvedTint = tint ?? RaycastIconTheme.tint(forSymbol: name)
         let side = displayPixel
         let isDark = darkSurface.withLock { $0 }

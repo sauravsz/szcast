@@ -789,6 +789,7 @@
 		CA2A3AA29D24FFE29C0EBD35 /* NotesMenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3873052B25A123BCA5A6DA9 /* NotesMenuBarController.swift */; };
 		CA6BA9C381351D0B2CADFB9D /* IconCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5CBCCE63360E4590CF5884A /* IconCache.swift */; };
 		CA6BA9C381351D0B2CADFB9E /* RaycastIconTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5CBCCE63360E4590CF5884B /* RaycastIconTheme.swift */; };
+		CA6BA9C381351D0B2CADFB9F /* ChatGPTIconProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5CBCCE63360E4590CF5884C /* ChatGPTIconProvider.swift */; };
 		CA9C4158D6102028733745F5 /* NoteMarkdownTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99EF603B1761C0EF33EAA15E /* NoteMarkdownTypography.swift */; };
 		CAE4C44A9D2EC4AC51FD3150 /* UninstallTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EBAD0766FF9BFC6A4396474 /* UninstallTarget.swift */; };
 		CB35B7D87CB8FCFF26A7BED4 /* FileSystemWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 992A05290190AFEBA0C525CA /* FileSystemWatcher.swift */; };
@@ -1929,6 +1930,7 @@
 		E5C7F0C39D24F068A8F84864 /* CurrencyData.generated.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrencyData.generated.swift; sourceTree = "<group>"; };
 		E5CBCCE63360E4590CF5884A /* IconCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconCache.swift; sourceTree = "<group>"; };
 		E5CBCCE63360E4590CF5884B /* RaycastIconTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaycastIconTheme.swift; sourceTree = "<group>"; };
+		E5CBCCE63360E4590CF5884C /* ChatGPTIconProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatGPTIconProvider.swift; sourceTree = "<group>"; };
 		E5D1A8D93DEC49E4EA11C449 /* ExtensionFormMetrics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionFormMetrics.swift; sourceTree = "<group>"; };
 		E6BBB22DFC9F53CCCCD8010C /* ExtensionSignInSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionSignInSession.swift; sourceTree = "<group>"; };
 		E6F27259003BDECA2054FC67 /* WindowLayoutEntryPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowLayoutEntryPicker.swift; sourceTree = "<group>"; };
@@ -4306,6 +4308,7 @@
 				4BC0CEDE9677C9C2485586B3 /* FilePreviewThumbnail.swift */,
 				E5CBCCE63360E4590CF5884A /* IconCache.swift */,
 				E5CBCCE63360E4590CF5884B /* RaycastIconTheme.swift */,
+				E5CBCCE63360E4590CF5884C /* ChatGPTIconProvider.swift */,
 				8C39345D0335ACA895133ABD /* IconStyleMonitor.swift */,
 				EB3FE08E1D7AF4CBB87654CA /* ImageDerivative.swift */,
 				36C6775BBA0FC6F134296606 /* ImageThumbnail.swift */,
@@ -5315,6 +5318,7 @@
 				122CA8786B58966376B27DC1 /* HyperKeyTap.swift in Sources */,
 				CA6BA9C381351D0B2CADFB9D /* IconCache.swift in Sources */,
 				CA6BA9C381351D0B2CADFB9E /* RaycastIconTheme.swift in Sources */,
+				CA6BA9C381351D0B2CADFB9F /* ChatGPTIconProvider.swift in Sources */,
 				3E2E2CFAD5C5731A5F059AD5 /* IconStyleMonitor.swift in Sources */,
 				321B4E5AAA0A69F83403F408 /* ImageDerivative.swift in Sources */,
 				CB95B0CBF0DFEDFCEA837053 /* ImageThumbnail.swift in Sources */,

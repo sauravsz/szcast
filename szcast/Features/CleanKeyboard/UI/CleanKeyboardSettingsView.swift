@@ -7,20 +7,22 @@ struct CleanKeyboardSettingsView: View {
     var body: some View {
         Form {
             Section {
-                HStack(spacing: Theme.Spacing.md) {
-                    Image(systemName: "keyboard")
-                        .font(.system(size: 24))
-                        .foregroundStyle(Color.accentColor)
-                        .frame(width: 32)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Clean Keyboard Mode")
-                            .font(.headline)
-                        Text("Temporarily locks your physical keyboard so you can safely clean keys without accidental input.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                SettingsRow(
+                    title: "Clean Keyboard Mode",
+                    subtitle: "Temporarily locks your physical keyboard so you can safely clean keys without accidental input."
+                ) {
+                    SettingsTabIcon(
+                        systemImage: "keyboard",
+                        tint: .accentColor,
+                        size: Theme.Size.settingsRowIcon * 1.5
+                    )
+                } trailing: {
+                    Button("Start Cleaning Mode") {
+                        cleanService.startCleaning(duration: defaultDuration)
                     }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.regular)
                 }
-                .padding(.vertical, 4)
 
                 Picker(selection: $defaultDuration) {
                     Text("30 seconds").tag(30)
@@ -28,59 +30,56 @@ struct CleanKeyboardSettingsView: View {
                     Text("90 seconds").tag(90)
                     Text("120 seconds (2 minutes)").tag(120)
                 } label: {
-                    Text("Default cleaning duration")
+                    SettingsRowTitle(.cleanKeyboardCleanKeyboard, "Default cleaning duration")
                     Text("How long keyboard inputs stay locked.")
                 }
-
-                LabeledContent {
-                    Button("Start Cleaning Mode Now") {
-                        cleanService.startCleaning(duration: defaultDuration)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.regular)
-                } label: {
-                    Text("Activate lock")
-                    Text("Locks keyboard inputs immediately for the selected duration.")
-                }
             } header: {
-                Text("Keyboard Lock")
+                SettingsSectionHeader(.cleanKeyboardCleanKeyboard)
             }
 
+            FeatureCommandsSection(owner: .cleanKeyboard, anchor: .cleanKeyboardCommands)
+
             Section {
-                LabeledContent {
-                    Text("Hold Escape for 3 seconds")
-                        .font(.subheadline)
+                SettingsRow(
+                    title: "Hold Escape for 3 seconds",
+                    subtitle: "Press and hold the Escape key continuously until the cleaning lock releases."
+                ) {
+                    Image(systemName: "lock.open")
                         .foregroundStyle(.secondary)
-                } label: {
-                    Label("Primary unlock", systemImage: "lock.open")
+                        .frame(width: SettingsListMetrics.iconSize)
+                } trailing: {
+                    Text("Primary")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Theme.Colors.controlSurface)
+                        .clipShape(Capsule())
                 }
 
-                LabeledContent {
-                    Text("⌃U (Control + U)")
-                        .font(.subheadline.monospaced())
+                SettingsRow(
+                    title: "Emergency Chord: ⌃U",
+                    subtitle: "Press Control + U at any time to immediately cancel keyboard lock."
+                ) {
+                    Image(systemName: "bolt.shield")
                         .foregroundStyle(.secondary)
-                } label: {
-                    Label("Emergency chord", systemImage: "bolt.shield")
+                        .frame(width: SettingsListMetrics.iconSize)
+                } trailing: {
+                    Text("⌃U")
+                        .font(.caption.weight(.semibold).monospaced())
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Theme.Colors.controlSurface)
+                        .clipShape(Capsule())
                 }
             } header: {
-                Text("Safety Unlock")
+                SettingsSectionHeader(.cleanKeyboardSafety)
             } footer: {
                 Text("Requires Accessibility permission to block keystrokes during cleaning.")
             }
-
-            Section {
-                LabeledContent {
-                    Text("Clean Keyboard")
-                        .font(.subheadline.monospaced())
-                        .foregroundStyle(.secondary)
-                } label: {
-                    Text("Launcher command")
-                    Text("Search in szcast to start keyboard cleaning.")
-                }
-            } header: {
-                Text("Launcher Trigger")
-            }
         }
         .formStyle(.grouped)
+        .settingsScrollTarget(.cleanKeyboard)
     }
 }

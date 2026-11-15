@@ -66,6 +66,7 @@ final class QuicklinkStore {
         }
         sqlite3_reset(stmt)
         quicklinks = loaded.sorted(by: Quicklink.precedes)
+        ensureChatGPTQuicklinkIcons()
     }
 
     /// A disabled quicklink is offered nowhere, so every surface lists this, not `quicklinks`.
@@ -90,6 +91,7 @@ final class QuicklinkStore {
     /// Seeds standard web search and fallback quicklinks on first run.
     func seedDefaultsIfNeeded() {
         let defaults = UserDefaults.standard
+        defer { ensureChatGPTQuicklinkIcons() }
         guard !defaults.bool(forKey: Self.seededDefaultsKey) else { return }
         for quicklink in DefaultQuicklinks.all {
             if self.quicklink(id: quicklink.id) == nil && !quicklinks.contains(where: { $0.name == quicklink.name }) {
@@ -97,6 +99,38 @@ final class QuicklinkStore {
             }
         }
         defaults.set(true, forKey: Self.seededDefaultsKey)
+    }
+
+    /// Guarantees that ChatGPT quicklinks have the proper high-contrast dual-mode icon.
+    func ensureChatGPTQuicklinkIcons() {
+        let chatGPTIDs = [
+            DefaultQuicklinks.chatGPTWebSearchUUID,
+            DefaultQuicklinks.chatGPTUUID
+        ]
+        if let pngData = ChatGPTIconProvider.generatePNGData() {
+            let dir = QuicklinkFaviconService.iconsDirectory
+            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            for id in chatGPTIDs {
+                let path = QuicklinkFaviconService.iconPath(for: id)
+                try? pngData.write(to: URL(fileURLWithPath: path), options: .atomic)
+                if let link = quicklink(id: id), link.iconPath != path {
+                    var updated = link
+                    updated.iconPath = path
+                    try? update(updated)
+                }
+            }
+        }
+        for link in quicklinks where (link.name.localizedCaseInsensitiveContains("chatgpt") || link.link.localizedCaseInsensitiveContains("chatgpt.com")) {
+            let path = QuicklinkFaviconService.iconPath(for: link.id)
+            if link.iconPath != path {
+                if let pngData = ChatGPTIconProvider.generatePNGData() {
+                    try? pngData.write(to: URL(fileURLWithPath: path), options: .atomic)
+                }
+                var updated = link
+                updated.iconPath = path
+                try? update(updated)
+            }
+        }
     }
 
     // Takes a whole draft, so adding an option doesn't churn every call site.

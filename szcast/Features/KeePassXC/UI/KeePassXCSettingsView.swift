@@ -13,45 +13,34 @@ struct KeePassXCSettingsView: View {
     var body: some View {
         Form {
             Section {
-                HStack(spacing: Theme.Spacing.md) {
-                    Image(systemName: "lock.fill")
-                        .font(.system(size: 24))
-                        .foregroundStyle(Color.accentColor)
-                        .frame(width: 32)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("KeePassXC Password Manager")
-                            .font(.headline)
-                        Text("Offline credentials and TOTP retrieval via keepassxc-cli with macOS Keychain storage.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .padding(.vertical, 4)
-
-                LabeledContent {
-                    HStack(spacing: 8) {
-                        Text(databasePath.isEmpty ? "No database chosen" : databasePath)
-                            .font(.subheadline)
-                            .foregroundStyle(databasePath.isEmpty ? .secondary : .primary)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                        Button("Browse…") {
-                            browseForDatabase()
-                        }
-                        .controlSize(.regular)
-                    }
-                } label: {
-                    Text("Database (.kdbx)")
-                    Text("Path to your KeePassXC password database.")
+                SettingsRow(
+                    title: "KeePassXC Password Manager",
+                    subtitle: "Offline credentials and TOTP retrieval via keepassxc-cli with macOS Keychain storage."
+                ) {
+                    SettingsTabIcon(
+                        systemImage: "lock.fill",
+                        tint: .accentColor,
+                        size: Theme.Size.settingsRowIcon * 1.5
+                    )
+                } trailing: {
+                    EmptyView()
                 }
 
-                LabeledContent {
+                SettingsRow(
+                    title: "Database (.kdbx)",
+                    subtitle: databasePath.isEmpty ? "No database chosen" : databasePath
+                ) {
+                    Button("Browse…") {
+                        browseForDatabase()
+                    }
+                    .controlSize(.regular)
+                }
+
+                SettingsRow(
+                    title: "Keyfile (optional)",
+                    subtitle: keyfilePath.isEmpty ? "None" : keyfilePath
+                ) {
                     HStack(spacing: 8) {
-                        Text(keyfilePath.isEmpty ? "None" : keyfilePath)
-                            .font(.subheadline)
-                            .foregroundStyle(keyfilePath.isEmpty ? .secondary : .primary)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
                         Button("Browse…") {
                             browseForKeyfile()
                         }
@@ -66,16 +55,16 @@ struct KeePassXCSettingsView: View {
                             .foregroundStyle(.red)
                         }
                     }
-                } label: {
-                    Text("Keyfile (optional)")
-                    Text("Optional encryption keyfile for database unlock.")
                 }
 
-                LabeledContent {
+                SettingsRow(
+                    title: "Master password",
+                    subtitle: statusMessage ?? (service.isUnlocked ? "Database unlocked in Keychain." : "Stored securely in Keychain for instant access.")
+                ) {
                     HStack(spacing: 8) {
                         SecureField("Master password", text: $passwordInput)
                             .textFieldStyle(.roundedBorder)
-                            .frame(maxWidth: 200)
+                            .frame(width: 150)
 
                         Button(service.isUnlocked ? "Update" : "Save") {
                             service.masterPassword = passwordInput
@@ -94,77 +83,111 @@ struct KeePassXCSettingsView: View {
                             .controlSize(.regular)
                         }
                     }
-                } label: {
-                    Text("Master password")
-                    Text(statusMessage ?? (service.isUnlocked ? "Database unlocked in Keychain." : "Stored securely in Keychain for instant access."))
+                }
+
+                Toggle(isOn: $windowResumptionEnabled) {
+                    SettingsRowTitle(.keepassxcDatabase, "Window resumption")
+                    Text("Reopening szcast (⌥Space) immediately restores your open entry.")
                 }
             } header: {
-                Text("Database & Credentials")
+                SettingsSectionHeader(.keepassxcDatabase)
+            }
+
+            FeatureCommandsSection(owner: .keepassxc, anchor: .keepassxcCommands)
+
+            Section {
+                SettingsRow(
+                    title: "Copy Password",
+                    subtitle: "Copies secret to clipboard and dismisses launcher."
+                ) {
+                    Image(systemName: "key")
+                        .foregroundStyle(.secondary)
+                        .frame(width: SettingsListMetrics.iconSize)
+                } trailing: {
+                    Text("⌘C")
+                        .font(.caption.weight(.semibold).monospaced())
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Theme.Colors.controlSurface)
+                        .clipShape(Capsule())
+                }
+
+                SettingsRow(
+                    title: "Copy TOTP",
+                    subtitle: "Copies 2FA digits and dismisses launcher."
+                ) {
+                    Image(systemName: "clock.badge.checkmark")
+                        .foregroundStyle(.secondary)
+                        .frame(width: SettingsListMetrics.iconSize)
+                } trailing: {
+                    Text("⌘T")
+                        .font(.caption.weight(.semibold).monospaced())
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Theme.Colors.controlSurface)
+                        .clipShape(Capsule())
+                }
+
+                SettingsRow(
+                    title: "Copy Username",
+                    subtitle: "Copies account username or email."
+                ) {
+                    Image(systemName: "person")
+                        .foregroundStyle(.secondary)
+                        .frame(width: SettingsListMetrics.iconSize)
+                } trailing: {
+                    Text("⌘B")
+                        .font(.caption.weight(.semibold).monospaced())
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Theme.Colors.controlSurface)
+                        .clipShape(Capsule())
+                }
+
+                SettingsRow(
+                    title: "Open URL",
+                    subtitle: "Opens website in your default browser."
+                ) {
+                    Image(systemName: "safari")
+                        .foregroundStyle(.secondary)
+                        .frame(width: SettingsListMetrics.iconSize)
+                } trailing: {
+                    Text("⌘U")
+                        .font(.caption.weight(.semibold).monospaced())
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Theme.Colors.controlSurface)
+                        .clipShape(Capsule())
+                }
+            } header: {
+                SettingsSectionHeader(.keepassxcKeePassXC)
             }
 
             Section {
-                LabeledContent {
-                    Text(service.resolveCliPath() ?? "Not found (brew install keepassxc)")
-                        .font(.subheadline.monospaced())
-                        .foregroundStyle(service.resolveCliPath() != nil ? Color.secondary : Color.red)
-                } label: {
-                    Text("CLI tool path")
-                    Text("Executable used to read database entries.")
+                SettingsRow(
+                    title: "CLI Binary Path",
+                    subtitle: service.resolveCliPath() ?? "Not found (brew install keepassxc)"
+                ) {
+                    HStack(spacing: 8) {
+                        TextField("/opt/homebrew/bin/keepassxc-cli", text: $customCliPath)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 200)
+                        Button("Apply") {
+                            service.customCliPath = customCliPath
+                        }
+                        .controlSize(.regular)
+                    }
                 }
             } header: {
                 Text("CLI Integration")
             }
-
-            Section {
-                Toggle(isOn: $windowResumptionEnabled) {
-                    Text("Persistent account resumption")
-                    Text("Toggling szcast open again (⌥Space) immediately restores the active account view to copy additional fields.")
-                }
-
-                LabeledContent {
-                    Text("⌘C")
-                        .font(.subheadline.weight(.semibold).monospaced())
-                } label: {
-                    Text("Copy password")
-                    Text("Copies secret and dismisses launcher.")
-                }
-
-                LabeledContent {
-                    Text("⌘T")
-                        .font(.subheadline.weight(.semibold).monospaced())
-                } label: {
-                    Text("Copy TOTP")
-                    Text("Copies 2FA digits and dismisses launcher.")
-                }
-
-                LabeledContent {
-                    Text("⌘B")
-                        .font(.subheadline.weight(.semibold).monospaced())
-                } label: {
-                    Text("Copy username")
-                    Text("Copies account username or email.")
-                }
-
-                LabeledContent {
-                    Text("⌘U")
-                        .font(.subheadline.weight(.semibold).monospaced())
-                } label: {
-                    Text("Open URL")
-                    Text("Opens entry website in default browser.")
-                }
-
-                LabeledContent {
-                    Text("Esc")
-                        .font(.subheadline.weight(.semibold).monospaced())
-                } label: {
-                    Text("Return to list")
-                    Text("Goes back to accounts search list.")
-                }
-            } header: {
-                Text("Account Shortcuts & Resumption")
-            }
         }
         .formStyle(.grouped)
+        .settingsScrollTarget(.keepassxc)
         .task {
             databasePath = service.databasePath
             keyfilePath = service.keyfilePath
@@ -180,7 +203,7 @@ struct KeePassXCSettingsView: View {
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = false
-        panel.allowedContentTypes = [.init(filenameExtension: "kdbx") ?? .data]
+        panel.allowedContentTypes = [.init(filenameExtension: "kdbx")].compactMap { $0 }
         panel.prompt = "Choose Database"
 
         if panel.runModal() == .OK, let url = panel.url {

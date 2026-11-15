@@ -18,6 +18,7 @@ enum RaycastIconTheme {
     static let magenta = NSColor(srgbRed: 0.93, green: 0.31, blue: 0.62, alpha: 1.0)   // #EC4E9E Magenta
     static let crimson = NSColor(srgbRed: 0.94, green: 0.24, blue: 0.31, alpha: 1.0)   // #F03D4F Crimson
     static let slate = NSColor(srgbRed: 0.38, green: 0.47, blue: 0.58, alpha: 1.0)     // #627894 Slate
+    static let chatGPT = NSColor(srgbRed: 0.063, green: 0.639, blue: 0.498, alpha: 1.0) // #10A37F ChatGPT Emerald
 
     // Pre-allocated SymbolTints
     static let tintRed = SymbolTint(key: "rc-red", color: red)
@@ -32,6 +33,7 @@ enum RaycastIconTheme {
     static let tintMagenta = SymbolTint(key: "rc-magenta", color: magenta)
     static let tintCrimson = SymbolTint(key: "rc-crimson", color: crimson)
     static let tintSlate = SymbolTint(key: "rc-slate", color: slate)
+    static let tintChatGPT = SymbolTint(key: "rc-chatgpt", color: chatGPT)
 
     private static let fallbackTints: [SymbolTint] = [
         tintRed, tintOrange, tintYellow, tintGreen,
@@ -87,6 +89,9 @@ enum RaycastIconTheme {
         }
 
         // AI / LLMs / Sparkles / Extensions
+        if clean.contains("openai") || clean.contains("chatgpt") || clean == "gpt" {
+            return tintChatGPT
+        }
         if clean.contains("sparkle") || clean.contains("bubble") || clean.contains("wand")
             || clean.contains("puzzlepiece") || clean.contains("brain") || clean.contains("cpu") {
             return tintPurple
