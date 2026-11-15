@@ -28,12 +28,8 @@ struct DisplayTweaksSettingsView: View {
                             Text(display.name).tag(display.id)
                         }
                     } label: {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Target display")
-                            Text("Choose which screen to calibrate.")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+                        Text("Target display")
+                        Text("Choose which screen to calibrate.")
                     }
                     .onChange(of: settings.displayTweaksDisplayID) { _, _ in
                         if settings.displayTweaksEnabled {

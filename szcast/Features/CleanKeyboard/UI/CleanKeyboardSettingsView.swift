@@ -22,11 +22,14 @@ struct CleanKeyboardSettingsView: View {
                 }
                 .padding(.vertical, 4)
 
-                Picker("Default cleaning duration", selection: $defaultDuration) {
+                Picker(selection: $defaultDuration) {
                     Text("30 seconds").tag(30)
                     Text("60 seconds (1 minute)").tag(60)
                     Text("90 seconds").tag(90)
                     Text("120 seconds (2 minutes)").tag(120)
+                } label: {
+                    Text("Default cleaning duration")
+                    Text("How long keyboard inputs stay locked.")
                 }
 
                 LabeledContent {

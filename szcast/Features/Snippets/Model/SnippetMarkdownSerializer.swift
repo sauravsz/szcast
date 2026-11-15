@@ -28,6 +28,7 @@ struct SnippetMarkdownSerializer {
         var showsConfirmation = false
         var isPinned = false
         var folder: String?
+        var icon: String?
         var seenKeys = Set<String>()
 
         for lineIndex in 1..<closingIndex {
@@ -68,6 +69,10 @@ struct SnippetMarkdownSerializer {
                 let decoded = try decodeScalar(rawValue, fileURL: fileURL, line: lineNumber)
                 let trimmed = decoded.trimmingCharacters(in: .whitespacesAndNewlines)
                 folder = trimmed.isEmpty ? nil : trimmed
+            case "icon", "favicon":
+                let decoded = try decodeScalar(rawValue, fileURL: fileURL, line: lineNumber)
+                let trimmed = decoded.trimmingCharacters(in: .whitespacesAndNewlines)
+                icon = trimmed.isEmpty ? nil : trimmed
             default:
                 preconditionFailure("Canonical keys are exhaustively handled")
             }
@@ -81,7 +86,8 @@ struct SnippetMarkdownSerializer {
             isEnabled: isEnabled,
             showsConfirmation: showsConfirmation,
             isPinned: isPinned,
-            folder: folder
+            folder: folder,
+            icon: icon
         )
     }
 
@@ -99,6 +105,9 @@ struct SnippetMarkdownSerializer {
         if snippet.isPinned { lines.append("pinned: true") }
         if let folder = snippet.folder?.trimmingCharacters(in: .whitespacesAndNewlines), !folder.isEmpty {
             lines.append("folder: \(encodeScalar(folder))")
+        }
+        if let icon = snippet.icon?.trimmingCharacters(in: .whitespacesAndNewlines), !icon.isEmpty {
+            lines.append("icon: \(encodeScalar(icon))")
         }
         lines.append("---")
         return lines.joined(separator: "\n") + "\n" + snippet.text
@@ -149,7 +158,7 @@ struct SnippetMarkdownSerializer {
     private static func canonicalKey(for rawKey: String) -> String? {
         let key = rawKey.lowercased()
         switch key {
-        case "name", "keyword", "enabled", "show_confirmation", "pinned", "folder", "group", "tag", "tags":
+        case "name", "keyword", "enabled", "show_confirmation", "pinned", "folder", "group", "tag", "tags", "icon", "favicon":
             return key
         default:
             return nil

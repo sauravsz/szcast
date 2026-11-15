@@ -177,7 +177,8 @@ enum IconCache {
 
     private static func symbolKey(_ name: String, _ tint: SymbolTint?) -> NSString {
         let surface = darkSurface.withLock { $0 } ? "dark" : "light"
-        return key("symbol:\(surface):\(tint?.key ?? "plain"):\(name)")
+        let resolvedTint = tint ?? RaycastIconTheme.tint(forSymbol: name)
+        return key("symbol:\(surface):\(resolvedTint.key):\(name)")
     }
 
     /// A freshly-decoded, thereafter-immutable `NSImage` is safe to move across the actor boundary.
@@ -250,17 +251,17 @@ enum IconCache {
         let key = symbolKey(name, tint)
         if let cached = cache.object(forKey: key) { return cached }
 
+        let resolvedTint = tint ?? RaycastIconTheme.tint(forSymbol: name)
         let side = displayPixel
         let isDark = darkSurface.withLock { $0 }
-        let plainInk: CGFloat = isDark ? 1 : 0
         let image = NSImage(size: NSSize(width: side, height: side), flipped: false) { _ in
             // Tile inset mirrors the margin macOS app icons carry inside their canvas.
             let tile = NSRect(x: 0, y: 0, width: side, height: side).insetBy(dx: 4, dy: 4)
-            (tint?.color ?? .srgbInk(plainInk, alpha: 0.09)).setFill()
+            resolvedTint.color.setFill()
             NSBezierPath(roundedRect: tile, xRadius: 9, yRadius: 9).fill()
 
-            // A tinted tile keeps white ink in both appearances; the tint carries the contrast.
-            let ink = tint == nil ? NSColor.srgbInk(plainInk, alpha: 0.85) : .white
+            // Raycast squircle style keeps crisp white glyph ink over vibrant background
+            let ink = NSColor.white
             // A symbol picks its glyph by the drawing appearance, which off-main isn't the surface's.
             NSAppearance(named: isDark ? .darkAqua : .aqua)?.performAsCurrentDrawingAppearance {
                 guard let symbol = glyph(named: name, tint: ink, isDark: isDark) else { return }

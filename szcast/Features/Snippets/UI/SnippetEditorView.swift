@@ -129,6 +129,23 @@ struct SnippetEditorView: View {
                 label: String(localized: "Snippet keyword"), text: $editor.keyword,
                 focus: .keyword, hint: String(localized: "Optional. Type this to expand the snippet.")
             )
+            VStack(alignment: .leading, spacing: metrics.spacing.md) {
+                fieldTitle(String(localized: "Icon / Favicon"))
+                HStack(spacing: metrics.spacing.md) {
+                    EntryIconView(source: SnippetFaviconService.resolveIcon(for: editor.snippet))
+                        .frame(width: 24, height: 24)
+
+                    FormTextInput(
+                        text: $editor.icon, focused: focusBinding(.icon),
+                        placeholder: String(localized: "Domain (e.g. github.com), SF Symbol, or URL"),
+                        label: String(localized: "Snippet icon"), moveFocus: editor.advanceFocus
+                    )
+                }
+                .padding(.leading, metrics.spacing.sm)
+                .frame(height: metrics.size.dialogButtonHeight)
+                .formFieldChrome(focused: focusedField == .icon)
+                .accessibilityHint(String(localized: "Optional custom favicon domain, URL, or SF Symbol."))
+            }
             option(
                 String(localized: "Enabled"),
                 detail: String(localized: "Disabled snippets cannot be expanded."),

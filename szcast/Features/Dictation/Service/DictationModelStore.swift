@@ -151,6 +151,22 @@ final class DictationModelStore {
         }
     }
 
+    func ensurePrewarmed(_ model: DictationModel) {
+        refreshInstalledModels()
+        if isInstalled(model) {
+            prewarm(model)
+        } else {
+            Task { [weak self] in
+                guard let self else { return }
+                try? await self.download(model)
+                self.refreshInstalledModels()
+                if self.isInstalled(model) {
+                    self.prewarm(model)
+                }
+            }
+        }
+    }
+
     func prewarm(_ model: DictationModel) {
         guard isInstalled(model), !transcribing else { return }
         releaseTask?.cancel()

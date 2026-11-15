@@ -33,6 +33,12 @@ if [ -d "szcast/Resources/Packs" ]; then
     cp -R szcast/Resources/Packs/*.json "$APP/Contents/Resources/Packs/"
 fi
 
+if [ -f "szcast/Resources/llama-server" ]; then
+    echo "▸ Injecting bundled llama-server…"
+    cp "szcast/Resources/llama-server" "$APP/Contents/Resources/llama-server"
+    chmod +x "$APP/Contents/Resources/llama-server"
+fi
+
 if [ -f "$APP/Contents/Resources/llama-server" ]; then
     echo "▸ Signing bundled llama-server…"
     codesign -f -s "$IDENTITY" --timestamp=none "$APP/Contents/Resources/llama-server"

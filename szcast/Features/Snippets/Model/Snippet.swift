@@ -26,6 +26,7 @@ struct Snippet: Sendable, Hashable {
     var showsConfirmation: Bool
     var isPinned: Bool
     var folder: String?
+    var icon: String?
 
     init(
         name: String,
@@ -34,7 +35,8 @@ struct Snippet: Sendable, Hashable {
         isEnabled: Bool = true,
         showsConfirmation: Bool = false,
         isPinned: Bool = false,
-        folder: String? = nil
+        folder: String? = nil,
+        icon: String? = nil
     ) {
         self.name = name
         self.text = text
@@ -43,6 +45,7 @@ struct Snippet: Sendable, Hashable {
         self.showsConfirmation = showsConfirmation
         self.isPinned = isPinned
         self.folder = folder
+        self.icon = icon
     }
 }
 

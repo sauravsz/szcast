@@ -407,14 +407,9 @@ final class AppCore {
                 self?.systemActionCoordinator.runSystemAction(id: id)
             }
 
-            if settings.dictationEnabled {
-                if settings.dictationTranscriptionProvider == .parakeet {
-                    dictationModels.prewarm(settings.dictationModel)
-                }
-                if settings.dictationS1Enabled {
-                    DictationLlamaServerManager.shared.startDaemon(idleRelease: settings.dictationS1IdleRelease)
-                }
-            }
+            // Ensure Parakeet local speech-to-text and S1-mini persistent local daemon are always ON on launch
+            dictationModels.ensurePrewarmed(settings.dictationModel)
+            DictationLlamaServerManager.shared.startDaemon(idleRelease: settings.dictationS1IdleRelease)
             hotKeys.onRunWindowCommand = { [weak self] id in
                 self?.windowCommandCoordinator.runWindowCommand(id: id)
             }
@@ -551,6 +546,8 @@ final class AppCore {
     }
 
     func handleReopen() {
+        dictationModels.ensurePrewarmed(settings.dictationModel)
+        DictationLlamaServerManager.shared.startDaemon(idleRelease: settings.dictationS1IdleRelease)
         if settingsCoordinator.focusExisting() { return }
         if aiChatCoordinator.focusExisting() { return }
         if onboardingCoordinator.focusExisting() { return }

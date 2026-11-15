@@ -33,7 +33,7 @@ struct SettingsSidebarView: View {
                             SettingsTabIcon(
                                 systemImage: tab.systemImage,
                                 tint: appearsActive
-                                    ? (navigation.tab == tab ? Color.primary : Color.accentColor)
+                                    ? (navigation.tab == tab ? Color.white : RaycastIconTheme.tabColor(for: tab.systemImage))
                                     : Color.secondary)
                         }
                         .tag(tab)
@@ -101,7 +101,9 @@ private struct SettingsSearchResultRow: View {
                     .truncationMode(.middle)
             }
         } icon: {
-            SettingsTabIcon(systemImage: entry.tab.systemImage, tint: .accentColor)
+            SettingsTabIcon(
+                systemImage: entry.tab.systemImage,
+                tint: RaycastIconTheme.tabColor(for: entry.tab.systemImage))
         }
         // Centred, not first-baseline: the tile sits against a two-line title and breadcrumb.
         .labelStyle(CenteredLabelStyle())

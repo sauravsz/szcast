@@ -541,7 +541,8 @@ final class AppIndex {
                     url: record.fileURL,
                     bundleID: nil,
                     kind: .snippet,
-                    alternateTitles: [record.snippet.keyword].compactMap { $0 })
+                    alternateTitles: [record.snippet.keyword].compactMap { $0 },
+                    iconOverride: SnippetFaviconService.resolveIcon(for: record.snippet))
             }
             .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
         guard entries != snippetEntries else { return }

@@ -461,12 +461,15 @@ run callout-test          Szcast/Platform/Appearance.swift \
                            Szcast/DesignSystem/InterfaceMetrics.swift \
                            Szcast/Features/HotKeys/UI/CalloutPlacement.swift
 run icon-cache-test        Szcast/Platform/Appearance.swift \
+                           Szcast/Platform/Images/RaycastIconTheme.swift \
                            Szcast/Platform/Images/IconCache.swift
 run entry-icon-test        Szcast/Platform/Appearance.swift \
+                           Szcast/Platform/Images/RaycastIconTheme.swift \
                            Szcast/Platform/Images/IconCache.swift \
                            Szcast/Platform/Images/FileIconStamp.swift
 run ext-icon-test          Szcast/Platform/Appearance.swift \
                            Szcast/Platform/AppDisplayName.swift \
+                           Szcast/Platform/Images/RaycastIconTheme.swift \
                            Szcast/Platform/Images/IconCache.swift \
                            Szcast/Platform/Compression/Zlib.swift \
                            Szcast/DesignSystem/Theme.swift \
@@ -631,6 +634,10 @@ run quicklink-coordinator-test Szcast/Platform/AppPaths.swift \
 run slow snippets-test     Szcast/Platform/NotificationToken.swift \
                            Szcast/Platform/HealthTicker.swift \
                            Szcast/Platform/AccessibilityText.swift \
+                           Szcast/Platform/AppPaths.swift \
+                           Szcast/Platform/Appearance.swift \
+                           Szcast/Platform/Images/RaycastIconTheme.swift \
+                           Szcast/Platform/Images/IconCache.swift \
                            Szcast/Features/Snippets/Model/*.swift \
                            Szcast/Features/Snippets/Service/*.swift \
                            Szcast/Features/Snippets/UI/SnippetEditorSession.swift \
@@ -801,6 +808,7 @@ run slow ext-test          -parse-as-library \
                            $E/UI/ExtensionMenuBarImage.swift \
                            Szcast/Platform/Appearance.swift \
                            Szcast/Platform/AppDisplayName.swift \
+                           Szcast/Platform/Images/RaycastIconTheme.swift \
                            Szcast/Platform/Images/IconCache.swift \
                            Szcast/DesignSystem/Theme.swift \
                            Szcast/DesignSystem/InterfaceMetrics.swift \

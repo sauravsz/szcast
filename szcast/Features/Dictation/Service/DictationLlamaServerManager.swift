@@ -23,9 +23,12 @@ final class DictationLlamaServerManager {
     }
 
     func startDaemon(idleRelease: DictationIdleRelease? = nil) {
-        guard isModelAvailable, isBinaryAvailable else { return }
         Task { [weak self] in
             guard let self else { return }
+            if !Self.isModelAvailable {
+                _ = await Self.ensureModelDownloaded()
+            }
+            guard Self.isModelAvailable, Self.isBinaryAvailable else { return }
             _ = try? await self.ensureRunning(idleRelease: idleRelease ?? .never)
             self.prewarm(idleRelease: idleRelease ?? .never)
         }
@@ -81,6 +84,38 @@ final class DictationLlamaServerManager {
     static func defaultDestinationURL() -> URL {
         let home = FileManager.default.homeDirectoryForCurrentUser
         return home.appendingPathComponent("Library/Application Support/szcast/Models/s1-mini/s1-mini-1.0.gguf")
+    }
+
+    @discardableResult
+    static func ensureModelDownloaded() async -> URL? {
+        if let existing = resolveGGUFModel() {
+            return existing
+        }
+        let destination = defaultDestinationURL()
+        try? FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+
+        let mirrors = [
+            primaryGitHubURL,
+            directHuggingFaceURL
+        ]
+        for mirror in mirrors {
+            var request = URLRequest(url: mirror)
+            request.timeoutInterval = 120.0
+            request.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)", forHTTPHeaderField: "User-Agent")
+            if let (tempURL, response) = try? await URLSession.shared.download(for: request),
+               let http = response as? HTTPURLResponse, http.statusCode == 200 {
+                do {
+                    if FileManager.default.fileExists(atPath: destination.path) {
+                        try FileManager.default.removeItem(at: destination)
+                    }
+                    try FileManager.default.moveItem(at: tempURL, to: destination)
+                    return destination
+                } catch {
+                    continue
+                }
+            }
+        }
+        return nil
     }
 
     nonisolated static func resolveGGUFModel() -> URL? {
