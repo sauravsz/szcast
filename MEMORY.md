@@ -134,8 +134,17 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - Active Settings Status: Updated `DictationSettingsView` to reflect live single-slot Metal daemon status and memory footprint.
   - Test Suite & Packaging: 130 test harnesses pass; Debug and signed Release builds verified; local `/Applications/szcast.app` deployed.
 
+- **Extension Aliases, Submenu Shortcuts, File Transcription & Indic Romanization**:
+  - Centralized Extension Aliases: Added `ExtensionCommandsSettingsSection` in `Settings -> Commands` querying all `.extensionCommand` entries with unified search, instant `AliasField`, `ShortcutRecorder`, and launcher visibility toggle.
+  - Submenu & Extension List Numeric Shortcuts: Extended numeric chords (`⌘1`..`⌘9`, `⌘0`) in `PaletteWindowController` and default `PaletteScreen.perform` across all list modes and submenus. Added dynamic `⌘1`..`⌘9` keycap badges in `ExtensionItemRow` when `Command` is held, matching Raycast.
+  - Superwhisper-Style File Transcription: Added "Transcribe Audio/Video File…" in `MenuBarItem.swift` via `NSOpenPanel`, decoding media to 16kHz float PCM via `DictationFileTranscriber` (`AVAssetReader`), transcribing via Parakeet/Groq, formatting via local S1-mini daemon, and copying to clipboard with HUD confirmation.
+  - Indic Phonetic Romanization: Implemented Bengali (Banglish) and Hindi (Hinglish) transliteration pickers in Dictation Settings. Dual architecture: Option 1 (S1-mini LLM conversational transliteration) and Option 2 (Avro deterministic 0ms converter / Hinglish phonetic converter).
+  - Lunar Display Pill Sliders: Reworked `LunarPillSlider` in `DisplayTweaksSettingsView` with tinted tracks and traveling pill thumb containing the active 0..100 value.
+  - Settings Scaling Fix: Enforced strict 840x600 minimum bounds in `AppWindowController` and `SettingsRootView` `WindowReader`.
+  - Deployment: 15/15 targeted test suites pass cleanly; Debug and signed Release builds verified; `/Applications/szcast.app` updated; pushed to `origin/main`.
+
 ## Active State & Next Steps
-- **Active State**: 130 test harnesses pass cleanly in 173s. S1-mini persistent daemon active with ~140ms warm cleanup latency; DuckDuckGo Email (`Hyper + D`), Clean Keyboard, KeePassXC (with `⌥Space` persistent window resumption and `⌘C`/`⌘T`/`⌘B`/`⌘U`), Settings Categorization, Ente Auth (`Hyper + T`), Finder File Actions (`Hyper + M`), and Display Tweaks fully integrated and verified.
+- **Active State**: All 15 targeted test suites pass. Centralized extension aliases, submenu `⌘1`..`⌘9` shortcuts, Superwhisper media file transcription, Bengali (Banglish) & Hindi (Hinglish) romanization, Lunar-style display sliders, and Liquid Glass UI active in `/Applications/szcast.app` and committed to `origin/main`.
 - **Immediate Next Steps**:
   1. Test long continuous dictation (5+ minutes) in real-world workflows.
   2. Perform weekly upstream radar audit (`./Scripts/upstream-radar.sh`).
