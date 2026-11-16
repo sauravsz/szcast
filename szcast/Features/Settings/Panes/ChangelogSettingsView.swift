@@ -40,10 +40,46 @@ struct ChangelogRelease: Identifiable, Sendable {
 enum ChangelogData {
     static let releases: [ChangelogRelease] = [
         ChangelogRelease(
+            id: "1.1.1",
+            version: "1.1.1",
+            date: "November 16, 2026",
+            isLatest: true,
+            summary: "Native Gamma Control 3-point inspector with exact Black/Middle/White calibration, restored Settings window navigation title, unified 20pt form margin alignment, and official dark vector brand icons.",
+            categories: [
+                ChangelogCategory(
+                    name: "Settings Navigation & Titlebar",
+                    icon: "macwindow",
+                    items: [
+                        "Restored visible pane titles (AI, Display Tweaks, Clean Keyboard, Notes) beside the < | > navigation buttons across all settings tabs.",
+                        "Eliminated manual platter offset overrides in favor of native AppKit and SwiftUI toolbar title layout with solid dark chrome.",
+                        "Aligned content margins across Dictation Insights, Changelog, and settings pickers to 20pt native form insets."
+                    ]
+                ),
+                ChangelogCategory(
+                    name: "Hardware Display Tweaks & Gamma Control",
+                    icon: "sun.max",
+                    items: [
+                        "Rebuilt Display Tweaks with a native 3-point inspector matching Gamma Control profiles: [ Black | Middle | White ].",
+                        "Exact luminance and per-channel RGB controls: 0.05 Black Point, 1.00 Gray Balance, and 0.89 White Point Luminance.",
+                        "Direct import and bidirectional hardware LUT synchronization with Gamma Control .gammaset files.",
+                        "Added 5-box checkerboard calibration targets, 256-step grayscale ramp, and RGB spectrum gradient strips."
+                    ]
+                ),
+                ChangelogCategory(
+                    name: "Brand & Visual Polish",
+                    icon: "sparkles",
+                    items: [
+                        "Integrated official dark vector squircle OpenAI and ChatGPT icon artwork.",
+                        "Replaced white-background screenshots with transparent alpha assets across documentation and web surfaces."
+                    ]
+                )
+            ]
+        ),
+        ChangelogRelease(
             id: "1.1.0",
             version: "1.1.0",
             date: "November 16, 2026",
-            isLatest: true,
+            isLatest: false,
             summary: "Wispr Flow-style Dictation Insights Dashboard, 21.5pt toolbar navigation gap, Display Tweaks Gamma Control reference preset, zero-lag persistent local S1-mini & Parakeet models, and 840x600 window constraints.",
             categories: [
                 ChangelogCategory(
@@ -372,7 +408,7 @@ struct ChangelogSettingsView: View {
                 HStack(spacing: Theme.Spacing.sm) {
                     Text("Changelog")
                         .font(.system(size: 22, weight: .bold))
-                    Text("v1.1.0")
+                    Text("v1.1.1")
                         .font(.caption.monospacedDigit().weight(.semibold))
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 6)

@@ -44,7 +44,7 @@ open /Applications/szcast.app
 - **Centralized Extension Aliases**: Set custom aliases and global hotkeys for any installed Raycast extension command from a single view in Settings &rarr; Commands.
 - **List & Submenu Shortcuts (`⌘1`..`⌘9`)**: Press `⌘1` through `⌘9` to instantly activate any item in search results, extension lists (e.g. `brew search`), and nested submenus, with dynamic keycap badges when holding `Command`.
 - **Dual-Mode Snippet & Extension Icons**: Adaptive SVG icons for ChatGPT, OpenAI, and Raycast snippets that render crisply across both light and dark themes.
-- **Window Geometry & Navigation Polish**: Enforced 840x600 minimum layout floor preventing sidebar truncation, 21.5pt AppKit toolbar platter navigation spacing, and opaque navigation headers.
+- **Window Geometry & Navigation Polish**: Enforced 840x600 minimum layout floor preventing sidebar truncation, 20pt unified form and settings insets, and restored visible navigation titles beside toolbar back/forward platter buttons on solid native dark chrome.
 
 ### Offline Speech Dictation & Indic Romanization
 - **Dictation Insights & Speech Analytics**: Real-time Wispr Flow-style telemetry dashboard driven 100% by local dictation metrics. Track Words Per Minute (WPM), cadence meter (Top % tier), S1-mini normalization corrections, total words dictated, application-level breakdown (AI Prompts, Work Messages, Personal Messages, Documents, Emails), and interactive 16-week speech cadence streak calendar.
@@ -56,7 +56,7 @@ open /Applications/szcast.app
 
 ### Liquid Glass Design & Display Tweaks
 - **macOS Liquid Glass UI**: Translucent vibrancy and light refraction across the launcher and settings, with a 0% to 100% transparency slider and instant toggle.
-- **Display Tweaks & Gamma Control**: Direct GPU gamma table controls (`CGSetDisplayTransferByTable`) with 0.00–1.00 fine luminance controls for Black point, Middle gamma, and White point across RGB channels, plus quick presets including the Gamma Control reference profile for deep OLED-grade blacks without color banding.
+- **Display Tweaks & Gamma Control**: Direct GPU gamma table controls (`CGSetDisplayTransferByTable`) with native 3-point inspector (`[ Black | Middle | White ]` tabs) featuring individual RGB and luminance sliders, 5-box checkerboard calibration targets, grayscale ramp, and RGB gradient strips matching `.gammaset` profiles for deep OLED-grade blacks without color banding.
 - **Display Mirroring**: One-key hardware display mirroring toggle.
 
 ### Built-In Productivity Tools
@@ -65,6 +65,7 @@ open /Applications/szcast.app
 - **KeePassXC Manager**: Fast password vault lookups via `keepassxc-cli` with window state resumption and dedicated shortcuts (`⌘C` password, `⌘T` TOTP, `⌘B` username, `⌘U` URL).
 - **DuckDuckGo Email (`Hyper + D`)**: Generate and copy private `@duck.com` alias addresses on demand.
 - **Clean Keyboard Mode**: Low-level keystroke suppression via `CGEventTap` for cleaning keyboards, with floating countdown HUD and safety unlocks (Hold Escape 3s or `Ctrl + U`).
+- **In-App Version Changelog**: Native Settings pane tracking release milestones, feature highlights, and architectural improvements directly inside the app.
 
 ### Core Launcher Capabilities
 - **Universal Search & Aliases**: Fast fuzzy search across applications, system settings, files, and scripts.
