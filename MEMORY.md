@@ -161,8 +161,14 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - Updated Documentation Screenshot: Replaced `docs/screenshot.jpg` with the official dark command palette screenshot.
   - Release Packaging & Distribution: Version bumped to 1.0.9; signed Release DMG (`build/szcast-1.0.9.dmg`) and ZIP (`build/szcast-1.0.9.zip`) packaged and deployed to `/Applications/szcast.app`.
 
+- **Release 1.1.0**:
+  - Dictation Insights Dashboard: Wispr Flow-style analytics inside Dictation Settings (`.insights` tab) with 100% real user metrics derived dynamically from `DictationHistoryStore.items` (real WPM cadence, S1-mini AI normalization fix count and words corrected, cumulative word milestone with equivalent speech page estimation, audio duration progress bar, desktop application breakdown without truncation, and 16-week contribution streak calendar).
+  - Settings Navigation Platter Offset: Enforced 21.5pt gap between vertical sidebar divider line and `< | >` navigation buttons via AppKit `NSToolbarPlatterView` frame observer.
+  - Display Tweaks & Gamma Control: Hardware gamma transfer curve scaling with exact Gamma Control preset (0.05 Black Point, 0.89 White Point Luminance).
+  - Version bump to 1.1.0, signed Release DMG (`build/szcast-1.1.0.dmg`) and ZIP (`build/szcast-1.1.0.zip`) packaged and deployed to `/Applications/szcast.app`.
+
 ## Active State & Next Steps
-- **Active State**: Releases `v1.0.9` and `v1.0.9-hotfix` live on GitHub (`sauravsz/szcast/releases`). Installed and running at `/Applications/szcast.app`. Settings navigation gap (14pt spacer), responsive Dictation Insights Dashboard (real metrics from history store, full app labels, equalized card heights, 16-week contribution heatmap), and Gamma Control preset verified. Unpushed local commits kept strictly local per instructions.
+- **Active State**: Releases through `v1.1.0` live on GitHub (`sauravsz/szcast/releases`). Installed and running at `/Applications/szcast.app` (v1.1.0). Dictation Insights Dashboard with real metrics, Settings toolbar navigation gap, and Gamma Control preset verified.
 - **Immediate Next Steps**:
   1. Test long continuous dictation (5+ minutes) in real-world workflows.
   2. Perform weekly upstream radar audit (`./Scripts/upstream-radar.sh`).
