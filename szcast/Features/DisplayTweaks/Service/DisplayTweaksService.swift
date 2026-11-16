@@ -15,7 +15,10 @@ final class DisplayTweaksService {
     }
 
     private var terminateObserver: Any?
+    private var wakeObserver: Any?
+    private var screenObserver: Any?
     private(set) var isApplied = false
+    private var lastAppliedGammaSet: (data: GammaSetData, displayID: CGDirectDisplayID?)?
 
     init() {
         terminateObserver = NotificationCenter.default.addObserver(
@@ -25,6 +28,25 @@ final class DisplayTweaksService {
         ) { [weak self] _ in
             self?.restoreGamma()
         }
+        wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.reapplyIfActive()
+        }
+        screenObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.reapplyIfActive()
+        }
+    }
+
+    func reapplyIfActive() {
+        guard isApplied, let last = lastAppliedGammaSet else { return }
+        applyGammaSet(last.data, displayID: last.displayID)
     }
 
     /// List all currently connected displays.
@@ -235,6 +257,7 @@ final class DisplayTweaksService {
     func restoreGamma() {
         CGDisplayRestoreColorSyncSettings()
         isApplied = false
+        lastAppliedGammaSet = nil
     }
 
     // MARK: - GammaSet Profile Support (.gammaset)
@@ -341,6 +364,7 @@ final class DisplayTweaksService {
 
     /// Apply an exact GammaSetData configuration to the hardware LUT.
     func applyGammaSet(_ set: GammaSetData, displayID: CGDirectDisplayID? = nil) {
+        lastAppliedGammaSet = (set, displayID)
         let target = (displayID != nil && displayID != 0) ? displayID! : CGMainDisplayID()
 
         let blackR = Float(set.blackPointR)

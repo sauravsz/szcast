@@ -126,8 +126,10 @@ final class ModifierTapMonitor: HealthCheckable {
         switch event {
         case .pressed(let key):
             if let holdKey, key == holdKey {
+                let hasTapBinding = bound.contains(key.singleBinding) || bound.contains(key.doubleBinding)
+                let holdDelay: TimeInterval = hasTapBinding ? DoubleTapDetector.maxHold : 0.04
                 pendingHold = Task { [weak self] in
-                    try? await Task.sleep(for: .seconds(DoubleTapDetector.maxHold))
+                    try? await Task.sleep(for: .seconds(holdDelay))
                     guard !Task.isCancelled, let self else { return }
                     pendingHold = nil
                     holding = true

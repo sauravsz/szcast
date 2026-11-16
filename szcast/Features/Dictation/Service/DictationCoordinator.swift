@@ -368,7 +368,7 @@ final class DictationCoordinator {
                 if destination.pastes {
                     // All at once: instant paste via direct editor injection or pasteboard Command+V
                     let app = target?.externalApp ?? NSWorkspace.shared.frontmostApplication
-                    if let editor = target?.ownEditor {
+                    if target?.ownEditor != nil {
                         injector.deliver(
                             InjectedText(text), target: target, expectedKeyword: nil,
                             keywordLength: 0, automaticGeneration: nil,

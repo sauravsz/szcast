@@ -142,6 +142,7 @@ final class CleanKeyboardService: Observable {
             if let source = runLoopSource {
                 CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .commonModes)
             }
+            CFMachPortInvalidate(tap)
             self.eventTap = nil
             self.runLoopSource = nil
         }

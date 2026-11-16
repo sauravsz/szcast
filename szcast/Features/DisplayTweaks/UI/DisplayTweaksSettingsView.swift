@@ -224,11 +224,6 @@ struct DisplayTweaksSettingsView: View {
                 settings.displayTweaksDisplayID = first.id
             }
 
-            let defaultGammaPath = "/Users/sz/Downloads/Untitled.gammaset"
-            if FileManager.default.fileExists(atPath: defaultGammaPath),
-               let parsed = DisplayTweaksService.GammaSetData.parse(from: URL(fileURLWithPath: defaultGammaPath)) {
-                gammaSet = parsed
-            }
             updateResolvedPoints()
 
             if settings.displayTweaksEnabled {
@@ -287,21 +282,15 @@ struct DisplayTweaksSettingsView: View {
         }
 
         if preset == .gammaControl {
-            let defaultGammaPath = "/Users/sz/Downloads/Untitled.gammaset"
-            if FileManager.default.fileExists(atPath: defaultGammaPath),
-               let parsed = DisplayTweaksService.GammaSetData.parse(from: URL(fileURLWithPath: defaultGammaPath)) {
-                gammaSet = parsed
-            } else {
-                gammaSet = DisplayTweaksService.GammaSetData(
-                    blackPointR: 0.05, blackPointG: 0.05, blackPointB: 0.05,
-                    whitePointR: 0.89, whitePointG: 0.89, whitePointB: 0.89,
-                    middlePointR: 1.0, middlePointG: 1.0, middlePointB: 1.0,
-                    masterBlack: 0.05, masterWhite: 0.89, masterMiddle: 1.0,
-                    gammaPointBlackR: 0.0, gammaPointBlackG: 0.0, gammaPointBlackB: 0.0,
-                    gammaPointMiddleR: 1.0, gammaPointMiddleG: 1.0, gammaPointMiddleB: 1.0,
-                    gammaPointWhiteR: 1.0, gammaPointWhiteG: 1.0, gammaPointWhiteB: 1.0
-                )
-            }
+            gammaSet = DisplayTweaksService.GammaSetData(
+                blackPointR: 0.05, blackPointG: 0.05, blackPointB: 0.05,
+                whitePointR: 0.89, whitePointG: 0.89, whitePointB: 0.89,
+                middlePointR: 1.0, middlePointG: 1.0, middlePointB: 1.0,
+                masterBlack: 0.05, masterWhite: 0.89, masterMiddle: 1.0,
+                gammaPointBlackR: 0.0, gammaPointBlackG: 0.0, gammaPointBlackB: 0.0,
+                gammaPointMiddleR: 1.0, gammaPointMiddleG: 1.0, gammaPointMiddleB: 1.0,
+                gammaPointWhiteR: 1.0, gammaPointWhiteG: 1.0, gammaPointWhiteB: 1.0
+            )
         } else {
             let v = preset.values
             gammaSet = DisplayTweaksService.GammaSetData(

@@ -7,6 +7,8 @@ struct ModifierKeyDetector: Sendable {
         case cancelled
     }
 
+    static let maxSingleHold: TimeInterval = 0.65
+
     static let resolutionWindow: Duration = .seconds(
         DoubleTapDetector.maxGap + DoubleTapDetector.maxHold + 0.02)
 
@@ -21,12 +23,14 @@ struct ModifierKeyDetector: Sendable {
         if keys.isEmpty {
             guard let press else { return nil }
             self.press = nil
-            let isHeld = now - press.startedAt > DoubleTapDetector.maxHold
+            let duration = now - press.startedAt
+            let isHeldForSingle = duration > Self.maxSingleHold
+            let isHeldForDouble = duration > DoubleTapDetector.maxHold
             let isDouble =
-                !isHeld && pendingTap?.key == press.key
+                !isHeldForDouble && pendingTap?.key == press.key
                 && press.startedAt - (pendingTap?.releasedAt ?? 0) <= DoubleTapDetector.maxGap
-            pendingTap = isHeld || isDouble ? nil : (press.key, now)
-            return .released(press.key, doubleTap: isDouble, held: isHeld)
+            pendingTap = isHeldForDouble || isDouble ? nil : (press.key, now)
+            return .released(press.key, doubleTap: isDouble, held: isHeldForSingle)
         }
         guard previous.isEmpty, keys.count == 1, let key = keys.first else {
             cancel()

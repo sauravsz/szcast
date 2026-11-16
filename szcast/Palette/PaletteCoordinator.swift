@@ -55,7 +55,7 @@ final class PaletteCoordinator {
     }
 
     func togglePalette() {
-        if isShowing(.launcher) {
+        if windowController.isVisible {
             hidePalette()
         } else {
             showPalette(mode: .launcher, restoreAnyMode: true)

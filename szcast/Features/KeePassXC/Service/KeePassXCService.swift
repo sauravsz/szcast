@@ -140,27 +140,30 @@ final class KeePassXCService: Observable {
                     }
                     try? stdinPipe.fileHandleForWriting.close()
 
-                    var outData = Data()
-                    var errData = Data()
+                    final class PipeBuffer: @unchecked Sendable {
+                        var data = Data()
+                    }
+                    let outBox = PipeBuffer()
+                    let errBox = PipeBuffer()
                     let pipeGroup = DispatchGroup()
 
                     pipeGroup.enter()
                     DispatchQueue.global().async {
-                        outData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+                        outBox.data = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
                         pipeGroup.leave()
                     }
 
                     pipeGroup.enter()
                     DispatchQueue.global().async {
-                        errData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+                        errBox.data = stderrPipe.fileHandleForReading.readDataToEndOfFile()
                         pipeGroup.leave()
                     }
 
                     pipeGroup.wait()
                     process.waitUntilExit()
 
-                    let outString = String(data: outData, encoding: .utf8) ?? ""
-                    let errString = String(data: errData, encoding: .utf8) ?? ""
+                    let outString = String(data: outBox.data, encoding: .utf8) ?? ""
+                    let errString = String(data: errBox.data, encoding: .utf8) ?? ""
 
                     if process.terminationStatus == 0 {
                         continuation.resume(returning: outString)

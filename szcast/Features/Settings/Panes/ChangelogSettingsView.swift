@@ -40,10 +40,46 @@ struct ChangelogRelease: Identifiable, Sendable {
 enum ChangelogData {
     static let releases: [ChangelogRelease] = [
         ChangelogRelease(
+            id: "1.1.2",
+            version: "1.1.2",
+            date: "November 16, 2026",
+            isLatest: true,
+            summary: "Responsive modifier key toggle detection (eliminated Fn key drop and Push-to-Talk speech onset clipping), universal Launcher shortcut dismissal across all active modes, full Ollama removal in favor of direct local llama-server, and DisplayTweaks sleep resilience.",
+            categories: [
+                ChangelogCategory(
+                    name: "HotKey & Dictation Responsiveness",
+                    icon: "keyboard",
+                    items: [
+                        "Expanded modifier single-tap threshold from 250ms to 650ms so deliberate human Fn/Globe taps are never dropped as abandoned holds.",
+                        "Reduced Push-to-Talk activation delay from 250ms to 40ms for uncontended hold keys, preventing speech onset clipping and audio dropouts.",
+                        "Resolved Launcher toggle shortcut (Option + Space) to dismiss szcast immediately when visible from any screen (Clipboard, AI, Calculator, etc.)."
+                    ]
+                ),
+                ChangelogCategory(
+                    name: "Dictation Offline Architecture",
+                    icon: "mic.fill",
+                    items: [
+                        "Completely decoupled transcription polish from Ollama (localhost:11434), running directly through dedicated local llama-server on port 51143.",
+                        "Pointed primary S1-mini GGUF download directly to GitHub Release assets with direct Hugging Face fallback.",
+                        "Polishing returns raw transcripts in 0ms if the local inference daemon is stopped, eliminating network hang and timeout freezes."
+                    ]
+                ),
+                ChangelogCategory(
+                    name: "Hardware Display Tweaks & System Health",
+                    icon: "sun.max",
+                    items: [
+                        "Added automatic wake and display reconfiguration observers to re-apply custom gamma curves on screen resume or monitor reconnect.",
+                        "Eliminated hardcoded local path references in favor of clean internal Gamma Control profile defaults.",
+                        "Resolved Swift concurrency data race warnings in KeePassXC CLI execution and cleaned Mach port invalidation in Clean Keyboard."
+                    ]
+                )
+            ]
+        ),
+        ChangelogRelease(
             id: "1.1.1",
             version: "1.1.1",
             date: "November 16, 2026",
-            isLatest: true,
+            isLatest: false,
             summary: "Native Gamma Control 3-point inspector with exact Black/Middle/White calibration, restored Settings window navigation title, unified 20pt form margin alignment, and official dark vector brand icons.",
             categories: [
                 ChangelogCategory(

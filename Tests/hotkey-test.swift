@@ -176,7 +176,7 @@ struct DoubleTapDetectorTests {
         _ = globe(true, at: 4.40)
         expect(globe(false, at: 4.45) == .globe, "a late second press starts a new tap")
         _ = globe(true, at: 5)
-        expect(globe(false, at: 5.30) == nil, "holding Globe is not a tap")
+        expect(globe(false, at: 5.70) == nil, "holding Globe is not a tap")
 
         for binding in [HotKeyBinding.globe, .doubleGlobe] {
             let encoded = try? JSONEncoder().encode(binding)

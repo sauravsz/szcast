@@ -21,7 +21,21 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
 
 ## Build / verify (macOS 27, Xcode 27.2)
 - `xcodebuild -project szcast.xcodeproj -scheme Szcast -configuration Debug build`
-- `Scripts/run-tests.sh` — all 121 harnesses pass. `Scripts/build-dmg.sh` → `build/szcast-0.1.0.dmg`; needs the `szcast Self-Signed` keychain identity (already created; without it Accessibility/TCC grants reset each build).
+- `Scripts/run-tests.sh` — all 130 harnesses pass. `Scripts/build-dmg.sh` → `build/szcast-1.1.2.dmg`; needs the `szcast Self-Signed` keychain identity (already created; without it Accessibility/TCC grants reset each build).
+
+- **Release v1.1.2**:
+  - HotKey & Dictation Responsiveness: Expanded modifier single-tap threshold from 250ms to 650ms (`ModifierKeyDetector.maxSingleHold`), eliminating dropped Fn keypresses during natural typing. Reduced Push-to-Talk activation delay from 250ms to 40ms on uncontended hold keys, preventing speech onset clipping.
+  - Launcher Dismissal Across Modes: Updated `togglePalette()` to check `windowController.isVisible` so pressing the global shortcut (`⌥ Space`) from any sub-screen (Clipboard, AI, Calculator, etc.) cleanly closes szcast immediately.
+  - S1-mini Offline Architecture: Fully eliminated Ollama (`localhost:11434`) dependency in favor of dedicated local `llama-server` on port 51143. If the daemon is uninitialized, raw transcripts return in 0ms without network hang. Pointed model downloads directly to GitHub Release assets.
+  - DisplayTweaks Sleep & Reconnect Resilience: Added `NSWorkspace.didWakeNotification` and `NSApplication.didChangeScreenParametersNotification` observers to automatically re-apply active gamma curves across sleep/wake cycles and display switches. Cleaned hardcoded download path dependencies.
+  - Thread Safety & Resource Cleanup: Resolved Swift concurrency capture warnings in KeePassXC CLI execution, cleaned up unused references in Dictation coordinator, and added Mach port invalidation in Clean Keyboard.
+
+- **Release v1.1.1**:
+  - Settings Navigation Titlebar: Restored visible detail pane titles (AI, Display Tweaks, Clean Keyboard, Notes) beside the `< | >` navigation buttons on solid native dark chrome by eliminating manual platter frame shifting and anchoring `.navigationTitle` on the detail view.
+  - Hardware Display Tweaks & Gamma Control: Rebuilt with a native 3-point inspector matching Gamma Control profiles: `[ Black | Middle | White ]` tabs with exact per-channel RGB sliders, 5-box checkerboard calibration targets, 256-step grayscale ramp, and RGB spectrum gradient strips matching `/Users/sz/Downloads/Untitled.gammaset`.
+  - Layout & Margin Polish: Standardized 20pt native form insets across Dictation Insights, Changelog, and settings pickers, eliminating horizontal clipping.
+  - In-App Changelog: Added dedicated Settings pane tracking release milestones, feature highlights, and architectural improvements directly inside the app.
+  - Brand & Visual Polish: Integrated official dark vector squircle OpenAI and ChatGPT icon artwork, and removed white backgrounds from assets. Deployed to `/Applications/szcast.app` and published to GitHub.
 
 - **Release v1.1.0**:
   - Dictation Insights Dashboard: Wispr Flow-style analytics driven 100% by local dictation metrics (`DictationHistoryStore`). Real-time WPM speed gauge with cadence percentile meter, S1-mini normalization corrections, total words dictated with book equivalence, application category distribution, and interactive 16-week speech cadence streak calendar.

@@ -233,8 +233,8 @@ struct DictationTest {
             fatalError("Raw prompt must contain framed user message with control line")
         }
 
-        let normalizedURL = DictationS1Polisher.normalizedBaseURL(URL(string: "http://localhost:11434/v1/chat/completions")!)
-        check(normalizedURL.absoluteString, "http://localhost:11434")
+        let normalizedURL = DictationS1Polisher.normalizedBaseURL(URL(string: "http://127.0.0.1:51143/v1/chat/completions")!)
+        check(normalizedURL.absoluteString, "http://127.0.0.1:51143")
 
         check(DictationS1Downloader.defaultModelID, "hf.co/superwhisper/s1-mini-gguf:Q4_K_M")
 

@@ -42,7 +42,7 @@ actor DictationS1Polisher {
     }
 
     /// Assembles ChatML frame for S1-mini with an explicitly closed empty think block.
-    /// This fixes the bug where Ollama's default GGUF template ends in an unclosed <think> tag,
+    /// This fixes the bug where S1-mini GGUF templates end in an unclosed <think> tag,
     /// causing the model to output empty responses over standard /api/chat or /v1/chat/completions.
     static func makeRawPrompt(systemPrompt: String, userMessage: String) -> String {
         let assistantPrefix = "<|im_start|>assistant\n<think>\n\n</think>\n\n"
@@ -53,7 +53,7 @@ actor DictationS1Polisher {
         _ transcript: String,
         settings: DictationS1Settings,
         endpointURL: URL? = nil,
-        model: String = "hf.co/superwhisper/s1-mini-gguf:Q4_K_M"
+        model: String = "s1-mini"
     ) async -> String {
         guard settings.enabled, !transcript.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             return transcript
@@ -63,69 +63,48 @@ actor DictationS1Polisher {
         let transcriptWordCount = transcript.split(separator: " ").count
         let effectiveSystemPrompt = settings.effectiveSystemPrompt(for: transcript)
 
-        // Priority 1 (DEFAULT): Direct local s1-mini-1.0.gguf via embedded/managed llama-server
-        if DictationLlamaServerManager.isModelAvailable && DictationLlamaServerManager.isBinaryAvailable {
-            if let llamaServerURL = try? await DictationLlamaServerManager.shared.ensureRunning(idleRelease: settings.idleRelease) {
-                let chatEndpoint = llamaServerURL.appendingPathComponent("v1/chat/completions")
+        // Custom endpoint (e.g. for testing)
+        if let customEndpoint = endpointURL {
+            let chatEndpoint = customEndpoint.path.hasSuffix("/v1/chat/completions") ? customEndpoint : customEndpoint.appendingPathComponent("v1/chat/completions")
+            if let output = try? await sendChatRequest(
+                model: model,
+                systemPrompt: effectiveSystemPrompt,
+                userMessage: userMessage,
+                transcriptWordCount: transcriptWordCount,
+                endpointURL: chatEndpoint
+            ) {
+                return output
+            }
+            return transcript
+        }
+
+        // Direct local s1-mini-1.0.gguf via embedded/managed llama-server
+        guard DictationLlamaServerManager.isModelAvailable && DictationLlamaServerManager.isBinaryAvailable else {
+            // Model or binary not available: return deterministic transcript immediately with zero delay
+            return transcript
+        }
+
+        if let llamaServerURL = try? await DictationLlamaServerManager.shared.ensureRunning(idleRelease: settings.idleRelease) {
+            let chatEndpoint = llamaServerURL.appendingPathComponent("v1/chat/completions")
+            if let output = try? await sendChatRequest(
+                model: "s1-mini",
+                systemPrompt: effectiveSystemPrompt,
+                userMessage: userMessage,
+                transcriptWordCount: transcriptWordCount,
+                endpointURL: chatEndpoint
+            ) {
+                return output
+            } else if let retryURL = try? await DictationLlamaServerManager.shared.ensureRunning(idleRelease: settings.idleRelease, forceRestart: true) {
+                let retryEndpoint = retryURL.appendingPathComponent("v1/chat/completions")
                 if let output = try? await sendChatRequest(
                     model: "s1-mini",
                     systemPrompt: effectiveSystemPrompt,
                     userMessage: userMessage,
                     transcriptWordCount: transcriptWordCount,
-                    endpointURL: chatEndpoint
+                    endpointURL: retryEndpoint
                 ) {
                     return output
-                } else if let retryURL = try? await DictationLlamaServerManager.shared.ensureRunning(idleRelease: settings.idleRelease, forceRestart: true) {
-                    let retryEndpoint = retryURL.appendingPathComponent("v1/chat/completions")
-                    if let output = try? await sendChatRequest(
-                        model: "s1-mini",
-                        systemPrompt: effectiveSystemPrompt,
-                        userMessage: userMessage,
-                        transcriptWordCount: transcriptWordCount,
-                        endpointURL: retryEndpoint
-                    ) {
-                        return output
-                    }
                 }
-            }
-            // If embedded model is present but inference failed, return unpolished text immediately without stalling
-            if endpointURL == nil {
-                return transcript
-            }
-        }
-
-        // Priority 2: Custom Ollama endpoint (only when explicitly provided or when embedded model is absent)
-        if let targetURL = endpointURL ?? (DictationLlamaServerManager.isModelAvailable ? nil : URL(string: "http://localhost:11434")) {
-            let baseURL = Self.normalizedBaseURL(targetURL)
-            let effectiveModel = await resolveModel(preferred: model, baseURL: baseURL)
-
-            do {
-                if Self.isS1Mini(effectiveModel) {
-                    // S1-mini raw transport with closed think block
-                    if let output = try await sendRawGenerateRequest(
-                        model: effectiveModel,
-                        systemPrompt: effectiveSystemPrompt,
-                        userMessage: userMessage,
-                        transcriptWordCount: transcriptWordCount,
-                        baseURL: baseURL
-                    ) {
-                        return output
-                    }
-                } else {
-                    // General fallback model (e.g. llama3.2:3b) via standard chat completions
-                    let chatURL = baseURL.appendingPathComponent("v1/chat/completions")
-                    if let output = try await sendChatRequest(
-                        model: effectiveModel,
-                        systemPrompt: DictationS1Settings.generalSystemPrompt,
-                        userMessage: transcript,
-                        transcriptWordCount: transcriptWordCount,
-                        endpointURL: chatURL
-                    ) {
-                        return output
-                    }
-                }
-            } catch {
-                Self.logger.notice("S1 polish unavailable or timed out; using deterministic text: \(error.localizedDescription)")
             }
         }
 
@@ -140,49 +119,6 @@ actor DictationS1Polisher {
             return comps?.url ?? url
         }
         return url
-    }
-
-    private func sendRawGenerateRequest(
-        model: String,
-        systemPrompt: String,
-        userMessage: String,
-        transcriptWordCount: Int,
-        baseURL: URL
-    ) async throws -> String? {
-        let generateURL = baseURL.appendingPathComponent("api/generate")
-        let prompt = Self.makeRawPrompt(systemPrompt: systemPrompt, userMessage: userMessage)
-        let cap = max(24, min(4096, transcriptWordCount * 2 + 32))
-
-        let body: [String: Any] = [
-            "model": model,
-            "prompt": prompt,
-            "raw": true,
-            "stream": false,
-            "keep_alive": "60m",
-            "options": [
-                "num_predict": cap,
-                "temperature": 0.1,
-                "stop": ["<|im_end|>"]
-            ]
-        ]
-
-        var request = URLRequest(url: generateURL)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = max(10.0, Double(transcriptWordCount) * 0.05 + 10.0)
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-
-        let (data, response) = try await Self.session.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode) else {
-            return nil
-        }
-
-        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let responseText = json["response"] as? String else {
-            return nil
-        }
-
-        return Self.cleanOutput(responseText)
     }
 
     private func sendChatRequest(
@@ -244,38 +180,5 @@ actor DictationS1Polisher {
             return nil
         }
         return Self.cleanOutput(output)
-    }
-
-    private func resolveModel(preferred: String, baseURL: URL) async -> String {
-        let tagsURL = baseURL.appendingPathComponent("api/tags")
-        struct TagsResponse: Decodable {
-            struct TagModel: Decodable {
-                let name: String
-            }
-            let models: [TagModel]
-        }
-        var request = URLRequest(url: tagsURL)
-        request.timeoutInterval = 1.5
-        guard let (data, response) = try? await Self.session.data(for: request),
-              let httpResponse = response as? HTTPURLResponse, (200...299).contains(httpResponse.statusCode),
-              let decoded = try? JSONDecoder().decode(TagsResponse.self, from: data) else {
-            return preferred
-        }
-
-        if decoded.models.contains(where: { $0.name == preferred }) {
-            return preferred
-        }
-
-        if let s1Match = decoded.models.first(where: { Self.isS1Mini($0.name) }) {
-            return s1Match.name
-        }
-
-        let preferredFallbacks = ["ministral-3:3b", "qwen3.5:2b", "phi4-mini:3.8b", "llama3.2:3b", "smollm3"]
-        for pref in preferredFallbacks {
-            if let match = decoded.models.first(where: { $0.name.localizedCaseInsensitiveContains(pref) }) {
-                return match.name
-            }
-        }
-        return decoded.models.first?.name ?? preferred
     }
 }

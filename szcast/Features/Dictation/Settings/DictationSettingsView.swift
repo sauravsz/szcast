@@ -708,46 +708,6 @@ struct DictationSettingsView: View {
             }
             .padding(.vertical, 2)
 
-        case .installedOllama(let modelName):
-            HStack(spacing: Theme.Spacing.sm) {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(.green)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("S1-mini Installed in Ollama")
-                        .font(.system(size: 12, weight: .medium))
-                    Text("\(modelName) (484 MB)")
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary)
-                }
-                Spacer()
-                Button("Refresh") {
-                    Task { await coordinator.s1Downloader.checkStatus() }
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-            }
-            .padding(.vertical, 2)
-
-        case .ollamaNotRunning:
-            HStack(spacing: Theme.Spacing.sm) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundColor(.orange)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Ollama is not running")
-                        .font(.system(size: 12, weight: .medium))
-                    Text("Start Ollama at localhost:11434 to run S1-mini offline.")
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary)
-                }
-                Spacer()
-                Button("Retry") {
-                    Task { await coordinator.s1Downloader.checkStatus() }
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-            }
-            .padding(.vertical, 2)
-
         case .notInstalled:
             HStack(spacing: Theme.Spacing.sm) {
                 Image(systemName: "arrow.down.circle")
