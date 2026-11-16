@@ -252,6 +252,15 @@ final class DisplayTweaksService {
         var masterBlack: Double = 0.05
         var masterWhite: Double = 0.89
         var masterMiddle: Double = 1.0
+        var gammaPointBlackR: Double = 0.0
+        var gammaPointBlackG: Double = 0.0
+        var gammaPointBlackB: Double = 0.0
+        var gammaPointMiddleR: Double = 1.0
+        var gammaPointMiddleG: Double = 1.0
+        var gammaPointMiddleB: Double = 1.0
+        var gammaPointWhiteR: Double = 1.0
+        var gammaPointWhiteG: Double = 1.0
+        var gammaPointWhiteB: Double = 1.0
         var blendingMode: Int = 1
 
         static func parse(from url: URL) -> GammaSetData? {
@@ -275,12 +284,59 @@ final class DisplayTweaksService {
                 res.middlePointG = (mp["Green"] as? NSNumber)?.doubleValue ?? 1.0
                 res.middlePointB = (mp["Blue"] as? NSNumber)?.doubleValue ?? 1.0
             }
+            if let gpb = plist["v4-GammaPointBlack"] as? [String: Any] {
+                res.gammaPointBlackR = (gpb["Red"] as? NSNumber)?.doubleValue ?? 0.0
+                res.gammaPointBlackG = (gpb["Green"] as? NSNumber)?.doubleValue ?? 0.0
+                res.gammaPointBlackB = (gpb["Blue"] as? NSNumber)?.doubleValue ?? 0.0
+            }
+            if let gpm = plist["v4-GammaPointMiddle"] as? [String: Any] {
+                res.gammaPointMiddleR = (gpm["Red"] as? NSNumber)?.doubleValue ?? 1.0
+                res.gammaPointMiddleG = (gpm["Green"] as? NSNumber)?.doubleValue ?? 1.0
+                res.gammaPointMiddleB = (gpm["Blue"] as? NSNumber)?.doubleValue ?? 1.0
+            }
+            if let gpw = plist["v4-GammaPointWhite"] as? [String: Any] {
+                res.gammaPointWhiteR = (gpw["Red"] as? NSNumber)?.doubleValue ?? 1.0
+                res.gammaPointWhiteG = (gpw["Green"] as? NSNumber)?.doubleValue ?? 1.0
+                res.gammaPointWhiteB = (gpw["Blue"] as? NSNumber)?.doubleValue ?? 1.0
+            }
             if let mb = plist["v4-MasterBlack"] as? NSNumber { res.masterBlack = mb.doubleValue }
             if let mw = plist["v4-MasterWhite"] as? NSNumber { res.masterWhite = mw.doubleValue }
             if let mm = plist["v4-MasterMiddle"] as? NSNumber { res.masterMiddle = mm.doubleValue }
             if let bm = plist["BlendingMode"] as? NSNumber { res.blendingMode = bm.intValue }
             return res
         }
+    }
+
+    /// Calculate 256-entry transfer tables from a GammaSetData configuration.
+    func calculateGammaSetTables(_ set: GammaSetData) -> (r: [Float], g: [Float], b: [Float]) {
+        var tableR = [Float](repeating: 0, count: 256)
+        var tableG = [Float](repeating: 0, count: 256)
+        var tableB = [Float](repeating: 0, count: 256)
+
+        let blackR = Float(max(0.0, min(1.0, set.blackPointR)))
+        let blackG = Float(max(0.0, min(1.0, set.blackPointG)))
+        let blackB = Float(max(0.0, min(1.0, set.blackPointB)))
+
+        let whiteR = Float(max(0.0, min(1.0, set.whitePointR)))
+        let whiteG = Float(max(0.0, min(1.0, set.whitePointG)))
+        let whiteB = Float(max(0.0, min(1.0, set.whitePointB)))
+
+        let middleR = Float(max(0.1, set.middlePointR))
+        let middleG = Float(max(0.1, set.middlePointG))
+        let middleB = Float(max(0.1, set.middlePointB))
+
+        for i in 0..<256 {
+            let x = Float(i) / 255.0
+            let rNorm = middleR == 1.0 ? x : pow(x, middleR)
+            let gNorm = middleG == 1.0 ? x : pow(x, middleG)
+            let bNorm = middleB == 1.0 ? x : pow(x, middleB)
+
+            tableR[i] = max(0.0, min(1.0, blackR + (whiteR - blackR) * rNorm))
+            tableG[i] = max(0.0, min(1.0, blackG + (whiteG - blackG) * gNorm))
+            tableB[i] = max(0.0, min(1.0, blackB + (whiteB - blackB) * bNorm))
+        }
+
+        return (tableR, tableG, tableB)
     }
 
     /// Apply an exact GammaSetData configuration to the hardware LUT.
@@ -311,22 +367,11 @@ final class DisplayTweaksService {
             return
         }
 
-        var tableR = [Float](repeating: 0, count: 256)
-        var tableG = [Float](repeating: 0, count: 256)
-        var tableB = [Float](repeating: 0, count: 256)
-
-        for i in 0..<256 {
-            let x = Float(i) / 255.0
-            let rNorm = middleR == 1.0 ? x : pow(x, middleR)
-            let gNorm = middleG == 1.0 ? x : pow(x, middleG)
-            let bNorm = middleB == 1.0 ? x : pow(x, middleB)
-
-            tableR[i] = max(0.0, min(1.0, blackR + (whiteR - blackR) * rNorm))
-            tableG[i] = max(0.0, min(1.0, blackG + (whiteG - blackG) * gNorm))
-            tableB[i] = max(0.0, min(1.0, blackB + (whiteB - blackB) * bNorm))
-        }
-
-        let err = CGSetDisplayTransferByTable(target, 256, &tableR, &tableG, &tableB)
+        let (tableR, tableG, tableB) = calculateGammaSetTables(set)
+        var r = tableR
+        var g = tableG
+        var b = tableB
+        let err = CGSetDisplayTransferByTable(target, 256, &r, &g, &b)
         if err == .success {
             isApplied = true
         } else {

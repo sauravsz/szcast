@@ -1,25 +1,24 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+enum GammaControlTab: String, CaseIterable, Identifiable {
+    case black = "Black"
+    case middle = "Middle"
+    case white = "White"
+
+    var id: String { rawValue }
+}
+
 struct DisplayTweaksSettingsView: View {
     @Environment(AppSettings.self) private var settings
     private let service = DisplayTweaksService.shared
     @State private var displays: [DisplayTweaksService.DisplayChoice] = []
+    @State private var gammaTab: GammaControlTab = .black
+    @State private var gammaSet = DisplayTweaksService.GammaSetData()
 
     var body: some View {
         @Bindable var bSettings = settings
-
-        let tables = service.calculateTransferTablesPercent(
-            red: settings.displayTweaksRed,
-            green: settings.displayTweaksGreen,
-            blue: settings.displayTweaksBlue,
-            blacks: settings.displayTweaksBlacks,
-            shadows: settings.displayTweaksShadows,
-            highlights: settings.displayTweaksHighlights,
-            whites: settings.displayTweaksWhites,
-            contrast: settings.displayTweaksContrast,
-            brightness: settings.displayTweaksBrightness
-        )
+        let tables = service.calculateGammaSetTables(gammaSet)
 
         return Form {
             Section {
@@ -37,7 +36,7 @@ struct DisplayTweaksSettingsView: View {
                         .frame(width: 220)
                         .onChange(of: settings.displayTweaksDisplayID) { _, _ in
                             if settings.displayTweaksEnabled {
-                                applyCurrentSettings()
+                                service.applyGammaSet(gammaSet, displayID: settings.displayTweaksDisplayID)
                             }
                         }
                     }
@@ -46,18 +45,19 @@ struct DisplayTweaksSettingsView: View {
                 SettingsSectionHeader(.displayTweaksSelection)
             }
 
-            // MARK: - Lunar Pro Style Gamma Box
+            // MARK: - Gamma Control Native 3-Point Inspector
             Section {
                 VStack(alignment: .leading, spacing: Theme.Spacing.md) {
                     SettingsRow(
                         title: "Software Gamma Tables",
-                        subtitle: "Direct GPU transfer curve adjustments. Keep disabled when using f.lux."
+                        subtitle: "Hardware Look-Up Table adjustments matching Gamma Control .gammaset profiles."
                     ) {
                         HStack(spacing: 8) {
                             Button(settings.displayTweaksEnabled ? "Enabled" : "Disabled") {
                                 bSettings.displayTweaksEnabled.toggle()
                                 if settings.displayTweaksEnabled {
-                                    applyCurrentSettings()
+                                    updateResolvedPoints()
+                                    service.applyGammaSet(gammaSet, displayID: settings.displayTweaksDisplayID)
                                 } else {
                                     service.restoreGamma()
                                 }
@@ -81,104 +81,110 @@ struct DisplayTweaksSettingsView: View {
                     }
                     .padding(.vertical, 2)
 
-                    // Sliders 0 to 100 like Lunar Pro
-                    VStack(spacing: 10) {
-                        LunarPillSlider(
-                            title: "Red",
-                            value: $bSettings.displayTweaksRed,
-                            range: 0...100,
-                            fillColor: Color(red: 0.95, green: 0.28, blue: 0.25)
-                        ) {
-                            onSliderChanged()
-                        }
-
-                        LunarPillSlider(
-                            title: "Green",
-                            value: $bSettings.displayTweaksGreen,
-                            range: 0...100,
-                            fillColor: Color(red: 0.25, green: 0.82, blue: 0.35)
-                        ) {
-                            onSliderChanged()
-                        }
-
-                        LunarPillSlider(
-                            title: "Blue",
-                            value: $bSettings.displayTweaksBlue,
-                            range: 0...100,
-                            fillColor: Color(red: 0.18, green: 0.52, blue: 0.96)
-                        ) {
-                            onSliderChanged()
-                        }
-
-                        LunarPillSlider(
-                            title: "Blacks",
-                            value: $bSettings.displayTweaksBlacks,
-                            range: 0...100,
-                            fillColor: Color(white: 0.12),
-                            textColor: Color.white,
-                            borderColor: Color.white.opacity(0.4),
-                            trackBgColor: Color.white.opacity(0.12)
-                        ) {
-                            onSliderChanged()
-                        }
-
-                        LunarPillSlider(
-                            title: "Whites",
-                            value: $bSettings.displayTweaksWhites,
-                            range: 0...100,
-                            fillColor: Color.white,
-                            textColor: Color.black,
-                            borderColor: Color.white,
-                            trackBgColor: Color.white.opacity(0.20)
-                        ) {
-                            onSliderChanged()
+                    // 3-Point Segmented Switcher (Black / Middle / White)
+                    Picker("", selection: $gammaTab) {
+                        ForEach(GammaControlTab.allCases) { tab in
+                            Text(tab.rawValue).tag(tab)
                         }
                     }
+                    .pickerStyle(.segmented)
+                    .padding(.vertical, 2)
+
+                    // Active Tab Sliders
+                    VStack(spacing: 8) {
+                        switch gammaTab {
+                        case .black:
+                            GammaControlSliderRow(
+                                title: "Black Point Luminance",
+                                value: $gammaSet.masterBlack,
+                                range: 0.00...0.40
+                            ) { onGammaSetChanged() }
+
+                            GammaControlSliderRow(
+                                title: "Red",
+                                titleColor: Color(red: 0.95, green: 0.55, blue: 0.55),
+                                value: $gammaSet.gammaPointBlackR,
+                                range: 0.00...1.00
+                            ) { onGammaSetChanged() }
+
+                            GammaControlSliderRow(
+                                title: "Green",
+                                titleColor: Color(red: 0.55, green: 0.85, blue: 0.55),
+                                value: $gammaSet.gammaPointBlackG,
+                                range: 0.00...1.00
+                            ) { onGammaSetChanged() }
+
+                            GammaControlSliderRow(
+                                title: "Blue",
+                                titleColor: Color(red: 0.55, green: 0.65, blue: 0.95),
+                                value: $gammaSet.gammaPointBlackB,
+                                range: 0.00...1.00
+                            ) { onGammaSetChanged() }
+
+                        case .middle:
+                            GammaControlSliderRow(
+                                title: "Gray Balance",
+                                value: $gammaSet.masterMiddle,
+                                range: 0.50...2.00
+                            ) { onGammaSetChanged() }
+
+                            GammaControlSliderRow(
+                                title: "Red",
+                                titleColor: Color(red: 0.95, green: 0.55, blue: 0.55),
+                                value: $gammaSet.gammaPointMiddleR,
+                                range: 0.50...1.50
+                            ) { onGammaSetChanged() }
+
+                            GammaControlSliderRow(
+                                title: "Green",
+                                titleColor: Color(red: 0.55, green: 0.85, blue: 0.55),
+                                value: $gammaSet.gammaPointMiddleG,
+                                range: 0.50...1.50
+                            ) { onGammaSetChanged() }
+
+                            GammaControlSliderRow(
+                                title: "Blue",
+                                titleColor: Color(red: 0.55, green: 0.65, blue: 0.95),
+                                value: $gammaSet.gammaPointMiddleB,
+                                range: 0.50...1.50
+                            ) { onGammaSetChanged() }
+
+                        case .white:
+                            GammaControlSliderRow(
+                                title: "White Point Luminance",
+                                value: $gammaSet.masterWhite,
+                                range: 0.50...1.00
+                            ) { onGammaSetChanged() }
+
+                            GammaControlSliderRow(
+                                title: "Red",
+                                titleColor: Color(red: 0.95, green: 0.55, blue: 0.55),
+                                value: $gammaSet.gammaPointWhiteR,
+                                range: 0.50...1.50
+                            ) { onGammaSetChanged() }
+
+                            GammaControlSliderRow(
+                                title: "Green",
+                                titleColor: Color(red: 0.55, green: 0.85, blue: 0.55),
+                                value: $gammaSet.gammaPointWhiteG,
+                                range: 0.50...1.50
+                            ) { onGammaSetChanged() }
+
+                            GammaControlSliderRow(
+                                title: "Blue",
+                                titleColor: Color(red: 0.55, green: 0.65, blue: 0.95),
+                                value: $gammaSet.gammaPointWhiteB,
+                                range: 0.50...1.50
+                            ) { onGammaSetChanged() }
+                        }
+                    }
+
+                    // Reference Calibration Target Bar
+                    GammaControlReferenceBar()
                 }
                 .padding(.vertical, 4)
             } header: {
                 SettingsSectionHeader(.displayTweaksGamma)
-            }
-
-            // MARK: - Brightness & Contrast (FaceLight Style)
-            Section {
-                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Brightness & Contrast")
-                            .font(.system(size: 13, weight: .semibold))
-                        Text("Hardware Look-Up Table offsets for brightness and dynamic range.")
-                            .font(.system(size: 11))
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.bottom, 2)
-
-                    VStack(spacing: 10) {
-                        LunarPillSlider(
-                            title: "Brightness",
-                            value: $bSettings.displayTweaksBrightness,
-                            range: 0...100,
-                            fillColor: Color(red: 0.96, green: 0.80, blue: 0.58),
-                            textColor: Color.black,
-                            iconName: "sun.max.fill"
-                        ) {
-                            onSliderChanged()
-                        }
-
-                        LunarPillSlider(
-                            title: "Contrast",
-                            value: $bSettings.displayTweaksContrast,
-                            range: 0...100,
-                            fillColor: Color(red: 0.96, green: 0.80, blue: 0.58),
-                            textColor: Color.black,
-                            iconName: "circle.righthalf.filled"
-                        ) {
-                            onSliderChanged()
-                        }
-                    }
-                }
-                .padding(.vertical, 4)
-            } header: {
-                SettingsSectionHeader(.displayTweaksRange)
             }
 
             // MARK: - Curve Preview & Presets
@@ -217,32 +223,56 @@ struct DisplayTweaksSettingsView: View {
             if settings.displayTweaksDisplayID == 0, let first = displays.first {
                 settings.displayTweaksDisplayID = first.id
             }
+
+            let defaultGammaPath = "/Users/sz/Downloads/Untitled.gammaset"
+            if FileManager.default.fileExists(atPath: defaultGammaPath),
+               let parsed = DisplayTweaksService.GammaSetData.parse(from: URL(fileURLWithPath: defaultGammaPath)) {
+                gammaSet = parsed
+            }
+            updateResolvedPoints()
+
             if settings.displayTweaksEnabled {
-                applyCurrentSettings()
+                service.applyGammaSet(gammaSet, displayID: settings.displayTweaksDisplayID)
             } else {
                 service.restoreGamma()
             }
         }
     }
 
-    private func onSliderChanged() {
+    private func updateResolvedPoints() {
+        gammaSet.blackPointR = max(0.0, min(1.0, gammaSet.masterBlack + gammaSet.gammaPointBlackR))
+        gammaSet.blackPointG = max(0.0, min(1.0, gammaSet.masterBlack + gammaSet.gammaPointBlackG))
+        gammaSet.blackPointB = max(0.0, min(1.0, gammaSet.masterBlack + gammaSet.gammaPointBlackB))
+
+        gammaSet.middlePointR = max(0.1, gammaSet.masterMiddle * gammaSet.gammaPointMiddleR)
+        gammaSet.middlePointG = max(0.1, gammaSet.masterMiddle * gammaSet.gammaPointMiddleG)
+        gammaSet.middlePointB = max(0.1, gammaSet.masterMiddle * gammaSet.gammaPointMiddleB)
+
+        gammaSet.whitePointR = max(0.0, min(1.0, gammaSet.masterWhite * gammaSet.gammaPointWhiteR))
+        gammaSet.whitePointG = max(0.0, min(1.0, gammaSet.masterWhite * gammaSet.gammaPointWhiteG))
+        gammaSet.whitePointB = max(0.0, min(1.0, gammaSet.masterWhite * gammaSet.gammaPointWhiteB))
+    }
+
+    private func onGammaSetChanged() {
+        updateResolvedPoints()
         settings.displayTweaksPreset = "Custom"
         if !settings.displayTweaksEnabled {
             settings.displayTweaksEnabled = true
         }
-        applyCurrentSettings()
+        service.applyGammaSet(gammaSet, displayID: settings.displayTweaksDisplayID)
     }
 
     private func resetToDefaults() {
-        settings.displayTweaksRed = 50.0
-        settings.displayTweaksGreen = 50.0
-        settings.displayTweaksBlue = 50.0
-        settings.displayTweaksBlacks = 0.0
-        settings.displayTweaksWhites = 100.0
-        settings.displayTweaksContrast = 50.0
-        settings.displayTweaksBrightness = 50.0
-        settings.displayTweaksShadows = 50.0
-        settings.displayTweaksHighlights = 50.0
+        gammaSet = DisplayTweaksService.GammaSetData(
+            blackPointR: 0.0, blackPointG: 0.0, blackPointB: 0.0,
+            whitePointR: 1.0, whitePointG: 1.0, whitePointB: 1.0,
+            middlePointR: 1.0, middlePointG: 1.0, middlePointB: 1.0,
+            masterBlack: 0.0, masterWhite: 1.0, masterMiddle: 1.0,
+            gammaPointBlackR: 0.0, gammaPointBlackG: 0.0, gammaPointBlackB: 0.0,
+            gammaPointMiddleR: 1.0, gammaPointMiddleG: 1.0, gammaPointMiddleB: 1.0,
+            gammaPointWhiteR: 1.0, gammaPointWhiteG: 1.0, gammaPointWhiteB: 1.0
+        )
+        updateResolvedPoints()
         settings.displayTweaksPreset = "Default"
         settings.displayTweaksEnabled = false
         service.restoreGamma()
@@ -250,48 +280,52 @@ struct DisplayTweaksSettingsView: View {
 
     private func applyPreset(_ preset: DisplayTweaksPreset) {
         settings.displayTweaksPreset = preset.rawValue
-        let v = preset.percentValues
-        settings.displayTweaksRed = v.red
-        settings.displayTweaksGreen = v.green
-        settings.displayTweaksBlue = v.blue
-        settings.displayTweaksBlacks = v.blacks
-        settings.displayTweaksShadows = v.shadows
-        settings.displayTweaksHighlights = v.highlights
-        settings.displayTweaksWhites = v.whites
-        settings.displayTweaksContrast = v.contrast
-        settings.displayTweaksBrightness = v.brightness
 
         if preset == .neutral {
-            settings.displayTweaksEnabled = false
-            service.restoreGamma()
-        } else if preset == .gammaControl {
+            resetToDefaults()
+            return
+        }
+
+        if preset == .gammaControl {
             let defaultGammaPath = "/Users/sz/Downloads/Untitled.gammaset"
             if FileManager.default.fileExists(atPath: defaultGammaPath),
-               let gammaData = DisplayTweaksService.GammaSetData.parse(from: URL(fileURLWithPath: defaultGammaPath)) {
-                settings.displayTweaksBlacks = gammaData.masterBlack * 100.0
-                settings.displayTweaksWhites = gammaData.masterWhite * 100.0
-                settings.displayTweaksRed = 50.0
-                settings.displayTweaksGreen = 50.0
-                settings.displayTweaksBlue = 50.0
-                settings.displayTweaksContrast = 50.0
-                settings.displayTweaksBrightness = 50.0
-                settings.displayTweaksShadows = 50.0
-                settings.displayTweaksHighlights = 50.0
-                settings.displayTweaksPreset = "Gamma Control"
-                settings.displayTweaksEnabled = true
-                service.applyGammaSet(gammaData, displayID: settings.displayTweaksDisplayID)
-                return
+               let parsed = DisplayTweaksService.GammaSetData.parse(from: URL(fileURLWithPath: defaultGammaPath)) {
+                gammaSet = parsed
+            } else {
+                gammaSet = DisplayTweaksService.GammaSetData(
+                    blackPointR: 0.05, blackPointG: 0.05, blackPointB: 0.05,
+                    whitePointR: 0.89, whitePointG: 0.89, whitePointB: 0.89,
+                    middlePointR: 1.0, middlePointG: 1.0, middlePointB: 1.0,
+                    masterBlack: 0.05, masterWhite: 0.89, masterMiddle: 1.0,
+                    gammaPointBlackR: 0.0, gammaPointBlackG: 0.0, gammaPointBlackB: 0.0,
+                    gammaPointMiddleR: 1.0, gammaPointMiddleG: 1.0, gammaPointMiddleB: 1.0,
+                    gammaPointWhiteR: 1.0, gammaPointWhiteG: 1.0, gammaPointWhiteB: 1.0
+                )
             }
-            if !settings.displayTweaksEnabled {
-                settings.displayTweaksEnabled = true
-            }
-            applyCurrentSettings()
         } else {
-            if !settings.displayTweaksEnabled {
-                settings.displayTweaksEnabled = true
-            }
-            applyCurrentSettings()
+            let v = preset.values
+            gammaSet = DisplayTweaksService.GammaSetData(
+                blackPointR: max(0.0, v.blacks),
+                blackPointG: max(0.0, v.blacks),
+                blackPointB: max(0.0, v.blacks),
+                whitePointR: v.whites > 0 ? v.whites : (1.0 + v.whites),
+                whitePointG: v.whites > 0 ? v.whites : (1.0 + v.whites),
+                whitePointB: v.whites > 0 ? v.whites : (1.0 + v.whites),
+                middlePointR: v.contrast != 0 ? (1.0 - v.contrast * 0.3) : 1.0,
+                middlePointG: v.contrast != 0 ? (1.0 - v.contrast * 0.3) : 1.0,
+                middlePointB: v.contrast != 0 ? (1.0 - v.contrast * 0.3) : 1.0,
+                masterBlack: max(0.0, v.blacks),
+                masterWhite: v.whites > 0 ? v.whites : (1.0 + v.whites),
+                masterMiddle: 1.0,
+                gammaPointBlackR: 0.0, gammaPointBlackG: 0.0, gammaPointBlackB: 0.0,
+                gammaPointMiddleR: v.red, gammaPointMiddleG: v.green, gammaPointMiddleB: v.blue,
+                gammaPointWhiteR: 1.0, gammaPointWhiteG: 1.0, gammaPointWhiteB: 1.0
+            )
         }
+
+        updateResolvedPoints()
+        settings.displayTweaksEnabled = true
+        service.applyGammaSet(gammaSet, displayID: settings.displayTweaksDisplayID)
     }
 
     private func importGammaSetFile() {
@@ -305,118 +339,123 @@ struct DisplayTweaksSettingsView: View {
 
         if panel.runModal() == .OK, let url = panel.url {
             if let data = DisplayTweaksService.GammaSetData.parse(from: url) {
-                settings.displayTweaksBlacks = data.masterBlack * 100.0
-                settings.displayTweaksWhites = data.masterWhite * 100.0
-                settings.displayTweaksRed = 50.0
-                settings.displayTweaksGreen = 50.0
-                settings.displayTweaksBlue = 50.0
-                settings.displayTweaksContrast = 50.0
-                settings.displayTweaksBrightness = 50.0
-                settings.displayTweaksShadows = 50.0
-                settings.displayTweaksHighlights = 50.0
+                gammaSet = data
+                updateResolvedPoints()
                 settings.displayTweaksPreset = "Gamma Control"
                 settings.displayTweaksEnabled = true
-                service.applyGammaSet(data, displayID: settings.displayTweaksDisplayID)
+                service.applyGammaSet(gammaSet, displayID: settings.displayTweaksDisplayID)
             }
         }
     }
-
-    private func applyCurrentSettings() {
-        service.applyPercent(
-            displayID: settings.displayTweaksDisplayID,
-            red: settings.displayTweaksRed,
-            green: settings.displayTweaksGreen,
-            blue: settings.displayTweaksBlue,
-            blacks: settings.displayTweaksBlacks,
-            shadows: settings.displayTweaksShadows,
-            highlights: settings.displayTweaksHighlights,
-            whites: settings.displayTweaksWhites,
-            contrast: settings.displayTweaksContrast,
-            brightness: settings.displayTweaksBrightness
-        )
-    }
 }
 
-// MARK: - Lunar Pro Style Pill Slider (0..100)
+// MARK: - Gamma Control Slider Row
 
-struct LunarPillSlider: View {
+struct GammaControlSliderRow: View {
     let title: String
+    var titleColor: Color = .primary
     @Binding var value: Double
-    var range: ClosedRange<Double> = 0...100
-    let fillColor: Color
-    var textColor: Color = .white
-    var borderColor: Color? = nil
-    var trackBgColor: Color? = nil
-    var iconName: String? = nil
-    var onChanged: (() -> Void)? = nil
-
-    private static let thumbWidth: CGFloat = 38
-    private static let trackHeight: CGFloat = 22
+    var range: ClosedRange<Double>
+    var onChanged: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
             Text(title)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(.primary)
-                .frame(width: 80, alignment: .leading)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(titleColor)
+                .frame(width: 170, alignment: .leading)
 
-            GeometryReader { geo in
-                let totalWidth = geo.size.width
-                let clamped = min(max(value, range.lowerBound), range.upperBound)
-                let pct = CGFloat((clamped - range.lowerBound) / (range.upperBound - range.lowerBound))
-                let availableTravel = max(0, totalWidth - Self.thumbWidth)
-                let thumbX = availableTravel * pct
-                let fillWidth = max(Self.thumbWidth, thumbX + Self.thumbWidth)
+            Slider(value: $value, in: range, step: 0.01)
+                .onChange(of: value) { _, _ in onChanged() }
 
-                ZStack(alignment: .leading) {
-                    // Track background (muted tinted tone)
-                    Capsule()
-                        .fill(trackBgColor ?? fillColor.opacity(0.24))
-                        .overlay(
-                            Capsule().stroke(trackBgColor?.opacity(0.5) ?? fillColor.opacity(0.35), lineWidth: 0.75)
-                        )
-
-                    // Filled progress bar up to thumb
-                    Capsule()
-                        .fill(fillColor.opacity(0.70))
-                        .frame(width: fillWidth)
-
-                    // Optional leading icon inside track
-                    if let icon = iconName {
-                        Image(systemName: icon)
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(textColor.opacity(0.9))
-                            .padding(.leading, 8)
-                    }
-
-                    // Sliding Pill Thumb with Current Value (matching Lunar exactly)
-                    Capsule()
-                        .fill(fillColor)
-                        .overlay(
-                            Capsule().stroke(borderColor ?? Color.white.opacity(0.25), lineWidth: 1)
-                        )
-                        .overlay(
-                            Text("\(Int(clamped.rounded()))")
-                                .font(.system(size: 10, weight: .heavy, design: .rounded))
-                                .foregroundStyle(textColor)
-                        )
-                        .shadow(color: Color.black.opacity(0.25), radius: 2, x: 0, y: 1)
-                        .frame(width: Self.thumbWidth, height: Self.trackHeight)
-                        .offset(x: thumbX)
-                }
-                .frame(height: Self.trackHeight)
-                .contentShape(Rectangle())
-                .gesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { gesture in
-                            let fraction = min(max(gesture.location.x / totalWidth, 0.0), 1.0)
-                            let newValue = range.lowerBound + Double(fraction) * (range.upperBound - range.lowerBound)
-                            value = newValue.rounded()
-                            onChanged?()
-                        }
+            Text(String(format: "%.2f", value))
+                .font(.system(size: 13, design: .monospaced))
+                .foregroundColor(.primary)
+                .frame(width: 44, alignment: .trailing)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 3)
+                .background(
+                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                        .fill(Color(nsColor: .controlBackgroundColor))
                 )
-            }
-            .frame(height: Self.trackHeight)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                        .stroke(Color.secondary.opacity(0.3), lineWidth: 0.5)
+                )
         }
+        .padding(.vertical, 1)
+    }
+}
+
+// MARK: - Gamma Control Calibration Bar
+
+struct GammaControlReferenceBar: View {
+    var body: some View {
+        VStack(spacing: 5) {
+            // 5-box checker pattern (Gray, Red, Green, Blue, White)
+            HStack(spacing: 6) {
+                CheckeredBox(color: Color(white: 0.5))
+                CheckeredBox(color: Color.red)
+                CheckeredBox(color: Color.green)
+                CheckeredBox(color: Color.blue)
+                CheckeredBox(color: Color.white)
+            }
+            .frame(height: 34)
+
+            // Grayscale gradient ramp
+            LinearGradient(
+                colors: [.black, .white],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            .frame(height: 10)
+            .cornerRadius(2)
+            .overlay(
+                RoundedRectangle(cornerRadius: 2)
+                    .stroke(Color.secondary.opacity(0.4), lineWidth: 0.5)
+            )
+
+            // RGB color gradient ramp
+            LinearGradient(
+                stops: [
+                    .init(color: .black, location: 0.0),
+                    .init(color: .red, location: 0.33),
+                    .init(color: .green, location: 0.66),
+                    .init(color: .blue, location: 1.0)
+                ],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            .frame(height: 10)
+            .cornerRadius(2)
+            .overlay(
+                RoundedRectangle(cornerRadius: 2)
+                    .stroke(Color.secondary.opacity(0.4), lineWidth: 0.5)
+            )
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+struct CheckeredBox: View {
+    let color: Color
+    var body: some View {
+        ZStack {
+            Rectangle()
+                .fill(Color.black.opacity(0.4))
+            GeometryReader { geo in
+                let w = geo.size.width / 2
+                let h = geo.size.height / 2
+                Path { p in
+                    p.addRect(CGRect(x: 0, y: 0, width: w, height: h))
+                    p.addRect(CGRect(x: w, y: h, width: w, height: h))
+                }
+                .fill(color)
+            }
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: 2)
+                .stroke(Color.secondary.opacity(0.4), lineWidth: 0.5)
+        )
     }
 }
