@@ -33,6 +33,7 @@ struct SettingsRootView: View {
                         .disabled(!navigation.canGoForward)
                 }
                 .controlGroupStyle(.navigation)
+                .padding(.leading, 12)
             }
         }
         .background(Color(nsColor: .windowBackgroundColor))
