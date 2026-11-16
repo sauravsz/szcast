@@ -174,8 +174,13 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - Display Tweaks & Gamma Control: Hardware gamma transfer curve scaling with exact Gamma Control preset (0.05 Black Point, 0.89 White Point Luminance).
   - Version bump to 1.1.0, signed Release DMG (`build/szcast-1.1.0.dmg`) and ZIP (`build/szcast-1.1.0.zip`) packaged and deployed to `/Applications/szcast.app`.
 
+- **Post-1.1.0 Refinements**:
+  - Dictation and Changelog Margins: Aligned content insets across Dictation Insights (`DictationInsightsDashboardView`), Changelog (`ChangelogSettingsView`), and the Dictation segmented control picker to the standard 20pt horizontal margin matching native `.formStyle(.grouped)` across all Settings panes. Removed horizontal scrollview wrapper around the segmented picker to prevent horizontal offset clipping.
+  - Liquid Glass UI Vibrancy: Replaced no-op SwiftUI glass effects with real AppKit `VisualEffectBlur` (`NSVisualEffectView`, `material: .hudWindow` / `.sidebar`, `blendingMode: .behindWindow`) layered behind window scrims in both the Launcher palette and Settings window. Configured transparent window backing and hidden scroll content backgrounds when enabled.
+  - Gamma Control Profile Matcher & Parser: Implemented `GammaSetData.parse(from:)` for `.gammaset` XML property lists and applied hardware LUT curves via `CGSetDisplayTransferByFormula` (`blackPoint` 0.05, `whitePoint` 0.89, `middlePoint` 1.0) with direct `.gammaset` import support in Settings. Display tweaks default to disabled with active native ColorSync restoration.
+
 ## Active State & Next Steps
-- **Active State**: Releases through `v1.1.0` live on GitHub (`sauravsz/szcast/releases`). Installed and running at `/Applications/szcast.app` (v1.1.0). Dictation Insights Dashboard with real metrics, Settings toolbar navigation gap, and Gamma Control preset verified.
+- **Active State**: Installed and running at `/Applications/szcast.app`. Dictation Insights, Changelog, and Settings margins aligned at 20pt; Liquid Glass UI with live blur active; Gamma Control formula hardware curve verified; changes pushed to `main`.
 - **Immediate Next Steps**:
   1. Test long continuous dictation (5+ minutes) in real-world workflows.
   2. Perform weekly upstream radar audit (`./Scripts/upstream-radar.sh`).
