@@ -50,6 +50,10 @@ final class SettingsCoordinator {
         showSettings(tab: .about)
     }
 
+    func showChangelog() {
+        showSettings(tab: .changelog)
+    }
+
     func showBackupSettings() {
         showSettings(tab: .backup)
     }

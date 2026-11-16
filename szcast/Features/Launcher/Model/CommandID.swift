@@ -46,6 +46,7 @@ enum CommandID: String, CaseIterable, Sendable {
     case checkForUpdates = "command:check-for-updates"
     case settings = "command:settings"
     case about = "command:about"
+    case changelog = "command:changelog"
     case support = "command:support"
     case focusTimer = "command:focus-timer"
     case captureScreenText = "command:capture-screen-text"
@@ -131,6 +132,7 @@ enum CommandID: String, CaseIterable, Sendable {
         case .checkForUpdates: return "Check for Updates"
         case .settings: return "szcast Settings"
         case .about: return "About szcast"
+        case .changelog: return "Changelog"
         case .support: return "Support szcast"
         case .focusTimer: return "Focus Timer"
         case .captureScreenText: return "Capture Screen Text (OCR)"
@@ -191,6 +193,7 @@ enum CommandID: String, CaseIterable, Sendable {
         case .checkForUpdates: return "arrow.down.circle"
         case .settings: return "gearshape"
         case .about: return "info.circle"
+        case .changelog: return "clock.arrow.circlepath"
         case .support: return "heart"
         case .focusTimer: return "timer"
         case .captureScreenText: return "text.viewfinder"
@@ -241,6 +244,7 @@ enum CommandID: String, CaseIterable, Sendable {
         case .cleanKeyboard: ["clean keyboard", "lock keyboard", "wipe keyboard", "clean"]
         case .keepassxc: ["keepass", "keepassxc", "kdbx", "password", "passwords", "credentials", "vault"]
         case .dictationInsights: ["insights", "wpm", "words per minute", "dictation insights", "dictation dashboard", "streak"]
+        case .changelog: ["changelog", "whats new", "what's new", "release notes", "version", "changes", "updates"]
         default: []
         }
     }

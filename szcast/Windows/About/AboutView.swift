@@ -3,6 +3,7 @@ import SwiftUI
 
 struct AboutView: View {
     @Environment(AppCore.self) private var core
+    @Environment(SettingsNavigationState.self) private var navigation
 
     private static var version: String {
         let short = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
@@ -33,6 +34,7 @@ struct AboutView: View {
                         .padding(.vertical, Theme.Spacing.lg)
                 }
                 .settingsAnchor(.aboutAbout)
+                changelogSection
                 links
                 support
             }
@@ -80,6 +82,36 @@ struct AboutView: View {
             Text("A native macOS launcher for everyday productivity. Lightweight and open source.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
+        }
+    }
+
+    private var changelogSection: some View {
+        Section {
+            Button {
+                navigation.select(.changelog)
+            } label: {
+                LabeledContent {
+                    HStack(spacing: Theme.Spacing.sm) {
+                        Text("v1.1.0")
+                            .font(.caption.monospacedDigit().weight(.medium))
+                            .foregroundStyle(.secondary)
+                        Image(systemName: "chevron.forward")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.tertiary)
+                    }
+                } label: {
+                    Label {
+                        Text("Changelog & Version History")
+                    } icon: {
+                        Image(systemName: "clock.arrow.circlepath")
+                            .font(.system(size: 13, weight: .medium))
+                    }
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        } header: {
+            Text("Updates & Changes")
         }
     }
 

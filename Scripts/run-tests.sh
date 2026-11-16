@@ -637,6 +637,7 @@ run slow snippets-test     Szcast/Platform/NotificationToken.swift \
                            Szcast/Platform/AppPaths.swift \
                            Szcast/Platform/Appearance.swift \
                            Szcast/Platform/Images/RaycastIconTheme.swift \
+                           Szcast/Platform/Images/ChatGPTIconProvider.swift \
                            Szcast/Platform/Images/IconCache.swift \
                            Szcast/Features/Snippets/Model/*.swift \
                            Szcast/Features/Snippets/Service/*.swift \

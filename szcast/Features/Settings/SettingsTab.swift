@@ -1,7 +1,7 @@
 enum SettingsTab: CaseIterable, Identifiable {
     case general, applications, systemSettings, systemActions, commands, quicklinks, appleShortcuts,
         fallbacks, clipboard, snippets, fileSearch, windowManagement, displayTweaks, cleanKeyboard, navigation, notes, calendar, emoji,
-        dictation, ai, quickActions, extensions, permissions, backup, about, enteAuth, finderFileActions, duckDuckGoEmail, keepassxc
+        dictation, ai, quickActions, extensions, permissions, backup, changelog, about, enteAuth, finderFileActions, duckDuckGoEmail, keepassxc
     /// The case, never an index: a selectable `List` flattens section and row IDs together.
     var id: Self { self }
 
@@ -36,6 +36,7 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .extensions: "extensions"
         case .permissions: "permissions"
         case .backup: "backup"
+        case .changelog: "changelog"
         case .about: "about"
         case .enteAuth: "ente-auth"
         case .finderFileActions: "finder-file-actions"
@@ -71,6 +72,7 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .extensions: return String(localized: "Extensions")
         case .permissions: return String(localized: "Permissions")
         case .backup: return String(localized: "Backup")
+        case .changelog: return String(localized: "Changelog")
         case .about: return String(localized: "About")
         case .enteAuth: return String(localized: "Ente Auth")
         case .finderFileActions: return String(localized: "Finder File Actions")
@@ -105,6 +107,7 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .extensions: return "puzzlepiece.extension"
         case .permissions: return "lock.shield"
         case .backup: return "arrow.up.arrow.down.circle"
+        case .changelog: return "clock.arrow.circlepath"
         case .about: return "info.circle"
         case .enteAuth: return "key.fill"
         case .finderFileActions: return "folder.badge.gearshape"
@@ -144,7 +147,7 @@ enum SettingsSection: CaseIterable, Identifiable {
         case .aiAndVoice:
             return [.ai, .dictation, .quickActions]
         case .systemAndAbout:
-            return [.extensions, .backup, .about]
+            return [.extensions, .backup, .changelog, .about]
         }
     }
 }

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CLB000000000E3F99B74168A /* ChangelogSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CLR000000000AE455707835D /* ChangelogSettingsView.swift */; };
 		C1C4E3A20008000000000001 /* DictationProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10008000000000001 /* DictationProvider.swift */; };
 		C1C4E3A20008000000000002 /* GroqAudioService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10008000000000002 /* GroqAudioService.swift */; };
 		C1C4E3A20008000000000003 /* GroqPolishService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10008000000000003 /* GroqPolishService.swift */; };
@@ -1032,6 +1033,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		CLR000000000AE455707835D /* ChangelogSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangelogSettingsView.swift; sourceTree = "<group>"; };
 		C1C4E3A10008000000000001 /* DictationProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationProvider.swift; sourceTree = "<group>"; };
 		C1C4E3A10008000000000002 /* GroqAudioService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroqAudioService.swift; sourceTree = "<group>"; };
 		C1C4E3A10008000000000003 /* GroqPolishService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroqPolishService.swift; sourceTree = "<group>"; };
@@ -3252,6 +3254,7 @@
 		87EA838A362AAB1D1B5665E0 /* Panes */ = {
 			isa = PBXGroup;
 			children = (
+				CLR000000000AE455707835D /* ChangelogSettingsView.swift */,
 				0CD9BD942CF0C95ECEFC41F4 /* CompactShortcutsSection.swift */,
 				418DA899A1546F3B4AC44777 /* GeneralSettingsView.swift */,
 				29D547CAB18AFCFC0390C943 /* NavigationSettingsView.swift */,
@@ -5276,7 +5279,8 @@
 				EEDDC1AFFBCC75039A873886 /* FormTextInput.swift in Sources */,
 				7833FD6E0A6036954FE285CE /* FrequentEmojiStore.swift in Sources */,
 				FEC954D6727EFEB00E059980 /* FrontmostApp.swift in Sources */,
-				C5F60D8681235B95DAA3314F /* GeneralSettingsView.swift in Sources */,
+								CLB000000000E3F99B74168A /* ChangelogSettingsView.swift in Sources */,
+C5F60D8681235B95DAA3314F /* GeneralSettingsView.swift in Sources */,
 				BA81211D8B660F2DD03A20EA /* GlassEffectView.swift in Sources */,
 				35D8AA4E6FE6FD020A56BD8A /* HIDEventSystem.swift in Sources */,
 				8F001DE9D2EF3429B351EFF5 /* HIDKeyMapping.swift in Sources */,

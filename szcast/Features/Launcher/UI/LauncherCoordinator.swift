@@ -274,6 +274,9 @@ final class LauncherCoordinator {
         case .about:
             dismissPalette()
             settingsCoordinator.showAbout()
+        case .changelog:
+            dismissPalette()
+            settingsCoordinator.showChangelog()
         case .support:
             dismissPalette()
             core.supportCoordinator.showSupport()

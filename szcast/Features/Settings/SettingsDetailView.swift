@@ -31,6 +31,7 @@ struct SettingsDetailView: View {
             case .extensions: ExtensionsSettingsView()
             case .permissions: PermissionsSettingsView()
             case .backup: BackupSettingsView()
+            case .changelog: ChangelogSettingsView()
             case .about: AboutView()
             case .enteAuth: EnteAuthSettingsView()
             case .finderFileActions: FinderFileActionsSettingsView()

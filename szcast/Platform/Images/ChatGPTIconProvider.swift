@@ -8,6 +8,13 @@ public enum ChatGPTIconProvider {
 
     /// Generates a pixel-perfect, crisp ChatGPT squircle icon (256x256) with #10A37F emerald background and white rosette.
     public static func generatePNGData(size: CGFloat = 256) -> Data? {
+        if let asset = NSImage(named: "BrandChatGPT"),
+           let tiff = asset.tiffRepresentation,
+           let rep = NSBitmapImageRep(data: tiff),
+           let png = rep.representation(using: .png, properties: [:]) {
+            return png
+        }
+
         guard let rep = NSBitmapImageRep(
             bitmapDataPlanes: nil,
             pixelsWide: Int(size),

@@ -156,6 +156,8 @@ extension SettingsAnchor {
     static let keepassxcCommands = Self(tab: .keepassxc, title: "Commands")
     static let keepassxcDatabase = Self(tab: .keepassxc, title: "Database & Master Password")
 
+    static let changelogReleases = Self(tab: .changelog, title: "Releases")
+
     static let aboutAbout = Self(tab: .about, title: "About")
     static let aboutLinks = Self(tab: .about, title: "Links")
 }

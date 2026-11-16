@@ -109,7 +109,7 @@ enum SettingsSearchCatalog {
         general + applications + systemSettings + systemActions + commands + quicklinks
         + appleShortcuts + fallbacks + clipboard + snippets + fileSearch + windowManagement
         + cleanKeyboard + navigation + notes + calendar + emoji + ai + quickActions + dictation + extensions + permissions
-        + backup + displayTweaks + enteAuth + finderFileActions + duckDuckGoEmail + keepassxc + about
+        + backup + displayTweaks + enteAuth + finderFileActions + duckDuckGoEmail + keepassxc + changelog + about
 
     private static let general: [SettingsSearchEntry] = [
         .init(pane: .general, keywords: ["preferences", "settings"]),
@@ -717,6 +717,15 @@ enum SettingsSearchCatalog {
         .init(
             pane: .keepassxc,
             keywords: ["keepass", "password", "kdbx", "vault", "keepassxc", "credentials", "manager"])
+    ]
+
+    private static let changelog: [SettingsSearchEntry] = [
+        .init(
+            pane: .changelog,
+            keywords: ["release notes", "what's new", "whats new", "version", "history", "updates", "changes"]),
+        .init(
+            .changelogReleases, "Release Notes",
+            keywords: ["versions", "features", "fixes", "improvements"])
     ]
 
     private static let about: [SettingsSearchEntry] = [
