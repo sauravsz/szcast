@@ -12,6 +12,8 @@ final class PalettePanel: NSPanel, AnimatedPanel {
     var onBareBackspace: (() -> Bool)?
     /// Escape, which a focused form field answers before `onKeyPress` could see it.
     var onEscape: (() -> Bool)?
+    /// Global toggle shortcut (e.g. ⌘ Space) pressed while the panel is key immediately dismisses it.
+    var onToggleShortcut: ((NSEvent) -> Bool)?
     /// Command chords the field editor swallows, plus the ones no main menu handles.
     var onCommandShortcut: ((NSEvent) -> Bool)?
     /// The palette's typing context, handed over each time a field takes focus.
@@ -194,6 +196,9 @@ final class PalettePanel: NSPanel, AnimatedPanel {
         // Before every other rule, so the arrows' own policies apply to the chords too.
         if event.type == .keyDown, let arrow = Self.emacsArrow(for: event) {
             sendEvent(arrow)
+            return
+        }
+        if event.type == .keyDown, onToggleShortcut?(event) == true {
             return
         }
         // A palette menu owns the keyboard. See docs/features/palette.md#menu-open-input-freeze.

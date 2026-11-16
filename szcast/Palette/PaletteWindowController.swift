@@ -445,6 +445,17 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
             }
             return false
         }
+        panel.onToggleShortcut = { [weak self] event in
+            guard let self else { return false }
+            if let shortcut = self.core.hotKeys.binding(for: .togglePalette)?.shortcut,
+                let eventShortcut = KeyShortcut(keyCode: Int(event.keyCode), modifierFlags: event.modifierFlags),
+                shortcut == eventShortcut
+            {
+                self.core.paletteCoordinator.hidePalette()
+                return true
+            }
+            return false
+        }
         // Handled at the panel: the field editor or a missing main menu eats these first.
         panel.onCommandShortcut = { [weak self] event in
             guard let self else { return false }

@@ -52,7 +52,7 @@ enum ChangelogData {
                     items: [
                         "Expanded modifier single-tap threshold from 250ms to 650ms so deliberate human Fn/Globe taps are never dropped as abandoned holds.",
                         "Reduced Push-to-Talk activation delay from 250ms to 40ms for uncontended hold keys, preventing speech onset clipping and audio dropouts.",
-                        "Resolved Launcher toggle shortcut (Option + Space) to dismiss szcast immediately when visible from any screen (Clipboard, AI, Calculator, etc.)."
+                        "Resolved Launcher toggle shortcut (Command + Space) to dismiss szcast immediately when visible from any screen (Clipboard, AI, Calculator, etc.)."
                     ]
                 ),
                 ChangelogCategory(

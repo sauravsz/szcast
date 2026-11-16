@@ -25,7 +25,7 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
 
 - **Release v1.1.2**:
   - HotKey & Dictation Responsiveness: Expanded modifier single-tap threshold from 250ms to 650ms (`ModifierKeyDetector.maxSingleHold`), eliminating dropped Fn keypresses during natural typing. Reduced Push-to-Talk activation delay from 250ms to 40ms on uncontended hold keys, preventing speech onset clipping.
-  - Launcher Dismissal Across Modes: Updated `togglePalette()` to check `windowController.isVisible` so pressing the global shortcut (`⌥ Space`) from any sub-screen (Clipboard, AI, Calculator, etc.) cleanly closes szcast immediately.
+  - Launcher Dismissal Across Modes: Updated `togglePalette()` and intercepted key down events in `PalettePanel` so pressing the global shortcut (`⌘ Space` / Command + Space) from any sub-screen (Clipboard, AI, Calculator, etc.) or focused search bar cleanly closes szcast immediately without event lag.
   - S1-mini Offline Architecture: Fully eliminated Ollama (`localhost:11434`) dependency in favor of dedicated local `llama-server` on port 51143. If the daemon is uninitialized, raw transcripts return in 0ms without network hang. Pointed model downloads directly to GitHub Release assets.
   - DisplayTweaks Sleep & Reconnect Resilience: Added `NSWorkspace.didWakeNotification` and `NSApplication.didChangeScreenParametersNotification` observers to automatically re-apply active gamma curves across sleep/wake cycles and display switches. Cleaned hardcoded download path dependencies.
   - Thread Safety & Resource Cleanup: Resolved Swift concurrency capture warnings in KeePassXC CLI execution, cleaned up unused references in Dictation coordinator, and added Mach port invalidation in Clean Keyboard.
