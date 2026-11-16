@@ -23,6 +23,13 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
 - `xcodebuild -project szcast.xcodeproj -scheme Szcast -configuration Debug build`
 - `Scripts/run-tests.sh` — all 121 harnesses pass. `Scripts/build-dmg.sh` → `build/szcast-0.1.0.dmg`; needs the `szcast Self-Signed` keychain identity (already created; without it Accessibility/TCC grants reset each build).
 
+- **Release v1.1.0**:
+  - Dictation Insights Dashboard: Wispr Flow-style analytics driven 100% by local dictation metrics (`DictationHistoryStore`). Real-time WPM speed gauge with cadence percentile meter, S1-mini normalization corrections, total words dictated with book equivalence, application category distribution, and interactive 16-week speech cadence streak calendar.
+  - Display Tweaks & Gamma Control: Direct GPU gamma table controls (`CGSetDisplayTransferByTable`) with 0.00–1.00 fine luminance controls for Black point, Middle gamma, and White point across RGB channels, plus quick presets including the Gamma Control reference profile for deep OLED-grade blacks without color banding.
+  - Zero-Lag Dictation Daemons: Local S1-mini normalization engine (~460 MB Metal memory) and offline Parakeet v3 ASR engine pre-warmed and kept persistent via launch daemons, eliminating first-dictation cold start delays entirely.
+  - Window UI & Navigation Polish: Enforced 840x600 minimum window layout constraints preventing sidebar truncation, 21.5pt AppKit toolbar platter navigation spacing, opaque navigation headers, and dual-mode vector SVG icons for ChatGPT, OpenAI, and Raycast snippets.
+  - Documentation & Site: Transparent 8-bit alpha screenshot (`docs/screenshot.png`) with zero-halo drop shadow replacing the white-canvas JPEG in README, updated `site/index.html` copy for v1.1.0, and automated production deployment live on `szcast.vercel.app`.
+
 - **Release v1.0.9-hotfix**:
   - Dictation Insights Dashboard: Wispr Flow-style analytics (WPM arc gauge with top percentile, S1-mini speech fixes and dictionary corrections, total words dictated with book equivalence, category distribution, 7x16 streak matrix).
   - Window UI & Chrome Overhaul: Eliminated Settings titlebar transparent bleed-through by setting `window.titlebarAppearsTransparent = false`, `isOpaque = true`, and native background color. Eliminated embossed title ghost shadow by hiding AppKit title visibility (`window.titleVisibility = .hidden`).
