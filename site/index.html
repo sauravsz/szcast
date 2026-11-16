@@ -520,7 +520,8 @@
            the cleaned text once. No model is bundled — the pane downloads a pinned Core ML
            conversion when you ask it to.</p>
         <ul class="ticks">
-          <li>Parakeet and Qwen3-ASR model families</li>
+          <li>Parakeet and Qwen3-ASR model families with persistent zero-lag daemons</li>
+          <li>Real-time Dictation Insights dashboard with WPM, cadence meter, and streak tracking</li>
           <li>Live preview in a floating pill while you speak</li>
           <li>Local cleanup fixes grammar and filler words before pasting</li>
           <li><a href="#beyond">Vocabulary packs and a custom word list</a> — grown well past upstream</li>
@@ -587,15 +588,16 @@
     <div class="grid">
       <div class="card">
         <span class="badge plus">Extended</span>
-        <h4>Dictation with vocabulary and a local cleanup pass</h4>
+        <h4>Dictation with insights, vocabulary and zero-lag cleanup</h4>
         <p>Tinycast ships dictation on Parakeet and Qwen3-ASR. szcast keeps both and grew the
-           feature to <em>41 source files from 27</em>: vocabulary packs, a custom word list,
+           feature to <em>43 source files from 27</em>: real-time speech analytics dashboard,
+           persistent launch daemons for 0ms latency, vocabulary packs, a custom word list,
            transcription history, a hotkey preset picker, an idle-release policy, and audio
            ducking so your music steps back while you speak.</p>
-        <p>The cleanup pass is the part worth pointing at. A pinned <em>S1-mini</em> model runs
-           locally through llama.cpp to fix grammar and filler words — with tone, structure and
-           sign-off controls — so the text lands formatted instead of raw.</p>
-        <div class="detail">DictationS1Polisher · DictationLlamaServerManager · VocabularyPack<br />
+        <p>The cleanup pass is the part worth pointing at. A pinned <em>S1-mini</em> model stays hot
+           in Metal GPU memory to fix grammar, punctuation, and filler words — with tone, structure,
+           and sign-off controls — so the text lands formatted instead of raw.</p>
+        <div class="detail">DictationInsightsView · DictationS1Polisher · DictationLlamaServerManager<br />
           Tech · Medical · Legal · Brands · Names</div>
       </div>
 
@@ -711,8 +713,13 @@
       </div>
       <div class="card">
         <div class="ico">◐</div>
-        <h4>Display Tweaks &amp; LUTs</h4>
-        <p>Direct hardware look-up table calibration via <code>CGSetDisplayTransferByTable</code> with 0–100 sliders, RGB gain balance, deep shadows, and display mirroring.</p>
+        <h4>Display Tweaks &amp; Gamma Control</h4>
+        <p>Direct hardware LUT calibration via <code>CGSetDisplayTransferByTable</code> with 0.00–1.00 fine Black, Middle, and White luminance controls, RGB gain balance, and instant Gamma Control preset for OLED-grade contrast.</p>
+      </div>
+      <div class="card">
+        <div class="ico">⚡</div>
+        <h4>Dictation Insights &amp; Analytics</h4>
+        <p>Real-time speech analytics dashboard tracking Words Per Minute, cadence percentile meter, S1-mini normalization corrections, 16-week streak calendar, and application usage breakdown.</p>
       </div>
       <div class="card">
         <div class="ico">⌨</div>

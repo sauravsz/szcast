@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshot.jpg" alt="szcast command palette">
+  <img src="docs/screenshot.png" alt="szcast command palette">
 </p>
 
 ## About
@@ -43,9 +43,12 @@ open /Applications/szcast.app
 ### Extension Customization & Fast Navigation
 - **Centralized Extension Aliases**: Set custom aliases and global hotkeys for any installed Raycast extension command from a single view in Settings &rarr; Commands.
 - **List & Submenu Shortcuts (`⌘1`..`⌘9`)**: Press `⌘1` through `⌘9` to instantly activate any item in search results, extension lists (e.g. `brew search`), and nested submenus, with dynamic keycap badges when holding `Command`.
+- **Dual-Mode Snippet & Extension Icons**: Adaptive SVG icons for ChatGPT, OpenAI, and Raycast snippets that render crisply across both light and dark themes.
+- **Window Geometry & Navigation Polish**: Enforced 840x600 minimum layout floor preventing sidebar truncation, 21.5pt AppKit toolbar platter navigation spacing, and opaque navigation headers.
 
 ### Offline Speech Dictation & Indic Romanization
-- **Persistent Local S1 Daemon**: Local S1-mini normalization engine stays hot in Metal GPU memory (~460 MB RAM) for 0ms startup delay.
+- **Dictation Insights & Speech Analytics**: Real-time Wispr Flow-style telemetry dashboard driven 100% by local dictation metrics. Track Words Per Minute (WPM), cadence meter (Top % tier), S1-mini normalization corrections, total words dictated, application-level breakdown (AI Prompts, Work Messages, Personal Messages, Documents, Emails), and interactive 16-week speech cadence streak calendar.
+- **Persistent Zero-Latency Daemons**: Local S1-mini normalization engine (~460 MB RAM) and offline Parakeet v3 ASR engine pre-warmed and kept persistent via launch daemons, eliminating first-dictation cold start delays entirely.
 - **Audio & Video File Transcription**: Transcribe media files directly from the menu bar using local Neural Engine or cloud Groq models, with S1 normalization and instant clipboard copy.
 - **Bengali & Hindi Romanization**: Dictate in Bengali or Hindi and receive clean Latin text (Banglish & Hinglish) via local S1-mini LLM or 0ms deterministic Avro/Hunterian rules.
 - **Quiet Dictation Pill & Single-Shot Paste**: Visual waveform feedback in a floating glass pill, with polished text pasted in one shot upon completion.
@@ -53,7 +56,7 @@ open /Applications/szcast.app
 
 ### Liquid Glass Design & Display Tweaks
 - **macOS Liquid Glass UI**: Translucent vibrancy and light refraction across the launcher and settings, with a 0% to 100% transparency slider and instant toggle.
-- **Lunar-Style 0–100 Color Sliders**: Direct GPU gamma table controls (`CGSetDisplayTransferByTable`) for Red, Green, Blue channels, Blacks, Whites, Brightness, and Contrast.
+- **Display Tweaks & Gamma Control**: Direct GPU gamma table controls (`CGSetDisplayTransferByTable`) with 0.00–1.00 fine luminance controls for Black point, Middle gamma, and White point across RGB channels, plus quick presets including the Gamma Control reference profile for deep OLED-grade blacks without color banding.
 - **Display Mirroring**: One-key hardware display mirroring toggle.
 
 ### Built-In Productivity Tools
