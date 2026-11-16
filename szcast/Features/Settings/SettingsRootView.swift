@@ -26,14 +26,16 @@ struct SettingsRootView: View {
         .navigationTitle(navigation.tab.title)
         .toolbar {
             ToolbarItem(placement: .navigation) {
-                ControlGroup {
-                    Button("Back", systemImage: "chevron.backward") { navigation.goBack() }
-                        .disabled(!navigation.canGoBack)
-                    Button("Forward", systemImage: "chevron.forward") { navigation.goForward() }
-                        .disabled(!navigation.canGoForward)
+                HStack(spacing: 0) {
+                    Color.clear.frame(width: 14, height: 1)
+                    ControlGroup {
+                        Button("Back", systemImage: "chevron.backward") { navigation.goBack() }
+                            .disabled(!navigation.canGoBack)
+                        Button("Forward", systemImage: "chevron.forward") { navigation.goForward() }
+                            .disabled(!navigation.canGoForward)
+                    }
+                    .controlGroupStyle(.navigation)
                 }
-                .controlGroupStyle(.navigation)
-                .padding(.leading, 12)
             }
         }
         .background(Color(nsColor: .windowBackgroundColor))

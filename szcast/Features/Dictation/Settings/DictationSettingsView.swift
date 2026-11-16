@@ -6,13 +6,15 @@ import UniformTypeIdentifiers
 enum DictationSettingsSection: String, CaseIterable, Identifiable {
     case insights = "Insights"
     case general = "General"
-    case livePreview = "Live Preview"
-    case formatting = "Formatting & AI"
-    case dictionary = "Dictionary & Packs"
+    case livePreview = "Preview"
+    case formatting = "Format & AI"
+    case dictionary = "Dictionary"
     case snippets = "Snippets"
     case history = "History"
 
     var id: Self { self }
+
+    var title: String { rawValue }
 }
 
 struct DictationSettingsView: View {
@@ -63,12 +65,15 @@ struct DictationSettingsView: View {
         @Bindable var settings = settings
 
         VStack(spacing: 0) {
-            Picker("", selection: $selectedSection) {
-                ForEach(DictationSettingsSection.allCases) { section in
-                    Text(section.rawValue).tag(section)
+            ScrollView(.horizontal, showsIndicators: false) {
+                Picker("", selection: $selectedSection) {
+                    ForEach(DictationSettingsSection.allCases) { section in
+                        Text(section.title).tag(section)
+                    }
                 }
+                .pickerStyle(.segmented)
+                .labelsHidden()
             }
-            .pickerStyle(.segmented)
             .padding(.horizontal, Theme.Spacing.lg)
             .padding(.vertical, Theme.Spacing.md)
 
@@ -76,6 +81,7 @@ struct DictationSettingsView: View {
 
             if selectedSection == .insights {
                 DictationInsightsDashboardView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             } else {
                 Form {
                     switch selectedSection {

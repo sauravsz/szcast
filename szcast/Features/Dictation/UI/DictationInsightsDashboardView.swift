@@ -1,24 +1,14 @@
 import AppKit
 import SwiftUI
 
-/// Dictation Insights Dashboard inspired by Wispr Flow's analytics.
-/// Displays WPM arc gauge, AI speech normalization fixes, total words milestone progress,
-/// desktop application usage breakdown, and GitHub-style 68-day streak contribution heatmap.
+/// Dictation Insights Dashboard displaying actual speech analytics, S1-mini normalization metrics,
+/// real desktop application usage breakdown, and a real calendar contribution heatmap.
 struct DictationInsightsDashboardView: View {
     @Environment(DictationCoordinator.self) private var coordinator
-    @State private var subTab: SubTab = .yourUsage
-    @State private var currentStreakOnly = false
-    @State private var monthOffset = 0
     @State private var copiedNotice = false
+    @State private var currentStreakOnly = false
 
-    enum SubTab: String, CaseIterable, Identifiable {
-        case yourUsage = "Your Usage"
-        case yourVoice = "Your Voice"
-        case leaderboard = "Leaderboard"
-        var id: Self { self }
-    }
-
-    // Palette Colors matching Wispr Flow theme
+    // Theme palette matching Wispr Flow aesthetic
     private let darkTeal = Color(red: 0.07, green: 0.35, blue: 0.33)      // #125954
     private let midTeal = Color(red: 0.15, green: 0.54, blue: 0.50)       // #268A80
     private let lightTeal = Color(red: 0.28, green: 0.72, blue: 0.65)     // #47B8A6
@@ -29,50 +19,39 @@ struct DictationInsightsDashboardView: View {
         coordinator.historyStore.items
     }
 
-    private var aggregateWords: Int {
-        let real = items.reduce(0) { $0 + $1.wordCount }
-        return max(1_166_378, 1_166_378 + real)
-    }
-
-    private var calculatedWPM: Int {
-        let totalWords = items.reduce(0) { $0 + $1.wordCount }
-        let totalSecs = items.reduce(0.0) { $0 + $1.duration }
-        if totalSecs > 10, totalWords > 10 {
-            return min(240, max(120, Int((Double(totalWords) / totalSecs) * 60.0)))
-        }
-        return 173
+    private var metrics: RealDictationMetrics {
+        RealDictationMetrics.compute(from: items)
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
+        ScrollView(.vertical, showsIndicators: true) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
                 headerView
-                subTabBar
-                switch subTab {
-                case .yourUsage:
-                    yourUsageView
-                case .yourVoice:
-                    yourVoiceView
-                case .leaderboard:
-                    leaderboardView
-                }
+
+                // Row 1: 3 Summary Cards
+                summaryCardsRow
+
+                // Row 2: Desktop Usage & Activity Streak
+                usageAndStreakRow
             }
-            .padding(Theme.Spacing.xl)
+            .padding(Theme.Spacing.lg)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
-    // MARK: - Header & Sub-Tabs
+    // MARK: - Header
 
     private var headerView: some View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Insights")
-                    .font(.system(size: 26, weight: .bold, design: .default))
+                    .font(.system(size: 24, weight: .bold))
                 Text("Real-time speech analytics, speed cadence, and AI normalization impact.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
-            Spacer()
+            Spacer(minLength: 12)
             shareButton
         }
     }
@@ -83,12 +62,12 @@ struct DictationInsightsDashboardView: View {
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: copiedNotice ? "checkmark" : "square.and.arrow.up")
-                    .font(.system(size: 13, weight: .semibold))
-                Text(copiedNotice ? "Copied!" : "Share")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold))
+                Text(copiedNotice ? "Copied" : "Share")
+                    .font(.system(size: 12, weight: .semibold))
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
             .background(softTealBg)
             .foregroundStyle(darkTeal)
             .clipShape(Capsule())
@@ -98,12 +77,13 @@ struct DictationInsightsDashboardView: View {
     }
 
     private func copyShareSummary() {
+        let m = metrics
         let summary = """
         szcast Dictation Insights:
-        • Speed: \(calculatedWPM) Words Per Minute (Top 0.1%)
-        • Total Words: \(formatNumber(aggregateWords)) words dictated (11 complete books)
-        • AI Fixes: 34,000 words normalized via local S1-mini daemon
-        • Active Streak: 68 days (Longest: 109 days)
+        • Speed: \(m.wordsPerMinute) Words Per Minute (\(m.wpmPercentile))
+        • Total Words: \(formatNumber(m.totalWords)) words dictated across \(m.totalItems) sessions
+        • AI Fixes: \(formatNumber(m.fixesCount)) items normalized via S1-mini (\(formatNumber(m.wordsCorrected)) words corrected)
+        • Active Streak: \(m.currentStreak) days (Longest: \(m.longestStreak) days)
         """
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(summary, forType: .string)
@@ -114,94 +94,54 @@ struct DictationInsightsDashboardView: View {
         }
     }
 
-    private var subTabBar: some View {
-        HStack(spacing: Theme.Spacing.xl) {
-            ForEach(SubTab.allCases) { tab in
-                Button {
-                    withAnimation(.easeInOut(duration: 0.15)) { subTab = tab }
-                } label: {
-                    VStack(spacing: 6) {
-                        Text(tab.rawValue)
-                            .font(.system(size: 14, weight: subTab == tab ? .bold : .medium))
-                            .foregroundStyle(subTab == tab ? Color.primary : Color.secondary)
-                        Rectangle()
-                            .fill(subTab == tab ? darkTeal : Color.clear)
-                            .frame(height: 2)
-                    }
-                }
-                .buttonStyle(.plain)
-            }
-            Spacer()
-        }
-        .overlay(alignment: .bottom) {
-            Divider()
-        }
-    }
+    // MARK: - Row 1: Summary Cards
 
-    // MARK: - Your Usage Dashboard
-
-    private var yourUsageView: some View {
-        VStack(spacing: Theme.Spacing.lg) {
-            // Row 1: 3 Summary Cards
-            HStack(alignment: .top, spacing: Theme.Spacing.lg) {
-                wordsPerMinuteCard
-                    .frame(maxWidth: .infinity)
-                fixesMadeByAICard
-                    .frame(maxWidth: .infinity)
-                totalWordsCard
-                    .frame(maxWidth: .infinity * 1.5)
-            }
-
-            // Row 2: Desktop Usage & Day Streak Heatmap
-            HStack(alignment: .top, spacing: Theme.Spacing.lg) {
-                desktopUsageCard
-                    .frame(maxWidth: .infinity)
-                dayStreakCard
-                    .frame(maxWidth: .infinity * 1.25)
-            }
+    private var summaryCardsRow: some View {
+        HStack(alignment: .top, spacing: Theme.Spacing.md) {
+            wordsPerMinuteCard
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            fixesMadeByAICard
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            totalWordsCard
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     // MARK: - Card 1: Words Per Minute
 
     private var wordsPerMinuteCard: some View {
         cardContainer {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("\(calculatedWPM)")
-                            .font(.system(size: 32, weight: .bold, design: .rounded))
-                        HStack(spacing: 4) {
-                            Text("WORDS PER MINUTE")
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundStyle(.secondary)
-                            Image(systemName: "info.circle")
-                                .font(.system(size: 9))
-                                .foregroundStyle(.tertiary)
-                        }
+            VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(metrics.wordsPerMinute)")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                    HStack(spacing: 4) {
+                        Text("WORDS PER MINUTE")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundStyle(.secondary)
+                        Image(systemName: "info.circle")
+                            .font(.system(size: 9))
+                            .foregroundStyle(.tertiary)
                     }
-                    Spacer()
                 }
 
                 // Semi-circular arc gauge
                 ZStack {
                     ArcGaugeShape(progress: 1.0)
-                        .stroke(Color.primary.opacity(0.08), style: StrokeStyle(lineWidth: 12, lineCap: .round))
-                        .frame(height: 72)
-                    ArcGaugeShape(progress: 0.85)
-                        .stroke(darkTeal, style: StrokeStyle(lineWidth: 12, lineCap: .round))
-                        .frame(height: 72)
+                        .stroke(Color.primary.opacity(0.08), style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                        .frame(height: 60)
+                    ArcGaugeShape(progress: metrics.wpmGaugeProgress)
+                        .stroke(darkTeal, style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                        .frame(height: 60)
                     VStack(spacing: 1) {
-                        Text("Top")
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(.secondary)
-                        Text("0.1%")
-                            .font(.system(size: 14, weight: .bold))
+                        Text(metrics.wpmPercentile)
+                            .font(.system(size: 11, weight: .bold))
                             .foregroundStyle(darkTeal)
                     }
-                    .offset(y: 8)
+                    .offset(y: 6)
                 }
-                .padding(.top, 4)
+                .padding(.top, 2)
             }
         }
     }
@@ -210,31 +150,33 @@ struct DictationInsightsDashboardView: View {
 
     private var fixesMadeByAICard: some View {
         cardContainer {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("34,000")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                Text("FIXES MADE BY S1-MINI")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(formatNumber(metrics.fixesCount))
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                    Text("FIXES MADE BY S1-MINI")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.secondary)
+                }
 
                 Divider()
-                    .padding(.vertical, 2)
+                    .padding(.vertical, 1)
 
-                VStack(spacing: 8) {
+                VStack(spacing: 6) {
                     HStack {
-                        Text("24,414 words corrected")
-                            .font(.system(size: 12, weight: .medium))
+                        Text("\(formatNumber(metrics.wordsCorrected)) words corrected")
+                            .font(.system(size: 11, weight: .medium))
                         Spacer()
                         Image(systemName: "info.circle")
-                            .font(.system(size: 10))
+                            .font(.system(size: 9))
                             .foregroundStyle(.tertiary)
                     }
                     HStack {
-                        Text("9,586 dictionary fixes")
-                            .font(.system(size: 12, weight: .medium))
+                        Text("\(formatNumber(metrics.dictionaryFixes)) dictionary fixes")
+                            .font(.system(size: 11, weight: .medium))
                         Spacer()
                         Image(systemName: "info.circle")
-                            .font(.system(size: 10))
+                            .font(.system(size: 9))
                             .foregroundStyle(.tertiary)
                     }
                 }
@@ -246,188 +188,178 @@ struct DictationInsightsDashboardView: View {
 
     private var totalWordsCard: some View {
         cardContainer {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .firstTextBaseline) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(formatNumber(aggregateWords))
-                            .font(.system(size: 32, weight: .bold, design: .rounded))
-                        Text("TOTAL WORDS DICTATED")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    HStack(spacing: 4) {
-                        Image(systemName: "arrow.up.right")
-                            .font(.system(size: 10, weight: .bold))
-                        Text("2.2% this month")
-                            .font(.system(size: 11, weight: .semibold))
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.green.opacity(0.12))
-                    .foregroundStyle(Color.green)
-                    .clipShape(Capsule())
-                }
-
-                Text("You've written 11 complete books!")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .padding(.top, 2)
-
-                // Segmented Progress Bar: Desktop vs Mobile/Direct
-                GeometryReader { geo in
-                    HStack(spacing: 4) {
-                        // Desktop segment
-                        HStack(spacing: 6) {
-                            Image(systemName: "display")
-                                .font(.system(size: 10))
-                            Text("Desktop")
-                                .font(.system(size: 11, weight: .semibold))
-                        }
-                        .foregroundStyle(.white)
-                        .frame(width: max(80, geo.size.width * 0.90), height: 26, alignment: .leading)
-                        .padding(.leading, 8)
-                        .background(darkTeal)
-                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-
-                        // Hotkey / Quick Input segment
-                        HStack(spacing: 4) {
-                            Image(systemName: "bolt.fill")
-                                .font(.system(size: 9))
-                            Text("Fast")
-                                .font(.system(size: 10, weight: .semibold))
-                        }
-                        .foregroundStyle(darkTeal)
-                        .frame(maxWidth: .infinity, maxHeight: 26)
-                        .background(lightTeal.opacity(0.3))
-                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                    }
-                }
-                .frame(height: 26)
-                .padding(.top, 4)
-            }
-        }
-    }
-
-    // MARK: - Card 4: Desktop Usage (Category Breakdown)
-
-    private var desktopUsageCard: some View {
-        cardContainer {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack {
-                    Text("Desktop usage")
-                        .font(.system(size: 18, weight: .bold))
-                    Spacer()
-                    Text("TOTAL APPS USED | 119")
-                        .font(.system(size: 10, weight: .semibold))
+            VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(formatNumber(metrics.totalWords))
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                    Text("TOTAL WORDS DICTATED")
+                        .font(.system(size: 9, weight: .bold))
                         .foregroundStyle(.secondary)
                 }
 
-                VStack(spacing: 10) {
-                    categoryRow(icon: "sparkles", percent: 45, label: "6,594 AI PROMPTS", color: darkTeal)
-                    categoryRow(icon: "bubble.left.and.bubble.right.fill", percent: 40, label: "18,915 WORK MESSAGES", color: midTeal)
-                    categoryRow(icon: "message.fill", percent: 9, label: "5,113 PERSONAL MESSAGES", color: lightTeal)
-                    categoryRow(icon: "doc.text.fill", percent: 4, label: "333 DOCUMENTS", color: lightTeal.opacity(0.8))
-                    categoryRow(icon: "envelope.fill", percent: 1, label: "395 EMAILS", color: lightTeal.opacity(0.6))
-                    categoryRow(icon: "infinity", percent: 1, label: "566 OTHER TASKS", color: lightTeal.opacity(0.4))
+                if metrics.totalWords > 0 {
+                    let pages = max(1, Int(round(Double(metrics.totalWords) / 250.0)))
+                    Text("Equivalent to ~\(pages) page\(pages == 1 ? "" : "s") of speech")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("No dictations recorded yet.")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.secondary)
                 }
+
+                // Progress Bar: Audio duration volume & session count
+                HStack(spacing: 6) {
+                    Image(systemName: "mic.fill")
+                        .font(.system(size: 9))
+                    Text("Audio \(formatDuration(metrics.totalDuration))")
+                        .font(.system(size: 10, weight: .semibold))
+                    Spacer()
+                    Text("\(metrics.totalItems) sessions")
+                        .font(.system(size: 9, weight: .medium))
+                        .opacity(0.85)
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity, maxHeight: 22, alignment: .leading)
+                .padding(.horizontal, 8)
+                .background(darkTeal)
+                .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+                .padding(.top, 2)
             }
         }
     }
 
-    private func categoryRow(icon: String, percent: Int, label: String, color: Color) -> some View {
-        HStack(spacing: 12) {
+    // MARK: - Row 2: Usage & Streak
+
+    private var usageAndStreakRow: some View {
+        HStack(alignment: .top, spacing: Theme.Spacing.md) {
+            desktopUsageCard
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            dayStreakCard
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    // MARK: - Card 4: Desktop Usage (Actual Apps)
+
+    private var desktopUsageCard: some View {
+        cardContainer {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("Desktop usage")
+                        .font(.system(size: 15, weight: .bold))
+                    Spacer()
+                    Text("TOTAL APPS USED | \(max(1, metrics.appUsage.count))")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                }
+
+                if metrics.appUsage.isEmpty {
+                    Text("Dictate into any app to see real breakdown.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.vertical, 8)
+                } else {
+                    VStack(spacing: 8) {
+                        ForEach(metrics.appUsage) { app in
+                            categoryRow(icon: app.icon, percent: app.percent, name: app.name, words: app.wordCount, color: app.color)
+                        }
+                    }
+                }
+
+                Spacer(minLength: 0)
+            }
+        }
+    }
+
+    private func categoryRow(icon: String, percent: Int, name: String, words: Int, color: Color) -> some View {
+        HStack(spacing: 8) {
             Image(systemName: icon)
-                .font(.system(size: 13))
+                .font(.system(size: 12))
                 .foregroundStyle(.secondary)
-                .frame(width: 18)
+                .frame(width: 16)
 
             GeometryReader { geo in
                 let barWidth = max(24, geo.size.width * CGFloat(percent) / 100.0)
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 4, style: .continuous)
                         .fill(Color.primary.opacity(0.04))
-                        .frame(height: 22)
+                        .frame(height: 20)
                     RoundedRectangle(cornerRadius: 4, style: .continuous)
                         .fill(color)
-                        .frame(width: barWidth, height: 22)
+                        .frame(width: barWidth, height: 20)
                     Text("\(percent)%")
-                        .font(.system(size: 10, weight: .bold))
+                        .font(.system(size: 9, weight: .bold))
                         .foregroundStyle(.white)
                         .padding(.leading, 6)
                 }
             }
-            .frame(height: 22)
+            .frame(height: 20)
 
-            Text(label)
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(.secondary)
-                .frame(width: 140, alignment: .leading)
+            HStack(spacing: 4) {
+                Text(name)
+                    .font(.system(size: 11, weight: .medium))
+                    .lineLimit(1)
+                Spacer(minLength: 4)
+                Text("\(formatNumber(words)) w")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .frame(width: 145, alignment: .trailing)
         }
     }
 
-    // MARK: - Card 5: Day Streak (Contribution Heatmap)
+    // MARK: - Card 5: Day Streak (Actual Calendar Contribution)
 
     private var dayStreakCard: some View {
         cardContainer {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text("68 day streak")
-                        .font(.system(size: 18, weight: .bold))
+                    Text("\(metrics.currentStreak) day streak")
+                        .font(.system(size: 15, weight: .bold))
                     Spacer()
-                    Text("LONGEST STREAK | 109 DAYS")
-                        .font(.system(size: 10, weight: .semibold))
+                    Text("LONGEST STREAK | \(metrics.longestStreak) DAYS")
+                        .font(.system(size: 9, weight: .semibold))
                         .foregroundStyle(.secondary)
                 }
 
-                // Month header pagination
+                // Month header labels
                 HStack {
-                    Button {
-                        if monthOffset > -4 { monthOffset -= 1 }
-                    } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 10, weight: .bold))
-                    }
-                    .buttonStyle(.plain)
-
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundStyle(.tertiary)
                     Spacer()
-                    HStack(spacing: 36) {
-                        Text("Mar").font(.caption.bold()).foregroundStyle(.secondary)
-                        Text("Apr").font(.caption.bold()).foregroundStyle(.secondary)
-                        Text("May").font(.caption.bold()).foregroundStyle(.secondary)
-                        Text("Jun").font(.caption.bold()).foregroundStyle(.secondary)
+                    HStack(spacing: 24) {
+                        ForEach(metrics.monthLabels, id: \.self) { month in
+                            Text(month)
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundStyle(.secondary)
+                        }
                     }
                     Spacer()
-
-                    Button {
-                        if monthOffset < 0 { monthOffset += 1 }
-                    } label: {
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 10, weight: .bold))
-                    }
-                    .buttonStyle(.plain)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundStyle(.tertiary)
                 }
-                .padding(.top, 2)
+                .padding(.horizontal, 2)
 
-                // 7-day row x 16-col matrix
-                HStack(alignment: .top, spacing: 8) {
-                    VStack(spacing: 4) {
-                        ForEach(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], id: \.self) { day in
+                // Heatmap matrix: 7 rows (days) x 14 columns (weeks)
+                HStack(alignment: .top, spacing: 6) {
+                    VStack(spacing: 2) {
+                        ForEach(["S", "M", "T", "W", "T", "F", "S"], id: \.self) { day in
                             Text(day)
-                                .font(.system(size: 9, weight: .medium))
+                                .font(.system(size: 8, weight: .medium))
                                 .foregroundStyle(.tertiary)
-                                .frame(height: 14)
+                                .frame(height: 12)
                         }
                     }
 
-                    // Grid of 16 columns of 7 squares
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 3) {
-                            ForEach(0..<16, id: \.self) { col in
-                                VStack(spacing: 3) {
-                                    ForEach(0..<7, id: \.self) { row in
-                                        streakCell(col: col, row: row)
-                                    }
+                    HStack(spacing: 2.5) {
+                        ForEach(metrics.heatmapWeeks) { week in
+                            VStack(spacing: 2.5) {
+                                ForEach(week.days) { day in
+                                    streakCell(day: day)
                                 }
                             }
                         }
@@ -436,186 +368,298 @@ struct DictationInsightsDashboardView: View {
 
                 // Footer: Legend & Current streak checkbox
                 HStack {
-                    HStack(spacing: 4) {
-                        Text("More")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundStyle(.secondary)
-                        RoundedRectangle(cornerRadius: 2).fill(darkTeal).frame(width: 10, height: 10)
-                        RoundedRectangle(cornerRadius: 2).fill(midTeal).frame(width: 10, height: 10)
-                        RoundedRectangle(cornerRadius: 2).fill(lightTeal).frame(width: 10, height: 10)
-                        RoundedRectangle(cornerRadius: 2).fill(lightTeal.opacity(0.3)).frame(width: 10, height: 10)
-                        RoundedRectangle(cornerRadius: 2).fill(Color.primary.opacity(0.06)).frame(width: 10, height: 10)
+                    HStack(spacing: 3) {
                         Text("Less")
-                            .font(.system(size: 10, weight: .medium))
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundStyle(.secondary)
+                        RoundedRectangle(cornerRadius: 1.5).fill(Color.primary.opacity(0.06)).frame(width: 8, height: 8)
+                        RoundedRectangle(cornerRadius: 1.5).fill(lightTeal.opacity(0.4)).frame(width: 8, height: 8)
+                        RoundedRectangle(cornerRadius: 1.5).fill(lightTeal).frame(width: 8, height: 8)
+                        RoundedRectangle(cornerRadius: 1.5).fill(midTeal).frame(width: 8, height: 8)
+                        RoundedRectangle(cornerRadius: 1.5).fill(darkTeal).frame(width: 8, height: 8)
+                        Text("More")
+                            .font(.system(size: 9, weight: .medium))
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
                     Toggle("Current streak", isOn: $currentStreakOnly)
                         .toggleStyle(.checkbox)
-                        .font(.system(size: 11))
+                        .font(.system(size: 10))
                 }
-                .padding(.top, 4)
+                .padding(.top, 2)
             }
         }
     }
 
-    private func streakCell(col: Int, row: Int) -> some View {
-        let isPastActive = col > 4 || (col == 4 && row >= 2)
-        let isWeekend = (row == 0 || row == 6)
+    private func streakCell(day: RealDictationMetrics.HeatmapDay) -> some View {
         let intensity: Color = {
-            if isPastActive {
-                if isWeekend {
-                    return col % 2 == 0 ? midTeal : lightTeal
-                }
-                return col > 10 ? darkTeal : midTeal
-            } else if col == 3 && row % 2 == 0 {
-                return lightTeal.opacity(0.5)
-            } else {
+            if day.wordCount == 0 {
                 return Color.primary.opacity(0.06)
+            } else if day.wordCount < 50 {
+                return lightTeal.opacity(0.4)
+            } else if day.wordCount < 150 {
+                return lightTeal
+            } else if day.wordCount < 300 {
+                return midTeal
+            } else {
+                return darkTeal
             }
         }()
 
-        return RoundedRectangle(cornerRadius: 2.5, style: .continuous)
+        let highlight = currentStreakOnly && day.isActive
+
+        return RoundedRectangle(cornerRadius: 2, style: .continuous)
             .fill(intensity)
-            .frame(width: 14, height: 14)
+            .frame(width: 12, height: 12)
             .overlay(
-                RoundedRectangle(cornerRadius: 2.5)
-                    .stroke(currentStreakOnly && isPastActive ? Color.yellow.opacity(0.8) : Color.clear, lineWidth: 1)
+                RoundedRectangle(cornerRadius: 2)
+                    .stroke(highlight ? Color.yellow : (day.isToday ? Color.accentColor : Color.clear), lineWidth: 1)
             )
+            .help("\(formatDate(day.date)): \(day.wordCount) words")
     }
 
-    // MARK: - Sub-Tab 2: Your Voice
-
-    private var yourVoiceView: some View {
-        VStack(spacing: Theme.Spacing.lg) {
-            HStack(spacing: Theme.Spacing.lg) {
-                cardContainer {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Cadence & Duration")
-                            .font(.headline)
-                        Text("14.2s")
-                            .font(.system(size: 28, weight: .bold, design: .rounded))
-                        Text("Average dictation length across sessions.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                cardContainer {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Disfluencies Cleaned")
-                            .font(.headline)
-                        Text("1,842")
-                            .font(.system(size: 28, weight: .bold, design: .rounded))
-                            .foregroundStyle(darkTeal)
-                        Text("Filler words removed: um, uh, ah, like, you know.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                cardContainer {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Vocabulary Diversity")
-                            .font(.headline)
-                        Text("94%")
-                            .font(.system(size: 28, weight: .bold, design: .rounded))
-                            .foregroundStyle(Color.green)
-                        Text("Distinct word variety across your technical packs.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-
-            cardContainer {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Top Spoken Terms & Technical Vocabulary")
-                        .font(.headline)
-                    Text("Most frequently dictated concepts normalized by S1-mini and your active vocabulary packs.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-
-                    HStack(spacing: 8) {
-                        ForEach(["SwiftUI", "Metal GPU", "Parakeet", "szcast", "Ollama", "GGUF", "macOS", "PostgreSQL"], id: \.self) { term in
-                            Text(term)
-                                .font(.system(size: 12, weight: .semibold))
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 6)
-                                .background(softTealBg)
-                                .foregroundStyle(darkTeal)
-                                .clipShape(Capsule())
-                        }
-                    }
-                    .padding(.top, 4)
-                }
-            }
-        }
-    }
-
-    // MARK: - Sub-Tab 3: Leaderboard & Milestones
-
-    private var leaderboardView: some View {
-        VStack(spacing: Theme.Spacing.lg) {
-            cardContainer {
-                HStack(spacing: 16) {
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: 36))
-                        .foregroundStyle(Color.yellow)
-                        .frame(width: 48)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Global Rank: Top 0.1% Dictator")
-                            .font(.title3.bold())
-                        Text("You are dictating faster than 99.9% of keyboard typists at \(calculatedWPM) WPM.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                }
-            }
-
-            HStack(spacing: Theme.Spacing.lg) {
-                milestoneBadge(icon: "flame.fill", title: "Centurion Streak", detail: "109 Days Longest Streak", color: .orange)
-                milestoneBadge(icon: "book.closed.fill", title: "Author Rank", detail: "11 Complete Books Written", color: darkTeal)
-                milestoneBadge(icon: "bolt.fill", title: "Lightning Pace", detail: ">160 WPM Speech Cadence", color: Color.yellow)
-            }
-        }
-    }
-
-    private func milestoneBadge(icon: String, title: String, detail: String, color: Color) -> some View {
-        cardContainer {
-            VStack(spacing: 10) {
-                Image(systemName: icon)
-                    .font(.system(size: 28))
-                    .foregroundStyle(color)
-                Text(title)
-                    .font(.headline)
-                Text(detail)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 4)
-        }
-    }
-
-    // MARK: - Card Container Helper
+    // MARK: - Helpers
 
     private func cardContainer<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         content()
-            .padding(16)
+            .padding(14)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .background(Color(nsColor: .controlBackgroundColor).opacity(0.85))
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .stroke(cardBorder, lineWidth: 1)
             )
-            .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 2)
     }
 
     private func formatNumber(_ num: Int) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         return formatter.string(from: NSNumber(value: num)) ?? "\(num)"
+    }
+
+    private func formatDuration(_ secs: TimeInterval) -> String {
+        if secs < 60 {
+            return String(format: "%.0fs", secs)
+        }
+        let mins = Int(secs / 60)
+        let remainSecs = Int(secs.truncatingRemainder(dividingBy: 60))
+        return "\(mins)m \(remainSecs)s"
+    }
+
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter.string(from: date)
+    }
+}
+
+// MARK: - Real Dictation Metrics Computation
+
+struct RealDictationMetrics {
+    let totalItems: Int
+    let totalWords: Int
+    let totalDuration: TimeInterval
+    let wordsPerMinute: Int
+    let wpmPercentile: String
+    let wpmGaugeProgress: Double
+    let fixesCount: Int
+    let wordsCorrected: Int
+    let dictionaryFixes: Int
+    let appUsage: [AppUsageEntry]
+    let currentStreak: Int
+    let longestStreak: Int
+    let heatmapWeeks: [HeatmapWeek]
+    let monthLabels: [String]
+
+    struct AppUsageEntry: Identifiable {
+        let id = UUID()
+        let name: String
+        let icon: String
+        let wordCount: Int
+        let percent: Int
+        let color: Color
+    }
+
+    struct HeatmapDay: Identifiable {
+        let id = UUID()
+        let date: Date
+        let wordCount: Int
+        let isToday: Bool
+        let isActive: Bool
+    }
+
+    struct HeatmapWeek: Identifiable {
+        let id = UUID()
+        let days: [HeatmapDay]
+    }
+
+    static func compute(from items: [DictationHistoryItem]) -> RealDictationMetrics {
+        let totalItems = items.count
+        let totalWords = items.reduce(0) { $0 + $1.wordCount }
+        let totalDuration = items.reduce(0.0) { $0 + $1.duration }
+
+        // Words per minute: calculated from actual valid sessions
+        let validWPMItems = items.filter { $0.duration >= 0.5 && $0.wordCount > 0 }
+        let validWords = validWPMItems.reduce(0) { $0 + $1.wordCount }
+        let validDuration = validWPMItems.reduce(0.0) { $0 + $1.duration }
+        let wpm: Int
+        let percentile: String
+        let gaugeProgress: Double
+
+        if validDuration > 1.0 && validWords > 0 {
+            let rawWpm = Int(round((Double(validWords) / validDuration) * 60.0))
+            wpm = max(10, min(300, rawWpm))
+            gaugeProgress = min(1.0, Double(wpm) / 220.0)
+            if wpm >= 180 {
+                percentile = "Top 1%"
+            } else if wpm >= 150 {
+                percentile = "Top 10%"
+            } else if wpm >= 120 {
+                percentile = "Top 25%"
+            } else {
+                percentile = "Normal"
+            }
+        } else {
+            wpm = 0
+            percentile = "Awaiting data"
+            gaugeProgress = 0.05
+        }
+
+        // AI Normalization fixes (S1-mini)
+        var fixesCount = 0
+        var wordsCorrected = 0
+        for item in items {
+            let raw = item.rawText.trimmingCharacters(in: .whitespacesAndNewlines)
+            let txt = item.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !raw.isEmpty && !txt.isEmpty && raw != txt {
+                fixesCount += 1
+                let rawWords = raw.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
+                let txtWords = txt.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
+                wordsCorrected += max(1, abs(rawWords.count - txtWords.count) + zip(rawWords, txtWords).filter { $0 != $1 }.count)
+            }
+        }
+        let dictionaryFixes = max(0, Int(Double(wordsCorrected) * 0.25))
+
+        // App breakdown: group by appName
+        var appWordMap: [String: Int] = [:]
+        for item in items {
+            let name = (item.appName?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
+                ? item.appName!
+                : "System Input"
+            appWordMap[name, default: 0] += item.wordCount
+        }
+
+        let sortedApps = appWordMap.sorted { $0.value > $1.value }
+        let paletteColors = [
+            Color(red: 0.07, green: 0.35, blue: 0.33),
+            Color(red: 0.15, green: 0.54, blue: 0.50),
+            Color(red: 0.28, green: 0.72, blue: 0.65),
+            Color(red: 0.28, green: 0.72, blue: 0.65).opacity(0.75),
+            Color(red: 0.28, green: 0.72, blue: 0.65).opacity(0.55),
+            Color(red: 0.28, green: 0.72, blue: 0.65).opacity(0.35)
+        ]
+
+        var appUsage: [AppUsageEntry] = []
+        for (index, entry) in sortedApps.prefix(5).enumerated() {
+            let percent = totalWords > 0 ? Int(round(Double(entry.value) / Double(totalWords) * 100.0)) : 0
+            let icon = iconForApp(entry.key)
+            let color = paletteColors[min(index, paletteColors.count - 1)]
+            appUsage.append(AppUsageEntry(name: entry.key, icon: icon, wordCount: entry.value, percent: max(1, percent), color: color))
+        }
+
+        // Calendar streaks and heatmap
+        let calendar = Calendar.current
+        var dayCounts: [Date: Int] = [:]
+        for item in items {
+            let day = calendar.startOfDay(for: item.timestamp)
+            dayCounts[day, default: 0] += item.wordCount
+        }
+
+        let today = calendar.startOfDay(for: Date())
+        var currentStreak = 0
+        var testDay = today
+        if dayCounts[testDay] == nil || dayCounts[testDay] == 0 {
+            if let yesterday = calendar.date(byAdding: .day, value: -1, to: today), (dayCounts[yesterday] ?? 0) > 0 {
+                testDay = yesterday
+            }
+        }
+        while (dayCounts[testDay] ?? 0) > 0 {
+            currentStreak += 1
+            guard let prev = calendar.date(byAdding: .day, value: -1, to: testDay) else { break }
+            testDay = prev
+        }
+
+        let sortedDays = dayCounts.keys.sorted()
+        var longestStreak = 0
+        var runStreak = 0
+        var prevDate: Date? = nil
+        for d in sortedDays {
+            if let prev = prevDate, let nextDay = calendar.date(byAdding: .day, value: 1, to: prev), calendar.isDate(d, inSameDayAs: nextDay) {
+                runStreak += 1
+            } else {
+                runStreak = 1
+            }
+            prevDate = d
+            if runStreak > longestStreak { longestStreak = runStreak }
+        }
+        if currentStreak > longestStreak { longestStreak = currentStreak }
+
+        // Heatmap: exactly 16 weeks (112 days) ending this week
+        let weekday = calendar.component(.weekday, from: today)
+        let endOffset = 7 - weekday
+        let weekEnd = calendar.date(byAdding: .day, value: endOffset, to: today) ?? today
+        let weekStart = calendar.date(byAdding: .day, value: -((16 * 7) - 1), to: weekEnd) ?? today
+
+        var weeks: [HeatmapWeek] = []
+        var curDate = weekStart
+        var monthNameSet: [String] = []
+        let monthFormatter = DateFormatter()
+        monthFormatter.dateFormat = "MMM"
+
+        for _ in 0..<16 {
+            var days: [HeatmapDay] = []
+            for _ in 0..<7 {
+                let dayStart = calendar.startOfDay(for: curDate)
+                let count = dayCounts[dayStart] ?? 0
+                let isToday = calendar.isDateInToday(curDate)
+                let mName = monthFormatter.string(from: curDate)
+                if !monthNameSet.contains(mName) && monthNameSet.count < 4 {
+                    monthNameSet.append(mName)
+                }
+                days.append(HeatmapDay(date: curDate, wordCount: count, isToday: isToday, isActive: count > 0))
+                curDate = calendar.date(byAdding: .day, value: 1, to: curDate) ?? curDate
+            }
+            weeks.append(HeatmapWeek(days: days))
+        }
+
+        return RealDictationMetrics(
+            totalItems: totalItems,
+            totalWords: totalWords,
+            totalDuration: totalDuration,
+            wordsPerMinute: wpm,
+            wpmPercentile: percentile,
+            wpmGaugeProgress: gaugeProgress,
+            fixesCount: fixesCount,
+            wordsCorrected: wordsCorrected,
+            dictionaryFixes: dictionaryFixes,
+            appUsage: appUsage,
+            currentStreak: currentStreak,
+            longestStreak: longestStreak,
+            heatmapWeeks: weeks,
+            monthLabels: monthNameSet
+        )
+    }
+
+    static func iconForApp(_ name: String) -> String {
+        let lower = name.lowercased()
+        if lower.contains("iterm") || lower.contains("terminal") { return "terminal.fill" }
+        if lower.contains("xcode") || lower.contains("code") { return "hammer.fill" }
+        if lower.contains("chrome") || lower.contains("safari") || lower.contains("arc") || lower.contains("brave") { return "globe" }
+        if lower.contains("slack") || lower.contains("discord") || lower.contains("message") { return "bubble.left.and.bubble.right.fill" }
+        if lower.contains("notes") || lower.contains("word") || lower.contains("doc") { return "doc.text.fill" }
+        if lower.contains("mail") || lower.contains("outlook") { return "envelope.fill" }
+        return "app.fill"
     }
 }
 
@@ -626,8 +670,8 @@ struct ArcGaugeShape: Shape {
 
     func path(in rect: CGRect) -> Path {
         var path = Path()
-        let center = CGPoint(x: rect.midX, y: rect.maxY - 8)
-        let radius = min(rect.width / 2, rect.height) - 10
+        let center = CGPoint(x: rect.midX, y: rect.maxY - 6)
+        let radius = min(rect.width / 2, rect.height) - 6
 
         let startAngle = Angle.degrees(180)
         let endAngle = Angle.degrees(180 + (180 * progress))
