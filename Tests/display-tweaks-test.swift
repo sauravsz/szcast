@@ -23,14 +23,26 @@ struct DisplayTweaksTests {
         testGainAdjustments()
         testTonalAdjustmentsAndClamping()
         testExtremeValuesClamp()
+        testGammaSetParsing()
 
         print("DisplayTweaksTests: \(passes) passed, \(failures) failed")
         exit(failures == 0 ? 0 : 1)
     }
 
+    static func testGammaSetParsing() {
+        let testPath = "/Users/sz/Downloads/Untitled.gammaset"
+        if FileManager.default.fileExists(atPath: testPath) {
+            let data = DisplayTweaksService.GammaSetData.parse(from: URL(fileURLWithPath: testPath))
+            expect(data != nil, "parses Untitled.gammaset plist")
+            expect(abs((data?.masterBlack ?? 0) - 0.05) < 0.001, "master black is 0.05")
+            expect(abs((data?.masterWhite ?? 0) - 0.89) < 0.001, "master white is 0.89")
+            expect(abs((data?.masterMiddle ?? 0) - 1.0) < 0.001, "master middle is 1.0")
+        }
+    }
+
     static func testPresets() {
         let presets = DisplayTweaksPreset.allCases
-        expect(presets.count == 7, "7 presets defined")
+        expect(presets.count == 8, "8 presets defined")
 
         for preset in presets {
             expect(!preset.id.isEmpty, "preset id is non-empty")
@@ -41,6 +53,10 @@ struct DisplayTweaksTests {
         expect(neutral.red == 1.0 && neutral.green == 1.0 && neutral.blue == 1.0, "neutral has unit gain")
         expect(neutral.blacks == 0.0 && neutral.shadows == 0.0 && neutral.highlights == 0.0, "neutral has zero tonal offsets")
         expect(neutral.whites == 0.0 && neutral.contrast == 0.0 && neutral.brightness == 0.0, "neutral has zero curve adjustments")
+
+        let gammaControl = DisplayTweaksPreset.gammaControl.values
+        expect(gammaControl.blacks == 0.05, "gamma control has 0.05 black point")
+        expect(gammaControl.whites == 0.89, "gamma control has 0.89 white point")
 
         let nightWarm = DisplayTweaksPreset.nightWarm.values
         expect(nightWarm.red > nightWarm.blue, "night warm reduces blue relative to red")
@@ -79,13 +95,17 @@ struct DisplayTweaksTests {
     static func testTonalAdjustmentsAndClamping() {
         let service = DisplayTweaksService()
         let neutral = service.calculateTransferTables()
-        let shadowLifted = service.calculateTransferTables(shadows: 0.4)
+        let contrastAdjusted = service.calculateTransferTables(contrast: 0.3)
 
-        // Shadow adjustment should lift values around index 64 (0.25)
-        expect(shadowLifted.r[64] > neutral.r[64], "shadows lift lower-mid values")
+        // S-curve contrast lifts upper half and compresses lower half
+        expect(contrastAdjusted.r[200] > neutral.r[200], "contrast lifts high values")
+        expect(contrastAdjusted.r[50] < neutral.r[50], "contrast deepens shadow values")
 
-        let blackLifted = service.calculateTransferTables(blacks: 0.3)
+        let blackLifted = service.calculateTransferTables(blacks: 0.05)
         expect(blackLifted.r[0] > 0.0, "blacks adjustment lifts the black floor")
+
+        let whiteCompressed = service.calculateTransferTablesPercent(whites: 89.0)
+        expect(whiteCompressed.r[255] < 1.0, "whites percentage compression lowers the peak ceiling")
     }
 
     static func testExtremeValuesClamp() {

@@ -65,16 +65,14 @@ struct DictationSettingsView: View {
         @Bindable var settings = settings
 
         VStack(spacing: 0) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                Picker("", selection: $selectedSection) {
-                    ForEach(DictationSettingsSection.allCases) { section in
-                        Text(section.title).tag(section)
-                    }
+            Picker("", selection: $selectedSection) {
+                ForEach(DictationSettingsSection.allCases) { section in
+                    Text(section.title).tag(section)
                 }
-                .pickerStyle(.segmented)
-                .labelsHidden()
             }
-            .padding(.horizontal, Theme.Spacing.lg)
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .padding(.horizontal, 20)
             .padding(.vertical, Theme.Spacing.md)
 
             Divider()

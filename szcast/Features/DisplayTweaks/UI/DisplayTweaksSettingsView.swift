@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct DisplayTweaksSettingsView: View {
     @Environment(AppSettings.self) private var settings
@@ -67,6 +68,12 @@ struct DisplayTweaksSettingsView: View {
 
                             Button("Reset") {
                                 resetToDefaults()
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.regular)
+
+                            Button("Import .gammaset…") {
+                                importGammaSetFile()
                             }
                             .buttonStyle(.bordered)
                             .controlSize(.regular)
@@ -212,6 +219,8 @@ struct DisplayTweaksSettingsView: View {
             }
             if settings.displayTweaksEnabled {
                 applyCurrentSettings()
+            } else {
+                service.restoreGamma()
             }
         }
     }
@@ -235,9 +244,8 @@ struct DisplayTweaksSettingsView: View {
         settings.displayTweaksShadows = 50.0
         settings.displayTweaksHighlights = 50.0
         settings.displayTweaksPreset = "Default"
-        if settings.displayTweaksEnabled {
-            applyCurrentSettings()
-        }
+        settings.displayTweaksEnabled = false
+        service.restoreGamma()
     }
 
     private func applyPreset(_ preset: DisplayTweaksPreset) {
@@ -253,10 +261,64 @@ struct DisplayTweaksSettingsView: View {
         settings.displayTweaksContrast = v.contrast
         settings.displayTweaksBrightness = v.brightness
 
-        if !settings.displayTweaksEnabled {
-            settings.displayTweaksEnabled = true
+        if preset == .neutral {
+            settings.displayTweaksEnabled = false
+            service.restoreGamma()
+        } else if preset == .gammaControl {
+            let defaultGammaPath = "/Users/sz/Downloads/Untitled.gammaset"
+            if FileManager.default.fileExists(atPath: defaultGammaPath),
+               let gammaData = DisplayTweaksService.GammaSetData.parse(from: URL(fileURLWithPath: defaultGammaPath)) {
+                settings.displayTweaksBlacks = gammaData.masterBlack * 100.0
+                settings.displayTweaksWhites = gammaData.masterWhite * 100.0
+                settings.displayTweaksRed = 50.0
+                settings.displayTweaksGreen = 50.0
+                settings.displayTweaksBlue = 50.0
+                settings.displayTweaksContrast = 50.0
+                settings.displayTweaksBrightness = 50.0
+                settings.displayTweaksShadows = 50.0
+                settings.displayTweaksHighlights = 50.0
+                settings.displayTweaksPreset = "Gamma Control"
+                settings.displayTweaksEnabled = true
+                service.applyGammaSet(gammaData, displayID: settings.displayTweaksDisplayID)
+                return
+            }
+            if !settings.displayTweaksEnabled {
+                settings.displayTweaksEnabled = true
+            }
+            applyCurrentSettings()
+        } else {
+            if !settings.displayTweaksEnabled {
+                settings.displayTweaksEnabled = true
+            }
+            applyCurrentSettings()
         }
-        applyCurrentSettings()
+    }
+
+    private func importGammaSetFile() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        panel.allowedContentTypes = [UTType(filenameExtension: "gammaset") ?? .data]
+        panel.prompt = "Import"
+        panel.message = "Choose a Gamma Control .gammaset file to import"
+
+        if panel.runModal() == .OK, let url = panel.url {
+            if let data = DisplayTweaksService.GammaSetData.parse(from: url) {
+                settings.displayTweaksBlacks = data.masterBlack * 100.0
+                settings.displayTweaksWhites = data.masterWhite * 100.0
+                settings.displayTweaksRed = 50.0
+                settings.displayTweaksGreen = 50.0
+                settings.displayTweaksBlue = 50.0
+                settings.displayTweaksContrast = 50.0
+                settings.displayTweaksBrightness = 50.0
+                settings.displayTweaksShadows = 50.0
+                settings.displayTweaksHighlights = 50.0
+                settings.displayTweaksPreset = "Gamma Control"
+                settings.displayTweaksEnabled = true
+                service.applyGammaSet(data, displayID: settings.displayTweaksDisplayID)
+            }
+        }
     }
 
     private func applyCurrentSettings() {

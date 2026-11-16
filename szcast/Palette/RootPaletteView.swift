@@ -373,8 +373,8 @@ struct RootPaletteView: View {
                 )
                 // Square, as rounded glass feathers its edge; the clip alone cuts a crisp corner.
                 .background {
-                    if settings.liquidGlassEnabled {
-                        Color.clear.glassEffect(isCollapsed ? .identity : .regular, in: Rectangle())
+                    if settings.liquidGlassEnabled && !isCollapsed {
+                        VisualEffectBlur(material: .hudWindow, blendingMode: .behindWindow)
                     }
                 }
                 .overlay {

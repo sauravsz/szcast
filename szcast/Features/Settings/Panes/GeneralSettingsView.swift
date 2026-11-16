@@ -172,11 +172,11 @@ struct GeneralSettingsView: View {
                 }
                 .onChange(of: settings.displayTweaksEnabled) { _, enabled in
                     if enabled {
-                        DisplayTweaksService.shared.apply(
+                        DisplayTweaksService.shared.applyPercent(
                             displayID: settings.displayTweaksDisplayID,
-                            redGain: settings.displayTweaksRed,
-                            greenGain: settings.displayTweaksGreen,
-                            blueGain: settings.displayTweaksBlue,
+                            red: settings.displayTweaksRed,
+                            green: settings.displayTweaksGreen,
+                            blue: settings.displayTweaksBlue,
                             blacks: settings.displayTweaksBlacks,
                             shadows: settings.displayTweaksShadows,
                             highlights: settings.displayTweaksHighlights,

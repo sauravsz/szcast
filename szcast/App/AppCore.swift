@@ -410,6 +410,24 @@ final class AppCore {
             // Ensure Parakeet local speech-to-text and S1-mini persistent local daemon are always ON on launch
             dictationModels.ensurePrewarmed(settings.dictationModel)
             DictationLlamaServerManager.shared.startDaemon(idleRelease: settings.dictationS1IdleRelease)
+
+            // Display Tweaks: only apply if explicitly enabled; default is off and native ColorSync gamma restored
+            if settings.displayTweaksEnabled {
+                DisplayTweaksService.shared.applyPercent(
+                    displayID: settings.displayTweaksDisplayID,
+                    red: settings.displayTweaksRed,
+                    green: settings.displayTweaksGreen,
+                    blue: settings.displayTweaksBlue,
+                    blacks: settings.displayTweaksBlacks,
+                    shadows: settings.displayTweaksShadows,
+                    highlights: settings.displayTweaksHighlights,
+                    whites: settings.displayTweaksWhites,
+                    contrast: settings.displayTweaksContrast,
+                    brightness: settings.displayTweaksBrightness
+                )
+            } else {
+                DisplayTweaksService.shared.restoreGamma()
+            }
             hotKeys.onRunWindowCommand = { [weak self] id in
                 self?.windowCommandCoordinator.runWindowCommand(id: id)
             }
@@ -680,6 +698,7 @@ final class AppCore {
         textInjector.prepareForTermination()
         snippetListener.stop()
         snippetsStore.stop()
+        DisplayTweaksService.shared.restoreGamma()
         aiChats.reset()
         chatGPTSubscription.stop()
         mcpOAuth.stop()

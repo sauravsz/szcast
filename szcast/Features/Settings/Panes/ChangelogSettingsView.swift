@@ -347,7 +347,8 @@ struct ChangelogSettingsView: View {
                     }
                 }
             }
-            .padding(Theme.Spacing.lg)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
             .frame(maxWidth: .infinity, alignment: .topLeading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

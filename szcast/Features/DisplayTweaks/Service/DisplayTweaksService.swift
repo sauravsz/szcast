@@ -236,4 +236,101 @@ final class DisplayTweaksService {
         CGDisplayRestoreColorSyncSettings()
         isApplied = false
     }
+
+    // MARK: - GammaSet Profile Support (.gammaset)
+
+    struct GammaSetData: Equatable {
+        var blackPointR: Double = 0.05
+        var blackPointG: Double = 0.05
+        var blackPointB: Double = 0.05
+        var whitePointR: Double = 0.89
+        var whitePointG: Double = 0.89
+        var whitePointB: Double = 0.89
+        var middlePointR: Double = 1.0
+        var middlePointG: Double = 1.0
+        var middlePointB: Double = 1.0
+        var masterBlack: Double = 0.05
+        var masterWhite: Double = 0.89
+        var masterMiddle: Double = 1.0
+        var blendingMode: Int = 1
+
+        static func parse(from url: URL) -> GammaSetData? {
+            guard let data = try? Data(contentsOf: url),
+                  let plist = (try? PropertyListSerialization.propertyList(from: data, format: nil)) as? [String: Any]
+            else { return nil }
+
+            var res = GammaSetData()
+            if let bp = plist["BlackPoint"] as? [String: Any] {
+                res.blackPointR = (bp["Red"] as? NSNumber)?.doubleValue ?? 0.05
+                res.blackPointG = (bp["Green"] as? NSNumber)?.doubleValue ?? 0.05
+                res.blackPointB = (bp["Blue"] as? NSNumber)?.doubleValue ?? 0.05
+            }
+            if let wp = plist["WhitePoint"] as? [String: Any] {
+                res.whitePointR = (wp["Red"] as? NSNumber)?.doubleValue ?? 0.89
+                res.whitePointG = (wp["Green"] as? NSNumber)?.doubleValue ?? 0.89
+                res.whitePointB = (wp["Blue"] as? NSNumber)?.doubleValue ?? 0.89
+            }
+            if let mp = plist["MiddlePoint"] as? [String: Any] {
+                res.middlePointR = (mp["Red"] as? NSNumber)?.doubleValue ?? 1.0
+                res.middlePointG = (mp["Green"] as? NSNumber)?.doubleValue ?? 1.0
+                res.middlePointB = (mp["Blue"] as? NSNumber)?.doubleValue ?? 1.0
+            }
+            if let mb = plist["v4-MasterBlack"] as? NSNumber { res.masterBlack = mb.doubleValue }
+            if let mw = plist["v4-MasterWhite"] as? NSNumber { res.masterWhite = mw.doubleValue }
+            if let mm = plist["v4-MasterMiddle"] as? NSNumber { res.masterMiddle = mm.doubleValue }
+            if let bm = plist["BlendingMode"] as? NSNumber { res.blendingMode = bm.intValue }
+            return res
+        }
+    }
+
+    /// Apply an exact GammaSetData configuration to the hardware LUT.
+    func applyGammaSet(_ set: GammaSetData, displayID: CGDirectDisplayID? = nil) {
+        let target = (displayID != nil && displayID != 0) ? displayID! : CGMainDisplayID()
+
+        let blackR = Float(set.blackPointR)
+        let blackG = Float(set.blackPointG)
+        let blackB = Float(set.blackPointB)
+
+        let whiteR = Float(set.whitePointR)
+        let whiteG = Float(set.whitePointG)
+        let whiteB = Float(set.whitePointB)
+
+        let middleR = Float(set.middlePointR)
+        let middleG = Float(set.middlePointG)
+        let middleB = Float(set.middlePointB)
+
+        let formulaErr = CGSetDisplayTransferByFormula(
+            target,
+            blackR, whiteR, middleR,
+            blackG, whiteG, middleG,
+            blackB, whiteB, middleB
+        )
+
+        if formulaErr == .success {
+            isApplied = true
+            return
+        }
+
+        var tableR = [Float](repeating: 0, count: 256)
+        var tableG = [Float](repeating: 0, count: 256)
+        var tableB = [Float](repeating: 0, count: 256)
+
+        for i in 0..<256 {
+            let x = Float(i) / 255.0
+            let rNorm = middleR == 1.0 ? x : pow(x, middleR)
+            let gNorm = middleG == 1.0 ? x : pow(x, middleG)
+            let bNorm = middleB == 1.0 ? x : pow(x, middleB)
+
+            tableR[i] = max(0.0, min(1.0, blackR + (whiteR - blackR) * rNorm))
+            tableG[i] = max(0.0, min(1.0, blackG + (whiteG - blackG) * gNorm))
+            tableB[i] = max(0.0, min(1.0, blackB + (whiteB - blackB) * bNorm))
+        }
+
+        let err = CGSetDisplayTransferByTable(target, 256, &tableR, &tableG, &tableB)
+        if err == .success {
+            isApplied = true
+        } else {
+            Self.logger.error("CGSetDisplayTransferByTable returned error: \(err.rawValue)")
+        }
+    }
 }

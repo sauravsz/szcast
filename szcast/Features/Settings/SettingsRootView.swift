@@ -15,11 +15,11 @@ struct SettingsRootView: View {
                 .navigationSplitViewColumnWidth(
                     min: Theme.Size.settingsSidebar, ideal: Theme.Size.settingsSidebar,
                     max: Theme.Size.settingsSidebar)
-                .scrollContentBackground(.automatic)
+                .scrollContentBackground(settings.liquidGlassEnabled ? .hidden : .automatic)
         } detail: {
             SettingsDetailView()
                 .frame(minWidth: 580)
-                .scrollContentBackground(.automatic)
+                .scrollContentBackground(settings.liquidGlassEnabled ? .hidden : .automatic)
                 .toolbar {
                     ToolbarItem(placement: .navigation) {
                         ControlGroup {
@@ -35,13 +35,28 @@ struct SettingsRootView: View {
         .navigationSplitViewStyle(.balanced)
         .frame(minWidth: 840, minHeight: 600)
         .navigationTitle(navigation.tab.title)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .background {
+            if settings.liquidGlassEnabled {
+                ZStack {
+                    VisualEffectBlur(material: .sidebar, blendingMode: .behindWindow)
+                    Theme.Colors.panelScrim(transparency: settings.liquidGlassTransparency)
+                }
+            } else {
+                Color(nsColor: .windowBackgroundColor)
+            }
+        }
         .background(
             WindowReader { window in
                 hostWindow = window
                 configureWindow(window)
             }
         )
+        .onChange(of: settings.liquidGlassEnabled) { _, _ in
+            configureWindow(hostWindow)
+        }
+        .onChange(of: settings.liquidGlassTransparency) { _, _ in
+            configureWindow(hostWindow)
+        }
         .onChange(of: columnVisibility) { _, new in
             if new != .all {
                 columnVisibility = .all
@@ -61,8 +76,13 @@ struct SettingsRootView: View {
         }
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = false
-        window.isOpaque = true
-        window.backgroundColor = .windowBackgroundColor
+        if settings.liquidGlassEnabled {
+            window.isOpaque = false
+            window.backgroundColor = .clear
+        } else {
+            window.isOpaque = true
+            window.backgroundColor = .windowBackgroundColor
+        }
 
         setupToolbarNavigationGap(in: window)
     }

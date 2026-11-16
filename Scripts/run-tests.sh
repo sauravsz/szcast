@@ -611,6 +611,7 @@ run uninstall-test         Szcast/Features/Uninstall/Model/UninstallTarget.swift
                            Szcast/Features/Uninstall/Model/UninstallProtection.swift \
                            Szcast/Features/Uninstall/Model/UninstallPlan.swift
 run quicklink-test         Szcast/Platform/AppPaths.swift \
+                           Szcast/Platform/Images/ChatGPTIconProvider.swift \
                            Szcast/Features/Quicklinks/Service/QuicklinkFaviconService.swift \
                            Szcast/Features/Quicklinks/Model/Quicklink.swift \
                            Szcast/Features/Quicklinks/Model/DefaultQuicklinks.swift \
@@ -620,6 +621,7 @@ run quicklink-test         Szcast/Platform/AppPaths.swift \
                            Szcast/Features/Quicklinks/Model/RaycastQuicklinkImport.swift \
                            Szcast/Features/Quicklinks/UI/QuicklinkEditorSession.swift
 run quicklink-coordinator-test Szcast/Platform/AppPaths.swift \
+                           Szcast/Platform/Images/ChatGPTIconProvider.swift \
                            Szcast/Features/Quicklinks/Service/QuicklinkFaviconService.swift \
                            Szcast/Features/Quicklinks/Model/Quicklink.swift \
                            Szcast/Features/Quicklinks/Model/DefaultQuicklinks.swift \
