@@ -162,7 +162,7 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - Release Packaging & Distribution: Version bumped to 1.0.9; signed Release DMG (`build/szcast-1.0.9.dmg`) and ZIP (`build/szcast-1.0.9.zip`) packaged and deployed to `/Applications/szcast.app`.
 
 ## Active State & Next Steps
-- **Active State**: Releases `v1.0.9` and `v1.0.9-hotfix` live on GitHub (`sauravsz/szcast/releases`) with signed DMGs and ZIPs. Installed and running at `/Applications/szcast.app`. Dictation Insights Dashboard (Wispr Flow style), settings visual standardization, high-contrast ChatGPT brand icons, and 0ms persistent S1/Parakeet prewarm verified.
+- **Active State**: Releases `v1.0.9` and `v1.0.9-hotfix` live on GitHub (`sauravsz/szcast/releases`). Installed and running at `/Applications/szcast.app`. Settings navigation gap (14pt spacer), responsive Dictation Insights Dashboard (real metrics from history store, full app labels, equalized card heights, 16-week contribution heatmap), and Gamma Control preset verified. Unpushed local commits kept strictly local per instructions.
 - **Immediate Next Steps**:
   1. Test long continuous dictation (5+ minutes) in real-world workflows.
   2. Perform weekly upstream radar audit (`./Scripts/upstream-radar.sh`).
