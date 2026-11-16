@@ -20,24 +20,21 @@ struct SettingsRootView: View {
             SettingsDetailView()
                 .frame(minWidth: 580)
                 .scrollContentBackground(.automatic)
+                .toolbar {
+                    ToolbarItem(placement: .navigation) {
+                        ControlGroup {
+                            Button("Back", systemImage: "chevron.backward") { navigation.goBack() }
+                                .disabled(!navigation.canGoBack)
+                            Button("Forward", systemImage: "chevron.forward") { navigation.goForward() }
+                                .disabled(!navigation.canGoForward)
+                        }
+                        .controlGroupStyle(.navigation)
+                    }
+                }
         }
         .navigationSplitViewStyle(.balanced)
         .frame(minWidth: 840, minHeight: 600)
         .navigationTitle(navigation.tab.title)
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                HStack(spacing: 0) {
-                    Color.clear.frame(width: 14, height: 1)
-                    ControlGroup {
-                        Button("Back", systemImage: "chevron.backward") { navigation.goBack() }
-                            .disabled(!navigation.canGoBack)
-                        Button("Forward", systemImage: "chevron.forward") { navigation.goForward() }
-                            .disabled(!navigation.canGoForward)
-                    }
-                    .controlGroupStyle(.navigation)
-                }
-            }
-        }
         .background(Color(nsColor: .windowBackgroundColor))
         .background(
             WindowReader { window in
@@ -66,5 +63,55 @@ struct SettingsRootView: View {
         window.titlebarAppearsTransparent = false
         window.isOpaque = true
         window.backgroundColor = .windowBackgroundColor
+
+        setupToolbarNavigationGap(in: window)
+    }
+
+    private func setupToolbarNavigationGap(in window: NSWindow) {
+        var attempts = 0
+        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
+            attempts += 1
+            guard let titlebarView = window.contentView?.superview else {
+                if attempts > 30 { timer.invalidate() }
+                return
+            }
+            guard let platter = findToolbarPlatter(in: titlebarView) else {
+                if attempts > 30 { timer.invalidate() }
+                return
+            }
+            timer.invalidate()
+
+            applyPlatterOffset(platter)
+
+            platter.postsFrameChangedNotifications = true
+            NotificationCenter.default.addObserver(
+                forName: NSView.frameDidChangeNotification,
+                object: platter,
+                queue: .main
+            ) { [weak platter] _ in
+                guard let platter else { return }
+                applyPlatterOffset(platter)
+            }
+        }
+    }
+
+    private func applyPlatterOffset(_ platter: NSView) {
+        let minX: CGFloat = 236.0
+        if platter.frame.origin.x < minX {
+            var f = platter.frame
+            f.origin.x = minX
+            platter.frame = f
+        }
+    }
+
+    private func findToolbarPlatter(in view: NSView) -> NSView? {
+        let name = String(describing: type(of: view))
+        if name.contains("ToolbarPlatterView") {
+            return view
+        }
+        for sub in view.subviews {
+            if let found = findToolbarPlatter(in: sub) { return found }
+        }
+        return nil
     }
 }
