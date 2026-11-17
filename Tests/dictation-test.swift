@@ -198,13 +198,13 @@ struct DictationTest {
                 fatalError("Model installation metadata is incomplete")
             }
             if let configuration = model.parakeetConfiguration {
-                guard model.family == .parakeet, configuration.blankToken == 8192,
-                    configuration.encoderUsesGPU == (model == .redux),
+                guard (model.family == .parakeet || model.family == .sravaani), configuration.blankToken == 8192,
+                    configuration.encoderUsesGPU == (model == .redux || model == .sravaani),
                     model.components.contains(configuration.joint + ".mlmodelc")
                 else {
                     fatalError("Parakeet download and inference disagree")
                 }
-            } else if !model.isQwen {
+            } else if !model.isQwen && !model.isSraVaani && !model.isSpecialized {
                 fatalError("Missing Parakeet decoding configuration")
             }
         }

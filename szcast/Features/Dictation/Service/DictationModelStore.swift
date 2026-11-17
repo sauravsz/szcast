@@ -18,6 +18,7 @@ final class DictationModelStore {
     @ObservationIgnored private var idleRelease: DictationIdleRelease
     @ObservationIgnored private var downloadTask: Task<Void, Error>?
     @ObservationIgnored private var downloadID: UUID?
+    @ObservationIgnored private let tokenProvider: (@Sendable () -> String?)?
     private let root: URL
     private let makeWorker: () throws -> DictationWorker
 
@@ -37,11 +38,13 @@ final class DictationModelStore {
     init(
         idleRelease: DictationIdleRelease,
         root: URL = AppPaths.caches().appending(path: "Dictation"),
-        makeWorker: @escaping () throws -> DictationWorker = { try DictationWorker() }
+        makeWorker: @escaping () throws -> DictationWorker = { try DictationWorker() },
+        tokenProvider: (@Sendable () -> String?)? = nil
     ) {
         self.idleRelease = idleRelease
         self.root = root
         self.makeWorker = makeWorker
+        self.tokenProvider = tokenProvider
         refreshInstalledModels()
     }
 
@@ -99,8 +102,9 @@ final class DictationModelStore {
         let id = UUID()
         downloadID = id
         let destination = directory(for: model)
+        let token = tokenProvider?()
         let task = Task.detached(priority: .utility) { [weak self] in
-            try await DictationModelDownloader.download(model, destination: destination) {
+            try await DictationModelDownloader.download(model, destination: destination, token: token) {
                 [weak self] received, total in
                 Task { @MainActor [weak self] in
                     guard let self, self.downloadID == id else { return }
@@ -161,7 +165,7 @@ final class DictationModelStore {
             let worker = try getOrMakeWorker()
             let request = DictationWire.Request(
                 id: UUID(), model: model, directory: directory(for: model),
-                sampleCount: samples.count, language: model.isQwen ? language : nil)
+                sampleCount: samples.count, language: (model.isQwen || model.isSraVaani || model.isSpecialized) ? language : nil)
             let text = try await worker.transcribe(samples, request: request) { [weak self] in
                 guard let self, self.worker === worker, self.transcribing else { return }
                 self.loadedModel = model

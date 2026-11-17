@@ -27,7 +27,10 @@ final class AppCore {
     let hotKeys = HotKeyManager()
     let dictationAudioDucker = DictationAudioDucker()
     @ObservationIgnored private(set) lazy var dictationModels =
-        DictationModelStore(idleRelease: settings.dictationIdleRelease)
+        DictationModelStore(
+            idleRelease: settings.dictationIdleRelease,
+            tokenProvider: { try? KeychainSecretStore.huggingFaceToken.secret(for: "default") }
+        )
     @ObservationIgnored private(set) lazy var hyperKey = HyperKeyManager(
         settings: settings, hotKeys: hotKeys)
     @ObservationIgnored private lazy var dictationKey = DictationKeyManager(hotKeys: hotKeys)

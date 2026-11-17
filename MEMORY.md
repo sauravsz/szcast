@@ -23,6 +23,16 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
 - `xcodebuild -project szcast.xcodeproj -scheme Szcast -configuration Debug build`
 - `Scripts/run-tests.sh` — all 130 harnesses pass. `Scripts/build-dmg.sh` → `build/szcast-1.1.2.dmg`; needs the `szcast Self-Signed` keychain identity (already created; without it Accessibility/TCC grants reset each build).
 
+- **Release v1.1.3**:
+  - Indic Speech Suite & Direct Romanization: Integrated 4 dedicated Indic neural speech models across Dictation Settings:
+    - `Whisper-Hindi2Hinglish-Apex` (`.whisperApex`): Direct acoustic transcription emitting conversational Latin Hinglish from Hindi speech.
+    - `Indic-Transcribe-Flex` (`.indicFlex`): Direct acoustic Canary-1B model emitting Romanized Banglish from Bengali speech.
+    - `SraVaani-1.0` (`.sravaani`): IISc/ARTPARK FastConformer-TDT flagship covering 65 Indian languages and dialects.
+    - `SraVaani-0.5-live` (`.sravaaniLive`): Streaming low-latency cache-aware CTC model for real-time dictation preview.
+  - S1-mini Cleanup Speed Invariant: Direct acoustic Romanization delivers native Latin text directly to the S1-mini polisher, bypassing multi-shot LLM transliteration and keeping S1-mini cleanup latency under 180ms with zero speed hit.
+  - Native Bengali Language Support: Added Bengali (`bn`) into `DictationLanguage` picker.
+  - Authenticated Hugging Face Token Support: Added `KeychainSecretStore.huggingFaceToken` integration in `DictationModelDownloader` to allow on-demand streaming of gated Indic checkpoints.
+
 - **Release v1.1.2**:
   - HotKey & Dictation Responsiveness: Expanded modifier single-tap threshold from 250ms to 650ms (`ModifierKeyDetector.maxSingleHold`), eliminating dropped Fn keypresses during natural typing. Reduced Push-to-Talk activation delay from 250ms to 40ms on uncontended hold keys, preventing speech onset clipping.
   - Launcher Dismissal Across Modes: Updated `togglePalette()` and intercepted key down events in `PalettePanel` so pressing the global shortcut (`⌘ Space` / Command + Space) from any sub-screen (Clipboard, AI, Calculator, etc.) or focused search bar cleanly closes szcast immediately without event lag.

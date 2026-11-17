@@ -14,6 +14,7 @@ enum DictationModelDownloader {
 
     static func download(
         _ model: DictationModel, destination: URL,
+        token: String? = nil,
         baseURL: URL = URL(string: "https://huggingface.co/")!,
         protocolClasses: [AnyClass]? = nil,
         onProgress: @escaping @Sendable (Int64, Int64) -> Void = { _, _ in }
@@ -54,13 +55,19 @@ enum DictationModelDownloader {
         defer { try? fileManager.removeItem(at: staging) }
         var files = try await manifest(
             repository: model.repository, revision: model.revision,
-            components: model.components, baseURL: baseURL, using: session)
+            components: model.components, token: token, baseURL: baseURL, using: session)
         if model.isQwen {
             files += try await manifest(
                 repository: "Qwen/Qwen3-ASR-0.6B",
                 revision: "5eb144179a02acc5e5ba31e748d22b0cf3e303b0",
                 components: ["vocab.json", "merges.txt"],
-                baseURL: baseURL, using: session)
+                token: token, baseURL: baseURL, using: session)
+        } else if model == .whisperApex {
+            files += try await manifest(
+                repository: "openai/whisper-large-v3-turbo",
+                revision: "main",
+                components: ["vocab.json", "merges.txt"],
+                token: token, baseURL: baseURL, using: session)
         }
         var total: Int64 = 0
         for (file, _) in files {
@@ -77,7 +84,7 @@ enum DictationModelDownloader {
             try fileManager.createDirectory(
                 at: target.deletingLastPathComponent(),
                 withIntermediateDirectories: true)
-            let response = try await downloadFile(from: url, to: target, using: session) { bytes in
+            let response = try await downloadFile(from: url, to: target, token: token, using: session) { bytes in
                 onProgress(completed + min(size, max(0, bytes)), expected)
             }
             try Task.checkCancellation()
@@ -94,11 +101,11 @@ enum DictationModelDownloader {
     }
 
     private static func manifest(
-        repository: String, revision: String, components: Set<String>, baseURL: URL, using session: URLSession
+        repository: String, revision: String, components: Set<String>, token: String? = nil, baseURL: URL, using session: URLSession
     ) async throws -> [(File, URL)] {
         let tree = baseURL.appending(path: "api/models/\(repository)/tree/\(revision)")
             .appending(queryItems: [URLQueryItem(name: "recursive", value: "true")])
-        let files = try JSONDecoder().decode([File].self, from: try await data(from: tree, using: session))
+        let files = try JSONDecoder().decode([File].self, from: try await data(from: tree, token: token, using: session))
             .filter { file in
                 file.type == "file"
                     && components.contains(file.path.split(separator: "/").first.map(String.init) ?? "")
@@ -121,11 +128,15 @@ enum DictationModelDownloader {
     }
 
     private static func downloadFile(
-        from url: URL, to destination: URL, using session: URLSession,
+        from url: URL, to destination: URL, token: String? = nil, using session: URLSession,
         onProgress: @escaping @Sendable (Int64) -> Void
     ) async throws -> URLResponse {
+        var request = URLRequest(url: url)
+        if let token, !token.isEmpty {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
         let responses = AsyncThrowingStream<URLResponse, any Error> { continuation in
-            let task = session.downloadTask(with: url)
+            let task = session.downloadTask(with: request)
             task.delegate = Transfer(
                 destination: destination, responses: continuation, onProgress: onProgress)
             continuation.onTermination = { _ in task.cancel() }
@@ -196,8 +207,12 @@ enum DictationModelDownloader {
         }
     }
 
-    private static func data(from url: URL, using session: URLSession) async throws -> Data {
-        let (data, response) = try await session.data(from: url)
+    private static func data(from url: URL, token: String? = nil, using session: URLSession) async throws -> Data {
+        var request = URLRequest(url: url)
+        if let token, !token.isEmpty {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        let (data, response) = try await session.data(for: request)
         try validate(response)
         return data
     }

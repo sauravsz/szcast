@@ -1248,8 +1248,13 @@ struct DictationSettingsView: View {
     private var familyBinding: Binding<DictationModel.Family> {
         Binding(
             get: { settings.dictationModel.family },
-            set: {
-                settings.dictationModel = $0 == .parakeet ? .ultra : .qwenSmall
+            set: { family in
+                switch family {
+                case .parakeet: settings.dictationModel = .ultra
+                case .qwen: settings.dictationModel = .qwenSmall
+                case .sravaani: settings.dictationModel = .sravaani
+                case .specialized: settings.dictationModel = .whisperApex
+                }
             })
     }
 
@@ -1326,6 +1331,22 @@ struct DictationSettingsView: View {
                 LocalizedStringResource(
                     "downloading-dictation-model-parakeet-ultra",
                     defaultValue: "Downloading Parakeet Ultra…")
+            case .sravaani:
+                LocalizedStringResource(
+                    "downloading-dictation-model-sravaani",
+                    defaultValue: "Downloading SraVaani 1.0…")
+            case .sravaaniLive:
+                LocalizedStringResource(
+                    "downloading-dictation-model-sravaani-live",
+                    defaultValue: "Downloading SraVaani 0.5 Live…")
+            case .whisperApex:
+                LocalizedStringResource(
+                    "downloading-dictation-model-whisper-apex",
+                    defaultValue: "Downloading Whisper-Apex Hinglish…")
+            case .indicFlex:
+                LocalizedStringResource(
+                    "downloading-dictation-model-indic-flex",
+                    defaultValue: "Downloading Indic-Transcribe Flex…")
             case nil:
                 LocalizedStringResource(
                     "downloading-dictation-model-general",

@@ -261,8 +261,13 @@ final class DictationCoordinator {
         }
 
         let current = token
-        let model = settings.dictationModel
+        var model = settings.dictationModel
         let language = settings.dictationLanguage
+        if settings.dictationHindiMode == .whisperApex, models.isInstalled(.whisperApex) {
+            model = .whisperApex
+        } else if settings.dictationBengaliMode == .indicFlex, models.isInstalled(.indicFlex) {
+            model = .indicFlex
+        }
         transcriptionTask = Task { [weak self] in
             guard let self else { return }
             let samples = await capture.stop()
@@ -583,7 +588,12 @@ final class DictationCoordinator {
                     language: language
                 )
             } else {
-                let model = settings.dictationModel
+                var model = settings.dictationModel
+                if settings.dictationHindiMode == .whisperApex, models.isInstalled(.whisperApex) {
+                    model = .whisperApex
+                } else if settings.dictationBengaliMode == .indicFlex, models.isInstalled(.indicFlex) {
+                    model = .indicFlex
+                }
                 if !models.isInstalled(model) {
                     showMessage(String(localized: "Download the dictation model in Settings first"), .danger)
                     return

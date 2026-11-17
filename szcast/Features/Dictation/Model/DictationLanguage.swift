@@ -1,7 +1,7 @@
 import Foundation
 
 enum DictationLanguage: String, CaseIterable, Identifiable, Sendable {
-    case arabic = "Arabic", cantonese = "Cantonese", chinese = "Chinese", czech = "Czech"
+    case arabic = "Arabic", bengali = "Bengali", cantonese = "Cantonese", chinese = "Chinese", czech = "Czech"
     case danish = "Danish", dutch = "Dutch", english = "English", filipino = "Filipino"
     case finnish = "Finnish", french = "French", german = "German", greek = "Greek"
     case hindi = "Hindi", hungarian = "Hungarian", indonesian = "Indonesian", italian = "Italian"
@@ -18,6 +18,7 @@ enum DictationLanguage: String, CaseIterable, Identifiable, Sendable {
     private var code: String {
         switch self {
         case .arabic: "ar"
+        case .bengali: "bn"
         case .cantonese: "yue"
         case .chinese: "zh"
         case .czech: "cs"

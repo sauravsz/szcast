@@ -24,6 +24,8 @@ struct KeychainSecretStore: Sendable {
     static let duckDuckGoToken = KeychainSecretStore(scope: "duckduckgo-token")
     /// KeePassXC database secrets.
     static let keepassXCSecrets = KeychainSecretStore(scope: "keepassxc-secrets")
+    /// Hugging Face API user token for gated models (SraVaani, Canary, etc.).
+    static let huggingFaceToken = KeychainSecretStore(scope: "huggingface-token")
 
     init(scope: String, bundleIdentifier: String? = Bundle.main.bundleIdentifier) {
         service = "\(bundleIdentifier ?? "com.sauravsz.szcast").\(scope)"

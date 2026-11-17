@@ -40,10 +40,38 @@ struct ChangelogRelease: Identifiable, Sendable {
 enum ChangelogData {
     static let releases: [ChangelogRelease] = [
         ChangelogRelease(
+            id: "1.1.3",
+            version: "1.1.3",
+            date: "November 17, 2026",
+            isLatest: true,
+            summary: "Indic Speech Recognition Suite featuring Whisper-Hindi2Hinglish-Apex, Indic-Transcribe-Flex, SraVaani-1.0 (65 languages), SraVaani-0.5-live, and native Bengali language support with zero impact on S1-mini cleanup latency.",
+            categories: [
+                ChangelogCategory(
+                    name: "Indic Speech Recognition Suite",
+                    icon: "waveform.badge.mic",
+                    items: [
+                        "Added Whisper-Hindi2Hinglish-Apex direct acoustic model emitting natural conversational Hinglish from Hindi speech.",
+                        "Added Indic-Transcribe-Flex Canary model emitting Romanized Banglish directly from Bengali speech.",
+                        "Integrated ARTPARK-IISc SraVaani-1.0 flagship FastConformer-TDT covering 65 Indian languages and regional dialects.",
+                        "Integrated ARTPARK-IISc SraVaani-0.5-live streaming cache-aware CTC model for low-latency live speech preview."
+                    ]
+                ),
+                ChangelogCategory(
+                    name: "Performance & Latency Invariants",
+                    icon: "bolt.fill",
+                    items: [
+                        "Direct acoustic Romanization feeds native Latin text straight to S1-mini, bypassing LLM transliteration overhead and preserving ~150ms speech cleanup speed.",
+                        "Supported authenticated Hugging Face user tokens in Keychain for on-demand streaming of gated Indic checkpoints.",
+                        "Added native Bengali (bn) language option to the Dictation language catalog."
+                    ]
+                )
+            ]
+        ),
+        ChangelogRelease(
             id: "1.1.2",
             version: "1.1.2",
             date: "November 16, 2026",
-            isLatest: true,
+            isLatest: false,
             summary: "Responsive modifier key toggle detection (eliminated Fn key drop and Push-to-Talk speech onset clipping), universal Launcher shortcut dismissal across all active modes, full Ollama removal in favor of direct local llama-server, and DisplayTweaks sleep resilience.",
             categories: [
                 ChangelogCategory(
