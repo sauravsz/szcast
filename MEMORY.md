@@ -198,16 +198,24 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - Display Tweaks & Gamma Control: Hardware gamma transfer curve scaling with exact Gamma Control preset (0.05 Black Point, 0.89 White Point Luminance).
   - Version bump to 1.1.0, signed Release DMG (`build/szcast-1.1.0.dmg`) and ZIP (`build/szcast-1.1.0.zip`) packaged and deployed to `/Applications/szcast.app`.
 
-- **Post-1.1.0 Refinements**:
-  - Dictation and Changelog Margins: Aligned content insets across Dictation Insights (`DictationInsightsDashboardView`), Changelog (`ChangelogSettingsView`), and the Dictation segmented control picker to the standard 20pt horizontal margin matching native `.formStyle(.grouped)` across all Settings panes. Removed horizontal scrollview wrapper around the segmented picker to prevent horizontal offset clipping.
-  - Liquid Glass UI Vibrancy: Replaced no-op SwiftUI glass effects with real AppKit `VisualEffectBlur` (`NSVisualEffectView`, `material: .hudWindow` / `.sidebar`, `blendingMode: .behindWindow`) layered behind window scrims in both the Launcher palette and Settings window. Configured transparent window backing and hidden scroll content backgrounds when enabled.
-  - Gamma Control Native 3-Point Inspector: Implemented `GammaControlTab` (`[Black | Middle | White]`) in `DisplayTweaksSettingsView.swift` with exact per-channel RGB controls matching Gamma Control profiles: Black Point Luminance (0.05) with 0.00 RGB offsets, Middle Gray Balance (1.00) with 1.00 RGB gains, and White Point Luminance (0.89) with 1.00 RGB gains. Added 5-box checkerboard calibration targets, grayscale ramp, RGB spectrum strip, and direct bidirectional synchronization with `/Users/sz/Downloads/Untitled.gammaset`.
-  - Settings Navigation Header Title Restoration: Restored visible detail pane title ("AI", "Clean Keyboard", "Display Tweaks", etc.) next to `< | >` navigation buttons on solid native chrome by removing manual platter frame shifts that collided with `NSToolbarTitleView`, keeping `window.titleVisibility = .visible`, and attaching `.navigationTitle` directly to `SettingsDetailView()`.
+- **Release 1.1.2**:
+  - Universal Launcher Dismissal: Intercepted `Command + Space` in `PalettePanel.sendEvent` so pressing the launcher hotkey from any sub-screen (Clipboard, AI, Calculator, Search bar) cleanly dismisses szcast without delay.
+  - Documentation Screenshot: Replaced `docs/screenshot.png` and `docs/screenshot.jpg` with the official dark command palette capture.
+
+- **Release 1.1.3**:
+  - Indic Speech Suite: Integrated 4 dedicated Indic models into Dictation:
+    - `Whisper-Hindi2Hinglish-Apex`: Direct speech-to-Hinglish acoustic decoding under Hindi Romanization.
+    - `indic-transcribe-flex`: Direct speech-to-Banglish acoustic decoding under Bengali Romanization.
+    - `SraVaani-1.0`: 65-language flagship Indic FastConformer-TDT ASR.
+    - `SraVaani-0.5-live`: Streaming cache-aware CTC ASR.
+  - Latency Invariant Preserved: Because Whisper-Apex and Indic-Flex output Latin characters acoustically, S1-mini skips phonetic transliteration and only executes punctuation/casing cleanup, maintaining ~120–180ms response time.
+  - Hugging Face Token Auth: Added `KeychainSecretStore.huggingFaceToken` support for gated model repositories.
+  - Release Packaging: Signed `build/szcast-1.1.3.dmg` and `build/szcast-1.1.3.zip` deployed to `/Applications/szcast.app` and published to GitHub.
 
 ## Active State & Next Steps
-- **Active State**: Installed and running at `/Applications/szcast.app`. Titlebar header titles fully visible; native Gamma Control 3-point inspector and calibration targets live; 130/130 test harnesses pass; changes pushed to `main`.
+- **Active State**: Installed and running at `/Applications/szcast.app`. Release v1.1.3 published on GitHub; 130/130 test harnesses pass; working tree clean on `main`.
 - **Immediate Next Steps**:
-  1. Test long continuous dictation (5+ minutes) in real-world workflows.
+  1. Test long continuous dictation (5+ minutes) in real-world workflows across Hindi and Bengali models.
   2. Perform weekly upstream radar audit (`./Scripts/upstream-radar.sh`).
 
 Attribution: AGPL-3.0. Copyright © 2026 Abue Ammar in LICENSE; NOTICE.md keeps third-party material. Fork of Tinycast; no affiliation implied.
