@@ -212,10 +212,30 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - Hugging Face Token Auth: Added `KeychainSecretStore.huggingFaceToken` support for gated model repositories.
   - Release Packaging: Signed `build/szcast-1.1.3.dmg` and `build/szcast-1.1.3.zip` deployed to `/Applications/szcast.app` and published to GitHub.
 
+- **Launcher Command Seeding Fix** (`EntryNaming.queryRemainder`):
+  - The defect: activating any command row handed the *whole* typed text to `LauncherCoordinator.runCommand` as its `searchQuery`, and every consumer reads that parameter as a residual filter term (`togglePalette(seeding:)`, `fileSearchCoordinator.show(query:)`, `menuSearchCoordinator.show(query:)`, `windowSwitchCoordinator.show(query:)`, `quickAICoordinator.show(draft:)`). So typing `search menu bar items` and pressing Return opened menu search *filtered to that phrase* — zero results in every command's screen, not just Menu Search.
+  - The fix: `EntryNaming.queryRemainder(_:names:)` strips the row's own leading name (title, `alternateTitles`, stored alias) as **whole words**, longest name first. `launch` calls it once before both `runCommand` dispatches. Nil = no name prefixed (query stands); `""` = the query *was* the name, seeding nothing — distinct from nil at `togglePalette`, where nil would close an open screen instead of opening it blank.
+  - Verified live on the Debug build by AX-driving the real palette: pre-fix the menu-search field held `search menu bar items`; post-fix it opens empty. Harness `launcher-query-remainder-test` covers exact, case-folded, partial-word, longer-word, whitespace, multi-word-name and alias cases. 131/131 harnesses pass.
+
+- **Core vs Extended Features Architecture & Settings Simplification**:
+  - Restructured Settings taxonomy into 4 clean sections: `.general`, `.coreFeatures`, `.extendedFeatures`, and `.systemAndAbout`.
+  - Core Features: Dictation, Notes, General, Applications, Commands & HotKeys, Quicklinks, Clipboard, Snippets, File Search, AI, Window Management, Emoji, System Actions, System Settings.
+  - Extended Features (6 modular capabilities): Ente Auth, KeePassXC, DuckDuckGo Mail, Display Tweaks, Calendar, Clean Keyboard.
+  - Managed via dedicated `ExtendedFeaturesSettingsView` with master toggles and quick navigation to feature panes.
+  - Smart one-time migration (`AppSettings.runExtendedFeaturesMigration` via `extendedFeaturesV1Migrated` key): fresh installs default all extended features to OFF; existing users with configured accounts/credentials/authorizations automatically keep them ON. Future toggling by the user is preserved and never reset on app updates. Dynamic sidebar filtering conditionally displays active tabs.
+  - Deep-link and command gating: opening an un-enabled extended feature screen or hotkey is cleanly inhibited.
+
+- **Removal of Liquid Glass UI**:
+  - Completely excised translucency controls, slider settings, and `VisualEffectBlur` from `RootPaletteView` and `Theme.swift` in favor of solid, crisp native chrome.
+
+- **Removal of Finder File Actions**:
+  - Completely removed `szcast/Features/FinderFileActions/`, its models, service, settings, and UI in favor of external szcast extension.
+
 ## Active State & Next Steps
-- **Active State**: Installed and running at `/Applications/szcast.app`. Release v1.1.3 published on GitHub; 130/130 test harnesses pass; working tree clean on `main`.
+- **Active State**: Installed and running at `/Applications/szcast.app`. Release v1.1.3 published on GitHub; 131/131 test harnesses pass.
 - **Immediate Next Steps**:
   1. Test long continuous dictation (5+ minutes) in real-world workflows across Hindi and Bengali models.
   2. Perform weekly upstream radar audit (`./Scripts/upstream-radar.sh`).
+  3. Command rows stop ranking once a trailing filter word is typed (e.g. `search files report` leaves only quicklink fallbacks), so the seeded-residual path is only reachable today by a full name or fuzzy abbreviation. Ranking commands on a name prefix would make it reachable and is a separate, contained change.
 
 Attribution: AGPL-3.0. Copyright © 2026 Abue Ammar in LICENSE; NOTICE.md keeps third-party material. Fork of Tinycast; no affiliation implied.

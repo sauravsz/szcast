@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct SettingsSidebarView: View {
+    @Environment(AppSettings.self) private var settings
     @Environment(SettingsNavigationState.self) private var navigation
     @Environment(\.appearsActive) private var appearsActive
     @State private var query = ""
@@ -8,6 +9,18 @@ struct SettingsSidebarView: View {
     @State private var searching = false
 
     private var results: [SettingsSearchEntry] { SettingsSearchCatalog.results(for: query) }
+
+    private func isTabVisible(_ tab: SettingsTab) -> Bool {
+        switch tab {
+        case .enteAuth: return settings.enteAuthEnabled
+        case .keepassxc: return settings.keepassxcEnabled
+        case .duckDuckGoEmail: return settings.duckDuckGoEmailEnabled
+        case .displayTweaks: return settings.displayTweaksEnabled
+        case .calendar: return settings.calendarEnabled
+        case .cleanKeyboard: return settings.cleanKeyboardEnabled
+        default: return true
+        }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -25,18 +38,21 @@ struct SettingsSidebarView: View {
     private var browse: some View {
         List(selection: selection) {
             ForEach(SettingsSection.allCases) { section in
-                Section(section.title) {
-                    ForEach(section.tabs) { tab in
-                        Label {
-                            Text(tab.title)
-                        } icon: {
-                            SettingsTabIcon(
-                                systemImage: tab.systemImage,
-                                tint: appearsActive
-                                    ? (navigation.tab == tab ? Color.white : RaycastIconTheme.tabColor(for: tab.systemImage))
-                                    : Color.secondary)
+                let visibleTabs = section.tabs.filter(isTabVisible)
+                if !visibleTabs.isEmpty {
+                    Section(section.title) {
+                        ForEach(visibleTabs) { tab in
+                            Label {
+                                Text(tab.title)
+                            } icon: {
+                                SettingsTabIcon(
+                                    systemImage: tab.systemImage,
+                                    tint: appearsActive
+                                        ? (navigation.tab == tab ? Color.white : RaycastIconTheme.tabColor(for: tab.systemImage))
+                                        : Color.secondary)
+                            }
+                            .tag(tab)
                         }
-                        .tag(tab)
                     }
                 }
             }

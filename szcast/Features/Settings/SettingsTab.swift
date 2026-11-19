@@ -1,7 +1,7 @@
 enum SettingsTab: CaseIterable, Identifiable {
     case general, applications, systemSettings, systemActions, commands, quicklinks, appleShortcuts,
         fallbacks, clipboard, snippets, fileSearch, windowManagement, displayTweaks, cleanKeyboard, navigation, notes, calendar, emoji,
-        dictation, ai, quickActions, extensions, permissions, backup, changelog, about, enteAuth, finderFileActions, duckDuckGoEmail, keepassxc
+        dictation, ai, quickActions, extensions, permissions, backup, changelog, about, enteAuth, duckDuckGoEmail, keepassxc, extendedFeatures
     /// The case, never an index: a selectable `List` flattens section and row IDs together.
     var id: Self { self }
 
@@ -39,10 +39,10 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .changelog: "changelog"
         case .about: "about"
         case .enteAuth: "ente-auth"
-        case .finderFileActions: "finder-file-actions"
         case .duckDuckGoEmail: "duckduckgo-email"
         case .cleanKeyboard: "clean-keyboard"
         case .keepassxc: "keepassxc"
+        case .extendedFeatures: "extended-features"
         }
     }
 
@@ -75,9 +75,9 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .changelog: return String(localized: "Changelog")
         case .about: return String(localized: "About")
         case .enteAuth: return String(localized: "Ente Auth")
-        case .finderFileActions: return String(localized: "Finder File Actions")
         case .duckDuckGoEmail: return String(localized: "DuckDuckGo Email")
         case .keepassxc: return String(localized: "KeePassXC")
+        case .extendedFeatures: return String(localized: "Extended Features")
         }
     }
 
@@ -110,26 +110,24 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .changelog: return "clock.arrow.circlepath"
         case .about: return "info.circle"
         case .enteAuth: return "key.fill"
-        case .finderFileActions: return "folder.badge.gearshape"
         case .duckDuckGoEmail: return "envelope.badge.shield.half.filled"
         case .keepassxc: return "lock.fill"
+        case .extendedFeatures: return "sparkles.rectangle.stack"
         }
     }
 }
 
 /// Declaration order is display order; not `.Section`, which would shadow SwiftUI's `Section`.
 enum SettingsSection: CaseIterable, Identifiable {
-    case general, launcher, productivity, windowAndDisplay, aiAndVoice, systemAndAbout
+    case general, coreFeatures, extendedFeatures, systemAndAbout
     /// See `SettingsTab.id`: distinct types keep the two namespaces from colliding.
     var id: Self { self }
 
     var title: String {
         switch self {
         case .general: return String(localized: "General")
-        case .launcher: return String(localized: "Launcher")
-        case .productivity: return String(localized: "Productivity")
-        case .windowAndDisplay: return String(localized: "Window & Display")
-        case .aiAndVoice: return String(localized: "AI & Voice")
+        case .coreFeatures: return String(localized: "Core Features")
+        case .extendedFeatures: return String(localized: "Extended Features")
         case .systemAndAbout: return String(localized: "System & About")
         }
     }
@@ -138,14 +136,18 @@ enum SettingsSection: CaseIterable, Identifiable {
         switch self {
         case .general:
             return [.general, .permissions, .navigation]
-        case .launcher:
-            return [.applications, .commands, .quicklinks, .appleShortcuts, .fallbacks]
-        case .productivity:
-            return [.clipboard, .snippets, .notes, .fileSearch, .enteAuth, .keepassxc, .duckDuckGoEmail, .finderFileActions, .calendar, .emoji]
-        case .windowAndDisplay:
-            return [.windowManagement, .displayTweaks, .cleanKeyboard, .systemActions, .systemSettings]
-        case .aiAndVoice:
-            return [.ai, .dictation, .quickActions]
+        case .coreFeatures:
+            return [
+                .dictation, .notes, .ai, .quickActions,
+                .clipboard, .snippets, .fileSearch, .windowManagement,
+                .applications, .commands, .quicklinks, .appleShortcuts, .fallbacks,
+                .emoji, .systemActions, .systemSettings
+            ]
+        case .extendedFeatures:
+            return [
+                .extendedFeatures, .enteAuth, .keepassxc, .duckDuckGoEmail,
+                .displayTweaks, .calendar, .cleanKeyboard
+            ]
         case .systemAndAbout:
             return [.extensions, .backup, .changelog, .about]
         }

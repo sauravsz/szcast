@@ -138,8 +138,6 @@ struct RootPaletteView: View {
             return FocusTimerScreen(coordinator: core.focusTimerCoordinator, core: core, vm: vm)
         case .enteAuth:
             return EnteAuthScreen(store: core.enteAuthStore, core: core, vm: vm)
-        case .moveFileToFolder:
-            return MoveFileToFolderScreen(service: core.finderFileActionsService, core: core, vm: vm)
         case .duckDuckGoEmail:
             return DuckDuckGoEmailScreen(service: core.duckDuckGoEmailService, core: core, vm: vm)
         case .keepassxc:
@@ -365,18 +363,8 @@ struct RootPaletteView: View {
                 // The window's frame is the size source, so the glass and clip stay matched.
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 .background(
-                    isCollapsed
-                        ? .clear
-                        : (settings.liquidGlassEnabled
-                            ? Theme.Colors.panelScrim(transparency: settings.liquidGlassTransparency)
-                            : Theme.Colors.panelOpaqueBackground)
+                    isCollapsed ? .clear : Theme.Colors.panelOpaqueBackground
                 )
-                // Square, as rounded glass feathers its edge; the clip alone cuts a crisp corner.
-                .background {
-                    if settings.liquidGlassEnabled && !isCollapsed {
-                        VisualEffectBlur(material: .hudWindow, blendingMode: .behindWindow)
-                    }
-                }
                 .overlay {
                     Theme.Colors.dialogDimming
                         .opacity(core.isDimmingPaletteForDialog && !isCollapsed ? 1 : 0)

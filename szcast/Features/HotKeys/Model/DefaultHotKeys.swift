@@ -33,7 +33,6 @@ enum DefaultHotKeys {
         [
             (.command(.captureScreenText), optionShiftCombo(kVK_ANSI_2)),
             (.command(.enteAuth), combo(kVK_ANSI_T)),
-            (.command(.moveFileToFolder), combo(kVK_ANSI_M)),
             (.command(.generateDuckAddress), combo(kVK_ANSI_D)),
             (.command(.searchSnippets), combo(kVK_ANSI_S)),
             (.windowCommand(id: .leftHalf), combo(kVK_ANSI_J)),

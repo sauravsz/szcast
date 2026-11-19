@@ -413,18 +413,6 @@ The corresponding implementations reside in:
 - `szcast/Features/EnteAuth/Service/EnteAuthStore.swift`
 - `szcast/Features/EnteAuth/UI/EnteAuthScreen.swift`
 
-## Finder File Actions
-
-szcast's native Finder file management integration is modeled on:
-
-- **finder-file-actions** (<https://github.com/raycast/extensions/tree/main/extensions/finder-file-actions>) by `pa1ar`: Frontmost Finder selection query via AppleScript, Spotlight directory filtering, destination folder pinning, LRU recent folders, and collision-safe duplicate naming (`file 2.txt`).
-- **Finder File Actions Alfred Workflow**: Dedicated `Hyper + M` instant file move to chosen destination folder.
-
-The corresponding implementations reside in:
-- `szcast/Features/FinderFileActions/Model/FinderFolderDestination.swift`
-- `szcast/Features/FinderFileActions/Service/FinderFileActionsService.swift`
-- `szcast/Features/FinderFileActions/UI/MoveFileToFolderScreen.swift`
-
 ## DuckDuckGo Email Protection
 
 szcast's native `@duck.com` private email alias generator adopts architecture and API patterns from:

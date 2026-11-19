@@ -49,6 +49,37 @@ enum EntryNaming {
     private static func isPlaceholder(_ name: String) -> Bool {
         name.contains("_") && !name.contains(where: { $0.isLowercase || $0.isWhitespace })
     }
+
+    /// What is left of `query` once it has named an entry — the text the row was found by,
+    /// which a screen the row opens may seed as its own search.
+    ///
+    /// Typing `search files report` and pressing Return opens file search holding `report`.
+    /// Without this the screen opens holding the whole phrase, so its list filters to nothing.
+    /// Only a leading name is stripped, and only as whole words.
+    ///
+    /// Nil means the query does not begin with a name: nothing was consumed, so the whole
+    /// query stands. An empty string means the query *is* the name, which seeds nothing —
+    /// and differs from nil at `PaletteCoordinator.togglePalette`, where nil would close
+    /// an already-open screen instead of opening it blank.
+    static func queryRemainder(_ query: String, names: [String]) -> String? {
+        let words = query.split(whereSeparator: \.isWhitespace)
+        guard !words.isEmpty else { return nil }
+        // Longest name first, so `Search Menu Bar Items` wins over `Search`, `Command` or `Item`.
+        let candidates = names
+            .map { $0.split(whereSeparator: \.isWhitespace) }
+            .filter { !$0.isEmpty }
+            .sorted { $0.count > $1.count }
+        for name in candidates {
+            // Whole words only: a shorter run would let `Finder` eat `Finderer`.
+            guard name.count <= words.count else { continue }
+            let matches = zip(words, name).allSatisfy {
+                FuzzyMatch.normalized(String($0)) == FuzzyMatch.normalized(String($1))
+            }
+            guard matches else { continue }
+            return words.dropFirst(name.count).joined(separator: " ")
+        }
+        return nil
+    }
 }
 
 /// Built by `EntryNaming.profile` alone.

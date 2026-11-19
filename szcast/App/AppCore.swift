@@ -249,7 +249,6 @@ final class AppCore {
         settings: settings, sensory: sensoryCoordinator,
         showMessage: { [unowned self] in self.showMessage($0, tone: $1) })
     @ObservationIgnored private(set) lazy var enteAuthStore = EnteAuthStore()
-    @ObservationIgnored private(set) lazy var finderFileActionsService = FinderFileActionsService()
     @ObservationIgnored private(set) lazy var duckDuckGoEmailService = DuckDuckGoEmailService()
     @ObservationIgnored private(set) lazy var cleanKeyboardService: CleanKeyboardService = {
         let service = CleanKeyboardService.shared
@@ -380,6 +379,7 @@ final class AppCore {
             }
             updateCoordinator.applyEnabled()
             calendarCoordinator.applyEnabled()
+            applyExtendedFeaturesPresence()
             Task { await appIndex.refresh() }
             Task { await emojiIndex.load(languages: SystemLanguages.preferred) }
             currencyRates.start()
@@ -999,6 +999,14 @@ final class AppCore {
     private func applyWindowCommandsPresence() {
         let visible = settings.windowManagementEnabled && settings.windowManagementShowInLauncher
         appIndex.setWindowCommandsVisible(visible)
+    }
+
+    func applyExtendedFeaturesPresence() {
+        appIndex.setCommandsVisible([.enteAuth], settings.enteAuthEnabled)
+        appIndex.setCommandsVisible([.keepassxc], settings.keepassxcEnabled)
+        appIndex.setCommandsVisible([.generateDuckAddress], settings.duckDuckGoEmailEnabled)
+        appIndex.setCommandsVisible([.cleanKeyboard], settings.cleanKeyboardEnabled)
+        calendarCoordinator.applyEnabled()
     }
 
     // MARK: - Settings file

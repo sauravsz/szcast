@@ -6,7 +6,6 @@ enum CommandID: String, CaseIterable, Sendable {
     case searchSnippets
     case captureScreenText
     case enteAuth
-    case moveFileToFolder
     case generateDuckAddress
     case cleanKeyboard
     case keepassxc

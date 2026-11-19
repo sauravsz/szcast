@@ -19,9 +19,6 @@
 		C1C4E3A2000A000000000002 /* TOTPEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000A000000000002 /* TOTPEngine.swift */; };
 		C1C4E3A2000A000000000003 /* EnteAuthStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000A000000000003 /* EnteAuthStore.swift */; };
 		C1C4E3A2000A000000000004 /* EnteAuthScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000A000000000004 /* EnteAuthScreen.swift */; };
-		C1C4E3A2000B000000000001 /* FinderFolderDestination.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000B000000000001 /* FinderFolderDestination.swift */; };
-		C1C4E3A2000B000000000002 /* FinderFileActionsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000B000000000002 /* FinderFileActionsService.swift */; };
-		C1C4E3A2000B000000000003 /* MoveFileToFolderScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000B000000000003 /* MoveFileToFolderScreen.swift */; };
 		C1C4E3A2000C000000000001 /* DuckDuckGoEmailService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000C000000000001 /* DuckDuckGoEmailService.swift */; };
 		C1C4E3A2000C000000000002 /* DuckDuckGoEmailScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000C000000000002 /* DuckDuckGoEmailScreen.swift */; };
 		C1C4E3A2000D000000000001 /* CleanKeyboardService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000D000000000001 /* CleanKeyboardService.swift */; };
@@ -30,7 +27,6 @@
 		C1C4E3A2000E000000000002 /* KeePassXCService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000E000000000002 /* KeePassXCService.swift */; };
 		C1C4E3A2000E000000000003 /* KeePassXCScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000E000000000003 /* KeePassXCScreen.swift */; };
 		C1C4E3A2000A000000000005 /* EnteAuthSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000A000000000005 /* EnteAuthSettingsView.swift */; };
-		C1C4E3A2000B000000000004 /* FinderFileActionsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000B000000000004 /* FinderFileActionsSettingsView.swift */; };
 		C1C4E3A2000C000000000003 /* DuckDuckGoEmailSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000C000000000003 /* DuckDuckGoEmailSettingsView.swift */; };
 		C1C4E3A2000D000000000003 /* CleanKeyboardSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000D000000000003 /* CleanKeyboardSettingsView.swift */; };
 		C1C4E3A2000E000000000004 /* KeePassXCSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000E000000000004 /* KeePassXCSettingsView.swift */; };
@@ -777,6 +773,7 @@
 		C5246D93BBA447893D58BD91 /* FallbackStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75614189EED9B440D911B412 /* FallbackStore.swift */; };
 		C567D5C8F8873CA595B1536A /* TextInjector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74904E7C8CE9B121B32594B9 /* TextInjector.swift */; };
 		C5F60D8681235B95DAA3314F /* GeneralSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 418DA899A1546F3B4AC44777 /* GeneralSettingsView.swift */; };
+		C1C4E3A2000F000000000099 /* ExtendedFeaturesSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A1000F000000000099 /* ExtendedFeaturesSettingsView.swift */; };
 		C64E1E78A80C4742745CB235 /* ReleaseArchitecture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63E3B7CDDB6A9D790548648B /* ReleaseArchitecture.swift */; };
 		C6D759F2F0ADBF05285F708A /* FileIndexCrawler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0333973AAC2B1F4653902175 /* FileIndexCrawler.swift */; };
 		C7111FA661D5C3CA0A5E7EF6 /* WindowLayoutDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1FB153A0D53D42771F1CA99 /* WindowLayoutDisplay.swift */; };
@@ -1045,9 +1042,6 @@
 		C1C4E3A1000A000000000002 /* TOTPEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TOTPEngine.swift; sourceTree = "<group>"; };
 		C1C4E3A1000A000000000003 /* EnteAuthStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnteAuthStore.swift; sourceTree = "<group>"; };
 		C1C4E3A1000A000000000004 /* EnteAuthScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnteAuthScreen.swift; sourceTree = "<group>"; };
-		C1C4E3A1000B000000000001 /* FinderFolderDestination.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderFolderDestination.swift; sourceTree = "<group>"; };
-		C1C4E3A1000B000000000002 /* FinderFileActionsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderFileActionsService.swift; sourceTree = "<group>"; };
-		C1C4E3A1000B000000000003 /* MoveFileToFolderScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveFileToFolderScreen.swift; sourceTree = "<group>"; };
 		C1C4E3A1000C000000000001 /* DuckDuckGoEmailService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuckDuckGoEmailService.swift; sourceTree = "<group>"; };
 		C1C4E3A1000C000000000002 /* DuckDuckGoEmailScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuckDuckGoEmailScreen.swift; sourceTree = "<group>"; };
 		C1C4E3A1000D000000000001 /* CleanKeyboardService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanKeyboardService.swift; sourceTree = "<group>"; };
@@ -1056,7 +1050,6 @@
 		C1C4E3A1000E000000000002 /* KeePassXCService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeePassXCService.swift; sourceTree = "<group>"; };
 		C1C4E3A1000E000000000003 /* KeePassXCScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeePassXCScreen.swift; sourceTree = "<group>"; };
 		C1C4E3A1000A000000000005 /* EnteAuthSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnteAuthSettingsView.swift; sourceTree = "<group>"; };
-		C1C4E3A1000B000000000004 /* FinderFileActionsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderFileActionsSettingsView.swift; sourceTree = "<group>"; };
 		C1C4E3A1000C000000000003 /* DuckDuckGoEmailSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuckDuckGoEmailSettingsView.swift; sourceTree = "<group>"; };
 		C1C4E3A1000D000000000003 /* CleanKeyboardSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanKeyboardSettingsView.swift; sourceTree = "<group>"; };
 		C1C4E3A1000E000000000004 /* KeePassXCSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeePassXCSettingsView.swift; sourceTree = "<group>"; };
@@ -1321,6 +1314,7 @@
 		4119AD87C7E31C9138FA0ADB /* DictationWorker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationWorker.swift; sourceTree = "<group>"; };
 		418527DD2F2370A1B82A13B7 /* PaletteDropGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaletteDropGuideView.swift; sourceTree = "<group>"; };
 		418DA899A1546F3B4AC44777 /* GeneralSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralSettingsView.swift; sourceTree = "<group>"; };
+		C1C4E3A1000F000000000099 /* ExtendedFeaturesSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtendedFeaturesSettingsView.swift; sourceTree = "<group>"; };
 		41E419A4DA5AB5B3A87B80F2 /* SnippetsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnippetsListView.swift; sourceTree = "<group>"; };
 		41FA492C2712A177DB36E565 /* CalcNumberFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalcNumberFormat.swift; sourceTree = "<group>"; };
 		42A6D9BE2BB5BA09A4A6FEAB /* CommandOutputPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandOutputPresenter.swift; sourceTree = "<group>"; };
@@ -3256,6 +3250,7 @@
 			children = (
 				CLR000000000AE455707835D /* ChangelogSettingsView.swift */,
 				0CD9BD942CF0C95ECEFC41F4 /* CompactShortcutsSection.swift */,
+				C1C4E3A1000F000000000099 /* ExtendedFeaturesSettingsView.swift */,
 				418DA899A1546F3B4AC44777 /* GeneralSettingsView.swift */,
 				29D547CAB18AFCFC0390C943 /* NavigationSettingsView.swift */,
 				B3C7D17F97002FD58E8A5F53 /* PermissionsSettingsView.swift */,
@@ -3520,41 +3515,6 @@
 			path = UI;
 			sourceTree = "<group>";
 		};
-		C1C4E3A0000B000000000001 /* FinderFileActions */ = {
-			isa = PBXGroup;
-			children = (
-				C1C4E3A0000B000000000010 /* Model */,
-				C1C4E3A0000B000000000020 /* Service */,
-				C1C4E3A0000B000000000030 /* UI */,
-			);
-			path = FinderFileActions;
-			sourceTree = "<group>";
-		};
-		C1C4E3A0000B000000000010 /* Model */ = {
-			isa = PBXGroup;
-			children = (
-				C1C4E3A1000B000000000001 /* FinderFolderDestination.swift */,
-			);
-			path = Model;
-			sourceTree = "<group>";
-		};
-		C1C4E3A0000B000000000020 /* Service */ = {
-			isa = PBXGroup;
-			children = (
-				C1C4E3A1000B000000000002 /* FinderFileActionsService.swift */,
-			);
-			path = Service;
-			sourceTree = "<group>";
-		};
-		C1C4E3A0000B000000000030 /* UI */ = {
-			isa = PBXGroup;
-			children = (
-				C1C4E3A1000B000000000003 /* MoveFileToFolderScreen.swift */,
-				C1C4E3A1000B000000000004 /* FinderFileActionsSettingsView.swift */,
-			);
-			path = UI;
-			sourceTree = "<group>";
-		};
 		C1C4E3A0000C000000000001 /* DuckDuckGoEmail */ = {
 			isa = PBXGroup;
 			children = (
@@ -3721,7 +3681,6 @@
 				C1C4E3A00006000000000001 /* ScreenCapture */,
 				C1C4E3A00009000000000001 /* DisplayTweaks */,
 				C1C4E3A0000A000000000001 /* EnteAuth */,
-				C1C4E3A0000B000000000001 /* FinderFileActions */,
 				C1C4E3A0000C000000000001 /* DuckDuckGoEmail */,
 				C1C4E3A0000D000000000001 /* CleanKeyboard */,
 				C1C4E3A0000E000000000001 /* KeePassXC */,
@@ -4969,9 +4928,6 @@
 				C1C4E3A2000A000000000002 /* TOTPEngine.swift in Sources */,
 				C1C4E3A2000A000000000003 /* EnteAuthStore.swift in Sources */,
 				C1C4E3A2000A000000000004 /* EnteAuthScreen.swift in Sources */,
-				C1C4E3A2000B000000000001 /* FinderFolderDestination.swift in Sources */,
-				C1C4E3A2000B000000000002 /* FinderFileActionsService.swift in Sources */,
-				C1C4E3A2000B000000000003 /* MoveFileToFolderScreen.swift in Sources */,
 				C1C4E3A2000C000000000001 /* DuckDuckGoEmailService.swift in Sources */,
 				C1C4E3A2000C000000000002 /* DuckDuckGoEmailScreen.swift in Sources */,
 				C1C4E3A2000D000000000001 /* CleanKeyboardService.swift in Sources */,
@@ -4980,7 +4936,6 @@
 				C1C4E3A2000E000000000002 /* KeePassXCService.swift in Sources */,
 				C1C4E3A2000E000000000003 /* KeePassXCScreen.swift in Sources */,
 				C1C4E3A2000A000000000005 /* EnteAuthSettingsView.swift in Sources */,
-				C1C4E3A2000B000000000004 /* FinderFileActionsSettingsView.swift in Sources */,
 				C1C4E3A2000C000000000003 /* DuckDuckGoEmailSettingsView.swift in Sources */,
 				C1C4E3A2000D000000000003 /* CleanKeyboardSettingsView.swift in Sources */,
 				C1C4E3A2000E000000000004 /* KeePassXCSettingsView.swift in Sources */,
@@ -5281,6 +5236,7 @@
 				FEC954D6727EFEB00E059980 /* FrontmostApp.swift in Sources */,
 								CLB000000000E3F99B74168A /* ChangelogSettingsView.swift in Sources */,
 C5F60D8681235B95DAA3314F /* GeneralSettingsView.swift in Sources */,
+				C1C4E3A2000F000000000099 /* ExtendedFeaturesSettingsView.swift in Sources */,
 				BA81211D8B660F2DD03A20EA /* GlassEffectView.swift in Sources */,
 				35D8AA4E6FE6FD020A56BD8A /* HIDEventSystem.swift in Sources */,
 				8F001DE9D2EF3429B351EFF5 /* HIDKeyMapping.swift in Sources */,

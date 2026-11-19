@@ -166,6 +166,9 @@ enum AppSettingsKey: String, CaseIterable {
     case chatFontSize = "chatFontSize"
     case chatFontFamily = "chatFontFamily"
     case chatCodeFontFamily = "chatCodeFontFamily"
-    case liquidGlassEnabled = "liquidGlassEnabled"
-    case liquidGlassTransparency = "liquidGlassTransparency"
+    case enteAuthEnabled = "enteAuthEnabled"
+    case keepassxcEnabled = "keepassxcEnabled"
+    case duckDuckGoEmailEnabled = "duckDuckGoEmailEnabled"
+    case cleanKeyboardEnabled = "cleanKeyboardEnabled"
+    case extendedFeaturesV1Migrated = "extendedFeaturesV1Migrated"
 }

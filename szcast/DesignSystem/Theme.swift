@@ -426,12 +426,6 @@ enum Theme {
         static let panelOpaqueBackground = adaptive(
             dark: .srgbInk(0.12, alpha: 1.0), light: .srgbInk(0.96, alpha: 1.0))
 
-        static func panelScrim(transparency: Double) -> Color {
-            let factor = max(0.0, min(100.0, transparency)) / 100.0
-            let darkAlpha = 0.95 - factor * (0.95 - 0.12)
-            let lightAlpha = 0.95 - factor * (0.95 - 0.20)
-            return adaptive(dark: .srgbInk(0, alpha: darkAlpha), light: .srgbInk(1, alpha: lightAlpha))
-        }
         static let dialogDimming = adaptive(
             dark: .srgbInk(0, alpha: 0.34), light: .srgbInk(0, alpha: 0.34))
         /// Find's marks, the Mac's own yellow: every match faint, the current one solid.
@@ -551,26 +545,5 @@ enum Theme {
 extension View {
     func frosted(in shape: some Shape) -> some View {
         glassEffect(.regular.interactive(), in: shape)
-    }
-}
-
-/// Native macOS AppKit visual effect view bridging for real desktop liquid glass blur.
-struct VisualEffectBlur: NSViewRepresentable {
-    var material: NSVisualEffectView.Material = .hudWindow
-    var blendingMode: NSVisualEffectView.BlendingMode = .behindWindow
-    var state: NSVisualEffectView.State = .active
-
-    func makeNSView(context: Context) -> NSVisualEffectView {
-        let view = NSVisualEffectView()
-        view.material = material
-        view.blendingMode = blendingMode
-        view.state = state
-        return view
-    }
-
-    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
-        nsView.material = material
-        nsView.blendingMode = blendingMode
-        nsView.state = state
     }
 }

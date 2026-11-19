@@ -69,7 +69,6 @@ extension SettingsTab {
         case .dictation: [.dictationInsights]
         case .cleanKeyboard: [.cleanKeyboard]
         case .enteAuth: [.enteAuth]
-        case .finderFileActions: [.moveFileToFolder]
         case .duckDuckGoEmail: [.generateDuckAddress]
         case .keepassxc: [.keepassxc]
         default: []

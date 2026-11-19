@@ -1,3 +1,4 @@
+import EventKit
 import SwiftUI
 
 /// Delay before a closed palette pops to root; an unset key reads as `.immediately`.
@@ -220,14 +221,24 @@ final class AppSettings {
         didSet { defaults.set(appearance.rawValue, forKey: Key.appearance.rawValue) }
     }
 
-    /// Whether native macOS Liquid Glass UI is enabled.
-    var liquidGlassEnabled: Bool {
-        didSet { defaults.set(liquidGlassEnabled, forKey: Key.liquidGlassEnabled.rawValue) }
+    /// Whether Ente Auth 2FA is enabled.
+    var enteAuthEnabled: Bool {
+        didSet { defaults.set(enteAuthEnabled, forKey: Key.enteAuthEnabled.rawValue) }
     }
 
-    /// Percentage of glass translucency (0% nearly opaque ... 100% maximum glass transparency).
-    var liquidGlassTransparency: Double {
-        didSet { defaults.set(liquidGlassTransparency, forKey: Key.liquidGlassTransparency.rawValue) }
+    /// Whether KeePassXC password search is enabled.
+    var keepassxcEnabled: Bool {
+        didSet { defaults.set(keepassxcEnabled, forKey: Key.keepassxcEnabled.rawValue) }
+    }
+
+    /// Whether DuckDuckGo Email Protection address generator is enabled.
+    var duckDuckGoEmailEnabled: Bool {
+        didSet { defaults.set(duckDuckGoEmailEnabled, forKey: Key.duckDuckGoEmailEnabled.rawValue) }
+    }
+
+    /// Whether Clean Keyboard mode is enabled.
+    var cleanKeyboardEnabled: Bool {
+        didSet { defaults.set(cleanKeyboardEnabled, forKey: Key.cleanKeyboardEnabled.rawValue) }
     }
 
     /// The per-app key System Settings writes too, so the two never disagree.
@@ -886,7 +897,52 @@ final class AppSettings {
                 as? [String], systemPreferences: SystemLanguages.preferred)
     }
 
+    private static func runExtendedFeaturesMigration(defaults: UserDefaults) {
+        guard defaults.object(forKey: Key.extendedFeaturesV1Migrated.rawValue) == nil else { return }
+
+        // 1. Ente Auth: check if accounts file exists and has accounts
+        let enteDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
+            .appendingPathComponent("szcast", isDirectory: true)
+            .appendingPathComponent("EnteAuth", isDirectory: true)
+            .appendingPathComponent("accounts.json")
+        var hasEnte = false
+        if let enteDir, let data = try? Data(contentsOf: enteDir) {
+            hasEnte = (try? JSONSerialization.jsonObject(with: data)) is [Any] && !((try? JSONSerialization.jsonObject(with: data)) as? [Any] ?? []).isEmpty
+        }
+        defaults.set(hasEnte, forKey: Key.enteAuthEnabled.rawValue)
+
+        // 2. KeePassXC: check if databasePath is non-empty
+        let hasKeePass = !(defaults.string(forKey: "keepassxc.databasePath") ?? "").isEmpty
+        defaults.set(hasKeePass, forKey: Key.keepassxcEnabled.rawValue)
+
+        // 3. DuckDuckGo Email: check if Keychain has token
+        let hasDDG = (try? KeychainSecretStore.duckDuckGoToken.hasSecret(for: "account")) ?? false
+        defaults.set(hasDDG, forKey: Key.duckDuckGoEmailEnabled.rawValue)
+
+        // 4. Display Tweaks: check if already enabled
+        let hasDisplayTweaks = defaults.bool(forKey: Key.displayTweaksEnabled.rawValue)
+        defaults.set(hasDisplayTweaks, forKey: Key.displayTweaksEnabled.rawValue)
+
+        // 5. Calendar: check if EventKit authorization was previously granted
+        let calendarAuthorized = (EKEventStore.authorizationStatus(for: .event) == .authorized)
+        defaults.set(calendarAuthorized, forKey: Key.calendarEnabled.rawValue)
+
+        // 6. Clean Keyboard: check if customized duration was set
+        let hasCleanKeyboard = defaults.object(forKey: "cleanKeyboard.defaultDuration") != nil
+        defaults.set(hasCleanKeyboard, forKey: Key.cleanKeyboardEnabled.rawValue)
+
+        // Mark migrated so future updates never overwrite user settings
+        defaults.set(true, forKey: Key.extendedFeaturesV1Migrated.rawValue)
+    }
+
     init() {
+        Self.runExtendedFeaturesMigration(defaults: defaults)
+
+        enteAuthEnabled = defaults.bool(forKey: Key.enteAuthEnabled.rawValue)
+        keepassxcEnabled = defaults.bool(forKey: Key.keepassxcEnabled.rawValue)
+        duckDuckGoEmailEnabled = defaults.bool(forKey: Key.duckDuckGoEmailEnabled.rawValue)
+        cleanKeyboardEnabled = defaults.bool(forKey: Key.cleanKeyboardEnabled.rawValue)
+
         // Every feature switch defaults on, so absence has to outrank a stored `false`.
         // `defaults.object(forKey:) == nil` is how each one tells "never set" from "set to off".
         clipboardEnabled =
@@ -940,13 +996,6 @@ final class AppSettings {
             ?? .navigateBackOrClose
         appearance =
             defaults.string(forKey: Key.appearance.rawValue).flatMap(AppAppearance.init) ?? .system
-        liquidGlassEnabled =
-            defaults.object(forKey: Key.liquidGlassEnabled.rawValue) == nil
-            || defaults.bool(forKey: Key.liquidGlassEnabled.rawValue)
-        liquidGlassTransparency =
-            defaults.object(forKey: Key.liquidGlassTransparency.rawValue) != nil
-            ? defaults.double(forKey: Key.liquidGlassTransparency.rawValue)
-            : 65.0
         language = Self.storedLanguage
         calcNumberStyle =
             defaults.string(forKey: Key.calcNumberStyle.rawValue).flatMap(CalcNumberStyle.init)
@@ -1149,8 +1198,7 @@ final class AppSettings {
         extensionCustomSearchPaths =
             defaults.stringArray(forKey: Key.extensionCustomSearchPaths.rawValue) ?? []
         // Opt-in, like extensions: until it is asked for, EventKit is never loaded.
-        calendarEnabled = defaults.object(forKey: Key.calendarEnabled.rawValue) == nil
-            || defaults.bool(forKey: Key.calendarEnabled.rawValue)
+        calendarEnabled = defaults.bool(forKey: Key.calendarEnabled.rawValue)
         calendarShowInLauncher =
             defaults.object(forKey: Key.calendarShowInLauncher.rawValue) == nil
             || defaults.bool(forKey: Key.calendarShowInLauncher.rawValue)

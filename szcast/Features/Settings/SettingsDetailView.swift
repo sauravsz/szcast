@@ -34,9 +34,9 @@ struct SettingsDetailView: View {
             case .changelog: ChangelogSettingsView()
             case .about: AboutView()
             case .enteAuth: EnteAuthSettingsView()
-            case .finderFileActions: FinderFileActionsSettingsView()
             case .duckDuckGoEmail: DuckDuckGoEmailSettingsView()
             case .keepassxc: KeePassXCSettingsView()
+            case .extendedFeatures: ExtendedFeaturesSettingsView()
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

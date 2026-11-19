@@ -188,7 +188,6 @@ run flight-test            Szcast/Features/Flights/Model/*.swift Szcast/Features
 run hardware-test          Szcast/Features/Hardware/Model/*.swift Szcast/Features/Hardware/Service/*.swift Szcast/Features/SystemActions/Model/*.swift Szcast/Platform/LocalizedResource.swift
 run display-tweaks-test    Szcast/Features/DisplayTweaks/Model/*.swift Szcast/Features/DisplayTweaks/Service/*.swift
 run ente-auth-test         Szcast/Features/EnteAuth/Model/*.swift Szcast/Features/EnteAuth/Service/*.swift
-run finder-file-actions-test Szcast/Features/FinderFileActions/Model/*.swift Szcast/Features/FinderFileActions/Service/*.swift
 run duckduckgo-email-test  Szcast/Features/DuckDuckGoEmail/Service/*.swift Szcast/Platform/KeychainSecretStore.swift
 run clean-keyboard-test    Szcast/Features/CleanKeyboard/Service/*.swift
 run keepassxc-test         Szcast/Features/KeePassXC/Model/*.swift Szcast/Features/KeePassXC/Service/*.swift Szcast/Platform/KeychainSecretStore.swift
@@ -340,6 +339,10 @@ run palette-filter-test    Szcast/Palette/PaletteMode.swift \
                            Szcast/Features/CustomCommands/Model/CustomCommand.swift
 run action-menu-search-test Szcast/Palette/ActionMenuSearchQuery.swift \
                             Szcast/Features/Launcher/Model/SearchRelevance.swift
+run launcher-query-remainder-test Szcast/Features/Launcher/Model/SearchRelevance.swift \
+                            Szcast/Features/Launcher/Model/ScriptRomanization.swift \
+                            Szcast/Features/Launcher/Model/LauncherMatch.swift \
+                            Szcast/Features/Launcher/Model/EntryNaming.swift
 run palette-shortcut-test  Szcast/Palette/PaletteShortcut.swift
 run ascii-layout-test      Szcast/Platform/ASCIIKeyboardLayout.swift
 run palette-tab-test       Szcast/Palette/PaletteMode.swift \

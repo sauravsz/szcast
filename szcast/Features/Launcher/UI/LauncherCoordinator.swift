@@ -73,6 +73,8 @@ final class LauncherCoordinator {
             ranking.visit(itemKey: app.preferenceKey, query: term)
         }
         // Commands dispatch before the palette hides: mode-switching commands keep it open.
+        // A command that opens a screen seeds it with what is left after its own name, so
+        // `search files report` opens file search holding `report`, not the whole phrase.
         if app.kind == .command {
             guard let id = CommandCatalog.command(for: app) else { return }
             // Query-driven: only this row knows the URL the typed text resolved to.
@@ -81,12 +83,12 @@ final class LauncherCoordinator {
                 AppLauncher.open(app.url)
                 return
             }
-            runCommand(id, searchQuery: searchQuery)
+            runCommand(id, searchQuery: remainder(of: searchQuery, for: app))
             return
         }
         if app.kind == .quickAction {
             if let command = CommandCatalog.command(for: app) {
-                runCommand(command, searchQuery: searchQuery)
+                runCommand(command, searchQuery: remainder(of: searchQuery, for: app))
                 return
             }
             guard let id = CustomQuickAction.id(fromEntryID: app.id) else { return }
@@ -210,14 +212,19 @@ final class LauncherCoordinator {
         case .openInBrowser, .runShellCommand:
             break  // Query-driven: each runs where the typed text is, never through this funnel.
         case .joinNextMeeting:
+            guard core.settings.calendarEnabled else { return }
             calendarCoordinator.joinNextMeeting()
         case .copyMeetingLink:
+            guard core.settings.calendarEnabled else { return }
             calendarCoordinator.copyNextMeetingLink()
         case .mySchedule:
+            guard core.settings.calendarEnabled else { return }
             calendarCoordinator.showSchedule()
         case .openInCalendar:
+            guard core.settings.calendarEnabled else { return }
             calendarCoordinator.openNextMeetingInCalendar()
         case .createEvent:
+            guard core.settings.calendarEnabled else { return }
             calendarCoordinator.createEvent()
         case .showNotes:
             dismissPalette()
@@ -283,9 +290,8 @@ final class LauncherCoordinator {
         case .focusTimer:
             paletteCoordinator.togglePalette(mode: .focusTimer, seeding: searchQuery)
         case .enteAuth:
+            guard core.settings.enteAuthEnabled else { return }
             paletteCoordinator.togglePalette(mode: .enteAuth, seeding: searchQuery)
-        case .moveFileToFolder:
-            paletteCoordinator.togglePalette(mode: .moveFileToFolder, seeding: searchQuery)
         case .captureScreenText:
             dismissPalette()
             ScreenCaptureService.shared.capture(mode: .textOCR, showMessage: { [weak core] msg in
@@ -308,6 +314,7 @@ final class LauncherCoordinator {
                 }
             }
         case .generateDuckAddress:
+            guard core.settings.duckDuckGoEmailEnabled else { return }
             if core.duckDuckGoEmailService.hasToken {
                 dismissPalette()
                 Task {
@@ -318,9 +325,11 @@ final class LauncherCoordinator {
                 paletteCoordinator.togglePalette(mode: .duckDuckGoEmail)
             }
         case .cleanKeyboard:
+            guard core.settings.cleanKeyboardEnabled else { return }
             dismissPalette()
             core.cleanKeyboardService.startCleaning(duration: 60)
         case .keepassxc:
+            guard core.settings.keepassxcEnabled else { return }
             paletteCoordinator.togglePalette(mode: .keepassxc, seeding: searchQuery)
         case .dictationInsights:
             dismissPalette()
@@ -337,6 +346,14 @@ final class LauncherCoordinator {
     }
 
     // MARK: - Row actions
+
+    /// The typed text minus the row's own name, which is what a screen it opens may seed.
+    private func remainder(of query: String?, for entry: AppEntry) -> String? {
+        guard let query else { return nil }
+        let alias = core.aliases.alias(for: entry.preferenceKey)
+        return EntryNaming.queryRemainder(
+            query, names: [entry.name] + entry.alternateTitles + [alias].compactMap { $0 })
+    }
 
     func resetRanking(for app: AppEntry) {
         ranking.reset(itemKey: app.preferenceKey)

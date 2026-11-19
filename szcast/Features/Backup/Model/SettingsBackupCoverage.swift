@@ -283,9 +283,15 @@ enum SettingsBackupCoverage {
             "Display tonal calibration is hardware-specific to this Mac.",
         AppSettingsKey.displayTweaksPreset.rawValue:
             "Display calibration preset is hardware-specific to this Mac.",
-        AppSettingsKey.liquidGlassEnabled.rawValue:
-            "Window material rendering preference is specific to this Mac.",
-        AppSettingsKey.liquidGlassTransparency.rawValue:
-            "Window transparency level is specific to this Mac."
+        AppSettingsKey.enteAuthEnabled.rawValue:
+            "Extended feature toggle state.",
+        AppSettingsKey.keepassxcEnabled.rawValue:
+            "Extended feature toggle state.",
+        AppSettingsKey.duckDuckGoEmailEnabled.rawValue:
+            "Extended feature toggle state.",
+        AppSettingsKey.cleanKeyboardEnabled.rawValue:
+            "Extended feature toggle state.",
+        AppSettingsKey.extendedFeaturesV1Migrated.rawValue:
+            "One-time migration marker for extended feature defaults."
     ]
 }

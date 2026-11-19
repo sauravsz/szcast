@@ -109,7 +109,7 @@ enum SettingsSearchCatalog {
         general + applications + systemSettings + systemActions + commands + quicklinks
         + appleShortcuts + fallbacks + clipboard + snippets + fileSearch + windowManagement
         + cleanKeyboard + navigation + notes + calendar + emoji + ai + quickActions + dictation + extensions + permissions
-        + backup + displayTweaks + enteAuth + finderFileActions + duckDuckGoEmail + keepassxc + changelog + about
+        + backup + displayTweaks + enteAuth + duckDuckGoEmail + keepassxc + extendedFeatures + changelog + about
 
     private static let general: [SettingsSearchEntry] = [
         .init(pane: .general, keywords: ["preferences", "settings"]),
@@ -143,12 +143,6 @@ enum SettingsSearchCatalog {
         .init(
             .generalAppearance, "Show animations",
             keywords: ["motion", "transitions", "reduce motion", "effects", "instant"]),
-        .init(
-            .generalAppearance, "Liquid Glass UI",
-            keywords: ["transparency", "glass", "blur", "vibrancy", "liquid", "tahoe"]),
-        .init(
-            .generalAppearance, "Glass transparency",
-            keywords: ["transparency", "opacity", "glass", "translucent", "liquid"]),
         .init(
             .generalAppearance, "Interface size",
             keywords: ["text size", "font size", "scale", "zoom", "bigger", "larger", "legible"]),
@@ -701,12 +695,6 @@ enum SettingsSearchCatalog {
             keywords: ["2fa", "totp", "authenticator", "ente", "code", "token", "otpauth"])
     ]
 
-    private static let finderFileActions: [SettingsSearchEntry] = [
-        .init(
-            pane: .finderFileActions,
-            keywords: ["finder", "move", "copy", "folder", "pinned", "file actions", "organize"])
-    ]
-
     private static let duckDuckGoEmail: [SettingsSearchEntry] = [
         .init(
             pane: .duckDuckGoEmail,
@@ -717,6 +705,15 @@ enum SettingsSearchCatalog {
         .init(
             pane: .keepassxc,
             keywords: ["keepass", "password", "kdbx", "vault", "keepassxc", "credentials", "manager"])
+    ]
+
+    private static let extendedFeatures: [SettingsSearchEntry] = [
+        .init(
+            pane: .extendedFeatures,
+            keywords: ["extended", "features", "plugins", "integrations", "power tools", "optional", "hub"]),
+        .init(
+            .extendedFeatures, "Extended Features Hub",
+            keywords: ["extended", "features", "integrations", "power tools", "enable", "disable"])
     ]
 
     private static let changelog: [SettingsSearchEntry] = [

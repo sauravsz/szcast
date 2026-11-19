@@ -40,7 +40,13 @@ open /Applications/szcast.app
 
 ## Key Features
 
+### Core vs Extended Modular Architecture
+- **Streamlined Settings Taxonomy**: Cleanly divides launcher capabilities into Core Features (always-ready essentials including Dictation, Notes, File Search, AI, Clipboard, Quicklinks, Snippets, Window Management) and Extended Features (modular power tools).
+- **Extended Features Suite**: Houses Ente Auth 2FA, KeePassXC, DuckDuckGo Mail, Display Tweaks & Gamma Control, Calendar HUD, and Clean Keyboard. Disabled by default on clean installs for minimal footprint; smart migration preserves active configurations seamlessly across updates.
+- **Dynamic Sidebar & Command Gating**: Settings sidebar and launcher command routing dynamically reflect active features, keeping navigation focused and uncluttered.
+
 ### Extension Customization & Fast Navigation
+- **Precise Command Query Routing**: Activating launcher commands cleanly strips leading command keywords before opening sub-screens, preventing query collisions when launching filtered views.
 - **Centralized Extension Aliases**: Set custom aliases and global hotkeys for any installed Raycast extension command from a single view in Settings &rarr; Commands.
 - **List & Submenu Shortcuts (`⌘1`..`⌘9`)**: Press `⌘1` through `⌘9` to instantly activate any item in search results, extension lists (e.g. `brew search`), and nested submenus, with dynamic keycap badges when holding `Command`.
 - **Dual-Mode Snippet & Extension Icons**: Adaptive SVG icons for ChatGPT, OpenAI, and Raycast snippets that render crisply across both light and dark themes.
@@ -54,14 +60,12 @@ open /Applications/szcast.app
 - **Quiet Dictation Pill & Single-Shot Paste**: Visual waveform feedback in a floating glass pill, with polished text pasted in one shot upon completion.
 - **Audio Ducking & Domain Vocabulary**: Automatic media volume lowering for Spotify and Apple Music, plus built-in domain dictionaries (tech, medical, legal, brands).
 
-### Liquid Glass Design & Display Tweaks
-- **macOS Liquid Glass UI**: Translucent vibrancy and light refraction across the launcher and settings, with a 0% to 100% transparency slider and instant toggle.
+### Display Tweaks & Gamma Control
 - **Display Tweaks & Gamma Control**: Direct GPU gamma table controls (`CGSetDisplayTransferByTable`) with native 3-point inspector (`[ Black | Middle | White ]` tabs) featuring individual RGB and luminance sliders, 5-box checkerboard calibration targets, grayscale ramp, and RGB gradient strips matching `.gammaset` profiles for deep OLED-grade blacks without color banding.
 - **Display Mirroring**: One-key hardware display mirroring toggle.
 
 ### Built-In Productivity Tools
 - **Ente Auth 2FA (`Hyper + T`)**: Instant TOTP generation with live countdown tickers and auto-discovery from `ente_auth.txt`.
-- **Finder File Actions (`Hyper + M`)**: Move or copy selected Finder files to pinned or recent folders with collision-safe duplicate renaming.
 - **KeePassXC Manager**: Fast password vault lookups via `keepassxc-cli` with window state resumption and dedicated shortcuts (`⌘C` password, `⌘T` TOTP, `⌘B` username, `⌘U` URL).
 - **DuckDuckGo Email (`Hyper + D`)**: Generate and copy private `@duck.com` alias addresses on demand.
 - **Clean Keyboard Mode**: Low-level keystroke suppression via `CGEventTap` for cleaning keyboards, with floating countdown HUD and safety unlocks (Hold Escape 3s or `Ctrl + U`).

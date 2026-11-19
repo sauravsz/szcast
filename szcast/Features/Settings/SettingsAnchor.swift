@@ -144,10 +144,6 @@ extension SettingsAnchor {
     static let enteAuthCommands = Self(tab: .enteAuth, title: "Commands")
     static let enteAuthAccounts = Self(tab: .enteAuth, title: "Accounts")
 
-    static let finderFileActionsFinderFileActions = Self(tab: .finderFileActions, title: "Finder File Actions")
-    static let finderFileActionsCommands = Self(tab: .finderFileActions, title: "Commands")
-    static let finderFileActionsPinned = Self(tab: .finderFileActions, title: "Pinned Destinations")
-
     static let duckDuckGoEmailDuckDuckGoEmail = Self(tab: .duckDuckGoEmail, title: "DuckDuckGo Email")
     static let duckDuckGoEmailCommands = Self(tab: .duckDuckGoEmail, title: "Commands")
     static let duckDuckGoEmailAccount = Self(tab: .duckDuckGoEmail, title: "Account & Token")
@@ -155,6 +151,8 @@ extension SettingsAnchor {
     static let keepassxcKeePassXC = Self(tab: .keepassxc, title: "KeePassXC")
     static let keepassxcCommands = Self(tab: .keepassxc, title: "Commands")
     static let keepassxcDatabase = Self(tab: .keepassxc, title: "Database & Master Password")
+
+    static let extendedFeatures = Self(tab: .extendedFeatures, title: "Extended Features")
 
     static let changelogReleases = Self(tab: .changelog, title: "Releases")
 
