@@ -196,6 +196,38 @@ private final class DirectDownloadCoordinator: NSObject, URLSessionDownloadDeleg
     }
 
     func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+        if let http = downloadTask.response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
+            if currentIndex + 1 < urls.count {
+                currentIndex += 1
+                retryCount = 0
+                self.resumeData = nil
+                startCurrent()
+                return
+            } else {
+                Task { @MainActor in
+                    self.onCompletion(.failure(NSError(domain: "DictationS1Download", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: "Download failed with HTTP \(http.statusCode)"])))
+                }
+                return
+            }
+        }
+
+        // Validate file size (s1-mini-1.0.gguf is ~462MB; anything under 10MB is corrupt or an error page)
+        if let attrs = try? FileManager.default.attributesOfItem(atPath: location.path),
+           let size = attrs[.size] as? UInt64, size < 10_000_000 {
+            if currentIndex + 1 < urls.count {
+                currentIndex += 1
+                retryCount = 0
+                self.resumeData = nil
+                startCurrent()
+                return
+            } else {
+                Task { @MainActor in
+                    self.onCompletion(.failure(NSError(domain: "DictationS1Download", code: 422, userInfo: [NSLocalizedDescriptionKey: "Downloaded model file is incomplete or invalid"])))
+                }
+                return
+            }
+        }
+
         let tempTarget = FileManager.default.temporaryDirectory.appendingPathComponent("s1-mini-\(UUID().uuidString).gguf")
         do {
             if FileManager.default.fileExists(atPath: tempTarget.path) {

@@ -77,7 +77,20 @@ struct ExtendedFeaturesSettingsView: View {
                         get: { settings.displayTweaksEnabled },
                         set: {
                             settings.displayTweaksEnabled = $0
-                            if !$0 {
+                            if $0 {
+                                DisplayTweaksService.shared.applyPercent(
+                                    displayID: settings.displayTweaksDisplayID,
+                                    red: settings.displayTweaksRed,
+                                    green: settings.displayTweaksGreen,
+                                    blue: settings.displayTweaksBlue,
+                                    blacks: settings.displayTweaksBlacks,
+                                    shadows: settings.displayTweaksShadows,
+                                    highlights: settings.displayTweaksHighlights,
+                                    whites: settings.displayTweaksWhites,
+                                    contrast: settings.displayTweaksContrast,
+                                    brightness: settings.displayTweaksBrightness
+                                )
+                            } else {
                                 DisplayTweaksService.shared.restoreGamma()
                             }
                         }

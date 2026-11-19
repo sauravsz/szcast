@@ -37,12 +37,17 @@ struct KeePassXCScreen: PaletteScreen {
         if query.isEmpty {
             return service.entries
         }
-        return service.entries.filter { entry in
+        let inMemory = service.entries.filter { entry in
             entry.title.localizedCaseInsensitiveContains(query) ||
             entry.path.localizedCaseInsensitiveContains(query) ||
             (entry.group?.localizedCaseInsensitiveContains(query) ?? false) ||
             entry.username.localizedCaseInsensitiveContains(query)
         }
+        if !inMemory.isEmpty {
+            return inMemory
+        }
+        service.filterEntries(query: query)
+        return service.filteredEntries
     }
 
     func activate(at selection: Int) {

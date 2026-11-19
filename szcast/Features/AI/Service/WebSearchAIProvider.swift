@@ -32,24 +32,29 @@ struct WebSearchAIProvider: AIProvider {
 
                     if !query.isEmpty {
                         continuation.yield(.searching(query))
-                        let results = (try? await searchService.search(
-                            query: query, provider: provider, apiKey: apiKey)) ?? []
-                        continuation.yield(.searched(query))
+                        do {
+                            let results = try await searchService.search(
+                                query: query, provider: provider, apiKey: apiKey)
+                            continuation.yield(.searched(query))
 
-                        if !results.isEmpty {
-                            let context = WebSearchContextFormatter.format(results: results, query: query)
-                            let currentInstructions = request.instructions ?? ""
-                            let combinedInstructions = currentInstructions.isEmpty
-                                ? context
-                                : currentInstructions + "\n\n" + context
+                            if !results.isEmpty {
+                                let context = WebSearchContextFormatter.format(results: results, query: query)
+                                let currentInstructions = request.instructions ?? ""
+                                let combinedInstructions = currentInstructions.isEmpty
+                                    ? context
+                                    : currentInstructions + "\n\n" + context
 
-                            augmentedRequest = AIRequest(
-                                instructions: combinedInstructions,
-                                messages: request.messages,
-                                webSearch: false,
-                                tools: request.tools,
-                                conversationID: request.conversationID
-                            )
+                                augmentedRequest = AIRequest(
+                                    instructions: combinedInstructions,
+                                    messages: request.messages,
+                                    webSearch: false,
+                                    tools: request.tools,
+                                    conversationID: request.conversationID
+                                )
+                            }
+                        } catch {
+                            continuation.yield(.searched(query))
+                            throw AIProviderError.responseFailed(error.localizedDescription)
                         }
                     }
 

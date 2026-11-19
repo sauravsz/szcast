@@ -64,8 +64,13 @@ final class KeePassXCService: Observable {
         !databasePath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
+    var hasKeyfile: Bool {
+        let kf = keyfilePath.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !kf.isEmpty && FileManager.default.fileExists(atPath: kf)
+    }
+
     var isUnlocked: Bool {
-        masterPassword != nil && !masterPassword!.isEmpty
+        (masterPassword != nil && !masterPassword!.isEmpty) || hasKeyfile
     }
 
     func resolveCliPath() -> String? {
@@ -185,8 +190,9 @@ final class KeePassXCService: Observable {
             errorMessage = String(localized: "Please configure your KeePassXC database path in Settings.")
             return
         }
-        guard let password = masterPassword, !password.isEmpty else {
-            errorMessage = String(localized: "Database is locked. Please enter your master password.")
+        let password = masterPassword ?? ""
+        guard !password.isEmpty || hasKeyfile else {
+            errorMessage = String(localized: "Database is locked. Please enter your master password or select a keyfile.")
             return
         }
 
@@ -198,10 +204,13 @@ final class KeePassXCService: Observable {
         if !kf.isEmpty && FileManager.default.fileExists(atPath: kf) {
             args.append(contentsOf: ["-k", kf])
         }
+        if password.isEmpty && hasKeyfile {
+            args.append("--no-password")
+        }
         args.append(databasePath)
 
         do {
-            let output = try await executeCli(arguments: args, input: password)
+            let output = try await executeCli(arguments: args, input: password.isEmpty ? nil : password)
             let lines = output.components(separatedBy: .newlines)
             var loaded: [KeePassXCEntry] = []
 
@@ -226,16 +235,60 @@ final class KeePassXCService: Observable {
         }
     }
 
+    func searchCli(term: String) async throws -> [KeePassXCEntry] {
+        guard isConfigured, isUnlocked else { return [] }
+        var args = ["search", "-q"]
+        let kf = keyfilePath.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !kf.isEmpty && FileManager.default.fileExists(atPath: kf) {
+            args.append(contentsOf: ["-k", kf])
+        }
+        let password = masterPassword ?? ""
+        if password.isEmpty && hasKeyfile {
+            args.append("--no-password")
+        }
+        args.append(contentsOf: [databasePath, term])
+        let output = try await executeCli(arguments: args, input: password.isEmpty ? nil : password)
+        let lines = output.components(separatedBy: .newlines)
+        var result: [KeePassXCEntry] = []
+        for line in lines {
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty, !trimmed.hasSuffix("/") else { continue }
+            if let existing = entries.first(where: { $0.path == trimmed }) {
+                result.append(existing)
+            } else {
+                let parts = trimmed.components(separatedBy: "/")
+                let title = parts.last ?? trimmed
+                let group = parts.count > 1 ? parts.dropLast().joined(separator: "/") : nil
+                result.append(KeePassXCEntry(path: trimmed, title: title, group: group))
+            }
+        }
+        return result
+    }
+
     func filterEntries(query: String) {
         let clean = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         if clean.isEmpty {
             filteredEntries = entries
         } else {
-            filteredEntries = entries.filter { entry in
+            let matched = entries.filter { entry in
                 entry.title.localizedCaseInsensitiveContains(clean) ||
                 entry.path.localizedCaseInsensitiveContains(clean) ||
                 (entry.username.localizedCaseInsensitiveContains(clean)) ||
-                (entry.group?.localizedCaseInsensitiveContains(clean) ?? false)
+                (entry.group?.localizedCaseInsensitiveContains(clean) ?? false) ||
+                (entryDetailCache[entry.path]?.username.localizedCaseInsensitiveContains(clean) ?? false)
+            }
+            filteredEntries = matched
+            if matched.isEmpty && isUnlocked {
+                Task { @MainActor [weak self] in
+                    guard let self = self else { return }
+                    if let results = try? await self.searchCli(term: query), !results.isEmpty {
+                        var combined = self.filteredEntries
+                        for r in results where !combined.contains(where: { $0.path == r.path }) {
+                            combined.append(r)
+                        }
+                        self.filteredEntries = combined
+                    }
+                }
             }
         }
     }
@@ -247,7 +300,8 @@ final class KeePassXCService: Observable {
             return cached
         }
 
-        guard let password = masterPassword else {
+        let password = masterPassword ?? ""
+        guard !password.isEmpty || hasKeyfile else {
             throw KeePassXCError.missingPassword
         }
 
@@ -256,9 +310,12 @@ final class KeePassXCService: Observable {
         if !kf.isEmpty && FileManager.default.fileExists(atPath: kf) {
             args.append(contentsOf: ["-k", kf])
         }
+        if password.isEmpty && hasKeyfile {
+            args.append("--no-password")
+        }
         args.append(contentsOf: [databasePath, entryPath])
 
-        let output = try await executeCli(arguments: args, input: password)
+        let output = try await executeCli(arguments: args, input: password.isEmpty ? nil : password)
         var entry = KeePassXCEntry(path: entryPath)
 
         for line in output.components(separatedBy: .newlines) {
@@ -279,11 +336,17 @@ final class KeePassXCService: Observable {
         }
 
         entryDetailCache[entryPath] = entry
+        if let idx = entries.firstIndex(where: { $0.path == entryPath }) {
+            entries[idx].username = entry.username
+            entries[idx].title = entry.title
+            entries[idx].url = entry.url
+        }
         return entry
     }
 
     func fetchTOTP(entryPath: String) async throws -> String {
-        guard let password = masterPassword else {
+        let password = masterPassword ?? ""
+        guard !password.isEmpty || hasKeyfile else {
             throw KeePassXCError.missingPassword
         }
 
@@ -292,9 +355,12 @@ final class KeePassXCService: Observable {
         if !kf.isEmpty && FileManager.default.fileExists(atPath: kf) {
             args.append(contentsOf: ["-k", kf])
         }
+        if password.isEmpty && hasKeyfile {
+            args.append("--no-password")
+        }
         args.append(contentsOf: [databasePath, entryPath])
 
-        let output = try await executeCli(arguments: args, input: password)
+        let output = try await executeCli(arguments: args, input: password.isEmpty ? nil : password)
         let trimmed = output.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.contains("has no TOTP set up") || trimmed.isEmpty {
             throw KeePassXCError.executionFailed(1, "No TOTP configured for \(entryPath)")
@@ -322,8 +388,7 @@ final class KeePassXCService: Observable {
                     self.onShowMessage?("No password stored for \(target.title)")
                     return
                 }
-                NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(password, forType: .string)
+                self.copyConcealed(password)
                 self.resumedEntry = fullEntry
                 self.onShowMessage?("Copied password for \(target.title)")
                 self.onHidePalette?()
@@ -338,8 +403,7 @@ final class KeePassXCService: Observable {
         Task { @MainActor in
             do {
                 let totp = try await self.fetchTOTP(entryPath: target.path)
-                NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(totp, forType: .string)
+                self.copyConcealed(totp)
                 self.resumedEntry = target
                 self.onShowMessage?("Copied TOTP code: \(totp)")
                 self.onHidePalette?()
@@ -416,5 +480,24 @@ final class KeePassXCService: Observable {
 
     func clearResumedEntry() {
         resumedEntry = nil
+    }
+
+    private func copyConcealed(_ text: String) {
+        let pb = NSPasteboard.general
+        pb.clearContents()
+        let concealed = NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType")
+        let transient = NSPasteboard.PasteboardType("org.nspasteboard.TransientType")
+        let autoGenerated = NSPasteboard.PasteboardType("org.nspasteboard.AutoGeneratedType")
+        let peterMaurer = NSPasteboard.PasteboardType("de.petermaurer.TransientPasteboardType")
+        let appleSensitive = NSPasteboard.PasteboardType("com.apple.is-sensitive")
+        let internalType = NSPasteboard.PasteboardType("com.sauravsz.szcast.internal")
+        pb.declareTypes([.string, concealed, transient, autoGenerated, peterMaurer, appleSensitive, internalType], owner: nil)
+        pb.setString(text, forType: .string)
+        pb.setData(Data(), forType: concealed)
+        pb.setData(Data(), forType: transient)
+        pb.setData(Data(), forType: autoGenerated)
+        pb.setData(Data(), forType: peterMaurer)
+        pb.setData(Data(), forType: appleSensitive)
+        pb.setData(Data(), forType: internalType)
     }
 }

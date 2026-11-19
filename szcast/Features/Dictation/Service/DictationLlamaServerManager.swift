@@ -128,7 +128,9 @@ final class DictationLlamaServerManager {
             AppPaths.caches().appendingPathComponent("Dictation/s1-mini/s1-mini-1.0.gguf")
         ]
         for url in candidates {
-            if FileManager.default.fileExists(atPath: url.path) {
+            if FileManager.default.fileExists(atPath: url.path),
+               let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
+               let size = attrs[.size] as? UInt64, size > 10_000_000 {
                 return url
             }
         }

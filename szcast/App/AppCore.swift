@@ -701,6 +701,7 @@ final class AppCore {
         textInjector.prepareForTermination()
         snippetListener.stop()
         snippetsStore.stop()
+        CleanKeyboardService.shared.stopCleaning()
         DisplayTweaksService.shared.restoreGamma()
         aiChats.reset()
         chatGPTSubscription.stop()

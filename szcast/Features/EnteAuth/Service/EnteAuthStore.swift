@@ -103,7 +103,11 @@ final class EnteAuthStore: Observable {
         let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed.lowercased().hasPrefix("otpauth://") else { return nil }
 
-        guard let components = URLComponents(string: trimmed) else { return nil }
+        let sanitized = trimmed
+            .replacingOccurrences(of: " ", with: "%20")
+            .replacingOccurrences(of: "[", with: "%5B")
+            .replacingOccurrences(of: "]", with: "%5D")
+        guard let components = URLComponents(string: sanitized) ?? URLComponents(string: trimmed) else { return nil }
         guard let host = components.host?.lowercased(), host == "totp" else { return nil }
 
         // Path contains the label: [Issuer:]Account

@@ -149,19 +149,36 @@ enum LauncherOrder {
             func passes(_ outcome: LauncherMatch.Outcome?, _ length: Int) -> Bool {
                 outcome.map { sensitivity.accepts($0, queryLength: length) } ?? false
             }
+            let isPrefixWithArgument: Bool = {
+                if !profile.title.units.isEmpty && query.latin.units.count > profile.title.units.count {
+                    if query.latin.units.starts(with: profile.title.units + [LauncherMatch.space]) {
+                        return true
+                    }
+                }
+                for alt in alternateTitles where !alt.units.isEmpty && query.typed.units.count > alt.units.count {
+                    if query.typed.units.starts(with: alt.units + [LauncherMatch.space]) {
+                        return true
+                    }
+                }
+                return false
+            }()
+
             let isMatching =
                 alias != .none || passes(titleMatch, latinLength)
                 || alternates.contains { passes($0, typedLength) } || passes(subtitleMatch, latinLength)
                 || profile.keywords.contains {
                     passes(LauncherMatch.match(query.latin, in: $0), latinLength)
                 }
+                || isPrefixWithArgument
             guard isMatching else { return nil }
 
             titleExact = titleMatch == .exact || alternates.contains { $0 == .exact }
-            title = alternates.reduce(Self.value(titleMatch)) { max($0, Self.value($1)) }
+            let baseTitle = alternates.reduce(Self.value(titleMatch)) { max($0, Self.value($1)) }
+            title = isPrefixWithArgument ? max(baseTitle, 1000) : baseTitle
             titlePrefix =
                 profile.title.units.starts(with: query.latin.units)
                 || alternateTitles.contains { $0.units.starts(with: query.typed.units) }
+                || isPrefixWithArgument
             subtitleExact = subtitleMatch == .exact
             subtitle = Self.value(subtitleMatch)
             term = Self.termHit(signals.usage.searchTerms, query.latin.units)

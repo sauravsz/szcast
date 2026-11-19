@@ -57,31 +57,35 @@ enum NoteMarkdownStyler {
                 case .image(let destination, _) = imgInline.kind,
                 let image = NoteImageCache.image(for: destination)
             {
-                let maxWidth: CGFloat = 520
-                let maxHeight: CGFloat = 360
-                let size = image.size
-                let aspect = (size.width > 0 && size.height > 0) ? (size.height / size.width) : 0.75
-                var width = min(maxWidth, max(size.width, 48))
-                var height = width * aspect
-                if height > maxHeight {
-                    height = maxHeight
-                    width = min(maxWidth, height / aspect)
+                let lineText = (text as NSString).substring(with: line.range).trimmingCharacters(in: .whitespacesAndNewlines)
+                let tagText = (text as NSString).substring(with: imgInline.range).trimmingCharacters(in: .whitespacesAndNewlines)
+                if lineText == tagText {
+                    let maxWidth: CGFloat = 520
+                    let maxHeight: CGFloat = 360
+                    let size = image.size
+                    let aspect = (size.width > 0 && size.height > 0) ? (size.height / size.width) : 0.75
+                    var width = min(maxWidth, max(size.width, 48))
+                    var height = width * aspect
+                    if height > maxHeight {
+                        height = maxHeight
+                        width = min(maxWidth, height / aspect)
+                    }
+                    let displaySize = CGSize(width: width, height: height)
+                    let totalHeight = height + 16
+                    let pStyle = NSMutableParagraphStyle()
+                    pStyle.minimumLineHeight = totalHeight
+                    pStyle.maximumLineHeight = totalHeight
+                    base[.paragraphStyle] = pStyle
+                    base[.font] = NoteMarkdownTypography.hidden
+                    base[.foregroundColor] = NSColor.clear
+                    base[.noteBlockDecoration] = decoration(
+                        .image(image, size: displaySize),
+                        fill: Theme.Colors.separator,
+                        ink: Theme.Colors.separator
+                    )
+                    runs.append((line.range, hidden))
+                    return LineStyle(base: base, runs: runs)
                 }
-                let displaySize = CGSize(width: width, height: height)
-                let totalHeight = height + 16
-                let pStyle = NSMutableParagraphStyle()
-                pStyle.minimumLineHeight = totalHeight
-                pStyle.maximumLineHeight = totalHeight
-                base[.paragraphStyle] = pStyle
-                base[.font] = NoteMarkdownTypography.hidden
-                base[.foregroundColor] = NSColor.clear
-                base[.noteBlockDecoration] = decoration(
-                    .image(image, size: displaySize),
-                    fill: Theme.Colors.separator,
-                    ink: Theme.Colors.separator
-                )
-                runs.append((line.range, hidden))
-                return LineStyle(base: base, runs: runs)
             }
         case .heading(let level):
             base[.font] = NoteMarkdownTypography.heading(level)

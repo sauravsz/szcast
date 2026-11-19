@@ -8,7 +8,9 @@ struct SettingsSidebarView: View {
     @State private var highlighted: SettingsSearchEntry.ID?
     @State private var searching = false
 
-    private var results: [SettingsSearchEntry] { SettingsSearchCatalog.results(for: query) }
+    private var results: [SettingsSearchEntry] {
+        SettingsSearchCatalog.results(for: query).filter { isTabVisible($0.tab) }
+    }
 
     private func isTabVisible(_ tab: SettingsTab) -> Bool {
         switch tab {

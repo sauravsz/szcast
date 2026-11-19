@@ -20,9 +20,13 @@ struct EnteAuthScreen: PaletteScreen {
 
         if store.accounts.isEmpty {
             let foundExport = store.findExportFile()
-            let sub = foundExport != nil
-                ? String(localized: "Found '\(foundExport!.lastPathComponent)' in Downloads! Press Return to import.")
-                : String(localized: "Place ente_auth.txt in ~/Downloads and press Return to import.")
+            let sub: String
+            if let foundExport {
+                let folder = foundExport.deletingLastPathComponent().lastPathComponent
+                sub = String(localized: "Found '\(foundExport.lastPathComponent)' in \(folder)! Press Return to import.")
+            } else {
+                sub = String(localized: "Place ente_auth.txt in ~/Downloads and press Return to import.")
+            }
             return [
                 Row(
                     id: "empty-import",
@@ -103,9 +107,8 @@ struct EnteAuthScreen: PaletteScreen {
 
         guard let acc = row.account, let info = row.tokenInfo else { return }
 
-        // Copy raw TOTP code to clipboard
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(info.currentCode, forType: .string)
+        // Copy raw TOTP code to clipboard (concealed from clipboard history)
+        Paster.copyConcealedText(info.currentCode)
 
         store.recordUsage(id: acc.id)
         core.paletteCoordinator.hidePalette()
@@ -119,12 +122,12 @@ struct EnteAuthScreen: PaletteScreen {
 
         guard let acc = row.account, let info = row.tokenInfo else { return false }
 
-        // Paste directly into frontmost app
+        // Paste directly into frontmost app with concealed markers
         let app = NSWorkspace.shared.frontmostApplication
         store.recordUsage(id: acc.id)
         core.paletteCoordinator.hidePalette()
 
-        Paster.pasteString(info.currentCode, previousApp: app) {
+        Paster.pasteString(info.currentCode, previousApp: app, concealed: true) {
             core.showMessage(String(localized: "Pasted \(acc.issuer) TOTP (\(info.currentFormatted))"), tone: .success)
         }
         return true

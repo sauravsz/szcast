@@ -275,7 +275,9 @@ final class DictationCoordinator {
             let destination = field == nil ? settings.dictationDestination : .paste
             if samples.count < 1_600 {
                 reset(cancelTranscription: false)
-                showMessage(String(localized: "No speech was recorded"), .danger)
+                if settings.dictationMode != .pushToTalk {
+                    showMessage(String(localized: "No speech was recorded"), .danger)
+                }
                 return
             }
             do {

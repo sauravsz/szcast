@@ -106,6 +106,15 @@ struct EnteAuthTests {
             expect(acc2.period == 60, "Period is 60")
         }
 
+        // URI with unencoded spaces in label and query
+        let uriSpaces = "otpauth://totp/Acme Corporation: john doe@work.com?secret=JBSWY3DPEHPK3PXP&issuer=Acme Corporation"
+        let accSpaces = EnteAuthStore.parseOTPAuthURI(uriSpaces)
+        expect(accSpaces != nil, "Parses URI with unencoded spaces")
+        if let accSpaces {
+            expect(accSpaces.issuer == "Acme Corporation", "Issuer unescapes Acme Corporation")
+            expect(accSpaces.username == "john doe@work.com", "Username unescapes john doe@work.com")
+        }
+
         // Non-totp scheme rejected
         let invalid = "otpauth://hotp/alice?secret=JBSWY3DP&counter=1"
         let accInvalid = EnteAuthStore.parseOTPAuthURI(invalid)

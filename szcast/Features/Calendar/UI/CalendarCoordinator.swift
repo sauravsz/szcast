@@ -235,12 +235,11 @@ final class CalendarCoordinator {
     }
 
     private static func entry(for meeting: MeetingEvent) -> AppEntry {
-        AppEntry(
+        let encodedID = meeting.id.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? ""
+        let url = URL(string: "szcast://meeting/\(encodedID)") ?? URL(fileURLWithPath: "/")
+        return AppEntry(
             id: meeting.entryID, name: meeting.title,
-            url: URL(
-                string: "szcast://meeting/"
-                    + (meeting.id.addingPercentEncoding(withAllowedCharacters: .alphanumerics)
-                        ?? ""))!,
+            url: url,
             bundleID: nil, kind: .meeting,
             symbolName: meeting.link?.provider.sfSymbol ?? "calendar",
             keywords: [meeting.calendarName])

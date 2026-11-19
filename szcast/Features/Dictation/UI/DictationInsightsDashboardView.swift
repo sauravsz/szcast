@@ -545,9 +545,12 @@ struct RealDictationMetrics {
         // App breakdown: group by appName
         var appWordMap: [String: Int] = [:]
         for item in items {
-            let name = (item.appName?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
-                ? item.appName!
-                : "System Input"
+            let name: String
+            if let appName = item.appName, !appName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                name = appName
+            } else {
+                name = "System Input"
+            }
             appWordMap[name, default: 0] += item.wordCount
         }
 

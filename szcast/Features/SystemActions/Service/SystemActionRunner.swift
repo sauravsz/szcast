@@ -221,6 +221,7 @@ enum SystemActionRunner {
             return SystemActionFeedback(
                 mirrored ? String(localized: "Display Mirroring On") : String(localized: "Display Mirroring Off"))
         case .cleanKeyboard:
+            guard AppCore.shared.settings.cleanKeyboardEnabled else { return nil }
             CleanKeyboardService.shared.startCleaning(duration: 60)
             return SystemActionFeedback(String(localized: "Clean Keyboard Activated"))
         }

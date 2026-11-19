@@ -228,7 +228,7 @@ final class DisplayTweaksService {
         contrast: Double,
         brightness: Double
     ) {
-        let target = (displayID != nil && displayID != 0) ? displayID! : CGMainDisplayID()
+        let targets: [CGDirectDisplayID] = (displayID != nil && displayID != 0) ? [displayID!] : enumerateDisplays().map(\.id)
         let (r, g, b) = calculateTransferTables(
             redGain: redGain,
             greenGain: greenGain,
@@ -241,15 +241,17 @@ final class DisplayTweaksService {
             brightness: brightness
         )
 
-        var redTable = r
-        var greenTable = g
-        var blueTable = b
+        for target in targets {
+            var redTable = r
+            var greenTable = g
+            var blueTable = b
 
-        let err = CGSetDisplayTransferByTable(target, 256, &redTable, &greenTable, &blueTable)
-        if err == .success {
-            isApplied = true
-        } else {
-            Self.logger.error("CGSetDisplayTransferByTable returned error: \(err.rawValue)")
+            let err = CGSetDisplayTransferByTable(target, 256, &redTable, &greenTable, &blueTable)
+            if err == .success {
+                isApplied = true
+            } else {
+                Self.logger.error("CGSetDisplayTransferByTable returned error \(err.rawValue) for display \(target)")
+            }
         }
     }
 
@@ -365,7 +367,7 @@ final class DisplayTweaksService {
     /// Apply an exact GammaSetData configuration to the hardware LUT.
     func applyGammaSet(_ set: GammaSetData, displayID: CGDirectDisplayID? = nil) {
         lastAppliedGammaSet = (set, displayID)
-        let target = (displayID != nil && displayID != 0) ? displayID! : CGMainDisplayID()
+        let targets: [CGDirectDisplayID] = (displayID != nil && displayID != 0) ? [displayID!] : enumerateDisplays().map(\.id)
 
         let blackR = Float(set.blackPointR)
         let blackG = Float(set.blackPointG)
@@ -379,27 +381,30 @@ final class DisplayTweaksService {
         let middleG = Float(set.middlePointG)
         let middleB = Float(set.middlePointB)
 
-        let formulaErr = CGSetDisplayTransferByFormula(
-            target,
-            blackR, whiteR, middleR,
-            blackG, whiteG, middleG,
-            blackB, whiteB, middleB
-        )
-
-        if formulaErr == .success {
-            isApplied = true
-            return
-        }
-
         let (tableR, tableG, tableB) = calculateGammaSetTables(set)
-        var r = tableR
-        var g = tableG
-        var b = tableB
-        let err = CGSetDisplayTransferByTable(target, 256, &r, &g, &b)
-        if err == .success {
-            isApplied = true
-        } else {
-            Self.logger.error("CGSetDisplayTransferByTable returned error: \(err.rawValue)")
+
+        for target in targets {
+            let formulaErr = CGSetDisplayTransferByFormula(
+                target,
+                blackR, whiteR, middleR,
+                blackG, whiteG, middleG,
+                blackB, whiteB, middleB
+            )
+
+            if formulaErr == .success {
+                isApplied = true
+                continue
+            }
+
+            var r = tableR
+            var g = tableG
+            var b = tableB
+            let err = CGSetDisplayTransferByTable(target, 256, &r, &g, &b)
+            if err == .success {
+                isApplied = true
+            } else {
+                Self.logger.error("CGSetDisplayTransferByTable returned error \(err.rawValue) for display \(target)")
+            }
         }
     }
 }

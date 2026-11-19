@@ -141,10 +141,15 @@ public enum URLSanitizer: Sendable {
         guard let components = URLComponents(string: urlString),
               let host = components.host?.lowercased() else { return nil }
 
+        func isValidRedirectTarget(_ target: String) -> Bool {
+            let lower = target.lowercased()
+            return lower.hasPrefix("http://") || lower.hasPrefix("https://")
+        }
+
         // Google Redirect: google.com/url?q=<target> or ?url=<target>
         if host.contains("google.") && components.path.hasSuffix("/url") {
             if let target = components.queryItems?.first(where: { $0.name == "q" || $0.name == "url" })?.value,
-               !target.isEmpty {
+               !target.isEmpty, isValidRedirectTarget(target) {
                 return target
             }
         }
@@ -152,7 +157,7 @@ public enum URLSanitizer: Sendable {
         // Slack Redirect: slack-redir.net/link?url=<target>
         if host.contains("slack-redir.net") {
             if let target = components.queryItems?.first(where: { $0.name == "url" })?.value,
-               !target.isEmpty {
+               !target.isEmpty, isValidRedirectTarget(target) {
                 return target
             }
         }
@@ -160,7 +165,7 @@ public enum URLSanitizer: Sendable {
         // Outlook SafeLinks: safelinks.protection.outlook.com/?url=<target>
         if host.contains("safelinks.protection.outlook.com") {
             if let target = components.queryItems?.first(where: { $0.name == "url" })?.value,
-               !target.isEmpty {
+               !target.isEmpty, isValidRedirectTarget(target) {
                 return target
             }
         }

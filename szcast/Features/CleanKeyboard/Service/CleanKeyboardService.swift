@@ -86,7 +86,7 @@ final class CleanKeyboardService: Observable {
 
     private func startCountdownTimer() {
         countdownTimer?.invalidate()
-        countdownTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+        let timer = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 guard let self = self, self.isCleaning else { return }
                 if self.remainingSeconds > 1 {
@@ -102,6 +102,8 @@ final class CleanKeyboardService: Observable {
                 }
             }
         }
+        RunLoop.main.add(timer, forMode: .common)
+        countdownTimer = timer
     }
 
     private func installTap() -> Bool {
@@ -171,11 +173,13 @@ final class CleanKeyboardService: Observable {
         if keyCode == 53 {
             if type == .keyDown {
                 if escapeHoldTimer == nil {
-                    escapeHoldTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { [weak self] _ in
+                    let timer = Timer(timeInterval: 3.0, repeats: false) { [weak self] _ in
                         Task { @MainActor in
                             self?.stopCleaning()
                         }
                     }
+                    RunLoop.main.add(timer, forMode: .common)
+                    escapeHoldTimer = timer
                 }
             } else if type == .keyUp {
                 escapeHoldTimer?.invalidate()
