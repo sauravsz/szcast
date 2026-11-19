@@ -1008,6 +1008,7 @@ final class AppCore {
         appIndex.setCommandsVisible([.generateDuckAddress], settings.duckDuckGoEmailEnabled)
         appIndex.setCommandsVisible([.cleanKeyboard], settings.cleanKeyboardEnabled)
         calendarCoordinator.applyEnabled()
+        appleShortcutCoordinator.refresh()
     }
 
     // MARK: - Settings file

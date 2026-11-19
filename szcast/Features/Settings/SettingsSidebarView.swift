@@ -20,6 +20,7 @@ struct SettingsSidebarView: View {
         case .displayTweaks: return settings.displayTweaksEnabled
         case .calendar: return settings.calendarEnabled
         case .cleanKeyboard: return settings.cleanKeyboardEnabled
+        case .appleShortcuts: return settings.appleShortcutsEnabled
         default: return true
         }
     }

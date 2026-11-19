@@ -219,10 +219,11 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
 
 - **Core vs Extended Features Architecture & Settings Simplification**:
   - Restructured Settings taxonomy into 4 clean sections: `.general`, `.coreFeatures`, `.extendedFeatures`, and `.systemAndAbout`.
-  - Core Features: Dictation, Notes, General, Applications, Commands & HotKeys, Quicklinks, Clipboard, Snippets, File Search, AI, Window Management, Emoji, System Actions, System Settings.
-  - Extended Features (6 modular capabilities): Ente Auth, KeePassXC, DuckDuckGo Mail, Display Tweaks, Calendar, Clean Keyboard.
+  - General: General, Permissions, Navigation, System Settings, System Actions.
+  - Core Features (sorted alphabetically by name): AI, Applications, Clipboard, Commands & HotKeys, Dictation, Emoji & Symbols, Fallbacks, File Search, Notes, Quick Actions, Quicklinks, Snippets, Window Management.
+  - Extended Features (7 modular capabilities): Ente Auth, KeePassXC, DuckDuckGo Mail, Display Tweaks, Calendar, Clean Keyboard, Apple Shortcuts.
   - Managed via dedicated `ExtendedFeaturesSettingsView` with master toggles and quick navigation to feature panes.
-  - Smart one-time migration (`AppSettings.runExtendedFeaturesMigration` via `extendedFeaturesV1Migrated` key): fresh installs default all extended features to OFF; existing users with configured accounts/credentials/authorizations automatically keep them ON. Future toggling by the user is preserved and never reset on app updates. Dynamic sidebar filtering conditionally displays active tabs.
+  - Smart one-time migration (`AppSettings.runExtendedFeaturesMigration` via `extendedFeaturesV1Migrated` key): fresh installs default extended features to OFF; existing users with configured accounts/credentials/authorizations automatically keep them ON. Future toggling by the user is preserved and never reset on app updates. Dynamic sidebar filtering conditionally displays active tabs.
   - Deep-link and command gating: opening an un-enabled extended feature screen or hotkey is cleanly inhibited.
 
 - **Removal of Liquid Glass UI**:

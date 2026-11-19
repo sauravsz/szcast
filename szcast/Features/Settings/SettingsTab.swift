@@ -135,18 +135,27 @@ enum SettingsSection: CaseIterable, Identifiable {
     var tabs: [SettingsTab] {
         switch self {
         case .general:
-            return [.general, .permissions, .navigation]
+            return [.general, .permissions, .navigation, .systemSettings, .systemActions]
         case .coreFeatures:
             return [
-                .dictation, .notes, .ai, .quickActions,
-                .clipboard, .snippets, .fileSearch, .windowManagement,
-                .applications, .commands, .quicklinks, .appleShortcuts, .fallbacks,
-                .emoji, .systemActions, .systemSettings
+                .ai,
+                .applications,
+                .clipboard,
+                .commands,
+                .dictation,
+                .emoji,
+                .fallbacks,
+                .fileSearch,
+                .notes,
+                .quickActions,
+                .quicklinks,
+                .snippets,
+                .windowManagement
             ]
         case .extendedFeatures:
             return [
                 .extendedFeatures, .enteAuth, .keepassxc, .duckDuckGoEmail,
-                .displayTweaks, .calendar, .cleanKeyboard
+                .displayTweaks, .calendar, .cleanKeyboard, .appleShortcuts
             ]
         case .systemAndAbout:
             return [.extensions, .backup, .changelog, .about]

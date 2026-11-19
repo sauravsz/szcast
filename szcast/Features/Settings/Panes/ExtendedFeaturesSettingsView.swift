@@ -127,6 +127,21 @@ struct ExtendedFeaturesSettingsView: View {
                     ),
                     targetTab: .cleanKeyboard
                 )
+
+                // 7. Apple Shortcuts
+                featureRow(
+                    title: "Apple Shortcuts",
+                    subtitle: "Run Siri and Shortcuts app automations directly from the launcher.",
+                    systemImage: "square.2.layers.3d",
+                    isOn: Binding(
+                        get: { settings.appleShortcutsEnabled },
+                        set: {
+                            settings.appleShortcutsEnabled = $0
+                            core.appleShortcutCoordinator.refresh()
+                        }
+                    ),
+                    targetTab: .appleShortcuts
+                )
             }
         }
         .formStyle(.grouped)
