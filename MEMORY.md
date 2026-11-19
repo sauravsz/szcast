@@ -232,7 +232,7 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - Completely removed `szcast/Features/FinderFileActions/`, its models, service, settings, and UI in favor of external szcast extension.
 
 ## Active State & Next Steps
-- **Active State**: Installed and running at `/Applications/szcast.app`. Release v1.1.3 published on GitHub; 131/131 test harnesses pass.
+- **Active State**: Installed and running at `/Applications/szcast.app` (v1.1.4). Release v1.1.4 live on GitHub and deployed to Vercel (szcast.vercel.app); all 130 test harnesses pass.
 - **Immediate Next Steps**:
   1. Test long continuous dictation (5+ minutes) in real-world workflows across Hindi and Bengali models.
   2. Perform weekly upstream radar audit (`./Scripts/upstream-radar.sh`).
