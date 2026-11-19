@@ -21,7 +21,12 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
 
 ## Build / verify (macOS 27, Xcode 27.2)
 - `xcodebuild -project szcast.xcodeproj -scheme Szcast -configuration Debug build`
-- `Scripts/run-tests.sh` — all 130 harnesses pass. `Scripts/build-dmg.sh` → `build/szcast-1.1.2.dmg`; needs the `szcast Self-Signed` keychain identity (already created; without it Accessibility/TCC grants reset each build).
+- `Scripts/run-tests.sh` — all 130 harnesses pass. `Scripts/build-dmg.sh` → `build/szcast-1.1.4.dmg`; needs the `szcast Self-Signed` keychain identity.
+
+- **Release v1.1.4**:
+  - Full codebase audit defect fixes: clipboard concealment markers across KeePassXC and Ente Auth to avoid history leaks, zero-error Push-to-Talk sub-100ms cancellation, safe unwrap bounds in Calendar/Insights/Ente, RunLoop timer modes in Clean Keyboard, safe HTTP & file size checks for S1 models, and scheme validation in URLSanitizer.
+  - Settings Taxonomy Reorganization: System Settings & Actions moved to General; Core Features alphabetically ordered; Apple Shortcuts moved to Extended Features; Extended Features pane & sidebar dynamically sorted alphabetically by feature title with `.extendedFeatures` Hub pinned at the top.
+  - Release binary built and deployed to `/Applications/szcast.app` reporting version 1.1.4.
 
 - **Release v1.1.3**:
   - Indic Speech Suite & Direct Romanization: Integrated 4 dedicated Indic neural speech models across Dictation Settings:
