@@ -23,52 +23,52 @@ struct ExtendedFeaturesSettingsView: View {
             }
 
             Section("Available Integrations") {
-                // 1. Ente Auth
+                // 1. Apple Shortcuts
                 featureRow(
-                    title: "Ente Auth (2FA)",
-                    subtitle: "Offline RFC 6238 TOTP authenticator with instant code generation.",
-                    systemImage: "key.fill",
+                    title: "Apple Shortcuts",
+                    subtitle: "Run Siri and Shortcuts app automations directly from the launcher.",
+                    systemImage: "square.2.layers.3d",
                     isOn: Binding(
-                        get: { settings.enteAuthEnabled },
+                        get: { settings.appleShortcutsEnabled },
                         set: {
-                            settings.enteAuthEnabled = $0
+                            settings.appleShortcutsEnabled = $0
+                            core.appleShortcutCoordinator.refresh()
+                        }
+                    ),
+                    targetTab: .appleShortcuts
+                )
+
+                // 2. Calendar & Meetings
+                featureRow(
+                    title: "Calendar & Meetings",
+                    subtitle: "Menu bar countdown, schedule browser, and one-click meeting joining.",
+                    systemImage: "calendar",
+                    isOn: Binding(
+                        get: { settings.calendarEnabled },
+                        set: {
+                            settings.calendarEnabled = $0
+                            core.calendarCoordinator.applyEnabled()
+                        }
+                    ),
+                    targetTab: .calendar
+                )
+
+                // 3. Clean Keyboard Mode
+                featureRow(
+                    title: "Clean Keyboard Mode",
+                    subtitle: "Temporarily locks all keyboard inputs so keys can be safely wiped down.",
+                    systemImage: "keyboard",
+                    isOn: Binding(
+                        get: { settings.cleanKeyboardEnabled },
+                        set: {
+                            settings.cleanKeyboardEnabled = $0
                             core.applyExtendedFeaturesPresence()
                         }
                     ),
-                    targetTab: .enteAuth
+                    targetTab: .cleanKeyboard
                 )
 
-                // 2. KeePassXC
-                featureRow(
-                    title: "KeePassXC Passwords",
-                    subtitle: "Offline password database search and autofill via KeePassXC CLI.",
-                    systemImage: "lock.fill",
-                    isOn: Binding(
-                        get: { settings.keepassxcEnabled },
-                        set: {
-                            settings.keepassxcEnabled = $0
-                            core.applyExtendedFeaturesPresence()
-                        }
-                    ),
-                    targetTab: .keepassxc
-                )
-
-                // 3. DuckDuckGo Email Protection
-                featureRow(
-                    title: "DuckDuckGo Email",
-                    subtitle: "Generate disposable private email forwarding aliases on demand.",
-                    systemImage: "envelope.badge.shield.half.filled",
-                    isOn: Binding(
-                        get: { settings.duckDuckGoEmailEnabled },
-                        set: {
-                            settings.duckDuckGoEmailEnabled = $0
-                            core.applyExtendedFeaturesPresence()
-                        }
-                    ),
-                    targetTab: .duckDuckGoEmail
-                )
-
-                // 4. Display Tweaks
+                // 4. Display Tweaks & Gamma Control
                 featureRow(
                     title: "Display Tweaks & Gamma Control",
                     subtitle: "Direct GPU transfer curves, 3-point calibration, and OLED contrast tuning.",
@@ -98,49 +98,49 @@ struct ExtendedFeaturesSettingsView: View {
                     targetTab: .displayTweaks
                 )
 
-                // 5. Calendar
+                // 5. DuckDuckGo Email
                 featureRow(
-                    title: "Calendar & Meetings",
-                    subtitle: "Menu bar countdown, schedule browser, and one-click meeting joining.",
-                    systemImage: "calendar",
+                    title: "DuckDuckGo Email",
+                    subtitle: "Generate disposable private email forwarding aliases on demand.",
+                    systemImage: "envelope.badge.shield.half.filled",
                     isOn: Binding(
-                        get: { settings.calendarEnabled },
+                        get: { settings.duckDuckGoEmailEnabled },
                         set: {
-                            settings.calendarEnabled = $0
-                            core.calendarCoordinator.applyEnabled()
-                        }
-                    ),
-                    targetTab: .calendar
-                )
-
-                // 6. Clean Keyboard
-                featureRow(
-                    title: "Clean Keyboard Mode",
-                    subtitle: "Temporarily locks all keyboard inputs so keys can be safely wiped down.",
-                    systemImage: "keyboard",
-                    isOn: Binding(
-                        get: { settings.cleanKeyboardEnabled },
-                        set: {
-                            settings.cleanKeyboardEnabled = $0
+                            settings.duckDuckGoEmailEnabled = $0
                             core.applyExtendedFeaturesPresence()
                         }
                     ),
-                    targetTab: .cleanKeyboard
+                    targetTab: .duckDuckGoEmail
                 )
 
-                // 7. Apple Shortcuts
+                // 6. Ente Auth (2FA)
                 featureRow(
-                    title: "Apple Shortcuts",
-                    subtitle: "Run Siri and Shortcuts app automations directly from the launcher.",
-                    systemImage: "square.2.layers.3d",
+                    title: "Ente Auth (2FA)",
+                    subtitle: "Offline RFC 6238 TOTP authenticator with instant code generation.",
+                    systemImage: "key.fill",
                     isOn: Binding(
-                        get: { settings.appleShortcutsEnabled },
+                        get: { settings.enteAuthEnabled },
                         set: {
-                            settings.appleShortcutsEnabled = $0
-                            core.appleShortcutCoordinator.refresh()
+                            settings.enteAuthEnabled = $0
+                            core.applyExtendedFeaturesPresence()
                         }
                     ),
-                    targetTab: .appleShortcuts
+                    targetTab: .enteAuth
+                )
+
+                // 7. KeePassXC Passwords
+                featureRow(
+                    title: "KeePassXC Passwords",
+                    subtitle: "Offline password database search and autofill via KeePassXC CLI.",
+                    systemImage: "lock.fill",
+                    isOn: Binding(
+                        get: { settings.keepassxcEnabled },
+                        set: {
+                            settings.keepassxcEnabled = $0
+                            core.applyExtendedFeaturesPresence()
+                        }
+                    ),
+                    targetTab: .keepassxc
                 )
             }
         }

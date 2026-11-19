@@ -154,8 +154,14 @@ enum SettingsSection: CaseIterable, Identifiable {
             ]
         case .extendedFeatures:
             return [
-                .extendedFeatures, .enteAuth, .keepassxc, .duckDuckGoEmail,
-                .displayTweaks, .calendar, .cleanKeyboard, .appleShortcuts
+                .extendedFeatures,
+                .appleShortcuts,
+                .calendar,
+                .cleanKeyboard,
+                .displayTweaks,
+                .duckDuckGoEmail,
+                .enteAuth,
+                .keepassxc
             ]
         case .systemAndAbout:
             return [.extensions, .backup, .changelog, .about]

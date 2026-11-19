@@ -41,7 +41,17 @@ struct SettingsSidebarView: View {
     private var browse: some View {
         List(selection: selection) {
             ForEach(SettingsSection.allCases) { section in
-                let visibleTabs = section.tabs.filter(isTabVisible)
+                let visibleTabs: [SettingsTab] = {
+                    let filtered = section.tabs.filter(isTabVisible)
+                    if section == .extendedFeatures {
+                        let hub = filtered.filter { $0 == .extendedFeatures }
+                        let rest = filtered.filter { $0 != .extendedFeatures }.sorted {
+                            $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
+                        }
+                        return hub + rest
+                    }
+                    return filtered
+                }()
                 if !visibleTabs.isEmpty {
                     Section(section.title) {
                         ForEach(visibleTabs) { tab in
