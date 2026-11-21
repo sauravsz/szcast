@@ -100,6 +100,14 @@ private struct SnippetRow: View {
             Text(record.snippet.name)
                 .font(metrics.typography.rowTitle)
                 .lineLimit(1)
+            let excerpt = SnippetSearch.excerpt(for: record.snippet.text)
+            if !excerpt.isEmpty {
+                Text(excerpt)
+                    .font(metrics.typography.rowTrailing)
+                    .foregroundStyle(Theme.Colors.textTertiary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
             Spacer(minLength: metrics.spacing.lg)
             if let folder = record.snippet.folder, !folder.isEmpty {
                 Text(folder)

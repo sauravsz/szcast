@@ -40,10 +40,101 @@ struct ChangelogRelease: Identifiable, Sendable {
 enum ChangelogData {
     static let releases: [ChangelogRelease] = [
         ChangelogRelease(
+            id: "1.1.5",
+            version: "1.1.5",
+            date: "November 21, 2026",
+            isLatest: true,
+            summary: "Comprehensive UI/UX modernization suite: Stats system hardware monitors, Raycast-parity Emoji & Symbols, Side-by-Side Diff Inspector, Developer Previews, Category Scoping, and Deep Snippet Body Search.",
+            categories: [
+                ChangelogCategory(
+                    name: "Hardware Telemetry & Menu Bar Monitors",
+                    icon: "cpu",
+                    items: [
+                        "Integrated native Stats engine monitoring CPU usage, RAM allocation, Disk capacity, Battery health, and Network throughput.",
+                        "Interactive 30-sample quadratic Bezier sparkline graphs in the Stats Dashboard with real-time hardware telemetry.",
+                        "Individual togglable menu bar status items for CPU, RAM, Disk, and Network with configurable update intervals."
+                    ]
+                ),
+                ChangelogCategory(
+                    name: "Raycast-Parity Emoji & Symbols",
+                    icon: "face.smiling",
+                    items: [
+                        "Replaced legacy emoji picker with full Raycast feature parity: semantic search across 1,800+ Unicode glyphs.",
+                        "Custom search keywords persisted in user storage via ⌘E.",
+                        "Inline colon autocomplete (:) directly inside text fields, tone modifiers (⌥⌘C / ⌥⌘V), and grid zooming (⌘- / ⌘+ / ⌘0)."
+                    ]
+                ),
+                ChangelogCategory(
+                    name: "Productivity & Developer Previews",
+                    icon: "wrench.and.screwdriver",
+                    items: [
+                        "Interactive Text Transformer with 15+ conversion formats, live character/word/byte metrics, and Side-by-Side Diff Inspector (⌘D).",
+                        "Rich developer previews with syntax highlighting and line number gutters for clipboard code snippets.",
+                        "Interactive Color Swatch preview card with one-click Hex, RGBA, HSL, and NSColor copy pills."
+                    ]
+                ),
+                ChangelogCategory(
+                    name: "Deep Snippet Body Search & Excerpt Previews",
+                    icon: "text.magnifyingglass",
+                    items: [
+                        "Deep multi-term search across snippet body text, keywords, and folders with word-boundary weighting (without loose fuzzy matches).",
+                        "Direct phrase, keyword, and Unicode symbol matching across multi-line code blocks and templates.",
+                        "Clean whitespace-normalized single-line body excerpt previews inside the Snippets library list."
+                    ]
+                ),
+                ChangelogCategory(
+                    name: "Ergonomics & Tactile Feedback",
+                    icon: "hand.tap",
+                    items: [
+                        "Launcher category scope filter chips: All, Apps, Commands, Quicklinks, Snippets, Files, Actions.",
+                        "Structured split Action Panel (⌘K) with direct AI code block injection ('Insert at Cursor' and 'Run in Terminal').",
+                        "Tactile haptic feedback and animated checkmark completion pulse on speech dictation finish."
+                    ]
+                )
+            ]
+        ),
+        ChangelogRelease(
+            id: "1.1.4",
+            version: "1.1.4",
+            date: "November 19, 2026",
+            isLatest: false,
+            summary: "Codebase resilience and hardening overhaul: sensitive credential concealment across KeePassXC and Ente Auth, zero-error Push-to-Talk cancellation, Settings taxonomy reorganization, and RunLoop timer protection.",
+            categories: [
+                ChangelogCategory(
+                    name: "Privacy & Sensitive Pasteboard Concealment",
+                    icon: "lock.shield",
+                    items: [
+                        "Added pasteboard concealment markers (org.nspasteboard.ConcealedType, TransientType) for KeePassXC and Ente Auth passwords and TOTP codes to prevent leakage into unencrypted SQLite clipboard history.",
+                        "URLSanitizer redirect target scheme validation enforcing http:// and https:// prefix checks to prevent malicious redirects.",
+                        "S1-mini download integrity verification checking HTTP 200 response codes and minimum file sizes (>10MB) before installation."
+                    ]
+                ),
+                ChangelogCategory(
+                    name: "Settings Taxonomy & Organization",
+                    icon: "slider.horizontal.3",
+                    items: [
+                        "Restructured Settings into 4 clean sections: General, Core Features, Extended Features Hub, and System & About.",
+                        "Core Features sorted alphabetically: AI, Applications, Clipboard, Commands, Dictation, Emoji & Symbols, Fallbacks, File Search, Notes, Quick Actions, Quicklinks, Snippets, Window Management.",
+                        "Moved Apple Shortcuts to Extended Features and System Settings & Actions to General.",
+                        "Persistent migration logic for modular Extended Features gating with dynamic sidebar filtering."
+                    ]
+                ),
+                ChangelogCategory(
+                    name: "Stability & Concurrency Hardening",
+                    icon: "checkmark.shield",
+                    items: [
+                        "Suppressed false-alarm error alerts on rapid modifier tap cancellations under 100ms in Push-to-Talk dictation mode.",
+                        "Scheduled Clean Keyboard countdown and unlock timers in RunLoop.main .common modes so mouse tracking does not stall unlock sequences.",
+                        "Eliminated force unwraps across Calendar meeting URLs, Ente Auth candidate directories, and Dictation Insights application breakdown."
+                    ]
+                )
+            ]
+        ),
+        ChangelogRelease(
             id: "1.1.3",
             version: "1.1.3",
             date: "November 17, 2026",
-            isLatest: true,
+            isLatest: false,
             summary: "Indic Speech Recognition Suite featuring Whisper-Hindi2Hinglish-Apex, Indic-Transcribe-Flex, SraVaani-1.0 (65 languages), SraVaani-0.5-live, and native Bengali language support with zero impact on S1-mini cleanup latency.",
             categories: [
                 ChangelogCategory(
@@ -405,6 +496,10 @@ struct ChangelogSettingsView: View {
 
     private let filterOptions = ["All", "v1.1", "v1.0"]
 
+    private var currentAppVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ChangelogData.releases.first?.version ?? "1.1.5"
+    }
+
     private var filteredReleases: [ChangelogRelease] {
         ChangelogData.releases.filter { release in
             // Filter by prefix
@@ -436,6 +531,7 @@ struct ChangelogSettingsView: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
                 headerView
                 searchAndFilterBar
+                    .settingsAnchor(.changelogReleases)
 
                 if filteredReleases.isEmpty {
                     emptyStateView
@@ -472,7 +568,7 @@ struct ChangelogSettingsView: View {
                 HStack(spacing: Theme.Spacing.sm) {
                     Text("Changelog")
                         .font(.system(size: 22, weight: .bold))
-                    Text("v1.1.1")
+                    Text("v\(currentAppVersion)")
                         .font(.caption.monospacedDigit().weight(.semibold))
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 6)
@@ -548,13 +644,14 @@ struct ChangelogSettingsView: View {
     // MARK: - Release Card
 
     private func releaseCard(for release: ChangelogRelease) -> some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+        let isCurrent = release.version == currentAppVersion || (release.isLatest && currentAppVersion.isEmpty)
+        return VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             // Card Top Row
             HStack(alignment: .center, spacing: Theme.Spacing.md) {
                 HStack(spacing: 8) {
                     Text("v\(release.version)")
                         .font(.system(size: 16, weight: .bold, design: .monospaced))
-                    if release.isLatest {
+                    if isCurrent {
                         Text("CURRENT")
                             .font(.system(size: 10, weight: .bold))
                             .foregroundStyle(Color.green)

@@ -154,6 +154,12 @@ public final class WeatherService {
                 isFahrenheit: useFahrenheit
             )
 
+            if cache.count >= 50 {
+                let oldest = cache.sorted { $0.value.timestamp < $1.value.timestamp }.prefix(10)
+                for entry in oldest {
+                    cache.removeValue(forKey: entry.key)
+                }
+            }
             cache[key] = (result, Date())
             activeResult = result
         } catch {

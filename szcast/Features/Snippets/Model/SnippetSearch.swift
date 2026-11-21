@@ -21,6 +21,15 @@ enum SnippetSearch {
         }
     }
 
+    /// Extracts a single-line clean excerpt from snippet body for list row previews.
+    static func excerpt(for text: String) -> String {
+        let lines = text.components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        guard let first = lines.first else { return "" }
+        return first.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+    }
+
     /// Ranks a collection of stored snippets against a search query.
     /// Pinned items remain in the pinned section, sorted by relevance within pinned;
     /// unpinned items are sorted by relevance within unpinned.
@@ -48,67 +57,75 @@ enum SnippetSearch {
         return pinned + unpinned
     }
 
-    /// Computes a relevance score for a snippet against a query, or returns nil if it doesn't match.
+    /// Computes a relevance score for a snippet against a query without fuzzy matching.
+    /// Matches strictly via exact substring, prefix, word boundary, or full phrase matches.
+    /// Non-contiguous fuzzy subsequence matching is strictly rejected.
     static func scoreSnippet(_ snippet: Snippet, for query: Query) -> Int? {
         guard !query.isEmpty else { return 0 }
 
-        // 1. Direct match against snippet name (highest priority)
-        if let nameMatch = FuzzyMatch.match(query: query.raw, candidate: snippet.name) {
-            let baseScore: Int
-            switch nameMatch.tier {
-            case .exact: baseScore = 3_000_000
-            case .prefix: baseScore = 2_600_000
-            case .wordStart: baseScore = 2_300_000
-            case .substring: baseScore = 2_000_000
-            case .subsequence: baseScore = 1_600_000
-            }
-            return baseScore + nameMatch.score
+        // 1. Direct match against snippet name (exact, prefix, wordStart, substring - no fuzzy subsequence)
+        if let nameMatch = matchSubstring(query: query.raw, in: snippet.name) {
+            return 2_000_000 + nameMatch
         }
 
         // 2. Direct match against snippet keyword
         if let keyword = snippet.keyword, !keyword.isEmpty,
-           let kwMatch = FuzzyMatch.match(query: query.raw, candidate: keyword) {
-            let baseScore: Int
-            switch kwMatch.tier {
-            case .exact: baseScore = 2_900_000
-            case .prefix: baseScore = 2_500_000
-            case .wordStart: baseScore = 2_200_000
-            case .substring: baseScore = 1_900_000
-            case .subsequence: baseScore = 1_500_000
-            }
-            return baseScore + kwMatch.score
+           let kwMatch = matchSubstring(query: query.raw, in: keyword) {
+            return 1_900_000 + kwMatch
         }
 
         // 3. Exact full query contained in snippet content body
-        if snippet.text.range(of: query.raw, options: [.caseInsensitive, .diacriticInsensitive]) != nil {
-            let lengthDamp = min(snippet.text.count / 20, 50_000)
-            return 1_400_000 - lengthDamp
+        if let contentMatch = matchBody(query: query.raw, in: snippet.text) {
+            return 1_500_000 + contentMatch
         }
 
         // 4. Direct match against snippet folder
         if let folder = snippet.folder, !folder.isEmpty,
-           let folderMatch = FuzzyMatch.match(query: query.raw, candidate: folder) {
-            let baseScore: Int
-            switch folderMatch.tier {
-            case .exact: baseScore = 1_300_000
-            case .prefix: baseScore = 1_200_000
-            case .wordStart: baseScore = 1_100_000
-            case .substring: baseScore = 1_000_000
-            case .subsequence: baseScore = 900_000
-            }
-            return baseScore + folderMatch.score
+           let folderMatch = matchSubstring(query: query.raw, in: folder) {
+            return 1_200_000 + folderMatch
         }
 
-        // 5. Multi-term matching: all terms must match across name, keyword, folder, or content body
+        // 5. Multi-term matching: all terms must match as substrings somewhere in the snippet
         if !query.isSingleTerm {
-            return scoreMultiTerm(snippet, terms: query.terms)
+            if let multiScore = scoreMultiTerm(snippet, terms: query.terms) {
+                return multiScore
+            }
         }
 
-        // 6. Single term fuzzy match against words in snippet content body
-        return scoreContentFuzzy(snippet.text, term: query.raw)
+        return nil
     }
 
-    /// Evaluates multi-term queries where every term must match somewhere in the snippet.
+    /// Matches a query term against a string target strictly via exact, prefix, wordStart, or substring.
+    /// Rejects any non-contiguous / fuzzy subsequence matching.
+    static func matchSubstring(query: String, in target: String) -> Int? {
+        guard let match = FuzzyMatch.match(query: query, candidate: target),
+              match.tier != .subsequence else {
+            return nil
+        }
+        switch match.tier {
+        case .exact: return 500_000
+        case .prefix: return 400_000 + match.score
+        case .wordStart: return 300_000 + match.score
+        case .substring: return 200_000 + match.score
+        case .subsequence: return nil
+        }
+    }
+
+    /// Checks if a query is contained as an exact substring in snippet body text,
+    /// returning a score boosted by word-boundary placement and penalized by excessive length.
+    static func matchBody(query: String, in text: String) -> Int? {
+        guard let range = text.range(of: query, options: [.caseInsensitive, .diacriticInsensitive]) else {
+            return nil
+        }
+        let atBoundary = range.lowerBound == text.startIndex
+            || text[text.index(before: range.lowerBound)].isWhitespace
+            || !text[text.index(before: range.lowerBound)].isLetter
+        let lengthDamp = min(text.count / 30, 40_000)
+        let boundaryBonus = atBoundary ? 50_000 : 0
+        return 100_000 + boundaryBonus - lengthDamp
+    }
+
+    /// Evaluates multi-term queries where every term must match as an exact substring somewhere in the snippet.
     private static func scoreMultiTerm(_ snippet: Snippet, terms: [String]) -> Int? {
         var totalScore = 0
         var nameHits = 0
@@ -116,44 +133,38 @@ enum SnippetSearch {
         var contentHits = 0
         var folderHits = 0
 
-        let contentWords = extractContentWords(snippet.text)
-
         for term in terms {
             var matchedTerm = false
             var bestTermScore = 0
 
             // Try name
-            if let match = FuzzyMatch.match(query: term, candidate: snippet.name) {
+            if let nameScore = matchSubstring(query: term, in: snippet.name) {
                 matchedTerm = true
                 nameHits += 1
-                bestTermScore = max(bestTermScore, match.score + (match.tier == .exact ? 50_000 : 20_000))
+                bestTermScore = max(bestTermScore, nameScore + 50_000)
             }
 
             // Try keyword
             if let keyword = snippet.keyword, !keyword.isEmpty,
-               let match = FuzzyMatch.match(query: term, candidate: keyword) {
+               let kwScore = matchSubstring(query: term, in: keyword) {
                 matchedTerm = true
                 keywordHits += 1
-                bestTermScore = max(bestTermScore, match.score + (match.tier == .exact ? 40_000 : 15_000))
+                bestTermScore = max(bestTermScore, kwScore + 40_000)
             }
 
-            // Try content substring
-            if snippet.text.range(of: term, options: [.caseInsensitive, .diacriticInsensitive]) != nil {
+            // Try content body substring
+            if let bodyScore = matchBody(query: term, in: snippet.text) {
                 matchedTerm = true
                 contentHits += 1
-                bestTermScore = max(bestTermScore, 10_000)
-            } else if let wordScore = matchAnyWord(in: contentWords, term: term) {
-                matchedTerm = true
-                contentHits += 1
-                bestTermScore = max(bestTermScore, wordScore)
+                bestTermScore = max(bestTermScore, bodyScore + 20_000)
             }
 
             // Try folder
             if let folder = snippet.folder, !folder.isEmpty,
-               let match = FuzzyMatch.match(query: term, candidate: folder) {
+               let folderScore = matchSubstring(query: term, in: folder) {
                 matchedTerm = true
                 folderHits += 1
-                bestTermScore = max(bestTermScore, match.score + 5_000)
+                bestTermScore = max(bestTermScore, folderScore + 10_000)
             }
 
             guard matchedTerm else { return nil }
@@ -162,15 +173,17 @@ enum SnippetSearch {
 
         let band: Int
         if nameHits == terms.count {
-            band = 2_200_000
-        } else if nameHits > 0 && keywordHits > 0 {
-            band = 2_000_000
-        } else if nameHits > 0 {
             band = 1_800_000
-        } else if keywordHits > 0 {
+        } else if nameHits > 0 && keywordHits > 0 {
             band = 1_600_000
-        } else if contentHits > 0 {
+        } else if nameHits > 0 && contentHits > 0 {
+            band = 1_400_000
+        } else if keywordHits > 0 && contentHits > 0 {
+            band = 1_300_000
+        } else if contentHits == terms.count {
             band = 1_100_000
+        } else if contentHits > 0 {
+            band = 1_000_000
         } else {
             band = 800_000
         }
@@ -178,52 +191,44 @@ enum SnippetSearch {
         return band + totalScore
     }
 
-    /// Evaluates fuzzy matching against words in snippet content.
-    private static func scoreContentFuzzy(_ text: String, term: String) -> Int? {
-        guard term.count >= 2 else { return nil }
-        let words = extractContentWords(text)
-        guard let bestWordScore = matchAnyWord(in: words, term: term) else { return nil }
-        return 700_000 + bestWordScore
+    /// Extracts non-empty lines trimmed for inspection.
+    static func extractLines(_ text: String) -> [String] {
+        text.components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
     }
 
-    /// Extracts distinct alphanumeric words from text for indexing and fuzzy matching.
-    static func extractContentWords(_ text: String) -> [String] {
+    /// Extracts rich tokens from text.
+    static func extractContentTokens(_ text: String) -> [String] {
         var result: [String] = []
         var seen = Set<String>()
-        let components = text.components(separatedBy: CharacterSet.alphanumerics.inverted)
-        for comp in components {
-            let trimmed = comp.trimmingCharacters(in: .whitespacesAndNewlines)
-            if trimmed.count >= 2 {
-                let lower = trimmed.lowercased()
-                if seen.insert(lower).inserted {
-                    result.append(lower)
-                    if result.count >= 150 { break }
-                }
+
+        func add(_ s: String) {
+            let trimmed = s.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard trimmed.count >= 2 else { return }
+            let lower = trimmed.lowercased()
+            if seen.insert(lower).inserted {
+                result.append(lower)
             }
         }
+
+        let whitespaceTokens = text.split(whereSeparator: \Character.isWhitespace)
+        for token in whitespaceTokens {
+            add(String(token))
+            if seen.count >= 600 { break }
+        }
+
+        let components = text.components(separatedBy: CharacterSet.alphanumerics.inverted)
+        for comp in components {
+            add(comp)
+            if seen.count >= 600 { break }
+        }
+
         return result
     }
 
-    private static func matchAnyWord(in words: [String], term: String) -> Int? {
-        var best: Int?
-        for word in words {
-            if let match = FuzzyMatch.match(query: term, candidate: word) {
-                switch match.tier {
-                case .exact:
-                    best = max(best ?? 0, 15_000)
-                case .prefix:
-                    best = max(best ?? 0, 10_000 + match.score)
-                case .wordStart:
-                    best = max(best ?? 0, 8_000 + match.score)
-                case .substring:
-                    best = max(best ?? 0, 5_000 + match.score)
-                case .subsequence:
-                    if match.score >= 8 {
-                        best = max(best ?? 0, match.score)
-                    }
-                }
-            }
-        }
-        return best
+    /// Backward-compatible alias for existing callers/tests.
+    static func extractContentWords(_ text: String) -> [String] {
+        extractContentTokens(text)
     }
 }

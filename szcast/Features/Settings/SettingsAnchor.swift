@@ -64,7 +64,6 @@ extension SettingsAnchor {
     static let dictationDictation = Self(tab: .dictation, title: "Dictation")
     static let dictationCommands = Self(tab: .dictation, title: "Commands")
     static let dictationModel = Self(tab: .dictation, title: "Model")
-    static let dictationMemory = Self(tab: .dictation, title: "Memory")
     static let dictationOutput = Self(tab: .dictation, title: "Output")
 
     static let fileSearchFileSearch = Self(tab: .fileSearch, title: "File Search")
@@ -130,10 +129,8 @@ extension SettingsAnchor {
     static let backupImportFromRaycast = Self(tab: .backup, title: "Import from Raycast")
     static let backupSettingsFile = Self(tab: .backup, title: "Settings File")
 
-    static let displayTweaksDisplayTweaks = Self(tab: .displayTweaks, title: "Display Tweaks")
     static let displayTweaksSelection = Self(tab: .displayTweaks, title: "Display Selection")
     static let displayTweaksGamma = Self(tab: .displayTweaks, title: "Hardware Gamma")
-    static let displayTweaksRange = Self(tab: .displayTweaks, title: "Display Range")
     static let displayTweaksCurve = Self(tab: .displayTweaks, title: "Transfer Curve & Presets")
 
     static let cleanKeyboardCleanKeyboard = Self(tab: .cleanKeyboard, title: "Clean Keyboard")
@@ -144,7 +141,6 @@ extension SettingsAnchor {
     static let enteAuthCommands = Self(tab: .enteAuth, title: "Commands")
     static let enteAuthAccounts = Self(tab: .enteAuth, title: "Accounts")
 
-    static let duckDuckGoEmailDuckDuckGoEmail = Self(tab: .duckDuckGoEmail, title: "DuckDuckGo Email")
     static let duckDuckGoEmailCommands = Self(tab: .duckDuckGoEmail, title: "Commands")
     static let duckDuckGoEmailAccount = Self(tab: .duckDuckGoEmail, title: "Account & Token")
 

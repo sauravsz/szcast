@@ -567,7 +567,7 @@ final class AppIndex {
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
 
-        for line in lines.prefix(8) {
+        for line in lines.prefix(30) {
             let cleanLine = line.replacingOccurrences(of: "\\{[^}]+\\}", with: " ", options: .regularExpression)
                 .trimmingCharacters(in: .whitespaces)
             if !cleanLine.isEmpty && cleanLine.count <= 100 {
@@ -583,7 +583,7 @@ final class AppIndex {
                 let lower = trimmed.lowercased()
                 if seen.insert(lower).inserted {
                     result.append(lower)
-                    if seen.count >= 60 { break }
+                    if seen.count >= 200 { break }
                 }
             }
         }

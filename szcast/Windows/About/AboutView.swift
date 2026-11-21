@@ -11,6 +11,10 @@ struct AboutView: View {
         return String(localized: "Version \(short) (\(build))")
     }
 
+    private var currentShortVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.1.5"
+    }
+
     // Cached, and read from the bundle: the app icon is generic until LaunchServices registers.
     @MainActor private static let appIcon: NSImage = {
         if let name = Bundle.main.infoDictionary?["CFBundleIconFile"] as? String,
@@ -92,7 +96,7 @@ struct AboutView: View {
             } label: {
                 LabeledContent {
                     HStack(spacing: Theme.Spacing.sm) {
-                        Text("v1.1.0")
+                        Text("v\(currentShortVersion)")
                             .font(.caption.monospacedDigit().weight(.medium))
                             .foregroundStyle(.secondary)
                         Image(systemName: "chevron.forward")

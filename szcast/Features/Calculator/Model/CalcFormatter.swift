@@ -74,19 +74,28 @@ enum CalcFormatter {
 
     /// Insert `,` every three integer digits. Exponent-form strings pass through untouched.
     static func grouped(_ text: String) -> String {
-        let bytes = text.utf8
-        guard !bytes.contains(101), !bytes.contains(69) else { return text }
-        let signCount = bytes.first == 45 ? 1 : 0
-        let integer = bytes.prefix { $0 != 46 }
-        guard integer.count - signCount > 3 else { return text }
-        var output: [UInt8] = []
-        output.reserveCapacity(bytes.count + integer.count / 3)
-        for (index, byte) in bytes.enumerated() {
-            if index > signCount, index < integer.count, (integer.count - index) % 3 == 0 {
-                output.append(44)
+        guard !text.contains("e"), !text.contains("E") else { return text }
+        let isNegative = text.hasPrefix("-")
+        let rawDigits = isNegative ? String(text.dropFirst()) : text
+        let components = rawDigits.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: false)
+        guard let integerPart = components.first, integerPart.count > 3 else { return text }
+
+        var groupedInteger = ""
+        groupedInteger.reserveCapacity(integerPart.count + integerPart.count / 3)
+        let chars = Array(integerPart)
+        let count = chars.count
+        for (i, char) in chars.enumerated() {
+            if i > 0 && (count - i) % 3 == 0 {
+                groupedInteger.append(",")
             }
-            output.append(byte)
+            groupedInteger.append(char)
         }
-        return String(bytes: output, encoding: .utf8)!
+
+        let prefix = isNegative ? "-" : ""
+        if components.count > 1 {
+            return prefix + groupedInteger + "." + components[1]
+        } else {
+            return prefix + groupedInteger
+        }
     }
 }

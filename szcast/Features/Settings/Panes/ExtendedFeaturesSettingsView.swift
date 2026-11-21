@@ -10,7 +10,8 @@ struct ExtendedFeaturesSettingsView: View {
             Section {
                 SettingsRow(
                     title: "Extended Features Hub",
-                    subtitle: "Optional power tools and integrations. Disabled features are fully dormant and removed from the launcher."
+                    subtitle: "Optional power tools and integrations. Disabled features are fully dormant and removed from the launcher.",
+                    anchor: .extendedFeatures
                 ) {
                     SettingsTabIcon(
                         systemImage: "sparkles.rectangle.stack",

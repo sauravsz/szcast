@@ -2082,19 +2082,19 @@ struct SnippetsTests {
         let matchMeet = SnippetSearch.rank(all, for: "Meet")
         check("prefix name match finds s1", matchMeet.contains(where: { $0.id == s1.id }))
 
-        // 3. Subsequence / fuzzy name search
+        // 3. Substring name search (fuzzy subsequence removed)
         let matchMtg = SnippetSearch.rank(all, for: "mtg")
-        check("fuzzy name match 'mtg' matches 'Meeting Notes'", matchMtg.contains(where: { $0.id == s1.id }))
+        check("fuzzy name match 'mtg' yields empty results", matchMtg.isEmpty)
 
         let matchArch = SnippetSearch.rank(all, for: "arch")
-        check("fuzzy name match 'arch' matches 'Architecture Blueprint'", matchArch.first?.id == s5.id)
+        check("prefix name match 'arch' matches 'Architecture Blueprint'", matchArch.first?.id == s5.id)
 
-        // 4. Keyword exact and fuzzy search
+        // 4. Keyword exact and substring search
         let matchShrug = SnippetSearch.rank(all, for: "!shrug")
         check("exact keyword match finds s2", matchShrug.first?.id == s2.id)
 
         let matchShrugFuzzy = SnippetSearch.rank(all, for: "shrg")
-        check("fuzzy keyword match 'shrg' finds s2", matchShrugFuzzy.contains(where: { $0.id == s2.id }))
+        check("fuzzy keyword match 'shrg' yields empty results", matchShrugFuzzy.isEmpty)
 
         // 5. Snippet content / body search
         // Query "banana" is only in s4 text (name is "Diet Plan")
@@ -2135,6 +2135,36 @@ struct SnippetsTests {
         // 10. Non-matching query returns empty results
         let noMatch = SnippetSearch.rank(all, for: "nonexistent_term_987654321")
         check("unmatched query yields empty results", noMatch.isEmpty)
+
+        // 11. Non-substring queries do not match (fuzzy search removed)
+        // "bnn" is not a substring of "banana", so it must return empty
+        let matchBnn = SnippetSearch.rank(all, for: "bnn")
+        check("fuzzy subsequence 'bnn' yields empty results", matchBnn.isEmpty)
+
+        // "shrdng" is not a substring of "sharding", so it must return empty
+        let matchShrdng = SnippetSearch.rank(all, for: "shrdng")
+        check("fuzzy subsequence 'shrdng' yields empty results", matchShrdng.isEmpty)
+
+        // Fuzzy subsequence on title ('dtpln' for 'Diet Plan') is also rejected
+        let matchTitleFuzzy = SnippetSearch.rank(all, for: "dtpln")
+        check("fuzzy title subsequence 'dtpln' yields empty results", matchTitleFuzzy.isEmpty)
+
+        // 12. Symbol and unicode content body matching
+        let matchTsu = SnippetSearch.rank(all, for: "ツ")
+        check("unicode symbol search 'ツ' finds shrug emoji s2", matchTsu.first?.id == s2.id)
+
+        // 13. Multi-term fuzzy body matching
+        let matchMultiBody = SnippetSearch.rank(all, for: "green banana")
+        check("multi-term body search finds s4", matchMultiBody.first?.id == s4.id)
+
+        let matchCurlAuth = SnippetSearch.rank(all, for: "curl auth")
+        check("multi-term code body search finds s3", matchCurlAuth.first?.id == s3.id)
+
+        // 14. Snippet excerpt extraction
+        let excerptSingle = SnippetSearch.excerpt(for: "  Hello World\nLine 2")
+        check("excerpt captures first non-empty line trimmed", excerptSingle == "Hello World")
+        let excerptMulti = SnippetSearch.excerpt(for: "\n\n   curl -X POST   https://api.com  \nLine 2")
+        check("excerpt collapses consecutive spaces", excerptMulti == "curl -X POST https://api.com")
     }
 
     private static func check(_ description: String, _ condition: @autoclosure () -> Bool) {

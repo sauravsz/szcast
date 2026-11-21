@@ -45,7 +45,7 @@ open /Applications/szcast.app
 - **Scope Filters**: Switch contexts instantly with category chips (`All`, `Apps`, `Commands`, `Quicklinks`, `Snippets`, `Files`, `Actions`).
 - **File Previews**: Arrow through file search results with instant native Quick Look previews (`⌘Y`).
 - **Clipboard History**: SQLite FTS5-indexed history with code syntax highlighting, line numbers, and interactive color swatches.
-- **Quicklinks & Snippets**: Parameterized URLs with cached favicons and instant dynamic text expansions.
+- **Quicklinks & Snippets**: Parameterized URLs with cached favicons, deep snippet content body search with live row excerpt previews, and instant dynamic text expansions.
 - **Window Management**: Half, quarter, and multi-display layout management without external window daemons.
 
 ### Raycast Extension Runtime
@@ -80,6 +80,7 @@ open /Applications/szcast.app
 - **DuckDuckGo Email (`Hyper + D`)**: Generate and copy private `@duck.com` forwarding addresses on demand.
 - **Display Tweaks & Gamma Control**: Hardware LUT calibration (`CGSetDisplayTransferByTable`) with 3-point luminance sliders and one-click contrast presets.
 - **Clean Keyboard Mode**: Suppress keystrokes via `CGEventTap` for safe physical keyboard cleaning.
+- **In-App Changelog & Version Sync**: Native release notes, feature highlights, and version history dynamically tracking the running app build.
 
 ## Architecture
 

@@ -2538,6 +2538,8 @@ struct CalcTests {
         expectLocalizedNil("max(2;3)", .english)
 
         check("history [grouped]", expected: "1.234,5 kg", got: italian.localized("1,234.5 kg"))
+        check("grouped non-ascii", expected: "€1,234,567", got: CalcFormatter.grouped("€1234567"))
+        check("grouped hindi rupee", expected: "₹1,234,567", got: CalcFormatter.grouped("₹1234567"))
         check("history [dotted date]", expected: "19.2.27", got: italian.localized("19.2.27"))
         check("history [clock]", expected: "00:18:00.123", got: italian.localized("00:18:00.123"))
         check(

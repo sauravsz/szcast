@@ -145,16 +145,17 @@ final class AgenticToolService: Sendable {
         // Attempt to read selected or focused text via Accessibility
         var visibleTextSnippet = ""
         let appElement = AXUIElementCreateApplication(pid)
-        var focusedElementValue: AnyObject?
+        var focusedElementValue: CFTypeRef?
         if AXUIElementCopyAttributeValue(appElement, kAXFocusedUIElementAttribute as CFString, &focusedElementValue) == .success,
-           let focusedElement = focusedElementValue {
-            var selectedTextValue: AnyObject?
+           let focusedElement = focusedElementValue,
+           CFGetTypeID(focusedElement) == AXUIElementGetTypeID() {
+            var selectedTextValue: CFTypeRef?
             let axElement = focusedElement as! AXUIElement
             if AXUIElementCopyAttributeValue(axElement, kAXSelectedTextAttribute as CFString, &selectedTextValue) == .success,
                let selStr = selectedTextValue as? String, !selStr.isEmpty {
                 visibleTextSnippet = "\nSelected Text:\n\(selStr.prefix(2000))"
             } else {
-                var textValue: AnyObject?
+                var textValue: CFTypeRef?
                 if AXUIElementCopyAttributeValue(axElement, kAXValueAttribute as CFString, &textValue) == .success,
                    let fullStr = textValue as? String, !fullStr.isEmpty {
                     visibleTextSnippet = "\nFocused Element Text:\n\(fullStr.prefix(2000))"

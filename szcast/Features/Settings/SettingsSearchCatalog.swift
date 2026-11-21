@@ -350,17 +350,16 @@ enum SettingsSearchCatalog {
     private static let dictation: [SettingsSearchEntry] = [
         .init(pane: .dictation, keywords: ["speech", "voice", "transcription", "microphone"]),
         .init(.dictationDictation, "Enable Dictation"),
-        .init(.dictationCommands, "Shortcut behavior"),
+        .init(.dictationCommands, "Recording mode"),
         .init(.dictationCommands, "Shortcut"),
         .init(.dictationCommands, "Play sounds", keywords: ["sound", "chime", "beep", "audio", "feedback"]),
         .init(.dictationModel, "Model"),
-        .init(.dictationModel, "Engine", keywords: ["parakeet", "redux", "ultra", "qwen"]),
-        .init(.dictationModel, "Language"),
-        .init(.dictationMemory, "Release model from memory"),
-        .init(.dictationOutput, "Microphone"),
+        .init(.dictationModel, "Transcription engine", keywords: ["parakeet", "groq", "engine"]),
+        .init(.dictationModel, "Engine family", keywords: ["parakeet", "whisper", "sravaani"]),
+        .init(.dictationOutput, "Input device", keywords: ["microphone", "audio", "input"]),
         .init(.dictationOutput, "When finished"),
-        .init(.dictationOutput, "Adapt capitalization", keywords: ["uppercase", "lowercase", "sentence"]),
-        .init(.dictationOutput, "Insert while recording", keywords: ["live", "streaming", "chunk", "pause"])
+        .init(.dictationOutput, "Pasting method", keywords: ["paste", "typewriter", "instant"]),
+        .init(.dictationOutput, "Enable AI Polish (S1-mini)", keywords: ["s1", "polish", "clean", "normalize"])
     ]
 
     private static let fileSearch: [SettingsSearchEntry] = [
@@ -679,7 +678,7 @@ enum SettingsSearchCatalog {
             pane: .displayTweaks,
             keywords: ["gamma", "display", "monitor", "rgb", "shadows", "highlights", "blacks", "whites", "contrast", "brightness", "lut"]),
         .init(
-            group: .displayTweaksDisplayTweaks, "Display Tweaks",
+            group: .displayTweaksGamma, "Hardware Gamma",
             keywords: ["gamma", "lut", "hardware", "curve", "calibration"])
     ]
 
@@ -754,7 +753,7 @@ enum SettingsSearchCatalog {
             pane: .changelog,
             keywords: ["release notes", "what's new", "whats new", "version", "history", "updates", "changes"]),
         .init(
-            .changelogReleases, "Release Notes",
+            group: .changelogReleases, "Release Notes",
             keywords: ["versions", "features", "fixes", "improvements"])
     ]
 

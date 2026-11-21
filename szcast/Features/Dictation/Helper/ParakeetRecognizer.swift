@@ -65,7 +65,9 @@ final class ParakeetRecognizer {
                 "mel_length": DictationTensor.array("mel_length", from: mel)
             ])
         let features = try DictationTensor.array("encoder", from: encoded)
-        let length = try DictationTensor.array("encoder_length", from: encoded)[0].intValue
+        let encoderLengths = try DictationTensor.array("encoder_length", from: encoded)
+        guard encoderLengths.count > 0 else { throw DictationInferenceError.incompatibleModel }
+        let length = encoderLengths[0].intValue
         guard features.shape.count == 3, features.shape[1].intValue == 1024,
             length > 0, length <= features.shape[2].intValue
         else {
@@ -100,8 +102,13 @@ final class ParakeetRecognizer {
             }
             let decision = try DictationTensor.predict(
                 joint, ["encoder_step": frame, "decoder_step": projection])
-            let token = try DictationTensor.array("token_id", from: decision)[0].intValue
-            let duration = try DictationTensor.array("duration", from: decision)[0].intValue
+            let tokens = try DictationTensor.array("token_id", from: decision)
+            let durations = try DictationTensor.array("duration", from: decision)
+            guard tokens.count > 0, durations.count > 0 else {
+                throw DictationInferenceError.incompatibleModel
+            }
+            let token = tokens[0].intValue
+            let duration = durations[0].intValue
             guard (0...blank).contains(token), (0...4).contains(duration) else {
                 throw DictationInferenceError.incompatibleModel
             }

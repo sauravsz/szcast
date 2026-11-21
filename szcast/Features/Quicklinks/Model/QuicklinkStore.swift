@@ -339,13 +339,8 @@ final class QuicklinkStore {
                 == SQLITE_OK,
             sqlite3_exec(db, Self.schema, nil, nil, nil) == SQLITE_OK
         else { return false }
-        // `IF NOT EXISTS` leaves an older table as it was, so its new column is added by hand.
-        sqlite3_exec(
-            db, "ALTER TABLE quicklinks ADD COLUMN is_enabled INTEGER NOT NULL DEFAULT 1", nil, nil,
-            nil)
-        sqlite3_exec(
-            db, "ALTER TABLE quicklinks ADD COLUMN icon_path TEXT", nil, nil,
-            nil)
+        ensureColumn("is_enabled", definition: "INTEGER NOT NULL DEFAULT 1")
+        ensureColumn("icon_path", definition: "TEXT")
         // After the schema, so a column added later can be indexed the same way.
         sqlite3_exec(
             db,
@@ -377,6 +372,22 @@ final class QuicklinkStore {
         var stmt: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return nil }
         return stmt
+    }
+
+    private func ensureColumn(_ name: String, definition: String) {
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, "PRAGMA table_info(quicklinks)", -1, &stmt, nil) == SQLITE_OK else { return }
+        defer { sqlite3_finalize(stmt) }
+        var exists = false
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            if let colName = sqlite3_column_text(stmt, 1), String(cString: colName) == name {
+                exists = true
+                break
+            }
+        }
+        if !exists {
+            sqlite3_exec(db, "ALTER TABLE quicklinks ADD COLUMN \(name) \(definition)", nil, nil, nil)
+        }
     }
 
     private func closeDatabase() {

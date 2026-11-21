@@ -21,7 +21,20 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
 
 ## Build / verify (macOS 27, Xcode 27.2)
 - `xcodebuild -project szcast.xcodeproj -scheme Szcast -configuration Debug build`
-- `Scripts/run-tests.sh` — all 134 harnesses pass.
+- `Scripts/run-tests.sh` — all 134 harnesses pass (167s).
+- `node Scripts/check-settings-search.js` — 0 errors.
+
+- **Full Codebase Audit & Hardening**:
+  - **Accessibility Type Safety**: Added `CFGetTypeID(focusedElement) == AXUIElementGetTypeID()` verification in `AgenticToolService.swift` preventing crashes on non-AXUIElement system objects.
+  - **Calculator UTF-8 Boundary Parsing**: Refactored `CalcFormatter.swift` grouping to Unicode scalar/character boundaries, eliminating byte-slicing crashes and forced unwrap traps on non-ASCII numerals.
+  - **CoreML Tensor Safety**: Guarded `[0]` index access on Parakeet encoder, token, and duration output tensors in `ParakeetRecognizer.swift`.
+  - **Settings Search Catalog Synchronization**: Cleaned up 15 dead search targets across `SettingsSearchCatalog.swift`, `SettingsAnchor.swift`, `DictationSettingsView.swift`, `ExtendedFeaturesSettingsView.swift`, and `ChangelogSettingsView.swift`.
+  - **Writing Tools Window Isolation**: Disabled Writing Tools popup affordances (`writingToolsBehavior = .none`) in `NoteEditorView.swift` preventing dismissed notes from repeatedly reviving.
+  - **Calendar XPC Reconnect Throttling**: Fixed `lastReloadAt` timestamp recording prior to access guards in `CalendarStore.swift`, eliminating 60s XPC reconnect storms to `remindd` and `CalendarAgent`.
+  - **System Actions Defaults Read/Write**: Migrated preference inspection to `CFPreferencesGetAppBooleanValue` in `SystemActionRunner.swift` for clean handling of unset preference keys.
+  - **SQLite Non-Destructive Migrations**: Replaced raw `ALTER TABLE` statements in `QuicklinkStore.swift` with `PRAGMA table_info` checks, eliminating duplicate column errors on launch.
+  - **Clipboard Deleted File Handling**: Handled `CocoaError.fileReadNoSuchFile` in `ClipboardTextExtractor.swift` to complete immediately with empty text rather than exhausting 3-stage retry loops.
+  - **In-Memory Cache Boundaries**: Enforced a 50-entry FIFO eviction cap across `FlightTrackerService`, `WeatherService`, and `TravelTimeService`.
 
 - **Release v1.1.5 / UI & UX Major Suite**:
   - **System Telemetry & Hardware Monitors**: Integrated Stats (exelban/stats architecture) directly into szcast with CPU, RAM, Disk, Battery, and Network monitors, rolling 30-sample quadratic Bezier sparkline graphs in `StatsDashboardView`, and individual togglable menu bar items with configurable cadences.
@@ -268,11 +281,24 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - 9. Dictation S1 Download Integrity & Mirror Fallback: Added HTTP status code check `(200..<300)` and minimum file size check (>10MB) to `DictationS1Downloader.didFinishDownloadingTo`, preventing 404 HTML error pages from being saved as GGUF models and enabling automatic mirror fallback. Added file size verification to `DictationLlamaServerManager.resolveGGUFModel()`.
   - 10. Extended Feature Gating Cleanliness: Removed duplicate Display Tweaks section from `GeneralSettingsView.swift`, routed immediate transfer curve application on enable in `ExtendedFeaturesSettingsView.swift`, and guarded `SystemAction.cleanKeyboard` execution against disabled settings.
 
+- **Snippet Body Substring Search & Inline Previews (Non-Fuzzy)**:
+  - Deep snippet body matching: Implemented exact substring matching across snippet body text with word-boundary weight boosts and line excerpt formatting, strictly rejecting loose non-contiguous fuzzy subsequence matching.
+  - Multi-term query scoring (`scoreMultiTerm`): Every query term must match as an exact substring across snippet name, keyword, folder, or content body.
+  - Excerpt preview: Added `SnippetSearch.excerpt(for:)` displaying clean, whitespace-collapsed snippet body previews inside `SnippetRow` in `SnippetsListView.swift`.
+  - Root launcher indexing: Retained `AppIndex.snippetKeywords` indexing depth (30 lines / 200 words) for deep launcher snippet matching.
+  - Test harness: Updated `Tests/snippets-test.swift` verifying that fuzzy subsequence queries (e.g. `bnn`, `shrdng`, `dtpln`) yield zero results while exact substrings in body and title match cleanly (134/134 test harnesses pass).
+  - Deployed: Signed release binary built and installed to `/Applications/szcast.app`.
+
+- **Changelog & Build Version Synchronization (v1.1.5)**:
+  - Synchronized `MARKETING_VERSION = 1.1.5` in `Szcast.xcodeproj/project.pbxproj` across Debug and Release configurations.
+  - Dynamically bound `currentAppVersion` via `Bundle.main.infoDictionary["CFBundleShortVersionString"]` in `ChangelogSettingsView.swift` and `AboutView.swift`, eliminating stale hardcoded labels (`v1.1.1` and `v1.1.0`).
+  - Added full release catalogs for `v1.1.5` (UI/UX suite, Stats hardware monitors, Raycast emoji parity, Diff inspector, and snippet body search) and `v1.1.4` (codebase hardening, sensitive pasteboard concealment, Settings taxonomy reorganization).
+  - Made the `CURRENT` release badge in `ChangelogSettingsView` dynamic based on the active running build version.
+
 ## Active State & Next Steps
-- **Active State**: Installed and running at `/Applications/szcast.app` (v1.1.4). Release v1.1.4 live on GitHub and deployed to Vercel (szcast.vercel.app); all 130 test harnesses pass.
+- **Active State**: Installed and running at `/Applications/szcast.app` (v1.1.5) with exact snippet body substring search (fuzzy search removed) and synchronized changelog catalog. All 134 test harnesses pass.
 - **Immediate Next Steps**:
   1. Test long continuous dictation (5+ minutes) in real-world workflows across Hindi and Bengali models.
   2. Perform weekly upstream radar audit (`./Scripts/upstream-radar.sh`).
-  3. Command rows stop ranking once a trailing filter word is typed (e.g. `search files report` leaves only quicklink fallbacks), so the seeded-residual path is only reachable today by a full name or fuzzy abbreviation. Ranking commands on a name prefix would make it reachable and is a separate, contained change.
 
 Attribution: AGPL-3.0. Copyright © 2026 Abue Ammar in LICENSE; NOTICE.md keeps third-party material. Fork of Tinycast; no affiliation implied.

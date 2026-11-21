@@ -332,7 +332,7 @@ struct DictationSettingsView: View {
                     Text("Copies dictation when automatic pasting is skipped or unavailable.")
                 }
             } header: {
-                Text("Audio & Memory")
+                SettingsSectionHeader(.dictationOutput)
             }
 
             Section {
