@@ -28,7 +28,9 @@ enum CommandCatalog {
 
     /// The row a typed web address earns; unlike a catalog entry, its URL is the real destination.
     static func openInBrowser(for query: String) -> AppEntry? {
-        guard case .web(let url)? = QuicklinkDestination.detect(query) else { return nil }
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, !trimmed.contains(where: \.isWhitespace) else { return nil }
+        guard case .web(let url)? = QuicklinkDestination.detect(trimmed) else { return nil }
         return makeEntry(.openInBrowser, url: url, subtitle: String(localized: "URL"))
     }
 
@@ -39,7 +41,8 @@ enum CommandCatalog {
         AppEntry(
             id: id.rawValue, name: id.name, url: url ?? placeholderURL(id), bundleID: nil,
             kind: id.entryKind, settingsOwner: id.owner, subtitle: subtitle,
-            alternateTitles: [id.englishName])
+            alternateTitles: [id.englishName],
+            acceptsArguments: id.acceptsArguments)
     }
 
     nonisolated private static func placeholderURL(_ id: CommandID) -> URL {
@@ -55,7 +58,12 @@ extension SettingsTab {
         case .quicklinks:
             [.createQuicklink, .searchQuicklinks, .importQuicklinks, .exportQuicklinks]
         case .ai: [.quickAI, .aiChat]
-        case .quickActions: [.fixGrammar, .rewrite, .translate, .summarize]
+        case .quickActions:
+            [
+                .fixGrammar, .rewrite, .makeShorter, .makeLonger, .simplify,
+                .changeTone, .translate, .summarize, .explain, .findActionItems,
+                .convertTypeScript, .slackReply, .emailReply, .summarizeYouTube
+            ]
         case .fileSearch: [.searchFiles]
         case .notes: [.showNotes, .createNote, .searchNotes]
         case .snippets: [.searchSnippets, .createSnippet]
@@ -71,6 +79,8 @@ extension SettingsTab {
         case .enteAuth: [.enteAuth]
         case .duckDuckGoEmail: [.generateDuckAddress]
         case .keepassxc: [.keepassxc]
+        case .textTransformer: [.textTransformer]
+        case .stats: [.systemStats]
         default: []
         }
     }

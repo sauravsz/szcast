@@ -32,6 +32,7 @@ final class EmojiIndex {
         let revision: Int
         let frequentID: ObjectIdentifier
         let frequentRevision: Int
+        let customRevision: Int
         let limit: Int
     }
 
@@ -82,9 +83,11 @@ final class EmojiIndex {
         let words = unwrapped.split(whereSeparator: \.isWhitespace).map(String.init)
         let q = words.joined(separator: " ")
         guard !q.isEmpty, limit > 0 else { return [] }
+        let customStore = CustomEmojiKeywordStore.shared
+        let customRev = customStore.revision
         let key = SearchKey(
             query: q, revision: revision, frequentID: ObjectIdentifier(frequent),
-            frequentRevision: frequent.revision, limit: limit)
+            frequentRevision: frequent.revision, customRevision: customRev, limit: limit)
         return searchMemo.value(for: key) {
             let query = FuzzyMatch.Query(q)
             let terms = words.count > 1 ? words : []
@@ -95,17 +98,40 @@ final class EmojiIndex {
                 }, uniquingKeysWith: max)
             var scored: [ScoredEntry] = []
             for (order, entry) in entries.enumerated() {
-                guard let textScore = Self.textScore(query, terms: terms, folded: foldedEntries[order])
-                else { continue }
-                let score = textScore + (frecency[entry.glyph] ?? 0)
+                var textScore = Self.textScore(query, terms: terms, folded: foldedEntries[order])
+
+                // Raycast Custom Keywords match
+                let custom = customStore.keywords(for: entry.glyph)
+                if !custom.isEmpty {
+                    for kw in custom {
+                        if kw.localizedCaseInsensitiveContains(q) || q.localizedCaseInsensitiveContains(kw) {
+                            textScore = max(textScore ?? 0, 150_000)
+                            break
+                        }
+                    }
+                }
+
+                guard let finalScore = textScore else { continue }
+                let score = finalScore + (frecency[entry.glyph] ?? 0)
                 scored.append(ScoredEntry(entry: entry, score: score, order: order))
             }
+
+            if scored.isEmpty {
+                // Raycast AI Results automatic fallback when no direct keyword matches
+                return EmojiSemanticSearchEngine.search(q, in: self, frequent: frequent, limit: limit)
+            }
+
             return
                 scored
                 .sorted { $0.score != $1.score ? $0.score > $1.score : $0.order < $1.order }
                 .prefix(limit)
                 .map(\.entry)
         }
+    }
+
+    /// Explicit AI Results discovery, triggered on Tab or AI switch
+    func searchAIResults(_ query: String, frequent: FrequentEmojiStore, limit: Int = 40) -> [EmojiEntry] {
+        EmojiSemanticSearchEngine.search(query, in: self, frequent: frequent, limit: limit)
     }
 
     /// Just under half a tier, so an equal-quality name match always wins.

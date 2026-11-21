@@ -102,6 +102,38 @@ final class NoteTextView: NSTextView, InjectableTextView {
             return
         }
         super.insertText(string, replacementRange: replacementRange)
+        if let str = string as? String, !str.isEmpty,
+           let provider = emojiSuggestionProvider,
+           provider(self.string, selectedRange().location) != nil {
+            complete(nil)
+        }
+    }
+
+    static var defaultEmojiSuggestionProvider: ((_ text: String, _ cursor: Int) -> (range: NSRange, suggestions: [String])?)?
+    var emojiSuggestionProvider: ((_ text: String, _ cursor: Int) -> (range: NSRange, suggestions: [String])?)? = NoteTextView.defaultEmojiSuggestionProvider
+
+    override var rangeForUserCompletion: NSRange {
+        let cursor = selectedRange().location
+        if let provider = emojiSuggestionProvider,
+           let match = provider(string, cursor) {
+            return match.range
+        }
+        return super.rangeForUserCompletion
+    }
+
+    override func completions(forPartialWordRange charRange: NSRange, indexOfSelectedItem index: UnsafeMutablePointer<Int>?) -> [String]? {
+        let cursor = selectedRange().location
+        if let provider = emojiSuggestionProvider,
+           let match = provider(string, cursor),
+           !match.suggestions.isEmpty {
+            index?.pointee = 0
+            return match.suggestions
+        }
+        if let index {
+            return super.completions(forPartialWordRange: charRange, indexOfSelectedItem: index)
+        }
+        var dummy = 0
+        return super.completions(forPartialWordRange: charRange, indexOfSelectedItem: &dummy)
     }
 
     override func insertTab(_ sender: Any?) {

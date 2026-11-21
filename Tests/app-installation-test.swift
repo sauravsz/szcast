@@ -571,6 +571,7 @@ struct OtherEntry<Tag: Sendable>: Sendable {
     var isEnabled = true
     var showsInRootSearch = true
     var link = ""
+    var arguments: [String] = []
     static var sfSymbol: String { "" }
     static func id(fromEntryID id: String) -> UUID? { nil }
     static func precedes(_ lhs: Self, _ rhs: Self) -> Bool { lhs.name < rhs.name }
@@ -615,13 +616,14 @@ enum WindowCommandCatalog {
 }
 enum QuicklinkDestination {
     static func detect(_ link: String) -> Self? { nil }
+    static func containsPlaceholder(_ link: String) -> Bool { false }
     var defaultSymbol: String { "" }
 }
 enum SnippetFaviconService {
     static func resolveIcon(for snippet: StoredSnippet.Snippet) -> EntryIcon? { nil }
 }
 struct StoredSnippet {
-    struct Snippet { var isEnabled = true; var name = ""; var keyword: String? }
+    struct Snippet { var isEnabled = true; var name = ""; var keyword: String?; var folder: String? = nil; var text: String = "" }
     var snippet = Snippet()
     var entryID = ""
     var fileURL = URL(fileURLWithPath: "/")

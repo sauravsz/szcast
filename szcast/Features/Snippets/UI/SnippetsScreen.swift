@@ -37,17 +37,10 @@ struct SnippetsScreen: PaletteScreen {
             filtered = enabled
         }
         let query = vm.query.trimmingCharacters(in: .whitespaces)
-        let matches: [StoredSnippet]
-        if query.isEmpty {
-            matches = filtered
-        } else {
-            matches = filtered.filter { record in
-                record.snippet.name.localizedCaseInsensitiveContains(query)
-                    || record.snippet.keyword?.localizedCaseInsensitiveContains(query) == true
-                    || record.snippet.folder?.localizedCaseInsensitiveContains(query) == true
-            }
+        guard !query.isEmpty else {
+            return filtered.filter(\.snippet.isPinned) + filtered.filter { !$0.snippet.isPinned }
         }
-        return matches.filter(\.snippet.isPinned) + matches.filter { !$0.snippet.isPinned }
+        return SnippetSearch.rank(filtered, for: query)
     }
 
     var primaryActionTitle: String {

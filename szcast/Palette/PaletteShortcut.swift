@@ -54,6 +54,14 @@ enum PaletteShortcut: Equatable {
     case continueInChat
     /// ⌘., which AppKit binds to `cancelOperation:`, so it arrives as a token instead of a key.
     case pin
+    /// ⌘S, saves the row/entry as a snippet.
+    case saveSnippet
+    /// ⌥⌘K, record global hotkey for selected entry.
+    case recordHotKey
+    /// ⇧⌘A, set alias for selected entry.
+    case setAlias
+    /// ⇧⌘,, configure command/setting for selected entry.
+    case configureCommand
     /// ⌘1…⌘0, matched by key code in the panel and handed over as a slot.
     case favoriteSlot(Int)
 
@@ -83,6 +91,10 @@ enum PaletteShortcut: Equatable {
         if command, !shift, matches("n") { return .newItem }
         if command, !shift, !option, !control, matches("e") { return .edit }
         if command, !shift, matches("d") { return .duplicate }
+        if command, !shift, !option, !control, matches("s") { return .saveSnippet }
+        if command, option, !shift, !control, matches("k") { return .recordHotKey }
+        if command, shift, !option, !control, matches("a") { return .setAlias }
+        if command, shift, !option, !control, matches(",") { return .configureCommand }
         if command, option, matches(",") { return .settings }
         if command, matches("j") { return .continueInChat }
         return nil
@@ -93,7 +105,8 @@ enum PaletteShortcut: Equatable {
         switch self {
         case .copyFile, .copyName, .copyPath, .copyText, .pasteFile, .quickLook, .openInApp,
             .showDetails, .toggleFavorite, .hideFromSearch, .quit, .forceQuit, .minimizeWindow,
-            .hideApp, .restart, .edit, .duplicate, .showInFinder:
+            .hideApp, .restart, .edit, .duplicate, .showInFinder, .saveSnippet,
+            .recordHotKey, .setAlias, .configureCommand:
             true
         case .commandDelete, .delete, .deleteAll, .pin, .favoriteSlot, .continueInChat, .newItem,
             .settings, .copyCalculation:
@@ -105,7 +118,8 @@ enum PaletteShortcut: Equatable {
         switch self {
         case .delete, .deleteAll, .copyFile, .copyName, .copyPath, .copyText, .copyCalculation,
             .quickLook, .openInApp, .showDetails, .toggleFavorite, .hideFromSearch, .minimizeWindow,
-            .newItem, .settings, .edit, .duplicate, .showInFinder:
+            .newItem, .settings, .edit, .duplicate, .showInFinder, .saveSnippet,
+            .recordHotKey, .setAlias, .configureCommand:
             true
         case .commandDelete, .pasteFile, .quit, .forceQuit, .hideApp, .restart, .pin, .favoriteSlot,
             .continueInChat:

@@ -10,13 +10,27 @@ struct ChatPreset: Codable, Hashable, Identifiable, Sendable {
         let name: String
         let symbol: String
         let instructions: String
+        var userContext: String?
         var toolScope: ChatToolScope
+
+        var effectiveInstructions: String {
+            guard let ctx = userContext?.trimmingCharacters(in: .whitespacesAndNewlines), !ctx.isEmpty else {
+                return instructions
+            }
+            return """
+            \(instructions)
+
+            ## User Context & Guidelines:
+            \(ctx)
+            """
+        }
     }
 
     let id: UUID
     var name: String
     var iconSymbol: String?
     var instructions: String
+    var userContext: String?
     /// Nil follows AI Chat's default model.
     var model: AIModelSelection?
     var toolScope: ChatToolScope
@@ -24,13 +38,14 @@ struct ChatPreset: Codable, Hashable, Identifiable, Sendable {
 
     init(
         id: UUID = UUID(), name: String, iconSymbol: String? = nil, instructions: String,
-        model: AIModelSelection? = nil, toolScope: ChatToolScope = ChatToolScope(),
-        createdAt: Date = Date()
+        userContext: String? = nil, model: AIModelSelection? = nil,
+        toolScope: ChatToolScope = ChatToolScope(), createdAt: Date = Date()
     ) {
         self.id = id
         self.name = name
         self.iconSymbol = iconSymbol
         self.instructions = instructions
+        self.userContext = userContext
         self.model = model
         self.toolScope = toolScope
         self.createdAt = createdAt
@@ -38,10 +53,22 @@ struct ChatPreset: Codable, Hashable, Identifiable, Sendable {
 
     var symbol: String { iconSymbol ?? Self.sfSymbol }
 
+    var fullInstructions: String {
+        guard let ctx = userContext?.trimmingCharacters(in: .whitespacesAndNewlines), !ctx.isEmpty else {
+            return instructions
+        }
+        return """
+        \(instructions)
+
+        ## User Context & Guidelines:
+        \(ctx)
+        """
+    }
+
     var stamp: Stamp {
         Stamp(
             presetID: id, name: name, symbol: symbol, instructions: instructions,
-            toolScope: toolScope)
+            userContext: userContext, toolScope: toolScope)
     }
 
     static func precedes(_ lhs: ChatPreset, _ rhs: ChatPreset) -> Bool {

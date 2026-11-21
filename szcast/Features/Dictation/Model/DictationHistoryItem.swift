@@ -9,6 +9,7 @@ struct DictationHistoryItem: Codable, Identifiable, Sendable {
     var wordCount: Int
     var appName: String?
     var appBundleID: String?
+    var audioFilename: String?
 
     init(
         id: UUID = UUID(),
@@ -17,7 +18,8 @@ struct DictationHistoryItem: Codable, Identifiable, Sendable {
         rawText: String = "",
         duration: TimeInterval = 0,
         appName: String? = nil,
-        appBundleID: String? = nil
+        appBundleID: String? = nil,
+        audioFilename: String? = nil
     ) {
         self.id = id
         self.timestamp = timestamp
@@ -27,5 +29,6 @@ struct DictationHistoryItem: Codable, Identifiable, Sendable {
         self.wordCount = text.split(whereSeparator: \.isWhitespace).count
         self.appName = appName
         self.appBundleID = appBundleID
+        self.audioFilename = audioFilename
     }
 }

@@ -190,7 +190,8 @@ final class ExtensionManager: ExtensionRuntimeDelegate, ExtensionHostContext {
                 lastError: metadata.lastError),
             keywords: command.keywords,
             iconOverride: icon(for: command, in: owner, appearance: appearance),
-            ownerName: owner.title, installedAt: owner.installedAt)
+            ownerName: owner.title, installedAt: owner.installedAt,
+            acceptsArguments: !command.arguments.isEmpty)
     }
 
     /// Persist and re-publish, so rows change under the user rather than on the next scan.

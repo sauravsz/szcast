@@ -45,7 +45,9 @@ enum DeepLinkConsentPolicy {
     /// No `default`, so a new command has to be classed before it builds.
     private static func requiresConsent(_ id: CommandID) -> Bool {
         switch id {
-        case .fixGrammar, .rewrite, .translate, .summarize, .pasteSequentially, .openCamera,
+        case .fixGrammar, .rewrite, .translate, .summarize,
+            .makeShorter, .makeLonger, .simplify, .changeTone, .explain, .findActionItems, .convertTypeScript, .slackReply, .emailReply, .summarizeYouTube,
+            .pasteSequentially, .openCamera,
             .joinNextMeeting, .copyMeetingLink, .openInCalendar, .captureWindowLayout, .captureScreenText, .scanQRCode, .openInBrowser,
             .runShellCommand, .enteAuth, .generateDuckAddress, .cleanKeyboard, .keepassxc, .quit:
             true
@@ -55,7 +57,7 @@ enum DeepLinkConsentPolicy {
             .searchNotes, .createWindowLayout, .switchRoom, .createRoom, .createQuicklink,
             .searchQuicklinks, .importQuicklinks, .exportQuicklinks, .searchSnippets, .createSnippet,
             .exportSettings, .importSettings, .importFromRaycast, .checkForUpdates, .settings, .about,
-            .support, .focusTimer, .cleanClipboardURL, .dictationInsights, .changelog:
+            .support, .focusTimer, .cleanClipboardURL, .dictationInsights, .changelog, .textTransformer, .systemStats:
             false
         }
     }

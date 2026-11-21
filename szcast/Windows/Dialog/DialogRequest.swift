@@ -39,6 +39,9 @@ enum DialogAccessory {
     case volume(VolumeState)
     case snippetArguments(SnippetArgumentsState)
     case clipboardText(ClipboardEditState)
+    case aliasInput(AliasInputState)
+    case hotKeyRecord(HotKeyRecordState)
+    case emojiKeywords(EmojiKeywordInputState)
 
     /// Whether ←/→/↑/↓ belong to the control rather than to whatever has focus inside it.
     var claimsArrowKeys: Bool {
@@ -50,5 +53,49 @@ enum DialogAccessory {
     var acceptsLineBreaks: Bool {
         if case .clipboardText = self { return true }
         return false
+    }
+}
+
+@MainActor
+@Observable
+final class AliasInputState {
+    var text: String
+    let placeholder: String
+    let entryName: String
+
+    init(initialText: String = "", placeholder: String = "", entryName: String = "") {
+        self.text = initialText
+        self.placeholder = placeholder
+        self.entryName = entryName
+    }
+}
+
+@MainActor
+@Observable
+final class HotKeyRecordState {
+    let entry: AppEntry
+    let action: HotKeyAction
+    let initialBinding: HotKeyBinding?
+
+    init(entry: AppEntry, action: HotKeyAction, initialBinding: HotKeyBinding?) {
+        self.entry = entry
+        self.action = action
+        self.initialBinding = initialBinding
+    }
+}
+
+@MainActor
+@Observable
+final class EmojiKeywordInputState {
+    var text: String
+    let placeholder: String
+    let emojiName: String
+    let glyph: String
+
+    init(glyph: String, emojiName: String, initialKeywords: [String] = [], placeholder: String = "e.g. smile, happy, party") {
+        self.glyph = glyph
+        self.emojiName = emojiName
+        self.text = initialKeywords.joined(separator: ", ")
+        self.placeholder = placeholder
     }
 }

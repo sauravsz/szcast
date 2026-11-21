@@ -1,4 +1,5 @@
 import AppKit
+import AVFoundation
 import SwiftUI
 
 /// Dictation Intelligence Dashboard displaying acoustic speed velocity, S1-mini normalization telemetry,
@@ -8,6 +9,8 @@ struct DictationInsightsDashboardView: View {
     @Environment(AppSettings.self) private var settings
     @State private var copiedNotice = false
     @State private var showingClearConfirmation = false
+    @State private var audioPlayer = DictationAudioPlayer()
+    @State private var showRawTextIDs: Set<UUID> = []
 
     private var items: [DictationHistoryItem] {
         coordinator.historyStore.items
@@ -583,38 +586,77 @@ struct DictationInsightsDashboardView: View {
                 } else {
                     VStack(spacing: 8) {
                         ForEach(metrics.recentTransformations) { item in
+                            let isShowingRaw = showRawTextIDs.contains(item.id)
+                            let displayText = (isShowingRaw && !item.rawText.isEmpty) ? item.rawText : item.text
+                            let hasAudio = coordinator.historyStore.audioURL(for: item) != nil
+                            let hasDiff = item.rawText != item.text && !item.rawText.isEmpty
+
                             VStack(alignment: .leading, spacing: 4) {
                                 HStack(spacing: 6) {
                                     DictationAppIconView(bundleID: item.appBundleID, fallbackName: item.appName ?? "System")
                                         .frame(width: 14, height: 14)
                                     Text(item.appName ?? "System")
                                         .font(.system(size: 10, weight: .semibold))
+
+                                    if isShowingRaw {
+                                        Text("RAW ASR")
+                                            .font(.system(size: 8, weight: .bold))
+                                            .padding(.horizontal, 4)
+                                            .padding(.vertical, 1)
+                                            .background(Color.orange.opacity(0.15))
+                                            .foregroundStyle(Color.orange)
+                                            .clipShape(RoundedRectangle(cornerRadius: 3))
+                                    }
+
                                     Spacer()
+
+                                    if hasAudio, let audioURL = coordinator.historyStore.audioURL(for: item) {
+                                        Button {
+                                            audioPlayer.toggle(id: item.id, url: audioURL)
+                                        } label: {
+                                            Image(systemName: audioPlayer.playingID == item.id ? "stop.fill" : "play.fill")
+                                                .font(.system(size: 9))
+                                                .foregroundStyle(audioPlayer.playingID == item.id ? Color.red : Color.accentColor)
+                                        }
+                                        .buttonStyle(.plain)
+                                        .help(audioPlayer.playingID == item.id ? "Stop playback" : "Play original dictation audio")
+                                    }
+
+                                    if hasDiff {
+                                        Button {
+                                            if isShowingRaw {
+                                                showRawTextIDs.remove(item.id)
+                                            } else {
+                                                showRawTextIDs.insert(item.id)
+                                            }
+                                        } label: {
+                                            Image(systemName: "arrow.triangle.2.circlepath")
+                                                .font(.system(size: 9))
+                                                .foregroundStyle(isShowingRaw ? Color.orange : Color.secondary)
+                                        }
+                                        .buttonStyle(.plain)
+                                        .help(isShowingRaw ? "Show polished text" : "Show original raw ASR")
+                                    }
+
+                                    Button {
+                                        Paster.copyPlainText(displayText)
+                                    } label: {
+                                        Image(systemName: "doc.on.doc")
+                                            .font(.system(size: 9))
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .help("Copy to clipboard")
+
                                     Text(relativeTimeString(from: item.timestamp))
                                         .font(.system(size: 9))
                                         .foregroundStyle(.tertiary)
                                 }
 
-                                if item.rawText != item.text && !item.rawText.isEmpty {
-                                    Text(item.text)
-                                        .font(.system(size: 11, weight: .medium))
-                                        .foregroundStyle(.primary)
-                                        .lineLimit(2)
-                                    HStack(spacing: 4) {
-                                        Text("RAW:")
-                                            .font(.system(size: 8, weight: .bold))
-                                            .foregroundStyle(.tertiary)
-                                        Text(item.rawText)
-                                            .font(.system(size: 10))
-                                            .foregroundStyle(.secondary)
-                                            .lineLimit(1)
-                                    }
-                                } else {
-                                    Text(item.text)
-                                        .font(.system(size: 11))
-                                        .foregroundStyle(.secondary)
-                                        .lineLimit(2)
-                                }
+                                Text(displayText)
+                                    .font(.system(size: 11, weight: isShowingRaw ? .regular : .medium))
+                                    .foregroundStyle(isShowingRaw ? .secondary : .primary)
+                                    .lineLimit(2)
                             }
                             .padding(8)
                             .background(Color.primary.opacity(0.03))
@@ -932,5 +974,44 @@ struct DictationIntelligenceMetrics {
             averageSessionDuration: averageSessionDuration,
             recentTransformations: recentTransformations
         )
+    }
+}
+
+// MARK: - Dictation Audio Player
+
+@MainActor
+@Observable
+final class DictationAudioPlayer: NSObject, AVAudioPlayerDelegate {
+    private var player: AVAudioPlayer?
+    private(set) var playingID: UUID?
+
+    func toggle(id: UUID, url: URL) {
+        if playingID == id {
+            stop()
+            return
+        }
+        stop()
+        do {
+            let p = try AVAudioPlayer(contentsOf: url)
+            p.delegate = self
+            p.prepareToPlay()
+            p.play()
+            player = p
+            playingID = id
+        } catch {
+            playingID = nil
+        }
+    }
+
+    func stop() {
+        player?.stop()
+        player = nil
+        playingID = nil
+    }
+
+    nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        Task { @MainActor in
+            self.stop()
+        }
     }
 }

@@ -207,6 +207,16 @@ final class AppSettings {
         didSet { defaults.set(emojiGridColumns.rawValue, forKey: Key.emojiGridColumns.rawValue) }
     }
 
+    /// Primary action when pressing Return in the Emoji & Symbols picker (.paste vs .copy).
+    var emojiPrimaryAction: EmojiPrimaryAction {
+        didSet { defaults.set(emojiPrimaryAction.rawValue, forKey: Key.emojiPrimaryAction.rawValue) }
+    }
+
+    /// Whether to automatically store search terms as custom keywords when an emoji is copied/pasted.
+    var emojiSaveAIKeywords: Bool {
+        didSet { defaults.set(emojiSaveAIKeywords, forKey: Key.emojiSaveAIKeywords.rawValue) }
+    }
+
     /// How long a closed palette keeps its state before popping back to the root launcher.
     var popToRootTimeout: PopToRootTimeout {
         didSet { defaults.set(popToRootTimeout.rawValue, forKey: Key.popToRootTimeout.rawValue) }
@@ -219,6 +229,57 @@ final class AppSettings {
     /// Follow macOS, or pin szcast to one appearance. Applied by `AppCore.applyAppearance()`.
     var appearance: AppAppearance {
         didSet { defaults.set(appearance.rawValue, forKey: Key.appearance.rawValue) }
+    }
+
+    /// Curated native theme preset for the palette and windows.
+    var appThemePreset: PaletteThemePreset {
+        didSet {
+            defaults.set(appThemePreset.rawValue, forKey: Key.appThemePreset.rawValue)
+            Theme.activePreset = appThemePreset
+        }
+    }
+
+    /// Whether interactive Text Transformer is enabled.
+    var textTransformerEnabled: Bool {
+        didSet { defaults.set(textTransformerEnabled, forKey: Key.textTransformerEnabled.rawValue) }
+    }
+
+    /// Whether Stats system monitoring is enabled.
+    var statsEnabled: Bool {
+        didSet { defaults.set(statsEnabled, forKey: Key.statsEnabled.rawValue) }
+    }
+    var statsCPUEnabled: Bool {
+        didSet { defaults.set(statsCPUEnabled, forKey: Key.statsCPUEnabled.rawValue) }
+    }
+    var statsRAMEnabled: Bool {
+        didSet { defaults.set(statsRAMEnabled, forKey: Key.statsRAMEnabled.rawValue) }
+    }
+    var statsDiskEnabled: Bool {
+        didSet { defaults.set(statsDiskEnabled, forKey: Key.statsDiskEnabled.rawValue) }
+    }
+    var statsBatteryEnabled: Bool {
+        didSet { defaults.set(statsBatteryEnabled, forKey: Key.statsBatteryEnabled.rawValue) }
+    }
+    var statsNetworkEnabled: Bool {
+        didSet { defaults.set(statsNetworkEnabled, forKey: Key.statsNetworkEnabled.rawValue) }
+    }
+    var statsCPUMenuBar: Bool {
+        didSet { defaults.set(statsCPUMenuBar, forKey: Key.statsCPUMenuBar.rawValue) }
+    }
+    var statsRAMMenuBar: Bool {
+        didSet { defaults.set(statsRAMMenuBar, forKey: Key.statsRAMMenuBar.rawValue) }
+    }
+    var statsDiskMenuBar: Bool {
+        didSet { defaults.set(statsDiskMenuBar, forKey: Key.statsDiskMenuBar.rawValue) }
+    }
+    var statsBatteryMenuBar: Bool {
+        didSet { defaults.set(statsBatteryMenuBar, forKey: Key.statsBatteryMenuBar.rawValue) }
+    }
+    var statsNetworkMenuBar: Bool {
+        didSet { defaults.set(statsNetworkMenuBar, forKey: Key.statsNetworkMenuBar.rawValue) }
+    }
+    var statsRefreshInterval: Double {
+        didSet { defaults.set(statsRefreshInterval, forKey: Key.statsRefreshInterval.rawValue) }
     }
 
     /// Whether Ente Auth 2FA is enabled.
@@ -498,6 +559,34 @@ final class AppSettings {
 
     var dictationHindiMode: DictationHindiMode {
         didSet { defaults.set(dictationHindiMode.rawValue, forKey: Key.dictationHindiMode.rawValue) }
+    }
+
+    var dictationDoubleTapToLock: Bool {
+        didSet { defaults.set(dictationDoubleTapToLock, forKey: Key.dictationDoubleTapToLock.rawValue) }
+    }
+
+    var dictationCommandModeEnabled: Bool {
+        didSet { defaults.set(dictationCommandModeEnabled, forKey: Key.dictationCommandModeEnabled.rawValue) }
+    }
+
+    var dictationAutoAppRouting: Bool {
+        didSet { defaults.set(dictationAutoAppRouting, forKey: Key.dictationAutoAppRouting.rawValue) }
+    }
+
+    var dictationWhisperMode: Bool {
+        didSet { defaults.set(dictationWhisperMode, forKey: Key.dictationWhisperMode.rawValue) }
+    }
+
+    var dictationAutoLearnDictionary: Bool {
+        didSet { defaults.set(dictationAutoLearnDictionary, forKey: Key.dictationAutoLearnDictionary.rawValue) }
+    }
+
+    var dictationAutoApplyTransform: Bool {
+        didSet { defaults.set(dictationAutoApplyTransform, forKey: Key.dictationAutoApplyTransform.rawValue) }
+    }
+
+    var dictationActiveTransformID: String? {
+        didSet { defaults.set(dictationActiveTransformID, forKey: Key.dictationActiveTransformID.rawValue) }
     }
 
     var groqAPIKey: String {
@@ -942,6 +1031,19 @@ final class AppSettings {
         keepassxcEnabled = defaults.bool(forKey: Key.keepassxcEnabled.rawValue)
         duckDuckGoEmailEnabled = defaults.bool(forKey: Key.duckDuckGoEmailEnabled.rawValue)
         cleanKeyboardEnabled = defaults.bool(forKey: Key.cleanKeyboardEnabled.rawValue)
+        textTransformerEnabled = defaults.bool(forKey: Key.textTransformerEnabled.rawValue)
+        statsEnabled = defaults.object(forKey: Key.statsEnabled.rawValue) == nil || defaults.bool(forKey: Key.statsEnabled.rawValue)
+        statsCPUEnabled = defaults.object(forKey: Key.statsCPUEnabled.rawValue) == nil || defaults.bool(forKey: Key.statsCPUEnabled.rawValue)
+        statsRAMEnabled = defaults.object(forKey: Key.statsRAMEnabled.rawValue) == nil || defaults.bool(forKey: Key.statsRAMEnabled.rawValue)
+        statsDiskEnabled = defaults.object(forKey: Key.statsDiskEnabled.rawValue) == nil || defaults.bool(forKey: Key.statsDiskEnabled.rawValue)
+        statsBatteryEnabled = defaults.object(forKey: Key.statsBatteryEnabled.rawValue) == nil || defaults.bool(forKey: Key.statsBatteryEnabled.rawValue)
+        statsNetworkEnabled = defaults.object(forKey: Key.statsNetworkEnabled.rawValue) == nil || defaults.bool(forKey: Key.statsNetworkEnabled.rawValue)
+        statsCPUMenuBar = defaults.object(forKey: Key.statsCPUMenuBar.rawValue) == nil || defaults.bool(forKey: Key.statsCPUMenuBar.rawValue)
+        statsRAMMenuBar = defaults.object(forKey: Key.statsRAMMenuBar.rawValue) == nil || defaults.bool(forKey: Key.statsRAMMenuBar.rawValue)
+        statsDiskMenuBar = defaults.bool(forKey: Key.statsDiskMenuBar.rawValue)
+        statsBatteryMenuBar = defaults.bool(forKey: Key.statsBatteryMenuBar.rawValue)
+        statsNetworkMenuBar = defaults.object(forKey: Key.statsNetworkMenuBar.rawValue) == nil || defaults.bool(forKey: Key.statsNetworkMenuBar.rawValue)
+        statsRefreshInterval = defaults.double(forKey: Key.statsRefreshInterval.rawValue) > 0 ? defaults.double(forKey: Key.statsRefreshInterval.rawValue) : 2.0
 
         // Every feature switch defaults on, so absence has to outrank a stored `false`.
         // `defaults.object(forKey:) == nil` is how each one tells "never set" from "set to off".
@@ -988,6 +1090,11 @@ final class AppSettings {
         emojiGridColumns =
             EmojiGridColumns(rawValue: defaults.integer(forKey: Key.emojiGridColumns.rawValue))
             ?? .default
+        emojiPrimaryAction =
+            defaults.string(forKey: Key.emojiPrimaryAction.rawValue).flatMap(EmojiPrimaryAction.init)
+            ?? .paste
+        emojiSaveAIKeywords =
+            defaults.object(forKey: Key.emojiSaveAIKeywords.rawValue) as? Bool ?? true
         popToRootTimeout =
             PopToRootTimeout(rawValue: defaults.integer(forKey: Key.popToRootTimeout.rawValue))
             ?? .immediately
@@ -996,6 +1103,10 @@ final class AppSettings {
             ?? .navigateBackOrClose
         appearance =
             defaults.string(forKey: Key.appearance.rawValue).flatMap(AppAppearance.init) ?? .system
+        let storedPreset =
+            defaults.string(forKey: Key.appThemePreset.rawValue).flatMap(PaletteThemePreset.init) ?? .szcastDark
+        appThemePreset = storedPreset
+        Theme.activePreset = storedPreset
         language = Self.storedLanguage
         calcNumberStyle =
             defaults.string(forKey: Key.calcNumberStyle.rawValue).flatMap(CalcNumberStyle.init)
@@ -1135,6 +1246,17 @@ final class AppSettings {
         dictationHindiMode =
             defaults.string(forKey: Key.dictationHindiMode.rawValue)
             .flatMap(DictationHindiMode.init(rawValue:)) ?? .off
+        dictationDoubleTapToLock = defaults.object(forKey: Key.dictationDoubleTapToLock.rawValue) == nil
+            || defaults.bool(forKey: Key.dictationDoubleTapToLock.rawValue)
+        dictationCommandModeEnabled = defaults.object(forKey: Key.dictationCommandModeEnabled.rawValue) == nil
+            || defaults.bool(forKey: Key.dictationCommandModeEnabled.rawValue)
+        dictationAutoAppRouting = defaults.object(forKey: Key.dictationAutoAppRouting.rawValue) == nil
+            || defaults.bool(forKey: Key.dictationAutoAppRouting.rawValue)
+        dictationWhisperMode = defaults.bool(forKey: Key.dictationWhisperMode.rawValue)
+        dictationAutoLearnDictionary = defaults.object(forKey: Key.dictationAutoLearnDictionary.rawValue) == nil
+            || defaults.bool(forKey: Key.dictationAutoLearnDictionary.rawValue)
+        dictationAutoApplyTransform = defaults.bool(forKey: Key.dictationAutoApplyTransform.rawValue)
+        dictationActiveTransformID = defaults.string(forKey: Key.dictationActiveTransformID.rawValue)
 
         displayTweaksEnabled = defaults.bool(forKey: Key.displayTweaksEnabled.rawValue)
         displayTweaksDisplayID = UInt32(defaults.integer(forKey: Key.displayTweaksDisplayID.rawValue))

@@ -10,6 +10,16 @@ struct EmojiSettingsView: View {
 
             Section {
                 EmojiColumnCountPicker(selection: $settings.emojiGridColumns)
+
+                Picker(selection: $settings.emojiPrimaryAction) {
+                    ForEach(EmojiPrimaryAction.allCases) { action in
+                        Text(action.title).tag(action)
+                    }
+                } label: {
+                    SettingsRowTitle(.emojiAppearance, "Primary Action")
+                    Text(settings.emojiPrimaryAction.subtitle)
+                }
+
                 SettingsRow(title: "Emoji Skin Tone", anchor: .emojiAppearance) {
                     HStack(spacing: Theme.Spacing.xs) {
                         ForEach(EmojiSkinTone.allCases) { tone in
@@ -28,8 +38,23 @@ struct EmojiSettingsView: View {
                         }
                     }
                 }
+
+                Toggle(isOn: $settings.emojiSaveAIKeywords) {
+                    SettingsRowTitle(.emojiAppearance, "Save AI-generated custom keywords")
+                    Text("Stores your search terms as custom keywords on the emoji you copied or pasted.")
+                }
             } header: {
                 SettingsSectionHeader(.emojiAppearance)
+            }
+
+            Section {
+                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                    SettingsRowTitle(.emojiAppearance, "Replace System Emoji Picker")
+                    Text("To replace macOS's default Character Viewer (⌃⌘Space or Globe/Fn key), record your preferred shortcut directly on the 'Search Emoji & Symbols' command above in the Commands table.")
+                        .font(.caption)
+                        .foregroundStyle(Theme.Colors.textSecondary)
+                }
+                .padding(.vertical, Theme.Spacing.xs)
             }
         }
         .formStyle(.grouped)
@@ -100,34 +125,21 @@ private struct EmojiColumnCountPreview: View {
 private struct EmojiGridDots: Shape {
     let columns: Int
 
-    private static let pointsPerCell = 4
-    /// Match the outline's raster weight; subpixel circles render visibly fainter at the same alpha.
-    private static let dotDiameter = Theme.Size.hairline
-
     func path(in rect: CGRect) -> Path {
         var path = Path()
-        let subdivisions = columns * Self.pointsPerCell
-        guard subdivisions > 0 else { return path }
-        let horizontalStep = rect.width / CGFloat(subdivisions)
-        let verticalStep = rect.height / CGFloat(subdivisions)
-        let radius = Self.dotDiameter / 2
-
-        for row in 0...subdivisions {
-            for column in 0...subdivisions {
-                let onVertical =
-                    column.isMultiple(of: Self.pointsPerCell)
-                    && column > 0 && column < subdivisions
-                let onHorizontal =
-                    row.isMultiple(of: Self.pointsPerCell)
-                    && row > 0 && row < subdivisions
-                guard onVertical || onHorizontal else { continue }
+        let count = CGFloat(columns)
+        let step = rect.width / count
+        let radius = step * 0.18
+        for row in 0..<columns {
+            for col in 0..<columns {
                 let center = CGPoint(
-                    x: rect.minX + CGFloat(column) * horizontalStep,
-                    y: rect.minY + CGFloat(row) * verticalStep)
-                path.addEllipse(
-                    in: CGRect(
-                        x: center.x - radius, y: center.y - radius,
-                        width: Self.dotDiameter, height: Self.dotDiameter))
+                    x: (CGFloat(col) + 0.5) * step,
+                    y: (CGFloat(row) + 0.5) * step)
+                path.addEllipse(in: CGRect(
+                    x: center.x - radius,
+                    y: center.y - radius,
+                    width: radius * 2,
+                    height: radius * 2))
             }
         }
         return path

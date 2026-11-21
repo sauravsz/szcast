@@ -354,6 +354,13 @@ final class AppSettings {
     var dictationGroqPolishModel = "openai/gpt-oss-120b"
     var dictationBengaliMode = DictationBengaliMode.off
     var dictationHindiMode = DictationHindiMode.off
+    var dictationDoubleTapToLock = true
+    var dictationCommandModeEnabled = true
+    var dictationAutoAppRouting = true
+    var dictationWhisperMode = false
+    var dictationAutoLearnDictionary = true
+    var dictationAutoApplyTransform = false
+    var dictationActiveTransformID: String?
     var groqAPIKey = ""
 }
 
@@ -375,12 +382,14 @@ final class DictationCapture {
     var onLevels: (([Float]) -> Void)?
     var onSamples: (@Sendable ([Float]) -> Void)?
     var onLimit: (() -> Void)?
+    var onSilenceWarning: ((Bool) -> Void)?
+    var onClamshellWarning: ((Bool) -> Void)?
     var isRecording = false
     var isBluetooth = false
     var stopCount = 0
 
     init() { Self.latest = self }
-    func start(microphoneID: String?) async throws { isRecording = true }
+    func start(microphoneID: String?, whisperMode: Bool = false) async throws { isRecording = true }
     var snapshotSamples: [Float] = []
     func snapshot() -> [Float] { snapshotSamples }
     func stop() async -> [Float] {
@@ -417,12 +426,17 @@ final class DictationModelStore {
 
 @MainActor
 final class DictationPanelController {
-    enum Phase { case listening, transcribing }
+    enum Phase { case listening, transcribing, completed }
     @MainActor
     final class State {
         var phase = Phase.listening
         var levels: [Float] = []
         var previewText: String = ""
+        var isLockedHandsFree: Bool = false
+        var isWhisperMode: Bool = false
+        var isMicSilent: Bool = false
+        var isClamshellMuffled: Bool = false
+        var commandModeText: String? = nil
     }
     static weak var latest: DictationPanelController?
     let state = State()
@@ -432,6 +446,7 @@ final class DictationPanelController {
     init() { Self.latest = self }
     func show() { isVisible = true }
     func close() { isVisible = false }
+    func showSuccessAndClose() { isVisible = false }
     func updatePreviewText(_ text: String) { state.previewText = text }
 }
 

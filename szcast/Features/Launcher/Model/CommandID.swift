@@ -6,8 +6,18 @@ enum CommandID: String, CaseIterable, Sendable {
     case aiChat = "command:ai-chat-window"
     case fixGrammar = "command:fix-grammar"
     case rewrite = "command:rewrite"
+    case makeShorter = "command:make-shorter"
+    case makeLonger = "command:make-longer"
+    case simplify = "command:simplify"
+    case changeTone = "command:change-tone"
     case translate = "command:translate"
     case summarize = "command:summarize"
+    case explain = "command:explain"
+    case findActionItems = "command:find-action-items"
+    case convertTypeScript = "command:convert-typescript"
+    case slackReply = "command:slack-reply"
+    case emailReply = "command:email-reply"
+    case summarizeYouTube = "command:summarize-youtube"
     case calculatorHistory = "command:calculator-history"
     case clipboardHistory = "command:clipboard-history"
     case pasteSequentially = "command:paste-sequentially"
@@ -56,6 +66,8 @@ enum CommandID: String, CaseIterable, Sendable {
     case generateDuckAddress = "command:generate-duck-address"
     case cleanKeyboard = "command:clean-keyboard"
     case keepassxc = "command:keepassxc"
+    case textTransformer = "command:text-transformer"
+    case systemStats = "command:system-stats"
     case dictationInsights = "command:dictation-insights"
     case quit = "command:quit"
 
@@ -91,8 +103,18 @@ enum CommandID: String, CaseIterable, Sendable {
         case .aiChat: return "AI Chat"
         case .fixGrammar: return BuiltInQuickAction.fixGrammar.titleResource
         case .rewrite: return BuiltInQuickAction.rewrite.titleResource
+        case .makeShorter: return BuiltInQuickAction.makeShorter.titleResource
+        case .makeLonger: return BuiltInQuickAction.makeLonger.titleResource
+        case .simplify: return BuiltInQuickAction.simplify.titleResource
+        case .changeTone: return BuiltInQuickAction.changeTone.titleResource
         case .translate: return BuiltInQuickAction.translate.titleResource
         case .summarize: return BuiltInQuickAction.summarize.titleResource
+        case .explain: return BuiltInQuickAction.explain.titleResource
+        case .findActionItems: return BuiltInQuickAction.findActionItems.titleResource
+        case .convertTypeScript: return BuiltInQuickAction.convertTypeScript.titleResource
+        case .slackReply: return BuiltInQuickAction.slackReply.titleResource
+        case .emailReply: return BuiltInQuickAction.emailReply.titleResource
+        case .summarizeYouTube: return BuiltInQuickAction.summarizeYouTube.titleResource
         case .calculatorHistory: return "Calculator History"
         case .clipboardHistory: return "Clipboard History"
         case .pasteSequentially: return "Paste Sequentially"
@@ -141,6 +163,8 @@ enum CommandID: String, CaseIterable, Sendable {
         case .generateDuckAddress: return "Generate DuckDuckGo Email"
         case .cleanKeyboard: return "Clean Keyboard Mode"
         case .keepassxc: return "KeePassXC Passwords"
+        case .textTransformer: return "Text Transformer"
+        case .systemStats: return "System Stats"
         case .dictationInsights: return "Dictation Insights"
         case .quit: return "Quit szcast"
         }
@@ -152,8 +176,18 @@ enum CommandID: String, CaseIterable, Sendable {
         case .aiChat: return "bubble.left.and.bubble.right"
         case .fixGrammar: return BuiltInQuickAction.fixGrammar.symbol
         case .rewrite: return BuiltInQuickAction.rewrite.symbol
+        case .makeShorter: return BuiltInQuickAction.makeShorter.symbol
+        case .makeLonger: return BuiltInQuickAction.makeLonger.symbol
+        case .simplify: return BuiltInQuickAction.simplify.symbol
+        case .changeTone: return BuiltInQuickAction.changeTone.symbol
         case .translate: return BuiltInQuickAction.translate.symbol
         case .summarize: return BuiltInQuickAction.summarize.symbol
+        case .explain: return BuiltInQuickAction.explain.symbol
+        case .findActionItems: return BuiltInQuickAction.findActionItems.symbol
+        case .convertTypeScript: return BuiltInQuickAction.convertTypeScript.symbol
+        case .slackReply: return BuiltInQuickAction.slackReply.symbol
+        case .emailReply: return BuiltInQuickAction.emailReply.symbol
+        case .summarizeYouTube: return BuiltInQuickAction.summarizeYouTube.symbol
         case .calculatorHistory: return "plus.forwardslash.minus"
         case .clipboardHistory: return "doc.on.clipboard"
         case .pasteSequentially: return "list.bullet.clipboard"
@@ -201,18 +235,30 @@ enum CommandID: String, CaseIterable, Sendable {
         case .generateDuckAddress: return "envelope.badge.shield.half.filled"
         case .cleanKeyboard: return "lock.shield"
         case .keepassxc: return "lock.fill"
+        case .textTransformer: return "text.word.spacing"
+        case .systemStats: return "gauge.with.needle"
         case .dictationInsights: return "chart.bar.xaxis"
         case .quit: return "power"
         }
     }
 
-    /// Exhaustive, so a fifth shipped action cannot reach the launcher without a row here.
+    /// Exhaustive, so an added shipped action cannot reach the launcher without a row here.
     init(_ action: BuiltInQuickAction) {
         switch action {
         case .fixGrammar: self = .fixGrammar
         case .rewrite: self = .rewrite
+        case .makeShorter: self = .makeShorter
+        case .makeLonger: self = .makeLonger
+        case .simplify: self = .simplify
+        case .changeTone: self = .changeTone
         case .translate: self = .translate
         case .summarize: self = .summarize
+        case .explain: self = .explain
+        case .findActionItems: self = .findActionItems
+        case .convertTypeScript: self = .convertTypeScript
+        case .slackReply: self = .slackReply
+        case .emailReply: self = .emailReply
+        case .summarizeYouTube: self = .summarizeYouTube
         }
     }
 
@@ -220,8 +266,18 @@ enum CommandID: String, CaseIterable, Sendable {
         switch self {
         case .fixGrammar: return .fixGrammar
         case .rewrite: return .rewrite
+        case .makeShorter: return .makeShorter
+        case .makeLonger: return .makeLonger
+        case .simplify: return .simplify
+        case .changeTone: return .changeTone
         case .translate: return .translate
         case .summarize: return .summarize
+        case .explain: return .explain
+        case .findActionItems: return .findActionItems
+        case .convertTypeScript: return .convertTypeScript
+        case .slackReply: return .slackReply
+        case .emailReply: return .emailReply
+        case .summarizeYouTube: return .summarizeYouTube
         default: return nil
         }
     }
@@ -239,8 +295,23 @@ enum CommandID: String, CaseIterable, Sendable {
         case .generateDuckAddress: ["duck", "duckduckgo", "email", "alias", "private email", "duck address"]
         case .cleanKeyboard: ["clean keyboard", "lock keyboard", "wipe keyboard", "clean"]
         case .keepassxc: ["keepass", "keepassxc", "kdbx", "password", "passwords", "credentials", "vault"]
+        case .textTransformer: ["transform", "casing", "camelcase", "snakecase", "json", "prettify", "base64", "urlencode", "hex", "slugify"]
+        case .systemStats: ["stats", "system stats", "cpu", "ram", "memory", "battery", "hardware", "disk", "activity monitor", "processes"]
         case .dictationInsights: ["insights", "wpm", "words per minute", "dictation insights", "dictation dashboard", "streak"]
+        case .showNotes: ["scratchpad", "notes", "notepad", "sticky note", "floating note"]
         case .changelog: ["changelog", "whats new", "what's new", "release notes", "version", "changes", "updates"]
+        case .fixGrammar: ["grammar", "spell", "spelling", "proofread", "typos"]
+        case .rewrite: ["improve", "improve writing", "polish", "clarity", "rephrase"]
+        case .makeShorter: ["short", "shorter", "condense", "trim", "brief"]
+        case .makeLonger: ["longer", "expand", "elaborate", "more"]
+        case .simplify: ["simplify", "plain", "clear", "simpler"]
+        case .changeTone: ["tone", "change tone", "tone of voice"]
+        case .explain: ["explain", "explain this", "concept", "breakdown"]
+        case .findActionItems: ["action items", "action points", "todos", "tasks", "next steps"]
+        case .convertTypeScript: ["typescript", "ts", "interface", "type", "json to ts"]
+        case .slackReply: ["slack", "slack reply", "reply slack"]
+        case .emailReply: ["email", "email reply", "reply email"]
+        case .summarizeYouTube: ["youtube", "video summary", "summarize video", "yt transcript", "video transcript"]
         default: []
         }
     }
@@ -261,6 +332,18 @@ enum CommandID: String, CaseIterable, Sendable {
     /// Query-driven: the typed text is their input, so they are built where offered, never listed.
     var isQueryDriven: Bool {
         self == .openInBrowser || self == .runShellCommand
+    }
+
+    /// Whether this command accepts trailing search arguments when typed in the root search field.
+    var acceptsArguments: Bool {
+        switch self {
+        case .searchFiles, .searchMenuItems, .switchWindows, .define, .quickAI,
+            .searchSnippets, .searchQuicklinks, .searchCustomCommands,
+            .searchEmoji, .runShellCommand, .searchNotes:
+            return true
+        default:
+            return false
+        }
     }
 
     /// A chord carries no query, and none should be able to terminate the app outright.

@@ -146,6 +146,11 @@ enum DictationTextFormatter {
             let range = NSRange(result.startIndex..<result.endIndex, in: result)
             result = regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: "$1")
         }
+        // Ensure space after internal sentence punctuation if followed directly by an uppercase letter: e.g. "word.Next" -> "word. Next"
+        if let regex = try? NSRegularExpression(pattern: #"(?<=[a-z0-9"'\)\]\}])[.?!](?=[A-Z\p{Lu}])"#, options: []) {
+            let range = NSRange(result.startIndex..<result.endIndex, in: result)
+            result = regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: "$0 ")
+        }
         return result
     }
 
@@ -158,6 +163,30 @@ enum DictationTextFormatter {
         )
     }()
 
+    // MARK: - Backtracking & Speech Repair
+
+    private static let backtrackPatterns: [String] = [
+        #"(?i)^.+?[,\s]+(?:actually\s+make\s+that|actually\s+wait|actually\s+no|actually)[,\s]+(.+)$"#,
+        #"(?i)^.+?[,\s]+(?:no\s+wait|wait\s+no|wait\s+sorry|sorry\s+no)[,\s]+(.+)$"#,
+        #"(?i)^.+?[,\s]+(?:scratch\s+that)[,\s]+(.+)$"#,
+        #"(?i)^.+?[,\s]+(?:sorry\s+I\s+mean|I\s+mean)[,\s]+(.+)$"#,
+        #"(?i)^.+?[,\s]+(?:or\s+rather)[,\s]+(.+)$"#
+    ]
+
+    static func resolveBacktracks(_ text: String) -> String {
+        guard !text.isEmpty else { return text }
+        var result = text
+        for pattern in backtrackPatterns {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
+                let range = NSRange(result.startIndex..<result.endIndex, in: result)
+                if regex.firstMatch(in: result, options: [], range: range) != nil {
+                    result = regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: "$1")
+                }
+            }
+        }
+        return result.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     static func removeFillerWords(_ text: String) -> String {
         guard let regex = fillerRegex else { return text }
         let range = NSRange(text.startIndex..<text.endIndex, in: text)
@@ -165,6 +194,29 @@ enum DictationTextFormatter {
         // Normalize any collapsed double spaces
         return cleaned.replacingOccurrences(of: "  +", with: " ", options: .regularExpression)
             .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    // MARK: - Repetition & Stutter Collapse
+
+    private static let repetitionRegex: NSRegularExpression? = {
+        try? NSRegularExpression(
+            pattern: #"\b([a-zA-Z0-9']+)\s+\1\b"#,
+            options: [.caseInsensitive]
+        )
+    }()
+
+    static func collapseRepetitions(_ text: String) -> String {
+        guard let regex = repetitionRegex, !text.isEmpty else { return text }
+        var result = text
+        var iterations = 0
+        while iterations < 3 {
+            let range = NSRange(result.startIndex..<result.endIndex, in: result)
+            let matches = regex.matches(in: result, options: [], range: range)
+            guard !matches.isEmpty else { break }
+            result = regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: "$1")
+            iterations += 1
+        }
+        return result
     }
 
     // MARK: - Echo Stripping
@@ -205,6 +257,19 @@ enum DictationTextFormatter {
 
     // MARK: - Smart Caret Insertion
 
+    /// Checks whether the text ends with a sentence-terminating punctuation.
+    static func endsWithSentenceTerminator(_ text: String) -> Bool {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+
+        let sentenceClosures = [
+            ".", ".\"", ".'", ".’", ".)", ".]", ".}", "…",
+            "!", "!\"", "!'", "!’", "!)", "!]",
+            "?", "?\"", "?'", "?’", "?)"
+        ]
+        return sentenceClosures.contains { trimmed.hasSuffix($0) }
+    }
+
     static func format(_ transcription: String, context: Context?, adaptCapitalization: Bool = true) -> String {
         var text = transcription.replacingOccurrences(of: #"^\s+"#, with: "", options: .regularExpression)
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -215,14 +280,25 @@ enum DictationTextFormatter {
             text.replaceSubrange(firstLetterIndex...firstLetterIndex, with: String(text[firstLetterIndex]).uppercased())
         }
 
-        guard let context else { return text }
-        // Trailing context: add space if inserting before another word
-        if let leading = context.following, !leading.isWhitespace,
-            let trailing = text.last, !trailing.isWhitespace,
-            !".,!?;:)]}/\"'”".contains(leading)
-        {
+        let isSentenceEnding = endsWithSentenceTerminator(text)
+
+        if let context {
+            if let leading = context.following {
+                // If following context already has whitespace or is closing punctuation, don't append space
+                if !leading.isWhitespace && !".,!?;:)]}/\"'”".contains(leading) {
+                    if isSentenceEnding || (text.last.map { !$0.isWhitespace } ?? false) {
+                        text += " "
+                    }
+                }
+            } else if isSentenceEnding {
+                // End of document / caret at boundary: sentence full stop automatically gets a trailing space
+                text += " "
+            }
+        } else if isSentenceEnding {
+            // No context available (or external app): sentence full stop automatically gets a trailing space
             text += " "
         }
+
         return text
     }
 }

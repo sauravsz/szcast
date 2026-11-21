@@ -8,9 +8,17 @@ enum AppActionsMenu {
         onHideFromSearch: @escaping () -> Void
     ) -> PopoverMenuContent {
         var items = leadingItems(app: app, searchQuery: searchQuery, core: core)
+        if !items.isEmpty {
+            items[0].sectionTitle = String(localized: "Primary Actions")
+        }
         // A query-driven row lives only for its query, so no preference could outlive it.
         let isPersistent = !CommandCatalog.isQueryDriven(app)
-        if isPersistent { items.append(contentsOf: favorites.items) }
+        if isPersistent, !favorites.items.isEmpty {
+            var favItems = favorites.items
+            favItems[0].startsSection = true
+            favItems[0].sectionTitle = String(localized: "Shortcuts & Favorites")
+            items.append(contentsOf: favItems)
+        }
         if let deepLink = core.launcherCoordinator.deepLink(for: app) {
             items.append(
                 PopoverMenuItem(
@@ -41,6 +49,7 @@ enum AppActionsMenu {
             items.append(
                 PopoverMenuItem(
                     title: String(localized: "Restart Application"), systemImage: "arrow.clockwise",
+                    sectionTitle: String(localized: "Process Control"),
                     startsSection: true, shortcut: "⌘R"
                 ) {
                     core.launcherCoordinator.restart(app)
@@ -63,6 +72,7 @@ enum AppActionsMenu {
             items.append(
                 PopoverMenuItem(
                     title: String(localized: "Uninstall Application"), systemImage: "trash",
+                    sectionTitle: String(localized: "Danger Zone"),
                     startsSection: true, isDestructive: true
                 ) {
                     core.uninstallCoordinator.beginUninstall(app)
@@ -106,18 +116,96 @@ enum AppActionsMenu {
             }
             items.append(
                 PopoverMenuItem(
-                    title: String(localized: "Configure Extension"), systemImage: "slider.horizontal.3",
-                    startsSection: true
-                ) {
-                    core.extensionCoordinator.showExtensionSettings(for: app)
-                })
-            items.append(
-                PopoverMenuItem(
                     title: String(localized: "Uninstall Extension"), systemImage: "trash",
-                    isDestructive: true
+                    startsSection: true, isDestructive: true
                 ) {
                     core.extensionCoordinator.confirmUninstall(app)
                 })
+        }
+        if isPersistent {
+            let configTitle: String
+            switch app.kind {
+            case .systemSettings:
+                configTitle = String(localized: "Configure Setting")
+            case .application:
+                configTitle = String(localized: "Configure Application")
+            case .extensionCommand:
+                configTitle = String(localized: "Configure Extension")
+            default:
+                configTitle = String(localized: "Configure Command")
+            }
+
+            items.append(
+                PopoverMenuItem(
+                    title: configTitle,
+                    systemImage: "slider.horizontal.3",
+                    sectionTitle: String(localized: "Configuration"),
+                    startsSection: true,
+                    shortcut: "⇧⌘,"
+                ) {
+                    core.launcherCoordinator.configure(app: app)
+                })
+
+            if let action = app.hotKeyAction {
+                if core.hotKeys.binding(for: action) != nil {
+                    items.append(
+                        PopoverMenuItem(
+                            title: String(localized: "Change Hotkey…"),
+                            systemImage: "keyboard",
+                            shortcut: "⌥⌘K"
+                        ) {
+                            core.launcherCoordinator.beginRecordHotKey(for: app)
+                        })
+                    items.append(
+                        PopoverMenuItem(
+                            title: String(localized: "Remove Hotkey"),
+                            systemImage: "xmark.circle",
+                            isDestructive: true
+                        ) {
+                            core.hotKeys.setBinding(nil, for: action)
+                            core.showMessage(String(localized: "Hotkey removed for \(app.name)"), tone: .neutral)
+                        })
+                } else {
+                    items.append(
+                        PopoverMenuItem(
+                            title: String(localized: "Record Hotkey…"),
+                            systemImage: "keyboard",
+                            shortcut: "⌥⌘K"
+                        ) {
+                            core.launcherCoordinator.beginRecordHotKey(for: app)
+                        })
+                }
+            }
+
+            let currentAlias = core.aliases.alias(for: app.preferenceKey)
+            if let currentAlias, !currentAlias.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                items.append(
+                    PopoverMenuItem(
+                        title: String(localized: "Change Alias…"),
+                        systemImage: "character",
+                        shortcut: "⇧⌘A"
+                    ) {
+                        core.launcherCoordinator.beginSetAlias(for: app)
+                    })
+                items.append(
+                    PopoverMenuItem(
+                        title: String(localized: "Remove Alias"),
+                        systemImage: "xmark.circle",
+                        isDestructive: true
+                    ) {
+                        core.aliases.setAlias("", for: app.preferenceKey)
+                        core.showMessage(String(localized: "Alias removed for \(app.name)"), tone: .neutral)
+                    })
+            } else {
+                items.append(
+                    PopoverMenuItem(
+                        title: String(localized: "Set Alias…"),
+                        systemImage: "character",
+                        shortcut: "⇧⌘A"
+                    ) {
+                        core.launcherCoordinator.beginSetAlias(for: app)
+                    })
+            }
         }
         return PopoverMenuContent(header: app.name, items: items)
     }

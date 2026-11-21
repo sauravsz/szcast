@@ -23,16 +23,24 @@ private struct SearchPill: ViewModifier {
     @Environment(SettingsNavigationState.self) private var navigation
 
     func body(content: Content) -> some View {
+        let isFlashing = navigation.flashing == target
         content
             .padding(.horizontal, Theme.Spacing.sm)
             .padding(.vertical, Theme.Spacing.xxs)
             .background(
-                Capsule().fill(navigation.flashing == target ? Theme.Colors.searchFlash : .clear)
+                Capsule()
+                    .fill(isFlashing ? Theme.Colors.accent.opacity(0.18) : .clear)
             )
+            .overlay(
+                Capsule()
+                    .strokeBorder(isFlashing ? Theme.Colors.accent.opacity(0.6) : .clear, lineWidth: 1)
+            )
+            .shadow(color: isFlashing ? Theme.Colors.accent.opacity(0.4) : .clear, radius: 4)
             // Given back, so the pill's own padding can't shift the label off its row's edge.
             .padding(.horizontal, -Theme.Spacing.sm)
             .padding(.vertical, -Theme.Spacing.xxs)
             .id(target)
+            .animation(.easeInOut(duration: 0.3), value: isFlashing)
     }
 }
 

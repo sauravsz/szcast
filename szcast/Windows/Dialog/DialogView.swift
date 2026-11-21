@@ -48,7 +48,8 @@ struct DialogView: View {
                 case .volume(let volume): VolumeSlider(state: volume)
                 case .snippetArguments(let arguments): SnippetArgumentFields(state: arguments)
                 case .clipboardText(let state): ClipboardEditField(state: state)
-                case nil: EmptyView()
+                case .emojiKeywords(let state): EmojiKeywordEditField(state: state)
+                case .aliasInput, .hotKeyRecord, nil: EmptyView()
                 }
             }
             .padding(.horizontal, metrics.spacing.xs)

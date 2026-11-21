@@ -5,10 +5,15 @@ import SwiftUI
 @MainActor
 @Observable
 final class DictationDisplayState {
-    enum Phase { case listening, transcribing }
+    enum Phase { case listening, transcribing, completed }
     var phase: Phase = .listening
     var levels = [Float](repeating: 0, count: DictationSpectrum.barCount)
     var previewText: String = ""
+    var isLockedHandsFree: Bool = false
+    var isWhisperMode: Bool = false
+    var isMicSilent: Bool = false
+    var isClamshellMuffled: Bool = false
+    var commandModeText: String? = nil
 }
 
 private struct DictationWaveform: View {
@@ -63,11 +68,19 @@ private struct DictationPanelView: View {
         HStack(spacing: 6) {
             // Recording status dot
             Circle()
-                .fill(state.phase == .listening ? Color.red : Color.accentColor)
+                .fill(state.phase == .listening ? Color.red : (state.phase == .completed ? Color.green : Color.accentColor))
                 .frame(width: 7, height: 7)
-                .shadow(color: (state.phase == .listening ? Color.red : Color.accentColor).opacity(0.6), radius: 2)
+                .shadow(color: (state.phase == .listening ? Color.red : (state.phase == .completed ? Color.green : Color.accentColor)).opacity(0.6), radius: 2)
 
-            if state.phase == .listening {
+            if state.phase == .completed {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(Color.green)
+                Text("Done")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(Color.green)
+                    .lineLimit(1)
+            } else if state.phase == .listening {
                 // Compact Level Meter Bars (6 bars)
                 HStack(alignment: .center, spacing: 2) {
                     ForEach(0..<6, id: \.self) { i in
@@ -80,7 +93,35 @@ private struct DictationPanelView: View {
                 .frame(width: 26, height: 14)
                 .animation(.easeOut(duration: 0.08), value: state.levels)
 
-                if !state.previewText.isEmpty {
+                if state.isMicSilent {
+                    HStack(spacing: 3) {
+                        Image(systemName: "mic.slash.fill")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundStyle(Color.orange)
+                        Text("No sound detected")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(Color.orange)
+                    }
+                } else if state.isClamshellMuffled {
+                    HStack(spacing: 3) {
+                        Image(systemName: "laptopcomputer.slash")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundStyle(Color.yellow)
+                        Text("Lid closed (mic muffled)")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(Color.yellow)
+                    }
+                } else if let cmd = state.commandModeText, !cmd.isEmpty {
+                    Image(systemName: "pencil.line")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(Color.accentColor)
+                    Text("Rewrite: \(cmd)")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(Theme.Colors.textPrimary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else if !state.previewText.isEmpty {
                     Text(state.previewText)
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(Theme.Colors.textPrimary)
@@ -88,11 +129,17 @@ private struct DictationPanelView: View {
                         .truncationMode(.head)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
-                    Text("Listening…")
+                    Text(state.isWhisperMode ? "Whisper listening…" : "Listening…")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(Theme.Colors.textSecondary)
                         .lineLimit(1)
                         .fixedSize(horizontal: true, vertical: false)
+                }
+
+                if state.isLockedHandsFree {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(Color.secondary)
                 }
             } else {
                 DictationProcessingWave()
@@ -161,6 +208,8 @@ final class DictationPanelController {
         state.phase = .listening
         state.levels = [Float](repeating: 0, count: DictationSpectrum.barCount)
         state.previewText = ""
+        state.isMicSilent = false
+        state.isClamshellMuffled = false
         panel.orderFrontRegardless()
 
         installEscapeMonitors()
@@ -178,6 +227,14 @@ final class DictationPanelController {
             context.duration = 0.12
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             panel.animator().setFrame(newFrame, display: true)
+        }
+    }
+
+    func showSuccessAndClose() {
+        state.phase = .completed
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(350))
+            self?.close()
         }
     }
 

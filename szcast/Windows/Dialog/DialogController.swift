@@ -107,6 +107,101 @@ final class DialogController: NSObject, NSWindowDelegate {
         return state.text
     }
 
+    func editEmojiKeywords(glyph: String, name: String, currentKeywords: [String]) async -> [String]? {
+        let state = EmojiKeywordInputState(glyph: glyph, emojiName: name, initialKeywords: currentKeywords)
+        let request = DialogRequest(
+            title: String(localized: "Custom Keywords"),
+            message: String(localized: "Assign custom keywords for \(glyph) \(name.capitalized) to find it faster in search."),
+            symbol: nil,
+            tone: .neutral,
+            actions: [
+                DialogAction(title: String(localized: "Save")),
+                DialogAction(title: String(localized: "Cancel"), role: .cancel)
+            ],
+            defaultIndex: 0, cancelIndex: 1, accessory: .emojiKeywords(state))
+        guard await present(request) == 0 else { return nil }
+        return state.text
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+            .filter { !$0.isEmpty }
+    }
+
+    func promptAlias(entry: AppEntry, currentAlias: String?) async -> (saved: Bool, alias: String?) {
+        let suggested = suggestedAlias(for: entry)
+        let placeholder = suggested.isEmpty ? "e.g. \(entry.name.prefix(1).lowercased())" : "e.g. \(suggested)"
+        let state = AliasInputState(
+            initialText: currentAlias ?? "",
+            placeholder: placeholder,
+            entryName: entry.name
+        )
+        var actions = [
+            DialogAction(title: String(localized: "Save")),
+            DialogAction(title: String(localized: "Cancel"), role: .cancel)
+        ]
+        let hasCurrent = currentAlias != nil && !currentAlias!.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        if hasCurrent {
+            actions.append(DialogAction(title: String(localized: "Remove Alias"), role: .destructive))
+        }
+        let request = DialogRequest(
+            title: String(localized: "Set Alias"),
+            message: String(localized: "Type a short keyword to trigger or find “\(entry.name)” in search."),
+            symbol: "character",
+            tone: .neutral,
+            actions: actions,
+            defaultIndex: 0,
+            cancelIndex: 1,
+            accessory: .aliasInput(state)
+        )
+        let chosen = await present(request)
+        if chosen == 0 {
+            return (true, state.text.trimmingCharacters(in: .whitespacesAndNewlines))
+        } else if hasCurrent && chosen == 2 {
+            return (true, "")
+        } else {
+            return (false, nil)
+        }
+    }
+
+    private func suggestedAlias(for entry: AppEntry) -> String {
+        let words = entry.name.split(separator: " ")
+        if words.count > 1 {
+            return words.compactMap { $0.first.map(String.init) }.joined().lowercased()
+        } else if let first = entry.name.first {
+            return String(first).lowercased()
+        }
+        return ""
+    }
+
+    func recordHotKey(entry: AppEntry, action: HotKeyAction, hotKeys: HotKeyManager) async {
+        let initialBinding = hotKeys.binding(for: action)
+        let state = HotKeyRecordState(entry: entry, action: action, initialBinding: initialBinding)
+        var actions: [DialogAction] = []
+        if initialBinding != nil {
+            actions.append(DialogAction(title: String(localized: "Clear Hotkey"), role: .destructive))
+        }
+        actions.append(DialogAction(title: String(localized: "Cancel"), role: .cancel))
+
+        let request = DialogRequest(
+            title: String(localized: "Record Hotkey"),
+            message: String(localized: "Press shortcut keys to assign to “\(entry.name)”. Delete to clear, Esc to cancel."),
+            symbol: "keyboard",
+            tone: .neutral,
+            actions: actions,
+            defaultIndex: actions.count - 1,
+            cancelIndex: actions.count - 1,
+            accessory: .hotKeyRecord(state)
+        )
+
+        hotKeys.recordingAction = action
+        let chosen = await present(request)
+        if initialBinding != nil && chosen == 0 {
+            hotKeys.setBinding(nil, for: action)
+        }
+        if hotKeys.recordingAction == action {
+            hotKeys.recordingAction = nil
+        }
+    }
+
     private func present(_ request: DialogRequest) async -> Int {
         guard continuation == nil else { return request.cancelIndex }
         return await withCheckedContinuation { continuation in
@@ -116,6 +211,7 @@ final class DialogController: NSObject, NSWindowDelegate {
                 switch request.accessory {
                 case nil, .volume: metrics.size.dialogCompactWidth
                 case .snippetArguments, .clipboardText: metrics.size.dialogWidth
+                case .aliasInput, .hotKeyRecord, .emojiKeywords: max(metrics.size.dialogCompactWidth, 340)
                 }
             let content = hostingView(
                 DialogView(
@@ -146,6 +242,7 @@ final class DialogController: NSObject, NSWindowDelegate {
             // Non-activating like the palette: key focus without pulling the user out.
             panel.makeKeyAndOrderFront(nil)
             panel.orderFrontRegardless()
+            panel.focusFirstTextField()
         }
     }
 

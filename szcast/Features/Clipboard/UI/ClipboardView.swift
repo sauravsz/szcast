@@ -314,12 +314,7 @@ struct ClipboardPreview: View {
             if let color = item.colorValue {
                 ColorPreview(color: color, text: item.text ?? "")
             } else {
-                ScrollView {
-                    Text(item.text ?? "")
-                        .font(.system(.subheadline, design: .monospaced))
-                        .textSelection(.enabled)
-                        .frame(maxWidth: .infinity, alignment: .topLeading)
-                }
+                ClipboardCodePreview(text: item.text ?? "")
             }
         case .image:
             AsyncThumbnail(
@@ -509,5 +504,151 @@ private struct ClipboardInfoSection: View {
             inWord = !separator
         }
         return count
+    }
+}
+
+/// Rich developer preview with syntax highlighting and line numbers for code/text snippets.
+private struct ClipboardCodePreview: View {
+    let text: String
+    @Environment(\.metrics) private var metrics
+
+    private var lines: [String] {
+        text.components(separatedBy: "\n")
+    }
+
+    private var detectedLanguage: ClipboardSyntaxHighlighter.Language {
+        ClipboardSyntaxHighlighter.detectLanguage(text)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if detectedLanguage != .plain {
+                HStack {
+                    Text(detectedLanguage.rawValue)
+                        .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(Color.accentColor)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.accentColor.opacity(0.12), in: Capsule())
+                    Spacer()
+                    Text("\(lines.count) lines")
+                        .font(.caption2)
+                        .foregroundStyle(Theme.Colors.textTertiary)
+                }
+                .padding(.horizontal, 4)
+            }
+
+            ScrollView([.vertical, .horizontal], showsIndicators: true) {
+                LazyVStack(alignment: .leading, spacing: 2) {
+                    ForEach(Array(lines.prefix(400).enumerated()), id: \.offset) { index, line in
+                        HStack(alignment: .top, spacing: 10) {
+                            if detectedLanguage != .plain {
+                                Text("\(index + 1)")
+                                    .font(.system(size: 11, design: .monospaced))
+                                    .foregroundStyle(Theme.Colors.textTertiary)
+                                    .frame(width: max(18, CGFloat(String(lines.count).count * 8)), alignment: .trailing)
+                            }
+                            Text(ClipboardSyntaxHighlighter.highlight(line, language: detectedLanguage))
+                                .font(.system(size: 12, design: .monospaced))
+                                .textSelection(.enabled)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+}
+
+private enum ClipboardSyntaxHighlighter {
+    enum Language: String {
+        case json = "JSON"
+        case swift = "Swift"
+        case javascript = "JavaScript"
+        case python = "Python"
+        case sql = "SQL"
+        case shell = "Shell"
+        case html = "HTML"
+        case plain = "Text"
+    }
+
+    static func detectLanguage(_ text: String) -> Language {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if (trimmed.hasPrefix("{") && trimmed.hasSuffix("}")) || (trimmed.hasPrefix("[") && trimmed.hasSuffix("]")) {
+            if (try? JSONSerialization.jsonObject(with: Data(trimmed.utf8))) != nil {
+                return .json
+            }
+        }
+        if trimmed.contains("import ") || trimmed.contains("func ") || trimmed.contains("struct ") || trimmed.contains("@ViewBuilder") {
+            return .swift
+        }
+        if trimmed.contains("const ") || trimmed.contains("function ") || trimmed.contains("export default") {
+            return .javascript
+        }
+        if trimmed.contains("def ") || trimmed.contains("class ") || trimmed.contains("print(") {
+            return .python
+        }
+        if trimmed.lowercased().contains("select ") && trimmed.lowercased().contains("from ") {
+            return .sql
+        }
+        if trimmed.hasPrefix("#!/") || trimmed.contains("echo ") || trimmed.contains("export ") {
+            return .shell
+        }
+        if trimmed.hasPrefix("<") && trimmed.hasSuffix(">") {
+            return .html
+        }
+        if (trimmed.contains("{") && trimmed.contains("}")) || trimmed.contains(";") {
+            return .swift
+        }
+        return .plain
+    }
+
+    static func highlight(_ line: String, language: Language) -> AttributedString {
+        var attributed = AttributedString(line)
+        guard language != .plain else { return attributed }
+
+        let lineNSString = line as NSString
+        let fullRange = NSRange(location: 0, length: lineNSString.length)
+
+        if let commentRegex = try? NSRegularExpression(pattern: "(//.*|#.*|--.*)", options: []) {
+            let matches = commentRegex.matches(in: line, range: fullRange)
+            for m in matches {
+                if let r = Range(m.range, in: line), let attrRange = Range(r, in: attributed) {
+                    attributed[attrRange].foregroundColor = Color.secondary.opacity(0.7)
+                }
+            }
+        }
+
+        if let strRegex = try? NSRegularExpression(pattern: "\"(\\\\.|[^\"])*\"|'(\\\\.|[^'])*'", options: []) {
+            let matches = strRegex.matches(in: line, range: fullRange)
+            for m in matches {
+                if let r = Range(m.range, in: line), let attrRange = Range(r, in: attributed) {
+                    attributed[attrRange].foregroundColor = Color.mint
+                }
+            }
+        }
+
+        if let numRegex = try? NSRegularExpression(pattern: "\\b(\\d+(\\.\\d+)?|true|false|nil|null|None)\\b", options: []) {
+            let matches = numRegex.matches(in: line, range: fullRange)
+            for m in matches {
+                if let r = Range(m.range, in: line), let attrRange = Range(r, in: attributed) {
+                    attributed[attrRange].foregroundColor = Color.cyan
+                }
+            }
+        }
+
+        let kwPattern = "\\b(func|let|var|const|def|class|struct|enum|import|from|return|if|else|switch|case|default|while|for|in|try|catch|async|await|select|from|where|insert|delete|update|table|public|private|static|override)\\b"
+        if let kwRegex = try? NSRegularExpression(pattern: kwPattern, options: [.caseInsensitive]) {
+            let matches = kwRegex.matches(in: line, range: fullRange)
+            for m in matches {
+                if let r = Range(m.range, in: line), let attrRange = Range(r, in: attributed) {
+                    attributed[attrRange].foregroundColor = Color.accentColor
+                }
+            }
+        }
+
+        return attributed
     }
 }

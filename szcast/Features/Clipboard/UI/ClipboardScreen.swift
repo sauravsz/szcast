@@ -62,6 +62,9 @@ struct ClipboardScreen: PaletteScreen {
             guard let item = item(at: selection), item.kind == .text else { return false }
             Task { await core.clipboardCoordinator.editClip(item) }
             return true
+        case .saveSnippet:
+            guard let item = item(at: selection) else { return false }
+            return saveSnippet(item)
         default: return false
         }
     }
@@ -96,6 +99,16 @@ struct ClipboardScreen: PaletteScreen {
     private func pin(at selection: Int) -> Bool {
         guard let item = item(at: selection) else { return false }
         core.clipboardCoordinator.togglePinnedClip(item)
+        return true
+    }
+
+    private func saveSnippet(_ item: ClipboardItem) -> Bool {
+        guard let text = item.plainText, !text.isEmpty else { return false }
+        if !core.settings.snippetsEnabled {
+            core.snippetCoordinator.setSnippetsEnabled(true)
+            return true
+        }
+        core.snippetCoordinator.createSnippet(name: "", text: text, keyword: "")
         return true
     }
 
@@ -205,6 +218,19 @@ enum ClipboardActionsMenu {
                 ) {
                     Task { await core.clipboardCoordinator.editClip(item) }
                 })
+            if let text = item.text, !text.isEmpty {
+                items.append(
+                    PopoverMenuItem(
+                        title: String(localized: "Save as Snippet"), systemImage: "curlybraces",
+                        shortcut: "⌘S"
+                    ) {
+                        if !core.settings.snippetsEnabled {
+                            core.snippetCoordinator.setSnippetsEnabled(true)
+                            return
+                        }
+                        core.snippetCoordinator.createSnippet(name: "", text: text, keyword: "")
+                    })
+            }
             if let text = item.text, URLSanitizer.containsURL(text) {
                 items.append(
                     PopoverMenuItem(

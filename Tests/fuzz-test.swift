@@ -176,6 +176,7 @@ struct FuzzTest {
         var terms: [String] = []
         var priority = 3
         var boosted: Set<String> = []
+        var acceptsArguments: Bool = false
 
         var profile: SearchProfile {
             FuzzTest.profile(name, alternates: alternates, subtitle: subtitle, keywords: keywords)
@@ -185,7 +186,7 @@ struct FuzzTest {
             LauncherOrder.Signals(
                 alias: alias.map { SearchText($0, transliterated: false) },
                 usage: LauncherUsage(frecency: frecency, searchTerms: terms), priority: priority,
-                title: name, boostedTerms: boosted)
+                title: name, boostedTerms: boosted, acceptsArguments: acceptsArguments)
         }
     }
 
@@ -301,6 +302,15 @@ struct FuzzTest {
                     Item(name: "系统设置", alternates: ["System Settings"])
                 ])
                 == ["系统设置", "Utility"])
+        check(
+            "an item without acceptsArguments does not match trailing words in query",
+            rank("ardia website", [Item(name: "Ardia", acceptsArguments: false)]).isEmpty)
+        check(
+            "safari does not match safari settings when acceptsArguments is false",
+            rank("safari settings", [Item(name: "Safari", acceptsArguments: false)]).isEmpty)
+        check(
+            "an item with acceptsArguments matches when followed by space and arguments",
+            rank("search files report", [Item(name: "Search Files", acceptsArguments: true)]) == ["Search Files"])
         let usage = LauncherOrder.byUsage(
             [
                 Item(name: "Zed"), Item(name: "Arc", alias: "a"), Item(name: "Maps", frecency: 300),

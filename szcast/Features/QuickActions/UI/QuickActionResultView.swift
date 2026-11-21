@@ -94,10 +94,45 @@ struct QuickActionResultView: View {
                     .foregroundStyle(Theme.Colors.textSecondary)
                 Text(state.action.title)
                     .font(metrics.typography.panelTitle)
+                if let appName = state.targetAppName {
+                    HStack(spacing: 4) {
+                        if let icon = state.targetAppIcon {
+                            Image(nsImage: icon)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 13, height: 13)
+                                .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
+                        }
+                        Text(appName)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(Theme.Colors.textSecondary)
+                    }
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Theme.Colors.controlSurface)
+                    .clipShape(Capsule())
+                }
                 Spacer(minLength: metrics.spacing.md)
             }
             .windowDraggable(true)
             if state.action == .translate, !languages.isEmpty { languageMenu }
+            Button {
+                state.togglePin()
+            } label: {
+                Image(systemName: state.isPinned ? "pin.fill" : "pin")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(state.isPinned ? Color.accentColor : Theme.Colors.textTertiary)
+            }
+            .buttonStyle(.plain)
+            .help(state.isPinned ? "Unpin window (⌘P)" : "Pin window (⌘P)")
+
+            Button(action: onCancel) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(Theme.Colors.textTertiary)
+            }
+            .buttonStyle(.plain)
+            .help("Dismiss (Esc)")
         }
         .padding(.horizontal, metrics.spacing.xxl)
         .padding(.top, metrics.spacing.xl)
@@ -199,11 +234,18 @@ struct QuickActionResultView: View {
             Button("Copy", action: onCopy)
                 .buttonStyle(.modalAction(.standard, fillsWidth: false))
                 .disabled(!state.canReplace)
-            Button("Replace", action: onReplace)
+            Button(replaceButtonTitle, action: onReplace)
                 .buttonStyle(.modalAction(.primary, fillsWidth: false))
                 .disabled(!state.canReplace)
         }
         .padding(.horizontal, metrics.spacing.xxl)
         .padding(.vertical, metrics.spacing.xl)
+    }
+
+    private var replaceButtonTitle: String {
+        if let appName = state.targetAppName {
+            return "Replace in \(appName)"
+        }
+        return "Replace"
     }
 }

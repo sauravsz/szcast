@@ -19,6 +19,7 @@ struct LauncherSettingsFileTest {
         testDeletedWaitingRecord()
         testMovedShortcut()
         testAliasTrigger()
+        testOpenInBrowserDetection()
 
         print(failures == 0 ? "\nALL PASSED" : "\n\(failures) FAILED")
         exit(failures == 0 ? 0 : 1)
@@ -46,6 +47,24 @@ struct LauncherSettingsFileTest {
 
         let trigger7 = AliasTrigger.parse(" e ", registeredAliases: aliases)
         check("leading space does not trigger alias", trigger7 == nil)
+    }
+
+    private static func testOpenInBrowserDetection() {
+        check(
+            "standalone https URL opens in browser",
+            CommandCatalog.openInBrowser(for: "https://ardia.dev/") != nil)
+        check(
+            "standalone bare domain opens in browser",
+            CommandCatalog.openInBrowser(for: "ardia.dev") != nil)
+        check(
+            "url with trailing query question does not open in browser",
+            CommandCatalog.openInBrowser(for: "https://ardia.dev/ does this support built in rss in the browser?") == nil)
+        check(
+            "url with trailing search words does not open in browser",
+            CommandCatalog.openInBrowser(for: "https://example.com search query") == nil)
+        check(
+            "bare host with trailing words does not open in browser",
+            CommandCatalog.openInBrowser(for: "ardia.dev documentation site") == nil)
     }
 
     private static func testInvalidRecords() {
@@ -255,6 +274,7 @@ struct AppEntry: Sendable {
     var settingsOwner: SettingsTab?
     var subtitle: String?
     var alternateTitles: [String] = []
+    var acceptsArguments: Bool = false
     var preferenceKey: String { bundleID ?? id }
 }
 

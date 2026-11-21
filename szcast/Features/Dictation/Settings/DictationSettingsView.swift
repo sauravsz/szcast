@@ -202,6 +202,17 @@ struct DictationSettingsView: View {
                     Text("Hold to talk, or press once to start and again to stop.")
                 }
 
+                Toggle(isOn: $bSettings.dictationDoubleTapToLock) {
+                    SettingsRowTitle(.dictationCommands, "Double-tap to lock hands-free")
+                    Text("Rapidly double-tap the shortcut to record continuously without holding the key.")
+                }
+                .disabled(settings.dictationMode == .toggle)
+
+                Toggle(isOn: $bSettings.dictationWhisperMode) {
+                    SettingsRowTitle(.dictationOutput, "Whisper mode")
+                    Text("Boosts microphone sensitivity for soft, sub-vocal whispered speech in quiet rooms.")
+                }
+
                 Picker(selection: dictationPresetBinding) {
                     ForEach(DictationHotkeyPreset.allCases) { preset in
                         Text(preset.title).tag(preset)
@@ -600,8 +611,46 @@ struct DictationSettingsView: View {
                 SettingsRowTitle(.dictationOutput, "Smart insertion")
                 Text("Fits text to the spacing and capitals around your cursor.")
             }
+
+            Toggle(isOn: $bSettings.dictationAutoAppRouting) {
+                SettingsRowTitle(.dictationOutput, "Context-aware app styles")
+                Text("Adapts tone to active app (casual in Slack/Messages, formal in Mail, syntax-aware in code editors).")
+            }
+
+            Toggle(isOn: $bSettings.dictationCommandModeEnabled) {
+                SettingsRowTitle(.dictationOutput, "Command mode (Voice edit)")
+                Text("Highlight text in any app and speak an instruction to rewrite, translate, or summarize in place.")
+            }
+
+            Toggle(isOn: $bSettings.dictationAutoLearnDictionary) {
+                SettingsRowTitle(.dictationOutput, "Auto-learn corrections")
+                Text("Automatically learns spelling corrections and vocabulary from your post-dictation edits.")
+            }
         } header: {
             Text("Formatting & Rules")
+        }
+
+        Section {
+            Toggle(isOn: $bSettings.dictationAutoApplyTransform) {
+                SettingsRowTitle(.dictationOutput, "Auto-apply transform")
+                Text("Applies your selected AI transform prompt to speech before insertion.")
+            }
+
+            if settings.dictationAutoApplyTransform {
+                Picker(selection: Binding(
+                    get: { settings.dictationActiveTransformID ?? DictationTransform.bulletPoints.id.uuidString },
+                    set: { settings.dictationActiveTransformID = $0 }
+                )) {
+                    ForEach(coordinator.transformStore.allTransforms) { transform in
+                        Text(transform.name).tag(transform.id.uuidString)
+                    }
+                } label: {
+                    SettingsRowTitle(.dictationOutput, "Active transform")
+                    Text("Choose structured AI prompt applied to your dictation.")
+                }
+            }
+        } header: {
+            Text("Transforms (Custom Prompts)")
         }
 
         Section {

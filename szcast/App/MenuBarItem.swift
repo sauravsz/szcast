@@ -23,12 +23,27 @@ struct MenuBarMenu: View {
                 AppCore.shared.paletteCoordinator.showPalette(mode: .clipboard)
             }
         }
+        if AppCore.shared.settings.statsEnabled {
+            Button("System Stats") {
+                AppCore.shared.paletteCoordinator.showPalette(mode: .systemStats)
+            }
+        }
         if AppCore.shared.settings.dictationEnabled {
             Button("Dictation Insights…") {
                 AppCore.shared.settingsCoordinator.showSettings(tab: .dictation)
             }
             Button("Transcribe Audio/Video File…") {
                 AppCore.shared.dictationCoordinator.transcribeFile()
+            }
+            Button(AppCore.shared.meetingNotetaker.isRecording ? "Stop Meeting Recording" : "Record Meeting (Notetaker)…") {
+                if AppCore.shared.meetingNotetaker.isRecording {
+                    AppCore.shared.meetingNotetaker.stopRecording()
+                } else {
+                    AppCore.shared.meetingNotetaker.startRecording()
+                }
+            }
+            Button("Import Meeting Transcript (Otter/Granola)…") {
+                AppCore.shared.meetingNotetaker.promptImportTranscript()
             }
             Button("Copy Last Dictation") {
                 AppCore.shared.dictationCoordinator.copyLastDictation()

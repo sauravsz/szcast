@@ -180,10 +180,30 @@ final class LauncherCoordinator {
             core.quickActionCoordinator.run(.fixGrammar)
         case .rewrite:
             core.quickActionCoordinator.run(.rewrite)
+        case .makeShorter:
+            core.quickActionCoordinator.run(.makeShorter)
+        case .makeLonger:
+            core.quickActionCoordinator.run(.makeLonger)
+        case .simplify:
+            core.quickActionCoordinator.run(.simplify)
+        case .changeTone:
+            core.quickActionCoordinator.run(.changeTone)
         case .translate:
             core.quickActionCoordinator.run(.translate)
         case .summarize:
             core.quickActionCoordinator.run(.summarize)
+        case .explain:
+            core.quickActionCoordinator.run(.explain)
+        case .findActionItems:
+            core.quickActionCoordinator.run(.findActionItems)
+        case .convertTypeScript:
+            core.quickActionCoordinator.run(.convertTypeScript)
+        case .slackReply:
+            core.quickActionCoordinator.run(.slackReply)
+        case .emailReply:
+            core.quickActionCoordinator.run(.emailReply)
+        case .summarizeYouTube:
+            core.quickActionCoordinator.run(.summarizeYouTube)
         case .calculatorHistory:
             paletteCoordinator.togglePalette(mode: .calculatorHistory, seeding: searchQuery)
         case .clipboardHistory:
@@ -331,6 +351,12 @@ final class LauncherCoordinator {
         case .keepassxc:
             guard core.settings.keepassxcEnabled else { return }
             paletteCoordinator.togglePalette(mode: .keepassxc, seeding: searchQuery)
+        case .textTransformer:
+            guard core.settings.textTransformerEnabled else { return }
+            paletteCoordinator.togglePalette(mode: .textTransformer, seeding: searchQuery)
+        case .systemStats:
+            guard core.settings.statsEnabled else { return }
+            paletteCoordinator.togglePalette(mode: .systemStats)
         case .dictationInsights:
             dismissPalette()
             core.settingsCoordinator.showSettings(tab: .dictation)
@@ -420,5 +446,67 @@ final class LauncherCoordinator {
             == app.id
         guard AppLauncher.quit(bundleID: bundleID, url: app.url, force: force) else { return }
         paletteCoordinator.hidePalette(restoreFocus: !quittingPreviousApp)
+    }
+
+    func configure(app: AppEntry) {
+        paletteCoordinator.hidePalette(restoreFocus: false)
+        if app.kind == .extensionCommand {
+            core.extensionCoordinator.showExtensionSettings(for: app)
+            return
+        }
+        if let owner = app.settingsOwner {
+            core.settingsCoordinator.showSettings(tab: owner)
+            return
+        }
+        switch app.kind {
+        case .systemSettings:
+            core.settingsCoordinator.showSettings(tab: .systemSettings)
+        case .application:
+            core.settingsCoordinator.showSettings(tab: .general)
+        case .command, .systemAction, .windowCommand, .quickAction, .customCommand:
+            core.settingsCoordinator.showSettings(tab: .commands)
+        case .quicklink:
+            core.settingsCoordinator.showSettings(tab: .quicklinks)
+        case .snippet:
+            core.settingsCoordinator.showSettings(tab: .snippets)
+        case .appleShortcut:
+            core.settingsCoordinator.showSettings(tab: .appleShortcuts)
+        case .meeting:
+            core.settingsCoordinator.showSettings(tab: .calendar)
+        default:
+            core.settingsCoordinator.showSettings(tab: .general)
+        }
+    }
+
+    func beginSetAlias(for app: AppEntry) {
+        Task { @MainActor in
+            let current = core.aliases.alias(for: app.preferenceKey)
+            let result = await core.promptAlias(entry: app, currentAlias: current)
+            guard result.saved, let newAlias = result.alias else { return }
+            let trimmed = newAlias.trimmingCharacters(in: .whitespacesAndNewlines)
+            core.aliases.setAlias(trimmed, for: app.preferenceKey)
+            if trimmed.isEmpty {
+                core.showMessage(String(localized: "Alias removed for \(app.name)"), tone: .neutral)
+            } else {
+                core.showMessage(String(localized: "Alias “\(trimmed)” set for \(app.name)"), tone: .success)
+            }
+        }
+    }
+
+    func beginRecordHotKey(for app: AppEntry) {
+        guard let action = app.hotKeyAction else { return }
+        Task { @MainActor in
+            let initial = core.hotKeys.binding(for: action)
+            await core.recordHotKey(entry: app, action: action)
+            let now = core.hotKeys.binding(for: action)
+            if now != initial {
+                if let now {
+                    let text = now.keycaps.joined(separator: " ")
+                    core.showMessage(String(localized: "Hotkey \(text) set for \(app.name)"), tone: .success)
+                } else {
+                    core.showMessage(String(localized: "Hotkey removed for \(app.name)"), tone: .neutral)
+                }
+            }
+        }
     }
 }

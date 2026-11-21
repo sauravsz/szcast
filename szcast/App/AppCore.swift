@@ -111,6 +111,9 @@ final class AppCore {
                 confirmRole: .standard)
         },
         showMessage: { [unowned self] in self.showMessage($0, tone: $1) })
+    @ObservationIgnored private(set) lazy var meetingNotetaker = MeetingNotetakerCoordinator(
+        settings: settings, models: dictationModels,
+        showMessage: { [unowned self] in self.showMessage($0, tone: $1) })
     @ObservationIgnored private(set) lazy var quicklinkCoordinator = QuicklinkCoordinator(
         store: quicklinks, settings: settings,
         appIndex: appIndex, injector: textInjector, hotKeys: hotKeys, favorites: favorites,
@@ -202,7 +205,7 @@ final class AppCore {
         paletteCoordinator: paletteCoordinator, core: self)
     @ObservationIgnored private(set) lazy var emojiCoordinator = EmojiCoordinator(
         frequentEmoji: frequentEmoji, settings: settings, windowController: windowController,
-        paletteCoordinator: paletteCoordinator)
+        paletteCoordinator: paletteCoordinator, core: self)
     @ObservationIgnored private(set) lazy var calculatorCoordinator = CalculatorCoordinator(
         calcHistory: calcHistory, paletteCoordinator: paletteCoordinator, core: self)
     @ObservationIgnored private(set) lazy var calendarCoordinator = CalendarCoordinator(
@@ -265,6 +268,7 @@ final class AppCore {
         }
         return service
     }()
+    @ObservationIgnored private(set) lazy var textTransformerCoordinator = TextTransformerCoordinator()
 
     @ObservationIgnored private lazy var windowController = PaletteWindowController(core: self)
     @ObservationIgnored private lazy var messageHUD = MessageHUDController(settings: settings)
@@ -272,7 +276,7 @@ final class AppCore {
     /// A link that launched the app can arrive before `start` wires anything; it waits, then runs.
     @ObservationIgnored private var pendingURLs: [URL]? = []
     var isDimmingPaletteForDialog: Bool { isShowingDialog && windowController.isVisible }
-    @ObservationIgnored private lazy var dialogs = DialogController(
+    @ObservationIgnored private(set) lazy var dialogs = DialogController(
         settings: settings,
         onPresentationChanged: { [weak self] isPresenting in
             guard let self else { return }
@@ -321,6 +325,25 @@ final class AppCore {
             pinnedEmoji.onPersistenceFailure = { [weak self] in
                 self?.showMessage(String(localized: "Couldn't save Emoji & Symbols pins"), tone: .danger)
             }
+
+            let emojiProvider: (_ text: String, _ cursor: Int) -> (range: NSRange, suggestions: [String])? = { [weak self] text, cursor in
+                guard let self,
+                      let trigger = InlineEmojiCompletionService.shared.detectTrigger(in: text, cursorLocation: cursor) else {
+                    return nil
+                }
+                let suggestions = InlineEmojiCompletionService.shared.suggestions(
+                    for: trigger.token,
+                    index: emojiIndex,
+                    frequent: frequentEmoji,
+                    pinned: pinnedEmoji,
+                    tone: settings.emojiSkinTone,
+                    limit: 10
+                ).map(\.glyph)
+                return (trigger.range, suggestions)
+            }
+            FormTextArea.defaultEmojiSuggestionProvider = emojiProvider
+            NoteTextView.defaultEmojiSuggestionProvider = emojiProvider
+            ComposerTextView.defaultEmojiSuggestionProvider = emojiProvider
 
             appIndex.start(settings: settings)
             clipboardCoordinator.applyEnabled()
@@ -430,6 +453,11 @@ final class AppCore {
                 )
             } else {
                 DisplayTweaksService.shared.restoreGamma()
+            }
+
+            if settings.statsEnabled {
+                StatsMonitor.shared.start(interval: settings.statsRefreshInterval)
+                StatsMenuBarManager.shared.syncWithSettings()
             }
             hotKeys.onRunWindowCommand = { [weak self] id in
                 self?.windowCommandCoordinator.runWindowCommand(id: id)
@@ -1007,6 +1035,8 @@ final class AppCore {
         appIndex.setCommandsVisible([.keepassxc], settings.keepassxcEnabled)
         appIndex.setCommandsVisible([.generateDuckAddress], settings.duckDuckGoEmailEnabled)
         appIndex.setCommandsVisible([.cleanKeyboard], settings.cleanKeyboardEnabled)
+        appIndex.setCommandsVisible([.textTransformer], settings.textTransformerEnabled)
+        appIndex.setCommandsVisible([.systemStats], settings.statsEnabled)
         calendarCoordinator.applyEnabled()
         appleShortcutCoordinator.refresh()
     }
@@ -1136,5 +1166,13 @@ final class AppCore {
 
     func editClipboardText(_ text: String) async -> String? {
         await dialogs.editClipboardText(text)
+    }
+
+    func promptAlias(entry: AppEntry, currentAlias: String?) async -> (saved: Bool, alias: String?) {
+        await dialogs.promptAlias(entry: entry, currentAlias: currentAlias)
+    }
+
+    func recordHotKey(entry: AppEntry, action: HotKeyAction) async {
+        await dialogs.recordHotKey(entry: entry, action: action, hotKeys: hotKeys)
     }
 }

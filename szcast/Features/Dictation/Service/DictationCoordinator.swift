@@ -17,7 +17,11 @@ final class DictationCoordinator {
     private let groqAudio = GroqAudioService()
     private let groqPolish = GroqPolishService()
     private let livePreviewCoordinator = DictationLivePreviewCoordinator()
+    let transformStore = DictationTransformStore()
     private(set) var lastDictation: String?
+    private(set) var isHandsFreeLocked = false
+    private(set) var commandModeSelectedText: String?
+    @ObservationIgnored private var lastPressTime: Date = .distantPast
     private let capture = DictationCapture()
     private let audioDucker: DictationAudioDucker
     private let cues = DictationCueRunner()
@@ -59,6 +63,12 @@ final class DictationCoordinator {
             if pendingStartCue == token { playStartCue() }
         }
         capture.onLimit = { [weak self] in self?.accept() }
+        capture.onSilenceWarning = { [weak self] silent in
+            self?.panel.state.isMicSilent = silent
+        }
+        capture.onClamshellWarning = { [weak self] muffled in
+            self?.panel.state.isClamshellMuffled = muffled
+        }
         capture.onSamples = { [weak self] samples in
             self?.livePreviewCoordinator.feed(samples)
         }
@@ -136,8 +146,23 @@ final class DictationCoordinator {
                 String(localized: "Hold to talk needs a key combination or a single modifier"), .danger)
             return
         }
+
+        let now = Date()
+        let interval = now.timeIntervalSince(lastPressTime)
+        lastPressTime = now
+
+        // Rapid double tap triggers hands-free lock
+        if settings.dictationDoubleTapToLock && interval < 0.45 {
+            isHandsFreeLocked = true
+            panel.state.isLockedHandsFree = true
+        }
+
         if phase != .idle {
-            if settings.dictationMode == .toggle { finish() }
+            if isHandsFreeLocked || settings.dictationMode == .toggle {
+                isHandsFreeLocked = false
+                panel.state.isLockedHandsFree = false
+                finish()
+            }
             return
         }
         begin(target: InjectionTarget.current())
@@ -200,18 +225,30 @@ final class DictationCoordinator {
         phase = .starting
         finishWhenStarted = false
         self.target = target
+        if settings.dictationCommandModeEnabled,
+           let sel = DictationInsertionContext.readSelectedText(in: target),
+           !sel.isEmpty {
+            self.commandModeSelectedText = sel
+            panel.state.commandModeText = sel
+        } else {
+            self.commandModeSelectedText = nil
+            panel.state.commandModeText = nil
+        }
+        panel.state.isWhisperMode = settings.dictationWhisperMode
+        panel.state.isLockedHandsFree = isHandsFreeLocked
         pendingStartCue = settings.dictationPlaysSounds ? current : nil
         if pendingStartCue == nil { audioDucker.begin(mode: settings.dictationOtherAudioMode) }
         startTask = Task { [weak self] in
             guard let self else { return }
             do {
-                try await capture.start(microphoneID: settings.dictationMicrophone)
+                try await capture.start(microphoneID: settings.dictationMicrophone, whisperMode: settings.dictationWhisperMode)
                 guard token == current, settings.dictationEnabled else {
                     _ = await capture.stop()
                     return
                 }
                 phase = .listening
                 panel.show()
+                NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .default)
                 if settings.dictationLivePreviewEnabled {
                     let langIdentifier = settings.dictationLanguage ?? "en-US"
                     livePreviewCoordinator.start(locale: Locale(identifier: langIdentifier))
@@ -242,6 +279,7 @@ final class DictationCoordinator {
 
     func released() {
         guard settings.dictationMode == .pushToTalk else { return }
+        if isHandsFreeLocked { return }
         if phase == .starting { finishWhenStarted = true }
         if phase == .listening { accept() }
     }
@@ -300,6 +338,8 @@ final class DictationCoordinator {
                 guard token == current else { return }
 
                 var processed = transcript
+                processed = DictationTextFormatter.resolveBacktracks(processed)
+                processed = DictationTextFormatter.collapseRepetitions(processed)
                 if settings.dictationConvertSpokenEmoji {
                     processed = DictationTextFormatter.convertSpokenEmoji(processed)
                 }
@@ -312,20 +352,61 @@ final class DictationCoordinator {
                 processed = dictionaryStore.applyDictionaryAndPacks(processed)
                 processed = dictionaryStore.applySnippets(processed)
 
+                let frontApp = target?.externalApp ?? NSWorkspace.shared.frontmostApplication
+                let bundleID = frontApp?.bundleIdentifier
+
                 if settings.dictationLivePreviewEnabled {
                     let lang = settings.dictationLanguage ?? "en-US"
                     livePreviewCoordinator.prewarm(locale: Locale(identifier: lang))
                 }
-                if settings.dictationS1Enabled {
-                    let s1 = DictationS1Settings(
-                        enabled: true,
-                        tone: settings.dictationS1Tone,
-                        structure: settings.dictationS1Structure,
-                        context: settings.dictationS1Context,
-                        idleRelease: settings.dictationS1IdleRelease,
-                        bengaliMode: settings.dictationBengaliMode,
-                        hindiMode: settings.dictationHindiMode
-                    )
+
+                var s1 = DictationS1Settings(
+                    enabled: true,
+                    tone: settings.dictationS1Tone,
+                    structure: settings.dictationS1Structure,
+                    context: settings.dictationS1Context,
+                    idleRelease: settings.dictationS1IdleRelease,
+                    bengaliMode: settings.dictationBengaliMode,
+                    hindiMode: settings.dictationHindiMode
+                )
+                if settings.dictationAutoAppRouting {
+                    s1 = AppStyleRouter.resolvedS1Settings(base: s1, bundleID: bundleID)
+                }
+
+                if let selectedText = self.commandModeSelectedText, !selectedText.isEmpty {
+                    // Command Mode: Rewrites highlighted text using voice instruction
+                    if settings.dictationPolishProvider == .groq, !settings.groqAPIKey.isEmpty {
+                        do {
+                            processed = try await groqPolish.transform(
+                                text: selectedText,
+                                instruction: processed,
+                                apiKey: settings.groqAPIKey,
+                                model: settings.dictationGroqPolishModel
+                            )
+                        } catch {
+                            processed = await s1Polisher.transform(text: selectedText, instruction: processed, settings: s1)
+                        }
+                    } else {
+                        processed = await s1Polisher.transform(text: selectedText, instruction: processed, settings: s1)
+                    }
+                } else if settings.dictationAutoApplyTransform,
+                          let transform = transformStore.transform(with: settings.dictationActiveTransformID) {
+                    // Custom Transform applied to dictation
+                    if settings.dictationPolishProvider == .groq, !settings.groqAPIKey.isEmpty {
+                        do {
+                            processed = try await groqPolish.transform(
+                                text: processed,
+                                instruction: transform.systemPrompt,
+                                apiKey: settings.groqAPIKey,
+                                model: settings.dictationGroqPolishModel
+                            )
+                        } catch {
+                            processed = await s1Polisher.transform(text: processed, instruction: transform.systemPrompt, settings: s1)
+                        }
+                    } else {
+                        processed = await s1Polisher.transform(text: processed, instruction: transform.systemPrompt, settings: s1)
+                    }
+                } else if settings.dictationS1Enabled {
                     if settings.dictationPolishProvider == .groq, !settings.groqAPIKey.isEmpty {
                         do {
                             processed = try await groqPolish.polish(
@@ -356,9 +437,12 @@ final class DictationCoordinator {
 
                 // A mic belongs to its field: the text goes in there, never to the clipboard.
                 let context = destination.pastes ? insertionContext() : nil
-                let text = DictationTextFormatter.format(
+                var text = DictationTextFormatter.format(
                     processed, context: context,
                     adaptCapitalization: settings.dictationAdaptsCapitalization)
+                if settings.dictationAutoAppRouting {
+                    text = AppStyleRouter.applyCategoryFormatting(text, bundleID: bundleID)
+                }
                 let target = self.target
                 guard !text.isEmpty else {
                     reset(cancelTranscription: false)
@@ -366,12 +450,14 @@ final class DictationCoordinator {
                 }
 
                 lastDictation = text
-                let frontApp = target?.externalApp ?? NSWorkspace.shared.frontmostApplication
                 historyStore.add(
                     text: text, rawText: transcript, duration: Double(samples.count) / 16000.0,
-                    appName: frontApp?.localizedName, appBundleID: frontApp?.bundleIdentifier)
+                    appName: frontApp?.localizedName, appBundleID: frontApp?.bundleIdentifier,
+                    samples: samples)
 
-                panel.close()
+                NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .default)
+                panel.showSuccessAndClose()
+
                 if destination.pastes {
                     // All at once: instant paste via direct editor injection or pasteboard Command+V
                     let app = target?.externalApp ?? NSWorkspace.shared.frontmostApplication
@@ -385,7 +471,7 @@ final class DictationCoordinator {
                                 if destination.copies || settings.dictationAutoCopyToClipboard {
                                     Paster.copyPlainText(text)
                                 }
-                                reset(cancelTranscription: false)
+                                reset(cancelTranscription: false, keepPanel: true)
                             },
                             onFailed: { [weak self] in
                                 guard let self, token == current else { return }
@@ -406,12 +492,12 @@ final class DictationCoordinator {
                             if destination.copies || settings.dictationAutoCopyToClipboard {
                                 Paster.copyPlainText(text)
                             }
-                            reset(cancelTranscription: false)
+                            reset(cancelTranscription: false, keepPanel: true)
                         }
                     }
                 } else {
                     Paster.copyPlainText(text)
-                    reset(cancelTranscription: false)
+                    reset(cancelTranscription: false, keepPanel: true)
                 }
             } catch {
                 guard token == current else { return }
@@ -459,17 +545,24 @@ final class DictationCoordinator {
         DictationLlamaServerManager.shared.stop()
     }
 
-    private func reset(cancelTranscription: Bool = true) {
+    private func reset(cancelTranscription: Bool = true, keepPanel: Bool = false) {
         token = UUID()
         livePreviewCoordinator.stop()
         panel.state.previewText = ""
+        panel.state.commandModeText = nil
+        panel.state.isLockedHandsFree = false
+        panel.state.isWhisperMode = false
+        isHandsFreeLocked = false
+        commandModeSelectedText = nil
         if cancelTranscription { transcriptionTask?.cancel() }
         startTask = nil
         transcriptionTask = nil
         phase = .idle
         target = nil
         field = nil
-        panel.close()
+        if !keepPanel {
+            panel.close()
+        }
         audioDucker.end(mode: settings.dictationOtherAudioMode)
     }
 
@@ -604,6 +697,7 @@ final class DictationCoordinator {
             }
 
             var processed = transcript
+            processed = DictationTextFormatter.collapseRepetitions(processed)
             if settings.dictationConvertSpokenEmoji {
                 processed = DictationTextFormatter.convertSpokenEmoji(processed)
             }
@@ -662,7 +756,7 @@ final class DictationCoordinator {
             }
 
             lastDictation = text
-            historyStore.add(text: text, rawText: transcript, duration: Double(samples.count) / 16000.0)
+            historyStore.add(text: text, rawText: transcript, duration: Double(samples.count) / 16000.0, samples: samples)
             Paster.copyPlainText(text)
             showMessage(String(localized: "\(url.lastPathComponent) transcribed & copied to clipboard"), .success)
         } catch {

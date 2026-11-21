@@ -97,6 +97,13 @@ struct PaletteShortcutTests {
         expect(resolve("e", command: true, control: true), nil, "⌃⌘E is not the edit chord")
         expect(resolve("d", command: true), .duplicate, "⌘D duplicates the row")
         expect(resolve("d", command: true, shift: true), nil, "⇧⌘D is not the duplicate chord")
+        expect(resolve("s", command: true), .saveSnippet, "⌘S saves the row as a snippet")
+        expect(resolve("s", command: true, shift: true), nil, "⇧⌘S is not the save snippet chord")
+        expect(resolve("s", command: true, option: true), nil, "⌥⌘S is not the save snippet chord")
+        expect(resolve("s", command: true, control: true), nil, "⌃⌘S is not the save snippet chord")
+        expect(resolve("k", command: true, option: true), .recordHotKey, "⌥⌘K records hotkey")
+        expect(resolve("a", command: true, shift: true), .setAlias, "⇧⌘A sets alias")
+        expect(resolve(",", command: true, shift: true), .configureCommand, "⇧⌘, configures command")
         expect(resolve(",", command: true, option: true), .settings, "⌥⌘, opens the screen's settings")
         expect(resolve(",", command: true), nil, "⌘, stays the app's own Settings")
 
@@ -107,7 +114,8 @@ struct PaletteShortcutTests {
         let expanded: [PaletteShortcut] = [
             .copyFile, .copyName, .copyPath, .copyText, .pasteFile, .quickLook, .openInApp,
             .showDetails, .toggleFavorite, .hideFromSearch, .quit, .forceQuit, .minimizeWindow,
-            .hideApp, .restart, .edit, .duplicate, .showInFinder
+            .hideApp, .restart, .edit, .duplicate, .showInFinder, .saveSnippet,
+            .recordHotKey, .setAlias, .configureCommand
         ]
         let anywhere: [PaletteShortcut] = [
             .commandDelete, .delete, .deleteAll, .pin, .favoriteSlot(0), .continueInChat, .newItem,
@@ -123,7 +131,8 @@ struct PaletteShortcutTests {
         let closing: [PaletteShortcut] = [
             .delete, .deleteAll, .copyFile, .copyName, .copyPath, .copyText, .copyCalculation,
             .quickLook, .openInApp, .showDetails, .toggleFavorite, .hideFromSearch, .minimizeWindow,
-            .newItem, .settings, .edit, .duplicate, .showInFinder
+            .newItem, .settings, .edit, .duplicate, .showInFinder, .saveSnippet,
+            .recordHotKey, .setAlias, .configureCommand
         ]
         let leaving: [PaletteShortcut] = [
             .commandDelete, .pasteFile, .quit, .forceQuit, .hideApp, .restart, .pin, .favoriteSlot(0),

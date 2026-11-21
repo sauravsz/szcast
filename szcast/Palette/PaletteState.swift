@@ -21,8 +21,12 @@ final class PaletteState {
     var clipboardFilter: ClipboardFilter = .all {
         didSet { if oldValue != clipboardFilter { restoredSelection = nil } }
     }
+    var launcherCategoryFilter: LauncherCategoryFilter = .all {
+        didSet { if oldValue != launcherCategoryFilter { restoredSelection = nil } }
+    }
     var fileSearchFilter: FileSearchFilter = .all
     var emojiCategoryFilter: EmojiCategoryFilter = .all
+    var emojiShowingAIResults = false
     var snippetFolderFilter: String? = nil {
         didSet { if oldValue != snippetFolderFilter { selection = 0; restoredSelection = nil } }
     }
@@ -145,8 +149,10 @@ final class PaletteState {
         pendingArgumentEntryID = nil
         argumentEntryID = nil
         clipboardFilter = .all
+        launcherCategoryFilter = .all
         fileSearchFilter = .all
         emojiCategoryFilter = .all
+        emojiShowingAIResults = false
         snippetFolderFilter = nil
         emojiGridColumnsOverride = nil
         forceExpanded = false
@@ -240,5 +246,29 @@ final class PaletteState {
         guard hoverHighlightArmed else { return }
         hoverHighlightArmed = false
         hoverDisarmToken = UUID()
+    }
+}
+
+enum LauncherCategoryFilter: String, CaseIterable, Sendable {
+    case all = "All"
+    case apps = "Apps"
+    case commands = "Commands"
+    case quicklinks = "Quicklinks"
+    case snippets = "Snippets"
+    case files = "Files"
+    case systemActions = "Actions"
+
+    var id: String { rawValue }
+
+    var sfSymbol: String {
+        switch self {
+        case .all: return "sparkles"
+        case .apps: return "app.fill"
+        case .commands: return "command"
+        case .quicklinks: return "link"
+        case .snippets: return "text.quote"
+        case .files: return "doc.fill"
+        case .systemActions: return "gearshape.fill"
+        }
     }
 }

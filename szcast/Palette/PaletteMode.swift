@@ -30,6 +30,8 @@ enum PaletteMode: String, CaseIterable, Identifiable {
     case enteAuth
     case duckDuckGoEmail
     case keepassxc
+    case textTransformer
+    case systemStats
 
     var id: String { rawValue }
 
@@ -64,6 +66,8 @@ enum PaletteMode: String, CaseIterable, Identifiable {
         case .enteAuth: return "key.fill"
         case .duckDuckGoEmail: return "envelope.badge.shield.half.filled"
         case .keepassxc: return "lock.fill"
+        case .textTransformer: return "text.word.spacing"
+        case .systemStats: return "gauge.with.needle"
         }
     }
     var placeholder: String {
@@ -97,6 +101,8 @@ enum PaletteMode: String, CaseIterable, Identifiable {
         case .enteAuth: return String(localized: "Search 2FA accounts…")
         case .duckDuckGoEmail: return String(localized: "DuckDuckGo Email Protection…")
         case .keepassxc: return String(localized: "Search KeePassXC passwords…")
+        case .textTransformer: return String(localized: "Transform, convert casing, format text…")
+        case .systemStats: return String(localized: "System Stats & Resource Monitor…")
         }
     }
 }

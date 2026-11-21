@@ -261,6 +261,8 @@ extension ChatAttachment {
         switch kind {
         case .image: return "photo"
         case .pdf: return "doc.richtext"
+        case .wordDocument: return "doc.text"
+        case .epub: return "book"
         case .text: return "doc.plaintext"
         }
     }

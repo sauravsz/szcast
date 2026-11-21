@@ -142,6 +142,42 @@ struct ExtendedFeaturesSettingsView: View {
                     ),
                     targetTab: .keepassxc
                 )
+
+                // 8. System Stats
+                featureRow(
+                    title: "System Stats",
+                    subtitle: "Real-time hardware monitoring suite for CPU, RAM, Disk, Battery, and Network with menu bar widgets.",
+                    systemImage: "gauge.with.needle",
+                    isOn: Binding(
+                        get: { settings.statsEnabled },
+                        set: {
+                            settings.statsEnabled = $0
+                            if $0 {
+                                StatsMonitor.shared.start(interval: settings.statsRefreshInterval)
+                            } else {
+                                StatsMonitor.shared.stop()
+                            }
+                            StatsMenuBarManager.shared.syncWithSettings()
+                            core.applyExtendedFeaturesPresence()
+                        }
+                    ),
+                    targetTab: .stats
+                )
+
+                // 9. Text Transformer
+                featureRow(
+                    title: "Text Transformer",
+                    subtitle: "Developer text processing tool with live casing, formatting, encoding, and metrics.",
+                    systemImage: "text.word.spacing",
+                    isOn: Binding(
+                        get: { settings.textTransformerEnabled },
+                        set: {
+                            settings.textTransformerEnabled = $0
+                            core.applyExtendedFeaturesPresence()
+                        }
+                    ),
+                    targetTab: .textTransformer
+                )
             }
         }
         .formStyle(.grouped)

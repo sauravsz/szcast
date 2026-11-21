@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Observation
 
@@ -18,6 +19,9 @@ final class QuickActionPanelState {
     private(set) var output = ""
     private(set) var phase: Phase = .running
     var targetLanguage: Locale.Language
+    var targetAppName: String?
+    var targetAppIcon: NSImage?
+    var isPinned: Bool = false
 
     @ObservationIgnored private var cachedDiff: [TextDiffEngine.Chunk]?
 
@@ -60,5 +64,9 @@ final class QuickActionPanelState {
 
     func requireLanguageDownload() {
         phase = .needsLanguageDownload
+    }
+
+    func togglePin() {
+        isPinned.toggle()
     }
 }

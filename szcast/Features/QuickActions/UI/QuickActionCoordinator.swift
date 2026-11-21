@@ -219,22 +219,56 @@ final class QuickActionCoordinator {
 
     private func begin(_ action: QuickAction, target: Target) async {
         let selection: String
-        do {
+        if action == .summarizeYouTube {
+            var candidate: String?
             switch target {
             case .external(let app):
-                selection = try await QuickActionRunner.selection(in: app, using: injector)
+                candidate = try? await QuickActionRunner.selection(in: app, using: injector)
             case .note(let note):
-                selection = try QuickActionRunner.accepted(note.text)
+                candidate = note.text
             }
-        } catch let failure as QuickActionFailure {
-            reportRefusal(failure)
-            return
-        } catch {
-            core.showMessage(error.localizedDescription, tone: .danger)
-            return
+            guard let resolvedURL = YouTubeTranscriptService.shared.resolveYouTubeURL(selection: candidate),
+                  let videoID = YouTubeTranscriptService.shared.extractVideoID(from: resolvedURL) else {
+                core.showMessage(String(localized: "No YouTube video URL found in selection, clipboard, or browser."), tone: .danger)
+                return
+            }
+            let mine = generation
+            progressOwner = mine
+            core.showProgress(String(localized: "Fetching YouTube Transcript…"), onCancel: { [weak self] in self?.cancel() })
+            do {
+                let info = try await YouTubeTranscriptService.shared.fetchTranscript(videoID: videoID)
+                hideProgress(ownedBy: mine)
+                selection = "Video: \(info.title)\nURL: https://www.youtube.com/watch?v=\(info.videoID)\n\nTranscript:\n\(info.transcript)"
+            } catch {
+                hideProgress(ownedBy: mine)
+                core.showMessage(error.localizedDescription, tone: .danger)
+                return
+            }
+        } else {
+            do {
+                switch target {
+                case .external(let app):
+                    selection = try await QuickActionRunner.selection(in: app, using: injector)
+                case .note(let note):
+                    selection = try QuickActionRunner.accepted(note.text)
+                }
+            } catch let failure as QuickActionFailure {
+                reportRefusal(failure)
+                return
+            } catch {
+                core.showMessage(error.localizedDescription, tone: .danger)
+                return
+            }
         }
         let state = QuickActionPanelState(
             action: action, original: selection, targetLanguage: targetLanguage)
+        switch target {
+        case .external(let app):
+            state.targetAppName = app?.localizedName
+            state.targetAppIcon = app?.icon
+        case .note:
+            state.targetAppName = "Notes"
+        }
         let previews = store.settings.previewsResult(action)
         if previews { present(state, target: target) }
         await perform(state, target: target, previewing: previews)

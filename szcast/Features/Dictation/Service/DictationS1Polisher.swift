@@ -111,6 +111,53 @@ actor DictationS1Polisher {
         return transcript
     }
 
+    /// Transforms or rewrites text according to a voice command instruction (Command Mode & Transforms).
+    func transform(
+        text: String,
+        instruction: String,
+        settings: DictationS1Settings,
+        endpointURL: URL? = nil,
+        model: String = "s1-mini"
+    ) async -> String {
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return text }
+        let systemPrompt = "You are a precise voice-directed text editing assistant. Apply the user's spoken instruction to the provided text. Output ONLY the resulting edited text directly. Do not include introductory notes, conversational commentary, conversational filler, quotes, or markdown code block fences unless specifically requested by the instruction."
+        let userMessage = "Instruction: \(instruction)\n\nOriginal Text:\n\(text)"
+        let wordCount = text.split(separator: " ").count + instruction.split(separator: " ").count
+
+        if let customEndpoint = endpointURL {
+            let chatEndpoint = customEndpoint.path.hasSuffix("/v1/chat/completions") ? customEndpoint : customEndpoint.appendingPathComponent("v1/chat/completions")
+            if let output = try? await sendChatRequest(
+                model: model,
+                systemPrompt: systemPrompt,
+                userMessage: userMessage,
+                transcriptWordCount: wordCount,
+                endpointURL: chatEndpoint
+            ) {
+                return output
+            }
+            return text
+        }
+
+        guard DictationLlamaServerManager.isModelAvailable && DictationLlamaServerManager.isBinaryAvailable else {
+            return text
+        }
+
+        if let llamaServerURL = try? await DictationLlamaServerManager.shared.ensureRunning(idleRelease: settings.idleRelease) {
+            let chatEndpoint = llamaServerURL.appendingPathComponent("v1/chat/completions")
+            if let output = try? await sendChatRequest(
+                model: "s1-mini",
+                systemPrompt: systemPrompt,
+                userMessage: userMessage,
+                transcriptWordCount: wordCount,
+                endpointURL: chatEndpoint
+            ) {
+                return output
+            }
+        }
+
+        return text
+    }
+
     static func normalizedBaseURL(_ url: URL) -> URL {
         let path = url.path
         if path.hasSuffix("/v1/chat/completions") || path.hasSuffix("/api/chat") || path.hasSuffix("/api/generate") {

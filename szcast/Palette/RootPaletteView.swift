@@ -142,6 +142,10 @@ struct RootPaletteView: View {
             return DuckDuckGoEmailScreen(service: core.duckDuckGoEmailService, core: core, vm: vm)
         case .keepassxc:
             return KeePassXCScreen(service: core.keepassXCService, core: core, vm: vm)
+        case .textTransformer:
+            return TextTransformerScreen(coordinator: core.textTransformerCoordinator, core: core, vm: vm)
+        case .systemStats:
+            return StatsScreen(core: core, vm: vm)
         }
     }
 
@@ -474,6 +478,7 @@ struct RootPaletteView: View {
             .modifier(ExtensionSelectionForwarder(screen: extensionScreen, selection: vm.selection))
             // A narrower list means the old index points at a different row, or at none.
             .onChange(of: vm.clipboardFilter) { land(restoringSelection: true) }
+            .onChange(of: vm.launcherCategoryFilter) { land(restoringSelection: false) }
             // The filter is part of the query, so narrowing re-runs it rather than thinning rows.
             .onChange(of: vm.fileSearchFilter) {
                 land()
@@ -481,6 +486,7 @@ struct RootPaletteView: View {
             }
             .onChange(of: vm.mode) {
                 vm.clipboardFilter = .all
+                vm.launcherCategoryFilter = .all
                 vm.fileSearchFilter = .all
                 vm.emojiCategoryFilter = .all
                 vm.emojiGridColumnsOverride = nil
@@ -686,6 +692,7 @@ struct RootPaletteView: View {
             )
             .onKeyPress(phases: .down) { press in
                 guard press.modifiers.contains(.command),
+                    press.modifiers.isDisjoint(with: [.option, .shift, .control]),
                     ASCIIKeyboardLayout.matches(press.key, character: "k")
                 else { return .ignored }
                 // A control's open list owns the screen, so a second panel may never open over it.
@@ -753,24 +760,62 @@ struct RootPaletteView: View {
     }
 
     private var header: some View {
-        headerBar
-            // The field stops where the capsule will, so it never runs under a button.
-            .frame(width: compactCapsuleWidth)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            // Behind the row, which a glass container would otherwise paint over.
-            .background(alignment: .topLeading) {
-                if isCollapsed {
-                    CompactBar(
-                        commands: compactCommands, selection: compactSelection.command,
-                        onRun: runCompactCommand, onSettled: { hostWindow?.invalidateShadow() })
+        VStack(spacing: 0) {
+            headerBar
+                // The field stops where the capsule will, so it never runs under a button.
+                .frame(width: compactCapsuleWidth)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                // Behind the row, which a glass container would otherwise paint over.
+                .background(alignment: .topLeading) {
+                    if isCollapsed {
+                        CompactBar(
+                            commands: compactCommands, selection: compactSelection.command,
+                            onRun: runCompactCommand, onSettled: { hostWindow?.invalidateShadow() })
+                    }
+                }
+            if vm.mode == .launcher && !isCollapsed && vm.query.isEmpty {
+                launcherCategoryScopeStrip
+            }
+        }
+        // Next turn, once the show's `land()` and search refocus are done, so neither undoes it.
+        .onChange(of: vm.pendingArgumentEntryID) {
+            Task { @MainActor in focusPendingArgument() }
+        }
+        .onChange(of: argumentFocused) { _, field in vm.noteEditingField(field != nil) }
+        .onChange(of: quickAI.pendingAttachments.map(\.id)) { refreshAttachmentsMenu() }
+    }
+
+    private var launcherCategoryScopeStrip: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: metrics.spacing.xs) {
+                ForEach(LauncherCategoryFilter.allCases, id: \.self) { filter in
+                    let isSelected = vm.launcherCategoryFilter == filter
+                    Button {
+                        vm.launcherCategoryFilter = filter
+                        land(restoringSelection: false)
+                    } label: {
+                        HStack(spacing: 3) {
+                            Image(systemName: filter.sfSymbol)
+                                .font(.system(size: 9, weight: .semibold))
+                            Text(filter.rawValue)
+                                .font(.system(size: 11, weight: isSelected ? .semibold : .regular))
+                        }
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(
+                            Capsule().fill(isSelected ? Color.accentColor.opacity(0.18) : Theme.Colors.controlSurface)
+                        )
+                        .overlay(
+                            Capsule().strokeBorder(isSelected ? Color.accentColor.opacity(0.55) : Theme.Colors.border.opacity(0.4), lineWidth: 0.5)
+                        )
+                        .foregroundStyle(isSelected ? Color.accentColor : Theme.Colors.textSecondary)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
-            // Next turn, once the show's `land()` and search refocus are done, so neither undoes it.
-            .onChange(of: vm.pendingArgumentEntryID) {
-                Task { @MainActor in focusPendingArgument() }
-            }
-            .onChange(of: argumentFocused) { _, field in vm.noteEditingField(field != nil) }
-            .onChange(of: quickAI.pendingAttachments.map(\.id)) { refreshAttachmentsMenu() }
+            .padding(.horizontal, metrics.spacing.md)
+            .padding(.vertical, 4)
+        }
     }
 
     private var compactCommands: [CommandID] {
@@ -1040,12 +1085,13 @@ struct RootPaletteView: View {
         primaryActionEnabled: Bool, showActions: Bool
     ) -> some View {
         // Floating controls, no bar; the edge dissolve ghosts the rows passing beneath.
-        HStack(spacing: 0) {
+        HStack(spacing: metrics.spacing.xs) {
             HStack(spacing: 0) {
                 appMenuButton
                 UpdatePill()
             }
             .modifier(ExtensionToastSlot(extensions: extensions, showing: vm.mode == .extensionCommand))
+            contextualShortcutStrip
             if showActionGroup {
                 actionGroup(
                     pillLabel: pillLabel, formPrimaryShortcut: formPrimaryShortcut,
@@ -1058,6 +1104,93 @@ struct RootPaletteView: View {
         .padding(.horizontal, metrics.spacing.md)
         .frame(height: metrics.size.bottomBarHeight)
         .frame(maxWidth: .infinity)
+    }
+
+    private var contextualShortcutStrip: some View {
+        HStack(spacing: metrics.spacing.sm) {
+            ForEach(currentContextualShortcuts) { shortcut in
+                HStack(spacing: metrics.spacing.xxs) {
+                    HStack(spacing: 1) {
+                        ForEach(shortcut.keys, id: \.self) { key in
+                            KeyCapChip(text: key, style: .outline, scale: .compact)
+                        }
+                    }
+                    Text(shortcut.label)
+                        .font(metrics.typography.bar)
+                        .foregroundStyle(Theme.Colors.textSecondary)
+                }
+            }
+        }
+        .padding(.trailing, metrics.spacing.xs)
+        .lineLimit(1)
+        .truncationMode(.tail)
+        .opacity(currentContextualShortcuts.isEmpty ? 0 : 1)
+        .animation(.easeInOut(duration: 0.15), value: vm.mode)
+    }
+
+    private var currentContextualShortcuts: [ContextualShortcut] {
+        switch vm.mode {
+        case .snippets:
+            return [
+                ContextualShortcut(id: "copy", keys: ["⌘", "↵"], label: "Copy"),
+                ContextualShortcut(id: "duplicate", keys: ["⌘", "D"], label: "Duplicate"),
+                ContextualShortcut(id: "pin", keys: ["⌘", "."], label: "Pin")
+            ]
+        case .clipboard:
+            return [
+                ContextualShortcut(id: "paste", keys: ["↵"], label: "Paste"),
+                ContextualShortcut(id: "copy", keys: ["⌘", "C"], label: "Copy"),
+                ContextualShortcut(id: "plain", keys: ["⌥", "↵"], label: "Plain Text"),
+                ContextualShortcut(id: "delete", keys: ["⌘", "⌫"], label: "Delete")
+            ]
+        case .emoji:
+            return [
+                ContextualShortcut(id: "copy", keys: ["⌘", "↵"], label: "Copy"),
+                ContextualShortcut(id: "tone", keys: ["⌥", "⌘", "V"], label: "Tone"),
+                ContextualShortcut(id: "keywords", keys: ["⌘", "E"], label: "Keywords"),
+                ContextualShortcut(id: "pin", keys: ["⌘", "."], label: "Pin")
+            ]
+        case .launcher:
+            return [
+                ContextualShortcut(id: "finder", keys: ["⌘", "↵"], label: "Finder"),
+                ContextualShortcut(id: "info", keys: ["⌘", "I"], label: "Info"),
+                ContextualShortcut(id: "pin", keys: ["⌘", "."], label: "Pin")
+            ]
+        case .fileSearch:
+            return [
+                ContextualShortcut(id: "open", keys: ["↵"], label: "Open"),
+                ContextualShortcut(id: "finder", keys: ["⌘", "↵"], label: "Finder"),
+                ContextualShortcut(id: "quicklook", keys: ["⌘", "Y"], label: "Quick Look")
+            ]
+        case .systemStats:
+            return [
+                ContextualShortcut(id: "refresh", keys: ["↵"], label: "Refresh"),
+                ContextualShortcut(id: "settings", keys: ["⌘", ","], label: "Settings")
+            ]
+        case .textTransformer:
+            return [
+                ContextualShortcut(id: "copy", keys: ["⌘", "C"], label: "Copy"),
+                ContextualShortcut(id: "diff", keys: ["⌘", "D"], label: "Diff")
+            ]
+        case .quicklinks:
+            return [
+                ContextualShortcut(id: "open", keys: ["↵"], label: "Open"),
+                ContextualShortcut(id: "copy", keys: ["⌘", "C"], label: "Copy URL"),
+                ContextualShortcut(id: "edit", keys: ["⌘", "E"], label: "Edit")
+            ]
+        case .keepassxc:
+            return [
+                ContextualShortcut(id: "pass", keys: ["⌘", "C"], label: "Password"),
+                ContextualShortcut(id: "totp", keys: ["⌘", "T"], label: "TOTP"),
+                ContextualShortcut(id: "user", keys: ["⌘", "B"], label: "Username")
+            ]
+        case .enteAuth:
+            return [
+                ContextualShortcut(id: "copy", keys: ["↵"], label: "Copy Code")
+            ]
+        default:
+            return []
+        }
     }
 
     private var appMenuButton: some View {
@@ -1340,7 +1473,10 @@ struct RootPaletteView: View {
                 return true
             }
         }
-        if modifiers.contains(.command), character == "k" {
+        if modifiers.contains(.command),
+            modifiers.isDisjoint(with: [.option, .shift, .control]),
+            character == "k"
+        {
             toggleActions()
             return true
         }
@@ -1704,4 +1840,10 @@ private struct HeaderBackButton: View {
         .animation(.easeOut(duration: Theme.Duration.hover), value: hovered)
         .help(help)
     }
+}
+
+private struct ContextualShortcut: Identifiable, Equatable {
+    let id: String
+    let keys: [String]
+    let label: String
 }

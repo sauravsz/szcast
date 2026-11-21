@@ -109,7 +109,7 @@ enum SettingsSearchCatalog {
         general + applications + systemSettings + systemActions + commands + quicklinks
         + appleShortcuts + fallbacks + clipboard + snippets + fileSearch + windowManagement
         + cleanKeyboard + navigation + notes + calendar + emoji + ai + quickActions + dictation + extensions + permissions
-        + backup + displayTweaks + enteAuth + duckDuckGoEmail + keepassxc + extendedFeatures + changelog + about
+        + backup + displayTweaks + enteAuth + duckDuckGoEmail + keepassxc + textTransformer + stats + extendedFeatures + changelog + about
 
     private static let general: [SettingsSearchEntry] = [
         .init(pane: .general, keywords: ["preferences", "settings"]),
@@ -705,6 +705,39 @@ enum SettingsSearchCatalog {
         .init(
             pane: .keepassxc,
             keywords: ["keepass", "password", "kdbx", "vault", "keepassxc", "credentials", "manager"])
+    ]
+
+    private static let textTransformer: [SettingsSearchEntry] = [
+        .init(
+            pane: .textTransformer,
+            keywords: ["text transformer", "casing", "convert case", "camelcase", "snakecase", "json prettify", "base64", "url encode", "slugify", "developer text", "metrics", "word count"])
+    ]
+
+    private static let stats: [SettingsSearchEntry] = [
+        .init(
+            pane: .stats,
+            keywords: ["stats", "telemetry", "hardware", "cpu", "ram", "disk", "battery", "network", "monitor", "resources"]),
+        .init(
+            .stats, "Enable System Stats",
+            keywords: ["telemetry", "hardware", "stats", "monitor"]),
+        .init(
+            .stats, "CPU Monitoring",
+            keywords: ["processor", "load", "cores", "usage"]),
+        .init(
+            .stats, "Memory Monitoring",
+            keywords: ["ram", "active", "wired", "swap"]),
+        .init(
+            .stats, "Disk Monitoring",
+            keywords: ["storage", "volume", "free space"]),
+        .init(
+            .stats, "Battery & Power",
+            keywords: ["charge", "ac", "health", "time remaining"]),
+        .init(
+            .stats, "Network Monitoring",
+            keywords: ["bandwidth", "download", "upload", "interfaces"]),
+        .init(
+            .stats, "Refresh Cadence",
+            keywords: ["interval", "frequency", "performance"])
     ]
 
     private static let extendedFeatures: [SettingsSearchEntry] = [

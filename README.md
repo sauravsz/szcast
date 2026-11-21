@@ -41,9 +41,34 @@ open /Applications/szcast.app
 ## Key Features
 
 ### Core vs Extended Modular Architecture
-- **Streamlined Settings Taxonomy**: Cleanly divides launcher capabilities into Core Features (always-ready essentials including Dictation, Notes, File Search, AI, Clipboard, Quicklinks, Snippets, Window Management) and Extended Features (modular power tools).
-- **Extended Features Suite**: Houses Ente Auth 2FA, KeePassXC, DuckDuckGo Mail, Display Tweaks & Gamma Control, Calendar HUD, and Clean Keyboard. Disabled by default on clean installs for minimal footprint; smart migration preserves active configurations seamlessly across updates.
+- **Streamlined Settings Taxonomy**: Cleanly divides launcher capabilities into Core Features (always-ready essentials including Dictation, Notes, File Search, AI, Clipboard, Quicklinks, Snippets, Emoji & Symbols, Window Management) and Extended Features (modular power tools).
+- **Extended Features Suite**: Houses System Stats (CPU, RAM, Disk, Battery, Network telemetry & individual menu bar monitors), Interactive Text Transformer, Ente Auth 2FA, KeePassXC, DuckDuckGo Mail, Display Tweaks & Gamma Control, Calendar HUD, and Clean Keyboard. Disabled by default on clean installs for minimal footprint; smart migration preserves active configurations seamlessly across updates.
 - **Dynamic Sidebar & Command Gating**: Settings sidebar and launcher command routing dynamically reflect active features, keeping navigation focused and uncluttered.
+
+### System Telemetry & Hardware Monitors (Stats Integration)
+- **System Stats Dashboard & Sparklines**: Full native telemetry dashboard tracking CPU load, RAM memory pressure, Disk space, Battery health/cycles, and Network throughput (upload/download) with rolling 30-sample quadratic Bezier sparkline graphs.
+- **Modular Menu Bar Items**: Individual, togglable menu bar indicators for CPU, RAM, Disk, Battery, and Network with configurable update cadences (1s, 2s, 5s, 10s).
+- **Stats Parity**: Replicates exelban/stats architecture using pure Mach host statistics, IOKit power sources, and BSD system interfaces with zero daemon overhead.
+
+### Raycast-Parity Emoji & Symbols Picker
+- **Natural Language & Semantic Search**: Search emojis by Unicode name, category, and meaning with local semantic search.
+- **Custom Keywords**: Assign personal keywords to any emoji or symbol via `⌘E` for instant recall, saved to local JSON storage.
+- **Inline Autocomplete (`:`)**: Type `:` inside any text input (Notes, AI Chat, Snippet Editor, Quicklink Editor) for instant inline emoji completions.
+- **Grid Customization & Tone Modifiers**: Configurable 6 to 10 column grid with `⌘-` / `⌘+` zoom (`⌘0` default), default skin tone picker, and contextual copy/paste with specific tone (`⌥⌘C` / `⌥⌘V`).
+
+### Interactive Text Transformer
+- **Instant Conversions**: Real-time transformation across 15+ formats: camelCase, snake_case, kebab-case, PascalCase, UPPERCASE, lowercase, Title Case, Slugify, Base64 encode/decode, URL encode/decode, SHA-256 hash, MD5, and UUID v4.
+- **Side-by-Side Diff Inspector (`⌘D`)**: Toggle between stacked preview and dual-column side-by-side diff view with live metrics (characters, words, lines, byte size).
+- **Clipboard & App Injection**: Instant single-key copy (`⌘C`) or paste directly to the active application (`↵`).
+
+### Rich Developer Previews & Ergonomics
+- **Clipboard Syntax Highlighting**: Automatic language detection (JSON, Swift, JavaScript, Python, SQL, Shell, HTML) with line numbers gutter and token coloring in Clipboard preview.
+- **Color Swatches & Conversion Pills**: Color swatch preview with one-click interactive copy pills for Hex, RGBA, HSL, and NSColor.
+- **Dynamic Footer Shortcut Strip**: Live contextual keyboard shortcut legend in the launcher footer (`⌘↵ Finder`, `⌘I Info`, `⌘. Pin`, `⌥↵ Plain Text`, `⌘D Diff`) positioned beside the primary action capsule.
+- **Launcher Category Scope Filter Chips**: Horizontal filter chips (`All`, `Apps`, `Commands`, `Quicklinks`, `Snippets`, `Files`, `Actions`) for instant narrowing of search results.
+- **AI Code Block Direct Injections**: 1-click "Insert at Cursor" (paste into frontmost app) and "Run in Terminal" action buttons on all AI-generated code blocks.
+- **Split Action Panel (⌘K)**: Action menus structured into distinct sections (`Primary Actions`, `Shortcuts & Favorites`, `Process Control`, `Danger Zone`).
+- **Tactile & Visual Feedback**: Dictation start alignment haptics and completion levelChange haptics with an animated checkmark pulse, plus Settings search target accent glow pulse.
 
 ### Extension Customization & Fast Navigation
 - **Precise Command Query Routing**: Activating launcher commands cleanly strips leading command keywords before opening sub-screens, preventing query collisions when launching filtered views.
@@ -84,6 +109,7 @@ open /Applications/szcast.app
 - **[Tinycast](https://github.com/abue-ammar/tinycast)** by Abue Ammar: The native macOS launcher foundation upon which szcast is built.
 - **[EnviousWispr](https://github.com/saurabhav88/EnviousWispr)** by saurabhav88: Dictation pipeline architecture, domain vocabulary packs, and audio ducking.
 - **[Raycast](https://raycast.com)**: Extension runtime model and API specifications.
+- **[Stats](https://github.com/exelban/stats)** by Serhiy Mytrovtsiy (exelban): macOS system monitor telemetry architecture.
 - **[FreeDisplay](https://github.com/huberdf/FreeDisplay)** by huberdf: Display management and screen mirroring.
 - **[gamma-control](https://github.com/Qiueyed/gamma-control)** by Qiueyed: Display gamma transfer curve mathematics and hardware LUT calculation.
 - **[Avro Keyboard](https://github.com/omicronlab/avro-pad)** by Mehdi Hasan Khan & OmicronLab: Phonetic Bengali romanization rules.

@@ -34,8 +34,11 @@ nonisolated enum ChatAttachmentReader {
         }
         let size = (try? file.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
         let ceiling =
-            kind == .text ? AIAttachmentBudget.maxInlinedTextBytes : AIAttachmentBudget.maxBytes
-        guard size <= ceiling else { return .failed(kind == .text ? .textTooLong : .size) }
+            (kind == .text || kind == .wordDocument || kind == .epub)
+            ? AIAttachmentBudget.maxInlinedTextBytes : AIAttachmentBudget.maxBytes
+        guard size <= ceiling else {
+            return .failed((kind == .text || kind == .wordDocument || kind == .epub) ? .textTooLong : .size)
+        }
         guard let bytes = try? Data(contentsOf: file) else { return .failed(.unreadable) }
         let mimeType = AIAttachmentPolicy.mimeType(forFileName: name)
         switch kind {
@@ -59,6 +62,41 @@ nonisolated enum ChatAttachmentReader {
                 Staged(
                     payload: .document(
                         AIDocument(data: Data(decoded.utf8), mimeType: mimeType, name: name)),
+                    name: name, preview: nil))
+        case .wordDocument:
+            let options: [NSAttributedString.DocumentReadingOptionKey: Any] = [
+                .documentType: NSAttributedString.DocumentType.officeOpenXML
+            ]
+            let decodedText: String? = {
+                if let attr = try? NSAttributedString(url: file, options: options, documentAttributes: nil) {
+                    return attr.string
+                }
+                if let attr = try? NSAttributedString(url: file, options: [:], documentAttributes: nil) {
+                    return attr.string
+                }
+                return nil
+            }()
+            guard let text = decodedText, !text.isEmpty else { return .failed(.undecodable) }
+            return .staged(
+                Staged(
+                    payload: .document(
+                        AIDocument(data: Data(text.utf8), mimeType: "text/plain", name: name)),
+                    name: name, preview: nil))
+        case .epub:
+            let decodedText: String? = {
+                if let attr = try? NSAttributedString(url: file, options: [:], documentAttributes: nil) {
+                    return attr.string
+                }
+                if let data = try? Data(contentsOf: file), let raw = String(data: data, encoding: .utf8) {
+                    return raw
+                }
+                return nil
+            }()
+            guard let text = decodedText, !text.isEmpty else { return .failed(.undecodable) }
+            return .staged(
+                Staged(
+                    payload: .document(
+                        AIDocument(data: Data(text.utf8), mimeType: "text/plain", name: name)),
                     name: name, preview: nil))
         }
     }

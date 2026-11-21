@@ -191,6 +191,7 @@ run ente-auth-test         Szcast/Features/EnteAuth/Model/*.swift Szcast/Feature
 run duckduckgo-email-test  Szcast/Features/DuckDuckGoEmail/Service/*.swift Szcast/Platform/KeychainSecretStore.swift
 run clean-keyboard-test    Szcast/Features/CleanKeyboard/Service/*.swift
 run keepassxc-test         Szcast/Features/KeePassXC/Model/*.swift Szcast/Features/KeePassXC/Service/*.swift Szcast/Platform/KeychainSecretStore.swift
+run stats-feature-test          Szcast/Features/Stats/Model/*.swift Szcast/Features/Stats/Service/*.swift
 run screen-capture-test    Szcast/Features/ScreenCapture/Model/*.swift Szcast/Features/ScreenCapture/Service/*.swift Szcast/Features/Launcher/Model/CommandID.swift Szcast/Features/HotKeys/Model/HotKeyAction.swift Szcast/Features/SystemActions/Model/SystemAction.swift Szcast/Features/WindowManagement/Model/WindowCommand.swift Szcast/Features/Snippets/Model/Snippet.swift Szcast/Features/QuickActions/Model/BuiltInQuickAction.swift Szcast/Features/Quicklinks/Model/Quicklink.swift Szcast/Features/Quicklinks/Model/QuicklinkDestination.swift Szcast/Platform/LocalizedResource.swift
 run index calc-performance Szcast/Features/Calculator/Model/*.swift Szcast/Platform/URLSanitizer.swift
 run calendar-test          Szcast/Features/Calendar/Model/*.swift \
@@ -260,9 +261,23 @@ run index clipboard-thumbnail-performance \
 run emoji-test             Szcast/Features/Emoji/Model/EmojiCatalog.swift \
                            Szcast/Features/Emoji/Model/EmojiGridGeometry.swift \
                            Szcast/Features/Emoji/Model/EmojiData.generated.swift
+run emoji-raycast-features-test \
+                           Szcast/Features/Emoji/Model/EmojiCatalog.swift \
+                           Szcast/Features/Emoji/Model/EmojiData.generated.swift \
+                           Szcast/Features/Emoji/Model/EmojiPrimaryAction.swift \
+                           Szcast/Features/Emoji/Service/EmojiIndex.swift \
+                           Szcast/Features/Emoji/Service/CustomEmojiKeywordStore.swift \
+                           Szcast/Features/Emoji/Service/EmojiSemanticSearchEngine.swift \
+                           Szcast/Features/Emoji/Service/InlineEmojiCompletionService.swift \
+                           Szcast/Features/Emoji/Service/FrequentEmojiStore.swift \
+                           Szcast/Features/Emoji/Service/PinnedEmojiStore.swift \
+                           Szcast/Features/Launcher/Model/SearchRelevance.swift \
+                           Szcast/Platform/AppPaths.swift Szcast/Platform/Memo.swift
 run emoji-search-test      Szcast/Features/Emoji/Model/EmojiCatalog.swift \
                            Szcast/Features/Emoji/Model/EmojiData.generated.swift \
                            Szcast/Features/Emoji/Service/EmojiIndex.swift \
+                           Szcast/Features/Emoji/Service/CustomEmojiKeywordStore.swift \
+                           Szcast/Features/Emoji/Service/EmojiSemanticSearchEngine.swift \
                            Szcast/Features/Emoji/Service/FrequentEmojiStore.swift \
                            Szcast/Features/Emoji/Service/PinnedEmojiStore.swift \
                            Szcast/Features/Launcher/Model/SearchRelevance.swift \
@@ -271,30 +286,38 @@ run index emoji-search-performance \
                            Szcast/Features/Emoji/Model/EmojiCatalog.swift \
                            Szcast/Features/Emoji/Model/EmojiData.generated.swift \
                            Szcast/Features/Emoji/Service/EmojiIndex.swift \
+                           Szcast/Features/Emoji/Service/CustomEmojiKeywordStore.swift \
+                           Szcast/Features/Emoji/Service/EmojiSemanticSearchEngine.swift \
                            Szcast/Features/Emoji/Service/FrequentEmojiStore.swift \
                            Szcast/Features/Launcher/Model/SearchRelevance.swift \
                            Szcast/Platform/AppPaths.swift Szcast/Platform/Memo.swift
 run palette-selection-test Szcast/Features/PaletteRowIndex.swift \
                            Szcast/Features/Emoji/Model/EmojiGridGeometry.swift
 run appearance-test        Szcast/Platform/Appearance.swift \
-                           Szcast/DesignSystem/Theme.swift \
+                           Szcast/DesignSystem/PaletteThemePreset.swift Szcast/DesignSystem/Theme.swift \
                            Szcast/DesignSystem/InterfaceMetrics.swift \
                            Szcast/Features/Settings/AppAppearance.swift
+run palette-theme-preset-test Szcast/Platform/Appearance.swift \
+                           Szcast/DesignSystem/PaletteThemePreset.swift \
+                           Szcast/DesignSystem/Theme.swift
+run text-transformer-test  Szcast/Platform/URLSanitizer.swift \
+                           Szcast/Features/TextTransformer/Model/TextTransformType.swift \
+                           Szcast/Features/TextTransformer/Model/TextTransformEngine.swift
 run language-test          Szcast/Features/Settings/AppLanguage.swift
 run localized-resource-test Szcast/Platform/LocalizedResource.swift
 run relaunch-test          Szcast/App/AppDelegate.swift Szcast/Platform/RelaunchRunner.swift
 run interface-size-test    Szcast/Platform/Appearance.swift \
-                           Szcast/DesignSystem/Theme.swift \
+                           Szcast/DesignSystem/PaletteThemePreset.swift Szcast/DesignSystem/Theme.swift \
                            Szcast/DesignSystem/InterfaceMetrics.swift \
                            Szcast/Features/Settings/InterfaceSize.swift \
                            Szcast/Features/Extensions/Model/ExtensionFormMetrics.swift
 run palette-placement-test Szcast/Platform/Appearance.swift \
-                           Szcast/DesignSystem/Theme.swift \
+                           Szcast/DesignSystem/PaletteThemePreset.swift Szcast/DesignSystem/Theme.swift \
                            Szcast/DesignSystem/InterfaceMetrics.swift \
                            Szcast/Features/Settings/InterfaceSize.swift \
                            Szcast/Palette/PalettePlacement.swift
 run palette-menu-click-test Szcast/Platform/Appearance.swift \
-                           Szcast/DesignSystem/Theme.swift \
+                           Szcast/DesignSystem/PaletteThemePreset.swift Szcast/DesignSystem/Theme.swift \
                            Szcast/Platform/WindowLevel.swift \
                            Szcast/Platform/NotificationToken.swift \
                            Szcast/DesignSystem/Interaction/KeyboardFocus.swift \
@@ -302,7 +325,7 @@ run palette-menu-click-test Szcast/Platform/Appearance.swift \
                            Szcast/DesignSystem/Interaction/AnimatedPanel.swift \
                            Szcast/Palette/PalettePanel.swift
 run form-input-test        Szcast/Platform/Appearance.swift \
-                           Szcast/DesignSystem/Theme.swift \
+                           Szcast/DesignSystem/PaletteThemePreset.swift Szcast/DesignSystem/Theme.swift \
                            Szcast/DesignSystem/InterfaceMetrics.swift \
                            Szcast/DesignSystem/FormTextInput.swift \
                            Szcast/DesignSystem/FormTextArea.swift
@@ -380,7 +403,7 @@ run fallback-test          Szcast/Features/Launcher/Model/Fallback.swift \
                            Szcast/Platform/LocalizedResource.swift
 run dictionary-test        Szcast/Features/Dictionary/Model/DictionaryEntry.swift \
                            Szcast/Features/Dictionary/Model/DictionaryMarkup.swift
-run dictation-test         Szcast/Platform/ASCIIKeyboardLayout.swift Szcast/Features/HotKeys/Model/HIDKeyMapping.swift Szcast/Features/HotKeys/Model/HyperKey.swift Szcast/Features/HotKeys/Model/DoubleTapModifier.swift Szcast/Features/HotKeys/Model/ModifierKey.swift Szcast/Features/HotKeys/Model/HotKeyBinding.swift Szcast/Features/HotKeys/Service/KeyShortcut.swift Szcast/Features/Dictation/Model/DictationHotkeyPreset.swift Szcast/Features/Dictation/Model/DictationModel.swift Szcast/Features/Dictation/Model/DictationIdleRelease.swift Szcast/Features/Dictation/Model/DictationPasteMode.swift Szcast/Features/Dictation/Model/DictationLanguage.swift Szcast/Features/Dictation/Model/DictationTextFormatter.swift Szcast/Features/Dictation/Model/DictationBengaliMode.swift Szcast/Features/Dictation/Model/AvroPhoneticConverter.swift Szcast/Features/Dictation/Model/DictationHindiMode.swift Szcast/Features/Dictation/Model/HinglishPhoneticConverter.swift Szcast/Features/Dictation/Model/DictationS1Settings.swift Szcast/Features/Dictation/Model/CustomWord.swift Szcast/Features/Dictation/Model/DictationSnippet.swift Szcast/Features/Dictation/Model/VocabularyPack.swift Szcast/Features/Dictation/Service/DictationDictionaryStore.swift Szcast/Features/Dictation/Service/DictationS1Polisher.swift Szcast/Features/Dictation/Service/DictationS1Downloader.swift Szcast/Features/Dictation/Service/DictationLlamaServerManager.swift Szcast/Platform/AppPaths.swift
+run dictation-test         Szcast/Platform/ASCIIKeyboardLayout.swift Szcast/Features/HotKeys/Model/HIDKeyMapping.swift Szcast/Features/HotKeys/Model/HyperKey.swift Szcast/Features/HotKeys/Model/DoubleTapModifier.swift Szcast/Features/HotKeys/Model/ModifierKey.swift Szcast/Features/HotKeys/Model/HotKeyBinding.swift Szcast/Features/HotKeys/Service/KeyShortcut.swift Szcast/Features/Dictation/Model/DictationHotkeyPreset.swift Szcast/Features/Dictation/Model/DictationModel.swift Szcast/Features/Dictation/Model/DictationIdleRelease.swift Szcast/Features/Dictation/Model/DictationPasteMode.swift Szcast/Features/Dictation/Model/DictationLanguage.swift Szcast/Features/Dictation/Model/DictationTextFormatter.swift Szcast/Features/Dictation/Model/DictationBengaliMode.swift Szcast/Features/Dictation/Model/AvroPhoneticConverter.swift Szcast/Features/Dictation/Model/DictationHindiMode.swift Szcast/Features/Dictation/Model/HinglishPhoneticConverter.swift Szcast/Features/Dictation/Model/DictationS1Settings.swift Szcast/Features/Dictation/Model/AppStyleRouter.swift Szcast/Features/Dictation/Model/DictationTransform.swift Szcast/Features/Dictation/Model/DictationHistoryItem.swift Szcast/Features/Dictation/Service/DictationHistoryStore.swift Szcast/Features/Dictation/Model/CustomWord.swift Szcast/Features/Dictation/Model/DictationSnippet.swift Szcast/Features/Dictation/Model/VocabularyPack.swift Szcast/Features/Dictation/Service/DictationDictionaryStore.swift Szcast/Features/Dictation/Service/DictationS1Polisher.swift Szcast/Features/Dictation/Service/DictationS1Downloader.swift Szcast/Features/Dictation/Service/DictationLlamaServerManager.swift Szcast/Platform/AppPaths.swift
 run dictation-cue-test     Szcast/Features/Dictation/Service/DictationCueRunner.swift
 run dictation-field-test   Szcast/Features/Dictation/Model/DictationModel.swift \
                            Szcast/Features/Dictation/Model/DictationPasteMode.swift \
@@ -394,6 +417,8 @@ run dictation-field-test   Szcast/Features/Dictation/Model/DictationModel.swift 
                            Szcast/Features/Dictation/Model/DictationHindiMode.swift \
                            Szcast/Features/Dictation/Model/HinglishPhoneticConverter.swift \
                            Szcast/Features/Dictation/Model/DictationS1Settings.swift \
+                           Szcast/Features/Dictation/Model/AppStyleRouter.swift \
+                           Szcast/Features/Dictation/Model/DictationTransform.swift \
                            Szcast/Features/Dictation/Model/DictationIdleRelease.swift \
                            Szcast/Features/Dictation/Model/CustomWord.swift \
                            Szcast/Features/Dictation/Model/VocabularyPack.swift \
@@ -414,12 +439,13 @@ run dictation-field-test   Szcast/Features/Dictation/Model/DictationModel.swift 
                            Szcast/Platform/KeychainSecretStore.swift \
                            Szcast/DesignSystem/ChatTypography.swift \
                            Szcast/Features/AI/UI/ChatComposerTextView.swift \
+                           $L/SearchRelevance.swift \
                            Szcast/Features/TextInjection/Service/*.swift \
                            Szcast/Features/Snippets/Model/*.swift \
                            Szcast/Platform/AccessibilityText.swift \
                            Szcast/Platform/PasteboardFiles.swift \
                            Szcast/Platform/AppPaths.swift \
-                           Szcast/Platform/Appearance.swift Szcast/DesignSystem/Theme.swift
+                           Szcast/Platform/Appearance.swift Szcast/DesignSystem/PaletteThemePreset.swift Szcast/DesignSystem/Theme.swift
 run dictation-volume-test  Szcast/Features/Dictation/Model/DictationVolumeSnapshot.swift \
                            Szcast/Features/Dictation/Model/DictationOtherAudioMode.swift \
                            Szcast/Features/Dictation/Service/DictationAudioDucker.swift \
@@ -460,7 +486,7 @@ run hotkey-test            Szcast/Features/HotKeys/Model/DoubleTapModifier.swift
                            Szcast/Features/Snippets/Model/Snippet.swift \
                            Szcast/Platform/LocalizedResource.swift
 run callout-test          Szcast/Platform/Appearance.swift \
-                           Szcast/DesignSystem/Theme.swift \
+                           Szcast/DesignSystem/PaletteThemePreset.swift Szcast/DesignSystem/Theme.swift \
                            Szcast/DesignSystem/InterfaceMetrics.swift \
                            Szcast/Features/HotKeys/UI/CalloutPlacement.swift
 run icon-cache-test        Szcast/Platform/Appearance.swift \
@@ -475,7 +501,7 @@ run ext-icon-test          Szcast/Platform/Appearance.swift \
                            Szcast/Platform/Images/RaycastIconTheme.swift \
                            Szcast/Platform/Images/IconCache.swift \
                            Szcast/Platform/Compression/Zlib.swift \
-                           Szcast/DesignSystem/Theme.swift \
+                           Szcast/DesignSystem/PaletteThemePreset.swift Szcast/DesignSystem/Theme.swift \
                            Szcast/DesignSystem/InterfaceMetrics.swift \
                            Szcast/Features/Extensions/Model/ExtensionBootConfig.swift \
                            Szcast/Features/Extensions/Model/ExtensionLaunchType.swift \
@@ -636,7 +662,8 @@ run quicklink-coordinator-test Szcast/Platform/AppPaths.swift \
                            Szcast/Features/Quicklinks/UI/QuicklinkArgumentsAccessory.swift \
                            Szcast/Features/Snippets/Model/Snippet.swift \
                            Szcast/Features/Snippets/Model/SnippetTemplateEngine.swift
-run slow snippets-test     Szcast/Platform/NotificationToken.swift \
+run slow snippets-test     $L/SearchRelevance.swift \
+                           Szcast/Platform/NotificationToken.swift \
                            Szcast/Platform/HealthTicker.swift \
                            Szcast/Platform/AccessibilityText.swift \
                            Szcast/Platform/AppPaths.swift \
@@ -655,7 +682,7 @@ run notes-test             Szcast/Platform/Signposts.swift \
                            Szcast/Features/Notes/Service/*.swift
 run notes-editor-test      Szcast/Platform/Signposts.swift \
                            Szcast/Platform/Appearance.swift \
-                           Szcast/DesignSystem/Theme.swift \
+                           Szcast/DesignSystem/PaletteThemePreset.swift Szcast/DesignSystem/Theme.swift \
                            Szcast/DesignSystem/InterfaceMetrics.swift \
                            Szcast/Platform/NotificationToken.swift \
                            Szcast/Features/TextInjection/Service/InjectableTextView.swift \
@@ -682,7 +709,7 @@ run notes-editor-test      Szcast/Platform/Signposts.swift \
 run -O index notes-editor-performance \
                            Szcast/Platform/Signposts.swift \
                            Szcast/Platform/Appearance.swift \
-                           Szcast/DesignSystem/Theme.swift \
+                           Szcast/DesignSystem/PaletteThemePreset.swift Szcast/DesignSystem/Theme.swift \
                            Szcast/DesignSystem/InterfaceMetrics.swift \
                            Szcast/Platform/NotificationToken.swift \
                            Szcast/Features/TextInjection/Service/InjectableTextView.swift \
@@ -816,7 +843,7 @@ run slow ext-test          -parse-as-library \
                            Szcast/Platform/AppDisplayName.swift \
                            Szcast/Platform/Images/RaycastIconTheme.swift \
                            Szcast/Platform/Images/IconCache.swift \
-                           Szcast/DesignSystem/Theme.swift \
+                           Szcast/DesignSystem/PaletteThemePreset.swift Szcast/DesignSystem/Theme.swift \
                            Szcast/DesignSystem/InterfaceMetrics.swift \
                            $E/Model/ExtensionBootConfig.swift \
                            $E/Model/ExtensionDeepLink.swift \
@@ -914,7 +941,7 @@ run ai-responses-test      Szcast/Features/AI/Model/AIConnection.swift \
                            Szcast/Features/AI/Service/AIProvider.swift \
                            Szcast/Features/AI/Service/AIToolLoopProvider.swift
 run chat-markdown-test     Szcast/Platform/Appearance.swift \
-                           Szcast/DesignSystem/Theme.swift \
+                           Szcast/DesignSystem/PaletteThemePreset.swift Szcast/DesignSystem/Theme.swift \
                            Szcast/DesignSystem/InterfaceMetrics.swift \
                            Szcast/DesignSystem/ChatTypography.swift \
                            Szcast/Features/Settings/InterfaceSize.swift \

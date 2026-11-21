@@ -1,7 +1,7 @@
 enum SettingsTab: CaseIterable, Identifiable {
     case general, applications, systemSettings, systemActions, commands, quicklinks, appleShortcuts,
         fallbacks, clipboard, snippets, fileSearch, windowManagement, displayTweaks, cleanKeyboard, navigation, notes, calendar, emoji,
-        dictation, ai, quickActions, extensions, permissions, backup, changelog, about, enteAuth, duckDuckGoEmail, keepassxc, extendedFeatures
+        dictation, ai, quickActions, extensions, permissions, backup, changelog, about, enteAuth, duckDuckGoEmail, keepassxc, textTransformer, stats, extendedFeatures
     /// The case, never an index: a selectable `List` flattens section and row IDs together.
     var id: Self { self }
 
@@ -42,6 +42,8 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .duckDuckGoEmail: "duckduckgo-email"
         case .cleanKeyboard: "clean-keyboard"
         case .keepassxc: "keepassxc"
+        case .textTransformer: "text-transformer"
+        case .stats: "stats"
         case .extendedFeatures: "extended-features"
         }
     }
@@ -77,6 +79,8 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .enteAuth: return String(localized: "Ente Auth")
         case .duckDuckGoEmail: return String(localized: "DuckDuckGo Email")
         case .keepassxc: return String(localized: "KeePassXC")
+        case .textTransformer: return String(localized: "Text Transformer")
+        case .stats: return String(localized: "System Stats")
         case .extendedFeatures: return String(localized: "Extended Features")
         }
     }
@@ -112,6 +116,8 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .enteAuth: return "key.fill"
         case .duckDuckGoEmail: return "envelope.badge.shield.half.filled"
         case .keepassxc: return "lock.fill"
+        case .textTransformer: return "text.word.spacing"
+        case .stats: return "gauge.with.needle"
         case .extendedFeatures: return "sparkles.rectangle.stack"
         }
     }
@@ -161,7 +167,9 @@ enum SettingsSection: CaseIterable, Identifiable {
                 .displayTweaks,
                 .duckDuckGoEmail,
                 .enteAuth,
-                .keepassxc
+                .keepassxc,
+                .stats,
+                .textTransformer
             ]
         case .systemAndAbout:
             return [.extensions, .backup, .changelog, .about]

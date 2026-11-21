@@ -137,6 +137,8 @@ struct AppEntry: Identifiable, Hashable, Sendable {
     /// When it landed on disk, so a fresh install can be suggested before its first open.
     var installedAt: Date?
     var search = SearchProfile.unnamed
+    /// Whether this entry accepts trailing search bar arguments (e.g. `search files report`).
+    var acceptsArguments: Bool = false
 
     /// Stable identity for learned ranking, favorites, and other per-entry preferences.
     var preferenceKey: String { bundleID ?? id }
@@ -268,7 +270,8 @@ extension AppEntry {
         self.init(
             id: command.entryID, name: command.name,
             url: URL(string: "szcast://custom-command/" + command.id.uuidString)!,
-            bundleID: nil, kind: .customCommand, symbolName: command.iconSymbol)
+            bundleID: nil, kind: .customCommand, symbolName: command.iconSymbol,
+            acceptsArguments: !command.arguments.isEmpty)
     }
 
     init(_ quicklink: Quicklink) {
@@ -284,7 +287,8 @@ extension AppEntry {
             bundleID: nil, kind: .quicklink,
             symbolName: quicklink.iconSymbol
                 ?? QuicklinkDestination.detect(quicklink.link)?.defaultSymbol,
-            iconOverride: iconOverride)
+            iconOverride: iconOverride,
+            acceptsArguments: QuicklinkDestination.containsPlaceholder(quicklink.link))
     }
 
     /// No bundle id: that would key every shortcut's alias and ranking to the Shortcuts app.
@@ -535,7 +539,7 @@ final class AppIndex {
             records
             .filter { $0.snippet.isEnabled }
             .map { record in
-                AppEntry(
+                var entry = AppEntry(
                     id: record.entryID,
                     name: record.snippet.name,
                     url: record.fileURL,
@@ -543,11 +547,47 @@ final class AppIndex {
                     kind: .snippet,
                     alternateTitles: [record.snippet.keyword].compactMap { $0 },
                     iconOverride: SnippetFaviconService.resolveIcon(for: record.snippet))
+                entry.subtitle = record.snippet.folder
+                entry.keywords = Self.snippetKeywords(folder: record.snippet.folder, text: record.snippet.text)
+                return entry
             }
             .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
         guard entries != snippetEntries else { return }
         snippetEntries = entries
         publishEntries()
+    }
+
+    static func snippetKeywords(folder: String?, text: String) -> [String] {
+        var result: [String] = []
+        if let folder = folder?.trimmingCharacters(in: .whitespacesAndNewlines), !folder.isEmpty {
+            result.append(folder)
+        }
+        let lines = text
+            .components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+
+        for line in lines.prefix(8) {
+            let cleanLine = line.replacingOccurrences(of: "\\{[^}]+\\}", with: " ", options: .regularExpression)
+                .trimmingCharacters(in: .whitespaces)
+            if !cleanLine.isEmpty && cleanLine.count <= 100 {
+                result.append(cleanLine)
+            }
+        }
+
+        var seen = Set<String>()
+        let components = text.components(separatedBy: CharacterSet.alphanumerics.inverted)
+        for comp in components {
+            let trimmed = comp.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.count >= 2 {
+                let lower = trimmed.lowercased()
+                if seen.insert(lower).inserted {
+                    result.append(lower)
+                    if seen.count >= 60 { break }
+                }
+            }
+        }
+        return result
     }
 
     /// Wires the scopes, re-indexing on edit rather than waiting for the next open.
@@ -848,6 +888,7 @@ final class AppIndex {
             alias: aliases.alias(for: entry.preferenceKey).map { SearchText($0, transliterated: false) },
             usage: usage.usage(for: entry.preferenceKey),
             priority: entry.kind.descriptor.rankPriority, title: entry.name,
-            boostedTerms: CommandCatalog.command(for: entry)?.boostedTerms ?? [])
+            boostedTerms: CommandCatalog.command(for: entry)?.boostedTerms ?? [],
+            acceptsArguments: entry.acceptsArguments)
     }
 }

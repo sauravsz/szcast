@@ -2,6 +2,9 @@ import SwiftUI
 
 /// Central design tokens; every dark colour is the literal the forced-dark build shipped.
 enum Theme {
+    /// Active curated visual theme preset.
+    nonisolated(unsafe) static var activePreset: PaletteThemePreset = .szcastDark
+
     /// macOS 26 glass casts its own shadow; on 27 bare glass has none and needs the window's shadow without clipped alpha rims.
     static var glassCastsShadow: Bool {
         if #available(macOS 27, *) { return false }
@@ -409,6 +412,7 @@ enum Theme {
         static let composerSymbol = Font.system(size: 13, weight: .medium)
         static let composerSend = Font.system(size: 13, weight: .bold)
         static let composerStop = Font.system(size: 10, weight: .bold)
+        static let metaLabel = Font.caption
     }
 
     enum Colors {
@@ -422,9 +426,14 @@ enum Theme {
             adaptive(dark: .srgbInk(1, alpha: dark), light: .srgbInk(0, alpha: light))
         }
 
-        static let panelScrim = adaptive(dark: .srgbInk(0, alpha: 0.40), light: .srgbInk(1, alpha: 0.55))
-        static let panelOpaqueBackground = adaptive(
-            dark: .srgbInk(0.12, alpha: 1.0), light: .srgbInk(0.96, alpha: 1.0))
+        static var panelScrim: Color {
+            adaptive(dark: Theme.activePreset.panelScrim.dark, light: Theme.activePreset.panelScrim.light)
+        }
+        static var panelOpaqueBackground: Color {
+            adaptive(
+                dark: Theme.activePreset.panelOpaqueBackground.dark,
+                light: Theme.activePreset.panelOpaqueBackground.light)
+        }
 
         static let dialogDimming = adaptive(
             dark: .srgbInk(0, alpha: 0.34), light: .srgbInk(0, alpha: 0.34))
@@ -442,17 +451,25 @@ enum Theme {
             dark: .srgbInk(0, alpha: 0.18), light: .srgbInk(0, alpha: 0.18))
 
         /// Selection fill, shared by every list so they look identical.
-        static let selection = ramp(dark: 0.10, light: 0.09)
-        static let rowHover = ramp(dark: 0.05, light: 0.045)
+        static var selection: Color {
+            ramp(dark: Theme.activePreset.selectionFill.dark, light: Theme.activePreset.selectionFill.light)
+        }
+        static var rowHover: Color {
+            ramp(dark: Theme.activePreset.rowHoverFill.dark, light: Theme.activePreset.rowHoverFill.light)
+        }
         static let emojiCell = ramp(dark: 0.045, light: 0.04)
         static let emojiHoverBorder = ramp(dark: 0.42, light: 0.34)
         static let emojiSelectionBorder = ramp(dark: 0.92, light: 0.72)
         static let emojiInnerBorder = adaptive(
             dark: .srgbInk(0, alpha: 0.72), light: .srgbInk(1, alpha: 0.72))
         static let menuHover = ramp(dark: 0.10, light: 0.09)
-        static let separator = ramp(dark: 0.10, light: 0.12)
+        static var separator: Color {
+            ramp(dark: Theme.activePreset.separatorStroke.dark, light: Theme.activePreset.separatorStroke.light)
+        }
         /// Small control surfaces: kbd chips, glyph tiles.
-        static let controlSurface = ramp(dark: 0.10, light: 0.08)
+        static var controlSurface: Color {
+            ramp(dark: Theme.activePreset.controlSurface.dark, light: Theme.activePreset.controlSurface.light)
+        }
         static let controlHover = ramp(dark: 0.16, light: 0.14)
         /// A held control is stronger than hover, so mouse-down always reads.
         static let controlPressed = ramp(dark: 0.24, light: 0.20)
@@ -461,7 +478,9 @@ enum Theme {
         static let compactShortcutSelectedInk = adaptive(
             dark: .srgbInk(1, alpha: 1), light: .srgbInk(1, alpha: 1))
         /// Control borders: outlined kbd chips.
-        static let border = ramp(dark: 0.20, light: 0.18)
+        static var border: Color {
+            ramp(dark: Theme.activePreset.borderStroke.dark, light: Theme.activePreset.borderStroke.light)
+        }
         /// Alpha 1, so a call site can dim it with `.opacity` and land on the value it replaced.
         static let textPrimary = ramp(dark: 1.0, light: 1.0)
         static let textSecondary = ramp(dark: 0.60, light: 0.60)
@@ -471,7 +490,9 @@ enum Theme {
         static let iconPlaceholder = ramp(dark: 0.06, light: 0.06)
         static let sheen = ramp(dark: 0.04, light: 0.04)
         /// The Settings card: a faint surface whose border doubles as the row divider.
-        static let cardFill = ramp(dark: 0.05, light: 0.04)
+        static var cardFill: Color {
+            ramp(dark: Theme.activePreset.cardFill.dark, light: Theme.activePreset.cardFill.light)
+        }
         static let cardStroke = ramp(dark: 0.10, light: 0.10)
         /// A window on the preview's plate. White in both, since the plate is always dark.
         static let layoutPreviewWindow = adaptive(
@@ -493,6 +514,7 @@ enum Theme {
             dark: .srgbInk(0, alpha: 0.25), light: .srgbInk(0, alpha: 0.25))
         static let roomCardDot = ramp(dark: 0.25, light: 0.25)
         static let searchFlash = Color.accentColor.opacity(0.35)
+        static let accent = Color.accentColor
         static let checkerLight = Color(nsColor: .srgbInk(1, alpha: 0.22))
         static let checkerDark = Color(nsColor: .srgbInk(0, alpha: 0.22))
         /// The violet of the app mark, used only to tint the About support callout.

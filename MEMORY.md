@@ -21,7 +21,15 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
 
 ## Build / verify (macOS 27, Xcode 27.2)
 - `xcodebuild -project szcast.xcodeproj -scheme Szcast -configuration Debug build`
-- `Scripts/run-tests.sh` — all 130 harnesses pass. `Scripts/build-dmg.sh` → `build/szcast-1.1.4.dmg`; needs the `szcast Self-Signed` keychain identity.
+- `Scripts/run-tests.sh` — all 134 harnesses pass.
+
+- **Release v1.1.5 / UI & UX Major Suite**:
+  - **System Telemetry & Hardware Monitors**: Integrated Stats (exelban/stats architecture) directly into szcast with CPU, RAM, Disk, Battery, and Network monitors, rolling 30-sample quadratic Bezier sparkline graphs in `StatsDashboardView`, and individual togglable menu bar items with configurable cadences.
+  - **Raycast-Parity Emoji & Symbols**: Replaced legacy emoji picker with full Raycast feature parity: semantic search, custom keywords stored in JSON via `⌘E`, inline autocomplete `:` in text fields, tone modifiers (`⌥⌘C`/`⌥⌘V`), and grid zooming (`⌘-`/`⌘+`/`⌘0`).
+  - **Interactive Text Transformer**: Full 15+ format text conversions, live character/word/line/byte metrics, and Side-by-Side Diff Inspector (`⌘D`).
+  - **Rich Developer Previews**: Clipboard code syntax highlighting with language detection and line numbers gutter; interactive Color Swatch card with one-click Hex, RGBA, HSL, and NSColor copy pills.
+  - **Scoping & Action Ergonomics**: Launcher category scope filter chips (`All`, `Apps`, `Commands`, `Quicklinks`, `Snippets`, `Files`, `Actions`), AI code block direct injection ("Insert at Cursor" and "Run in Terminal"), and structured split Action Panel (`⌘K`).
+  - **Tactile & Visual Feedback**: Dictation haptic cues on start/finish with an animated checkmark completion pulse; Settings search target accent glow pulse.
 
 - **Release v1.1.4**:
   - Full codebase audit defect fixes: clipboard concealment markers across KeePassXC and Ente Auth to avoid history leaks, zero-error Push-to-Talk sub-100ms cancellation, safe unwrap bounds in Calendar/Insights/Ente, RunLoop timer modes in Clean Keyboard, safe HTTP & file size checks for S1 models, and scheme validation in URLSanitizer.

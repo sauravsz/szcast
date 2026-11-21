@@ -174,6 +174,42 @@ final class ComposerTextView: NSTextView, InjectableTextView {
             && sender.draggingPasteboard.canReadObject(
                 forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true])
     }
+
+    static var defaultEmojiSuggestionProvider: ((_ text: String, _ cursor: Int) -> (range: NSRange, suggestions: [String])?)?
+    var emojiSuggestionProvider: ((_ text: String, _ cursor: Int) -> (range: NSRange, suggestions: [String])?)? = ComposerTextView.defaultEmojiSuggestionProvider
+
+    override func insertText(_ string: Any, replacementRange: NSRange) {
+        super.insertText(string, replacementRange: replacementRange)
+        if let str = string as? String, !str.isEmpty,
+           let provider = emojiSuggestionProvider,
+           provider(self.string, selectedRange().location) != nil {
+            complete(nil)
+        }
+    }
+
+    override var rangeForUserCompletion: NSRange {
+        let cursor = selectedRange().location
+        if let provider = emojiSuggestionProvider,
+           let match = provider(string, cursor) {
+            return match.range
+        }
+        return super.rangeForUserCompletion
+    }
+
+    override func completions(forPartialWordRange charRange: NSRange, indexOfSelectedItem index: UnsafeMutablePointer<Int>?) -> [String]? {
+        let cursor = selectedRange().location
+        if let provider = emojiSuggestionProvider,
+           let match = provider(string, cursor),
+           !match.suggestions.isEmpty {
+            index?.pointee = 0
+            return match.suggestions
+        }
+        if let index {
+            return super.completions(forPartialWordRange: charRange, indexOfSelectedItem: index)
+        }
+        var dummy = 0
+        return super.completions(forPartialWordRange: charRange, indexOfSelectedItem: &dummy)
+    }
 }
 
 @MainActor

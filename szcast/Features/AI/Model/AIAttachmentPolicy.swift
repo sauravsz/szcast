@@ -7,6 +7,8 @@ enum AIAttachmentPolicy {
         case image
         case pdf
         case text
+        case wordDocument
+        case epub
     }
 
     static let pdfMIMEType = "application/pdf"
@@ -17,6 +19,14 @@ enum AIAttachmentPolicy {
     /// Extensions, not `UTType`: installed apps declare types, so conformance differs per Mac.
     private static let imageExtensions: Set<String> = [
         "png", "jpg", "jpeg", "gif", "webp", "heic", "tiff", "bmp"
+    ]
+
+    private static let wordExtensions: Set<String> = [
+        "docx", "doc", "rtf", "rtfd"
+    ]
+
+    private static let epubExtensions: Set<String> = [
+        "epub"
     ]
 
     private static let textExtensions: Set<String> = [
@@ -31,6 +41,8 @@ enum AIAttachmentPolicy {
         let ext = (name as NSString).pathExtension.lowercased()
         if imageExtensions.contains(ext) { return .image }
         if ext == "pdf" { return .pdf }
+        if wordExtensions.contains(ext) { return .wordDocument }
+        if epubExtensions.contains(ext) { return .epub }
         if textExtensions.contains(ext) { return .text }
         return nil
     }

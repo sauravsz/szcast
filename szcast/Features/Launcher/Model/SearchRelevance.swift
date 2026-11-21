@@ -74,11 +74,6 @@ enum FuzzyMatch {
                 tier: .prefix, offset: 0, queryLength: query.characters.count,
                 candidateLength: length, spread: 0)
         }
-        if q.hasPrefix(c + " ") {
-            return Match(
-                tier: .prefix, offset: 0, queryLength: c.count,
-                candidateLength: length, spread: 0)
-        }
         if let range = c.range(of: q) {
             let offset = c.distance(from: c.startIndex, to: range.lowerBound)
             return Match(

@@ -13,7 +13,7 @@ struct DictationTest {
         }
 
         typealias Context = DictationTextFormatter.Context
-        check(DictationTextFormatter.format("  Hello. \n", context: nil), "Hello.")
+        check(DictationTextFormatter.format("  Hello. \n", context: nil), "Hello. ")
         check(DictationTextFormatter.format("hello", context: Context(before: "", after: "")), "Hello")
         check(DictationTextFormatter.format("World", context: Context(before: "Hello", after: "")), "World")
         check(DictationTextFormatter.format("world", context: Context(before: "Hello.", after: "")), "World")
@@ -43,6 +43,23 @@ struct DictationTest {
             DictationTextFormatter.format(
                 "World.", context: Context(before: "Hello ", after: ")"),
                 adaptCapitalization: false), "World.")
+        // Sentence full stop automatically appends trailing space at boundary or no context
+        check(
+            DictationTextFormatter.format("This is a sentence.", context: Context(before: "", after: "")),
+            "This is a sentence. ")
+        check(
+            DictationTextFormatter.format("This is a question?", context: nil),
+            "This is a question? ")
+        check(
+            DictationTextFormatter.format("Great job!", context: nil),
+            "Great job! ")
+        check(
+            DictationTextFormatter.format("He said, \"Welcome.\"", context: nil),
+            "He said, \"Welcome.\" ")
+        // Avoid double spacing when following character in document already has whitespace
+        check(
+            DictationTextFormatter.format("Hello.", context: Context(before: "", after: " next")),
+            "Hello.")
         let document = "prefix. Text to replace suffix"
         check(
             DictationTextFormatter.format(
@@ -71,9 +88,16 @@ struct DictationTest {
         // Spoken Punctuation conversion
         check(DictationTextFormatter.convertSpokenPunctuation("hello comma world period"), "hello, world.")
         check(DictationTextFormatter.convertSpokenPunctuation("are you ready question mark"), "are you ready?")
+        check(DictationTextFormatter.convertSpokenPunctuation("First sentence.Second sentence."), "First sentence. Second sentence.")
+        check(DictationTextFormatter.convertSpokenPunctuation("Are you ready?Yes I am!"), "Are you ready? Yes I am!")
 
         // Filler words removal
         check(DictationTextFormatter.removeFillerWords("Um, this is uh a test"), "this is a test")
+
+        // Repetition & Stutter Collapse
+        check(DictationTextFormatter.collapseRepetitions("can you tell the the launch is slipping"), "can you tell the launch is slipping")
+        check(DictationTextFormatter.collapseRepetitions("timeline by by end of week"), "timeline by end of week")
+        check(DictationTextFormatter.collapseRepetitions("we we we are ready"), "we are ready")
 
         // S1 Control Line
         let s1 = DictationS1Settings(enabled: true, tone: .formal, structure: .lists, context: .email)
@@ -259,6 +283,48 @@ struct DictationTest {
         DictationLlamaServerManager.shared.setIdleRelease(.fiveMinutes)
         guard DictationLlamaServerManager.shared.currentIdleRelease == .fiveMinutes else {
             fatalError("Failed to set idle release to 5 minutes")
+        }
+
+        // Speech Backtracking / Repairs
+        check(DictationTextFormatter.resolveBacktracks("let's meet at 4, actually make that 5"), "5")
+        check(DictationTextFormatter.resolveBacktracks("let's do Tuesday, scratch that, Wednesday"), "Wednesday")
+        check(DictationTextFormatter.resolveBacktracks("call John, sorry I mean Sarah"), "Sarah")
+
+        // Context-Aware App Style Routing
+        check(AppStyleRouter.category(for: "com.tinyspeck.slackmacgap").rawValue, "workMessaging")
+        check(AppStyleRouter.category(for: "net.whatsapp.WhatsApp").rawValue, "personalMessaging")
+        check(AppStyleRouter.category(for: "com.apple.mail").rawValue, "email")
+        check(AppStyleRouter.category(for: "com.microsoft.VSCode").rawValue, "code")
+        check(AppStyleRouter.applyCategoryFormatting("See you soon.", bundleID: "net.whatsapp.WhatsApp"), "See you soon")
+
+        // Transforms Store
+        check(String(DictationTransform.defaultTransforms.count), "6")
+        guard DictationTransform.defaultTransforms.contains(where: { $0.name == "Prompt Engineer" }) else {
+            fatalError("Prompt Engineer transform should be in default transforms")
+        }
+        let tempTransformsURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "-transforms.json")
+        let transformStore = DictationTransformStore(fileURL: tempTransformsURL)
+        check(String(transformStore.allTransforms.count), "6")
+
+        // Rich Text RTF Generation for Markdown
+        let sampleMD = "Hello **world**, this is *italic* and `code`"
+        if let attr = try? NSAttributedString(markdown: sampleMD, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)) {
+            let rtf = try? attr.data(from: NSRange(location: 0, length: attr.length), documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf])
+            guard let rtf, rtf.count > 100 else {
+                fatalError("Failed to produce RTF bytes for markdown snippet")
+            }
+        }
+
+        // 14-Day Audio WAV Cache Export
+        let tempWAVURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "-sample.wav")
+        defer { try? FileManager.default.removeItem(at: tempWAVURL) }
+        let sampleFloats: [Float] = [0.0, 0.25, -0.25, 0.5, -0.5]
+        DictationHistoryStore.writeWAV(samples: sampleFloats, to: tempWAVURL)
+        guard FileManager.default.fileExists(atPath: tempWAVURL.path) else {
+            fatalError("DictationHistoryStore.writeWAV failed to write audio file")
+        }
+        guard let wavBytes = try? Data(contentsOf: tempWAVURL), wavBytes.count == 44 + sampleFloats.count * 2 else {
+            fatalError("WAV file byte length mismatch")
         }
 
         print("Dictation text formatting passed")

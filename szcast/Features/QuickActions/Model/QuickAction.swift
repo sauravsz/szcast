@@ -6,8 +6,18 @@ enum QuickAction: Hashable, Identifiable, Sendable {
 
     static let fixGrammar = QuickAction.builtIn(.fixGrammar)
     static let rewrite = QuickAction.builtIn(.rewrite)
+    static let makeShorter = QuickAction.builtIn(.makeShorter)
+    static let makeLonger = QuickAction.builtIn(.makeLonger)
+    static let simplify = QuickAction.builtIn(.simplify)
+    static let changeTone = QuickAction.builtIn(.changeTone)
     static let translate = QuickAction.builtIn(.translate)
     static let summarize = QuickAction.builtIn(.summarize)
+    static let explain = QuickAction.builtIn(.explain)
+    static let findActionItems = QuickAction.builtIn(.findActionItems)
+    static let convertTypeScript = QuickAction.builtIn(.convertTypeScript)
+    static let slackReply = QuickAction.builtIn(.slackReply)
+    static let emailReply = QuickAction.builtIn(.emailReply)
+    static let summarizeYouTube = QuickAction.builtIn(.summarizeYouTube)
 
     static let allBuiltIn: [QuickAction] = BuiltInQuickAction.allCases.map(QuickAction.builtIn)
 
@@ -53,7 +63,15 @@ enum QuickAction: Hashable, Identifiable, Sendable {
 
     var showsDiff: Bool { builtInAction?.showsDiff ?? false }
 
-    var rendersMarkdown: Bool { builtInAction.map { $0 == .summarize } ?? true }
+    var rendersMarkdown: Bool {
+        guard let builtIn = builtInAction else { return true }
+        switch builtIn {
+        case .summarize, .explain, .findActionItems, .convertTypeScript, .slackReply, .emailReply, .summarizeYouTube:
+            return true
+        default:
+            return false
+        }
+    }
 
     var usesTranslationFramework: Bool { builtInAction?.usesTranslationFramework ?? false }
 }

@@ -78,6 +78,7 @@ struct GeneralSettingsView: View {
                 } label: {
                     SettingsRowTitle(.generalAppearance, "Appearance")
                 }
+                ThemePresetSelectorRow()
                 Toggle(isOn: $settings.animationsEnabled) {
                     SettingsRowTitle(.generalAppearance, "Show animations")
                 }
@@ -342,5 +343,65 @@ private struct LauncherTypographyRows: View {
             return .custom(family, size: size).weight(weight)
         }
         return .system(size: size, weight: weight)
+    }
+}
+
+private struct ThemePresetSelectorRow: View {
+    @Environment(AppSettings.self) private var settings
+
+    var body: some View {
+        @Bindable var settings = settings
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            HStack {
+                SettingsRowTitle(.generalAppearance, "Theme preset")
+                Spacer()
+                Text(settings.appThemePreset.title)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Text(settings.appThemePreset.subtitle)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: Theme.Spacing.sm) {
+                ForEach(PaletteThemePreset.allCases) { preset in
+                    let isSelected = settings.appThemePreset == preset
+                    Button {
+                        settings.appThemePreset = preset
+                    } label: {
+                        VStack(spacing: Theme.Spacing.xs) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                    .fill(preset.swatchPreviewColor)
+                                    .frame(height: 28)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                            .strokeBorder(isSelected ? preset.swatchAccentColor : Theme.Colors.border, lineWidth: isSelected ? 2 : 1)
+                                    )
+                                Circle()
+                                    .fill(preset.swatchAccentColor)
+                                    .frame(width: 8, height: 8)
+                            }
+                            Text(preset.title)
+                                .font(.caption2.weight(isSelected ? .semibold : .regular))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.75)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(4)
+                        .background(
+                            RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
+                                .fill(isSelected ? Theme.Colors.selection : Color.clear)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(preset.title)
+                    .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+                }
+            }
+            .padding(.top, 2)
+        }
+        .padding(.vertical, Theme.Spacing.xs)
     }
 }

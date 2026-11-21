@@ -186,6 +186,9 @@ final class SnippetCoordinator {
         editor.name = name
         editor.text = text
         editor.keyword = keyword
+        if !text.isEmpty && name.isEmpty {
+            editor.focusedField = .name
+        }
         self.editor = editor
         paletteCoordinator.showPalette(mode: .snippetEditor)
     }

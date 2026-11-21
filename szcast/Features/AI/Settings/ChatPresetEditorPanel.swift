@@ -13,6 +13,7 @@ struct ChatPresetEditorPanel: View {
     @State private var name: String
     @State private var iconSymbol: String?
     @State private var instructions: String
+    @State private var userContext: String
     @State private var model: AIModelSelection?
     @State private var toolScope: ChatToolScope
     @State private var failure: String?
@@ -34,6 +35,7 @@ struct ChatPresetEditorPanel: View {
         _name = State(initialValue: request.preset?.name ?? "")
         _iconSymbol = State(initialValue: request.preset?.iconSymbol)
         _instructions = State(initialValue: request.preset?.instructions ?? "")
+        _userContext = State(initialValue: request.preset?.userContext ?? "")
         _model = State(initialValue: request.preset?.model)
         _toolScope = State(initialValue: request.preset?.toolScope ?? ChatToolScope())
     }
@@ -50,6 +52,8 @@ struct ChatPresetEditorPanel: View {
             }
 
             instructionsField
+
+            userContextField
 
             modelField
 
@@ -125,6 +129,27 @@ struct ChatPresetEditorPanel: View {
         }
     }
 
+    private var userContextField: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            Text("User Context & Guidelines (Optional)")
+                .font(.callout.weight(.medium))
+            TextEditor(text: $userContext)
+                .font(.body)
+                .settingsEditorTextArea(height: Theme.Size.editorTextHeight)
+                .overlay(alignment: .topLeading) {
+                    if userContext.isEmpty {
+                        Text("Add personal background, preferences, or guidelines appended to this preset.")
+                            .foregroundStyle(.tertiary)
+                            .padding(Theme.Spacing.md)
+                            .allowsHitTesting(false)
+                    }
+                }
+            Text("Appended under ### User Context when using this preset.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
     private var modelField: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             Text("Model")
@@ -176,9 +201,12 @@ struct ChatPresetEditorPanel: View {
     }
 
     private func save() {
+        let trimmedContext = userContext.trimmingCharacters(in: .whitespacesAndNewlines)
         let draft = ChatPreset(
             id: existing?.id ?? UUID(), name: name, iconSymbol: iconSymbol,
-            instructions: instructions, model: model, toolScope: toolScope,
+            instructions: instructions,
+            userContext: trimmedContext.isEmpty ? nil : trimmedContext,
+            model: model, toolScope: toolScope,
             createdAt: existing?.createdAt ?? Date())
         do {
             if existing == nil {

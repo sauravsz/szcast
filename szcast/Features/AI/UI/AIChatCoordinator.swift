@@ -367,7 +367,7 @@ final class AIChatCoordinator {
                 model: model(for: chat))
         }
         return AIInstructions.compose(
-            presetInstructions: preset.instructions,
+            presetInstructions: preset.effectiveInstructions,
             preambleEnabled: core.aiSettings.systemPromptEnabled,
             offersChoices: core.aiSettings.choicesEnabled,
             model: model(for: chat))
@@ -382,8 +382,11 @@ final class AIChatCoordinator {
         let chatID = chat.session.id
         let session = AIToolSession(
             tools: tools, maxCalls: core.aiSettings.toolRounds.limit
-        ) { [mcp = core.mcpCoordinator] call in
-            await mcp.invoke(call, in: chatID)
+        ) { [mcp = core.mcpCoordinator, history = core.chatHistory] call in
+            if AgenticToolService.shared.isAgenticTool(call.name) {
+                return await AgenticToolService.shared.invoke(call, historyStore: history)
+            }
+            return await mcp.invoke(call, in: chatID)
         }
         if case .openCode? = model(for: chat) {
             return try provider(for: chat, toolSession: session)
@@ -410,10 +413,14 @@ final class AIChatCoordinator {
     private func tools(for chat: AIChatState, scopedTo slug: String?) -> [AITool] {
         guard chat.toolScope.isEnabled else { return [] }
         let excluded = chat.toolScope.excluded
-        return core.mcpCoordinator.tools(scopedTo: slug).filter { tool in
+        var list = core.mcpCoordinator.tools(scopedTo: slug).filter { tool in
             guard let route = MCPToolName.parse(tool.name) else { return true }
             return !excluded.contains(route.slug)
         }
+        if slug == nil || slug == "system" {
+            list.append(contentsOf: AgenticToolService.shared.tools)
+        }
+        return list
     }
 
     var mcpServers: [MCPServer] { core.mcpCoordinator.servers }

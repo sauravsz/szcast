@@ -51,6 +51,7 @@ final class QuickActionPanelController: NSObject, NSWindowDelegate {
             case .replace: if state.canReplace { self.replace(state.output) }
             case .copy: if state.canReplace { self.copyOutput() }
             case .cancel: self.dismiss()
+            case .pin: state.togglePin()
             }
         }
         self.panel = panel
@@ -126,6 +127,7 @@ final class QuickActionPanelController: NSObject, NSWindowDelegate {
 
     func windowDidResignKey(_ notification: Notification) {
         guard let panel, notification.object as? NSWindow === panel else { return }
+        guard let state, !state.isPinned else { return }
         dismiss()
     }
 }

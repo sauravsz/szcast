@@ -198,11 +198,13 @@ struct QuickActionTests {
             Set(BuiltInQuickAction.allCases.map(\.title)).count == BuiltInQuickAction.allCases.count,
             "no two actions read the same in the shortcut list")
 
-        // Summarize answers a question about the text; replacing it unasked would destroy the text.
+        // Analytical and generative actions show their panel; replacing unasked would destroy the text.
         expect(BuiltInQuickAction.summarize.alwaysPreviews, "Summarize always shows its panel")
         expect(
-            BuiltInQuickAction.allCases.filter(\.alwaysPreviews) == [.summarize],
-            "only Summarize forces a panel")
+            BuiltInQuickAction.allCases.filter(\.alwaysPreviews) == [
+                .summarize, .explain, .findActionItems, .convertTypeScript, .slackReply, .emailReply, .summarizeYouTube
+            ],
+            "analytical and generative actions force a panel")
         expect(
             BuiltInQuickAction.fixGrammar.replacesDirectlyByDefault,
             "grammar is the one action safe to apply unseen")
@@ -219,8 +221,10 @@ struct QuickActionTests {
             BuiltInQuickAction.summarize.showsDiff == false,
             "a summary is not the input edited, so a diff would be noise")
         expect(
-            QuickAction.allBuiltIn.filter(\.rendersMarkdown) == [.summarize],
-            "an edit or translation is shown as the literal text it would paste")
+            QuickAction.allBuiltIn.filter(\.rendersMarkdown) == [
+                .summarize, .explain, .findActionItems, .convertTypeScript, .slackReply, .emailReply, .summarizeYouTube
+            ],
+            "analytical and generative actions render markdown")
     }
 
     static func promptsForbidCommentaryAndInjection() {

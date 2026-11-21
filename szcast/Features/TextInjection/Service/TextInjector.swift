@@ -1181,7 +1181,26 @@ struct PasteboardSnapshot {
         guard item.setString(text, forType: .string),
             item.setData(Data(), forType: ClipboardManager.internalType)
         else { return nil }
+        if let rtf = richTextData(for: text) {
+            item.setData(rtf, forType: .rtf)
+        }
         return item
+    }
+
+    static func richTextData(for text: String) -> Data? {
+        guard text.contains("**") || text.contains("*") || text.contains("`") || text.contains("[") || text.contains("#") else {
+            return nil
+        }
+        guard let attributed = try? NSAttributedString(
+            markdown: text,
+            options: AttributedString.MarkdownParsingOptions(interpretedSyntax: .inlineOnlyPreservingWhitespace)
+        ) else { return nil }
+        let range = NSRange(location: 0, length: attributed.length)
+        guard range.length > 0 else { return nil }
+        return try? attributed.data(
+            from: range,
+            documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf]
+        )
     }
 
     func pasteboardItems() -> [NSPasteboardItem]? {

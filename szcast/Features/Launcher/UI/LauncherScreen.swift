@@ -87,18 +87,44 @@ struct LauncherScreen: PaletteScreen {
             entries: Array(results.prefix(ordered.favoriteCount)),
             files: pinsFavorites ? core.fileSearchCoordinator.favoriteFiles : [])
         results.removeFirst(ordered.favoriteCount)
+        var filteredResults = results
+        var filteredFiles = files
+        if vm.launcherCategoryFilter != .all {
+            switch vm.launcherCategoryFilter {
+            case .apps:
+                filteredResults = results.filter { $0.kind == .application }
+                filteredFiles = []
+            case .commands:
+                filteredResults = results.filter { $0.kind == .command || $0.kind == .customCommand }
+                filteredFiles = []
+            case .quicklinks:
+                filteredResults = results.filter { $0.kind == .quicklink }
+                filteredFiles = []
+            case .snippets:
+                filteredResults = results.filter { $0.kind == .snippet }
+                filteredFiles = []
+            case .files:
+                filteredResults = []
+            case .systemActions:
+                filteredResults = results.filter { $0.kind == .systemAction }
+                filteredFiles = []
+            case .all:
+                break
+            }
+        }
+
         let entries =
-            pinnedFavorites.map(Row.init) + results.map(Row.entry) + files.map(Row.file)
+            pinnedFavorites.map(Row.init) + filteredResults.map(Row.entry) + filteredFiles.map(Row.file)
             + fallbacks.map { Row.fallback($0.fallback, $0.entry) }
         // At most one of them leads, so the flat index keeps a single-row offset.
         let meeting = pinsFavorites ? meeting : nil
         self.meeting = meeting
-        self.results = results
+        self.results = filteredResults
         self.weather = weather
         self.travel = travel
         self.flight = flight
         self.calc = calc
-        self.files = files
+        self.files = filteredFiles
         self.fallbacks = fallbacks
         self.color = color
         self.pinsFavorites = pinsFavorites
@@ -386,6 +412,9 @@ struct LauncherScreen: PaletteScreen {
         case .copyFile: return copyDeepLink(at: selection)
         case .favoriteSlot(let index): return launchSlot(at: index)
         case .copyCalculation: return copyCalculation(at: selection)
+        case .recordHotKey: return recordHotKey(at: selection)
+        case .setAlias: return setAlias(at: selection)
+        case .configureCommand: return configure(at: selection)
         case .openInApp, .showDetails:
             guard let meeting = meeting(at: selection) else { return false }
             return MeetingActionsMenu.perform(shortcut, meeting: meeting, core: core)
@@ -412,6 +441,24 @@ struct LauncherScreen: PaletteScreen {
     private func copyCalculation(at selection: Int) -> Bool {
         guard case .calc(let result) = row(at: selection), result.isActionable else { return false }
         core.calculatorCoordinator.copyCalculationWithExpression(result)
+        return true
+    }
+
+    private func recordHotKey(at selection: Int) -> Bool {
+        guard let app = entry(at: selection), app.hotKeyAction != nil else { return false }
+        core.launcherCoordinator.beginRecordHotKey(for: app)
+        return true
+    }
+
+    private func setAlias(at selection: Int) -> Bool {
+        guard let app = entry(at: selection) else { return false }
+        core.launcherCoordinator.beginSetAlias(for: app)
+        return true
+    }
+
+    private func configure(at selection: Int) -> Bool {
+        guard let app = entry(at: selection) else { return false }
+        core.launcherCoordinator.configure(app: app)
         return true
     }
 

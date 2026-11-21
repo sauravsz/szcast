@@ -28,6 +28,7 @@ struct SnippetsTests {
         testKeywordLifecycle()
         await testKeywordListenerLifecycle()
         testOwnEditorInjection()
+        testSnippetSearchContentAndFuzzy()
 
         print(failures == 0 ? "\nALL PASSED" : "\n\(failures) FAILED")
         exit(failures == 0 ? 0 : 1)
@@ -2059,6 +2060,81 @@ struct SnippetsTests {
         while ContinuousClock.now < deadline, !condition() {
             try? await Task.sleep(for: .milliseconds(10))
         }
+    }
+
+    private static func testSnippetSearchContentAndFuzzy() {
+        let s1 = record("/tmp/s1.md", Snippet(name: "Meeting Notes", text: "Team sync notes and action items for Friday.", keyword: "!meet", folder: "Work"))
+        let s2 = record("/tmp/s2.md", Snippet(name: "Shrug Emoji", text: "¯\\_(ツ)_/¯", keyword: "!shrug"))
+        let s3 = record("/tmp/s3.md", Snippet(name: "API Request", text: "curl -X POST https://api.service.com/v1/auth -H 'Content-Type: application/json' -d '{\"token\": \"secret\"}'", keyword: "!curl", folder: "Development"))
+        let s4 = record("/tmp/s4.md", Snippet(name: "Diet Plan", text: "Eat a banana and drink green tea every morning.", isPinned: true))
+        let s5 = record("/tmp/s5.md", Snippet(name: "Architecture Blueprint", text: "Microservices design and database sharding principles.", isPinned: false))
+
+        let all = [s1, s2, s3, s4, s5]
+
+        // 1. Empty or whitespace query returns original order
+        check("empty query returns all records", SnippetSearch.rank(all, for: "").count == 5)
+        check("whitespace query returns all records", SnippetSearch.rank(all, for: "   ").count == 5)
+
+        // 2. Exact and prefix name search
+        let matchMeeting = SnippetSearch.rank(all, for: "Meeting Notes")
+        check("exact name match finds s1 first", matchMeeting.first?.id == s1.id)
+
+        let matchMeet = SnippetSearch.rank(all, for: "Meet")
+        check("prefix name match finds s1", matchMeet.contains(where: { $0.id == s1.id }))
+
+        // 3. Subsequence / fuzzy name search
+        let matchMtg = SnippetSearch.rank(all, for: "mtg")
+        check("fuzzy name match 'mtg' matches 'Meeting Notes'", matchMtg.contains(where: { $0.id == s1.id }))
+
+        let matchArch = SnippetSearch.rank(all, for: "arch")
+        check("fuzzy name match 'arch' matches 'Architecture Blueprint'", matchArch.first?.id == s5.id)
+
+        // 4. Keyword exact and fuzzy search
+        let matchShrug = SnippetSearch.rank(all, for: "!shrug")
+        check("exact keyword match finds s2", matchShrug.first?.id == s2.id)
+
+        let matchShrugFuzzy = SnippetSearch.rank(all, for: "shrg")
+        check("fuzzy keyword match 'shrg' finds s2", matchShrugFuzzy.contains(where: { $0.id == s2.id }))
+
+        // 5. Snippet content / body search
+        // Query "banana" is only in s4 text (name is "Diet Plan")
+        let matchBanana = SnippetSearch.rank(all, for: "banana")
+        check("content search finds snippet by body word", matchBanana.first?.id == s4.id)
+
+        // Query "action items" is in s1 body text
+        let matchActionItems = SnippetSearch.rank(all, for: "action items")
+        check("content search finds snippet by body phrase", matchActionItems.contains(where: { $0.id == s1.id }))
+
+        // Query "sharding" is only in s5 body
+        let matchSharding = SnippetSearch.rank(all, for: "sharding")
+        check("content search finds snippet by technical keyword in body", matchSharding.first?.id == s5.id)
+
+        // Query "curl -X POST" is in s3 body
+        let matchCurlPost = SnippetSearch.rank(all, for: "curl -X POST")
+        check("content search finds snippet by code content", matchCurlPost.contains(where: { $0.id == s3.id }))
+
+        // 6. Multi-term cross search (one term in title, one term in body)
+        let matchCross = SnippetSearch.rank(all, for: "Meeting Friday")
+        check("multi-term cross search matches title and body", matchCross.first?.id == s1.id)
+
+        // 7. Fuzzy word search in content body
+        // "microserv" is a prefix/fuzzy match of "Microservices" in s5 body
+        let matchMicro = SnippetSearch.rank(all, for: "microserv")
+        check("fuzzy content search matches word prefix in body", matchMicro.contains(where: { $0.id == s5.id }))
+
+        // 8. Ranking priority: Exact name match ranks above content match
+        let sContentMeeting = record("/tmp/s6.md", Snippet(name: "Random Note", text: "Discussed in yesterday's meeting."))
+        let rankedPriority = SnippetSearch.rank([sContentMeeting, s1], for: "Meeting")
+        check("name match ranks above body content match", rankedPriority.first?.id == s1.id)
+
+        // 9. Pinned items partitioned at the top
+        // s4 is pinned. Searching a term that matches s4 body keeps pinned at top
+        let pinnedSearch = SnippetSearch.rank(all, for: "banana")
+        check("pinned snippet remains at top of result group", pinnedSearch.first?.snippet.isPinned == true)
+
+        // 10. Non-matching query returns empty results
+        let noMatch = SnippetSearch.rank(all, for: "nonexistent_term_987654321")
+        check("unmatched query yields empty results", noMatch.isEmpty)
     }
 
     private static func check(_ description: String, _ condition: @autoclosure () -> Bool) {

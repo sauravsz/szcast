@@ -31,6 +31,8 @@ struct SettingsBackup: Codable {
         var hyperKeySecureInputCompatibility: Bool?
         var emojiSkinTone: String?
         var emojiGridColumns: Int?
+        var emojiPrimaryAction: String?
+        var emojiSaveAIKeywords: Bool?
         var showInMenuBar: Bool?
         var automaticallyCheckForUpdates: Bool?
         var popToRootSeconds: Int?
@@ -151,6 +153,8 @@ extension SettingsBackup {
             hyperKeySecureInputCompatibility: s.hyperKeySecureInputCompatibility,
             emojiSkinTone: s.emojiSkinTone.rawValue,
             emojiGridColumns: s.emojiGridColumns.rawValue,
+            emojiPrimaryAction: s.emojiPrimaryAction.rawValue,
+            emojiSaveAIKeywords: s.emojiSaveAIKeywords,
             showInMenuBar: s.showInMenuBar,
             automaticallyCheckForUpdates: s.automaticallyCheckForUpdates,
             popToRootSeconds: s.popToRootTimeout.rawValue,
@@ -361,6 +365,14 @@ extension SettingsBackup {
         }
         if let raw = s.emojiGridColumns, let columns = EmojiGridColumns(rawValue: raw) {
             settings.emojiGridColumns = columns
+            count += 1
+        }
+        if let raw = s.emojiPrimaryAction, let action = EmojiPrimaryAction(rawValue: raw) {
+            settings.emojiPrimaryAction = action
+            count += 1
+        }
+        if let save = s.emojiSaveAIKeywords {
+            settings.emojiSaveAIKeywords = save
             count += 1
         }
         if let show = s.showInMenuBar {

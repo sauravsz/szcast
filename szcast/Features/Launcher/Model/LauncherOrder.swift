@@ -50,6 +50,7 @@ enum LauncherOrder {
         var title: String
         /// Queries this entry wins until the user opens a rival more.
         var boostedTerms: Set<String> = []
+        var acceptsArguments: Bool = false
     }
 
     static func ranked<Item>(
@@ -150,6 +151,7 @@ enum LauncherOrder {
                 outcome.map { sensitivity.accepts($0, queryLength: length) } ?? false
             }
             let isPrefixWithArgument: Bool = {
+                guard signals.acceptsArguments else { return false }
                 if !profile.title.units.isEmpty && query.latin.units.count > profile.title.units.count {
                     if query.latin.units.starts(with: profile.title.units + [LauncherMatch.space]) {
                         return true

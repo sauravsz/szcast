@@ -7,6 +7,7 @@ final class QuickActionPanel: NSPanel, AnimatedPanel {
         case replace
         case copy
         case cancel
+        case pin
     }
 
     var onKey: ((Key) -> Void)?
@@ -39,14 +40,21 @@ final class QuickActionPanel: NSPanel, AnimatedPanel {
             super.sendEvent(event)
             return
         }
-        // ⌘C before the plain keys: the modifier is what separates Copy from anything else here.
         if event.modifierFlags.contains(.command) {
-            guard Int(event.keyCode) == kVK_ANSI_C else {
+            switch Int(event.keyCode) {
+            case kVK_ANSI_C:
+                onKey(.copy)
+                return
+            case kVK_ANSI_P:
+                onKey(.pin)
+                return
+            case kVK_Return, kVK_ANSI_KeypadEnter:
+                onKey(.replace)
+                return
+            default:
                 super.sendEvent(event)
                 return
             }
-            onKey(.copy)
-            return
         }
         switch Int(event.keyCode) {
         case kVK_Escape:

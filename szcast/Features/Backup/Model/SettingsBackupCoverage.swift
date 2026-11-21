@@ -15,6 +15,8 @@ enum SettingsBackupCoverage {
         "automaticallyCheckForUpdates": .automaticallyCheckForUpdates,
         "emojiSkinTone": .emojiSkinTone,
         "emojiGridColumns": .emojiGridColumns,
+        "emojiPrimaryAction": .emojiPrimaryAction,
+        "emojiSaveAIKeywords": .emojiSaveAIKeywords,
         "popToRootSeconds": .popToRootTimeout,
         "escapeKeyBehavior": .escapeKeyBehavior,
         "appearance": .appearance,
@@ -259,6 +261,20 @@ enum SettingsBackupCoverage {
             "Bengali phonetic Romanization mode preference stays local to this Mac.",
         AppSettingsKey.dictationHindiMode.rawValue:
             "Hindi phonetic Romanization (Hinglish) mode preference stays local to this Mac.",
+        AppSettingsKey.dictationDoubleTapToLock.rawValue:
+            "Dictation double tap preference stays local to this Mac.",
+        AppSettingsKey.dictationCommandModeEnabled.rawValue:
+            "Dictation command mode preference stays local to this Mac.",
+        AppSettingsKey.dictationAutoAppRouting.rawValue:
+            "Context-aware app style routing preference stays local to this Mac.",
+        AppSettingsKey.dictationWhisperMode.rawValue:
+            "Whisper mode microphone gain preference stays local to this Mac.",
+        AppSettingsKey.dictationAutoLearnDictionary.rawValue:
+            "Auto-learning dictionary preference stays local to this Mac.",
+        AppSettingsKey.dictationAutoApplyTransform.rawValue:
+            "Auto-apply transform preference stays local to this Mac.",
+        AppSettingsKey.dictationActiveTransformID.rawValue:
+            "Active transform selection stays local to this Mac.",
         AppSettingsKey.displayTweaksEnabled.rawValue:
             "Display LUT calibration is local to this Mac's attached screens.",
         AppSettingsKey.displayTweaksDisplayID.rawValue:
@@ -291,6 +307,34 @@ enum SettingsBackupCoverage {
             "Extended feature toggle state.",
         AppSettingsKey.cleanKeyboardEnabled.rawValue:
             "Extended feature toggle state.",
+        AppSettingsKey.textTransformerEnabled.rawValue:
+            "Extended feature toggle state.",
+        AppSettingsKey.statsEnabled.rawValue:
+            "Extended feature toggle state.",
+        AppSettingsKey.statsCPUEnabled.rawValue:
+            "Extended feature toggle state.",
+        AppSettingsKey.statsRAMEnabled.rawValue:
+            "Extended feature toggle state.",
+        AppSettingsKey.statsDiskEnabled.rawValue:
+            "Extended feature toggle state.",
+        AppSettingsKey.statsBatteryEnabled.rawValue:
+            "Extended feature toggle state.",
+        AppSettingsKey.statsNetworkEnabled.rawValue:
+            "Extended feature toggle state.",
+        AppSettingsKey.statsCPUMenuBar.rawValue:
+            "Menu bar item display state local to this Mac.",
+        AppSettingsKey.statsRAMMenuBar.rawValue:
+            "Menu bar item display state local to this Mac.",
+        AppSettingsKey.statsDiskMenuBar.rawValue:
+            "Menu bar item display state local to this Mac.",
+        AppSettingsKey.statsBatteryMenuBar.rawValue:
+            "Menu bar item display state local to this Mac.",
+        AppSettingsKey.statsNetworkMenuBar.rawValue:
+            "Menu bar item display state local to this Mac.",
+        AppSettingsKey.statsRefreshInterval.rawValue:
+            "System telemetry polling cadence local to this Mac.",
+        AppSettingsKey.appThemePreset.rawValue:
+            "Active visual theme preset for launcher and windows.",
         AppSettingsKey.extendedFeaturesV1Migrated.rawValue:
             "One-time migration marker for extended feature defaults."
     ]

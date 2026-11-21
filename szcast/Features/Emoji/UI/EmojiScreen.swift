@@ -32,13 +32,18 @@ struct EmojiScreen: PaletteScreen {
     private var sections: [EmojiGridSection] {
         EmojiGrid.sections(
             query: vm.query, index: index, frequent: frequent, pinned: pinned,
-            filter: vm.emojiCategoryFilter, columns: columns)
+            filter: vm.emojiCategoryFilter, columns: columns,
+            isShowingAI: vm.emojiShowingAIResults)
     }
 
     /// Flat grid order across sections — what the selection indexes.
     var rows: [EmojiEntry] { sections.flatMap(\.entries) }
 
-    var primaryActionTitle: String { vm.pasteTarget?.pasteTitle ?? String(localized: "Paste") }
+    var primaryActionTitle: String {
+        core.settings.emojiPrimaryAction == .paste
+            ? (vm.pasteTarget?.pasteTitle ?? String(localized: "Paste"))
+            : String(localized: "Copy to Clipboard")
+    }
 
     private func entry(at selection: Int) -> EmojiEntry? {
         let rows = rows
@@ -51,6 +56,7 @@ struct EmojiScreen: PaletteScreen {
         return EmojiActionsMenu.content(
             entry: entry, core: core, target: vm.pasteTarget,
             pinPosition: pins.firstIndex(of: entry.glyph), pinCount: pins.count,
+            query: vm.query,
             canZoom: { columns.applying($0, default: defaultColumns) != nil },
             togglePin: { togglePin(entry) },
             movePin: { movePin(entry, by: $0) },
@@ -59,25 +65,47 @@ struct EmojiScreen: PaletteScreen {
 
     func activate(at selection: Int) {
         guard let entry = entry(at: selection) else { return }
-        core.emojiCoordinator.pasteEmoji(entry)
+        if core.settings.emojiPrimaryAction == .paste {
+            core.emojiCoordinator.pasteEmoji(entry, query: vm.query)
+        } else {
+            core.emojiCoordinator.copyEmoji(entry, query: vm.query)
+        }
     }
 
     func secondary(at selection: Int) -> Bool {
         guard let entry = entry(at: selection) else { return false }
-        core.emojiCoordinator.copyEmoji(entry)
+        if core.settings.emojiPrimaryAction == .paste {
+            core.emojiCoordinator.copyEmoji(entry, query: vm.query)
+        } else {
+            core.emojiCoordinator.pasteEmoji(entry, query: vm.query)
+        }
         return true
     }
 
-    /// ⌥↵ — the palette stays up, so a run of emoji goes over without re-summoning it.
+    /// ⌥↵ or ⇧⌘↵ — the palette stays up, so a run of emoji goes over without re-summoning it.
     func pasteKeepingWindowOpen(at selection: Int) -> Bool {
         guard let entry = entry(at: selection) else { return false }
-        core.emojiCoordinator.pasteEmojiKeepingWindowOpen(entry)
+        core.emojiCoordinator.pasteEmojiKeepingWindowOpen(entry, query: vm.query)
         return true
     }
 
     func perform(_ shortcut: PaletteShortcut, at selection: Int) -> Bool {
-        guard shortcut == .pin, let entry = entry(at: selection) else { return false }
-        togglePin(entry)
+        guard let entry = entry(at: selection) else { return false }
+        switch shortcut {
+        case .pin:
+            togglePin(entry)
+            return true
+        case .edit:
+            core.emojiCoordinator.editCustomKeywords(for: entry)
+            return true
+        default:
+            return false
+        }
+    }
+
+    func tab(at selection: Int, backwards: Bool) -> Bool {
+        guard !isBrowsing else { return false }
+        vm.emojiShowingAIResults.toggle()
         return true
     }
 
@@ -180,36 +208,123 @@ struct EmojiScreen: PaletteScreen {
 enum EmojiActionsMenu {
     static func content(
         entry: EmojiEntry, core: AppCore, target: PasteTarget?, pinPosition: Int?, pinCount: Int,
+        query: String,
         canZoom: (EmojiGridZoom) -> Bool, togglePin: @escaping () -> Void,
         movePin: @escaping (Int) -> Void, zoom: @escaping (EmojiGridZoom) -> Void
     )
         -> PopoverMenuContent
     {
         let noun = entry.category.itemTitle
-        var items = [
-            PopoverMenuItem(
-                title: target?.pasteTitle ?? String(localized: "Paste"),
-                icon: .paste(target, fallback: "doc.on.clipboard"), shortcut: "↵"
+        let isPrimaryPaste = core.settings.emojiPrimaryAction == .paste
+        let pasteTitle = target?.pasteTitle ?? String(localized: "Paste")
+        let copyTitle = String(localized: "Copy to Clipboard")
+
+        var items: [PopoverMenuItem] = []
+
+        // Primary action
+        if isPrimaryPaste {
+            items.append(PopoverMenuItem(
+                title: pasteTitle,
+                icon: .paste(target, fallback: "doc.on.clipboard"),
+                shortcut: "↵"
             ) {
-                core.emojiCoordinator.pasteEmoji(entry)
-            },
-            PopoverMenuItem(
-                title: String(localized: "Copy to Clipboard"), systemImage: "doc.on.doc", shortcut: "⌘↵"
+                core.emojiCoordinator.pasteEmoji(entry, query: query)
+            })
+            items.append(PopoverMenuItem(
+                title: copyTitle,
+                systemImage: "doc.on.doc",
+                shortcut: "⌘↵"
             ) {
-                core.emojiCoordinator.copyEmoji(entry)
-            },
-            PopoverMenuItem(
-                title: String(localized: "Paste and Keep Window Open"),
-                icon: .paste(target, fallback: "macwindow"), shortcut: "⌥↵"
+                core.emojiCoordinator.copyEmoji(entry, query: query)
+            })
+        } else {
+            items.append(PopoverMenuItem(
+                title: copyTitle,
+                systemImage: "doc.on.doc",
+                shortcut: "↵"
             ) {
-                core.emojiCoordinator.pasteEmojiKeepingWindowOpen(entry)
-            },
-            PopoverMenuItem(
-                title: pinPosition == nil
-                    ? String(localized: "Pin \(noun)") : String(localized: "Unpin \(noun)"),
-                systemImage: pinPosition == nil ? "pin" : "pin.slash",
-                startsSection: true, shortcut: "⌘.", action: togglePin)
-        ]
+                core.emojiCoordinator.copyEmoji(entry, query: query)
+            })
+            items.append(PopoverMenuItem(
+                title: pasteTitle,
+                icon: .paste(target, fallback: "doc.on.clipboard"),
+                shortcut: "⌘↵"
+            ) {
+                core.emojiCoordinator.pasteEmoji(entry, query: query)
+            })
+        }
+
+        // Paste and Keep Window Open
+        items.append(PopoverMenuItem(
+            title: String(localized: "Paste and Keep Window Open"),
+            icon: .paste(target, fallback: "macwindow"),
+            shortcut: "⇧⌘↵"
+        ) {
+            core.emojiCoordinator.pasteEmojiKeepingWindowOpen(entry, query: query)
+        })
+
+        // Skin Tone actions (if supported)
+        if entry.supportsSkinTone {
+            for tone in EmojiSkinTone.allCases {
+                let tonedGlyph = entry.display(tone: tone)
+                let isDefault = (tone == .none)
+                let toneLabel = tone.title
+                items.append(PopoverMenuItem(
+                    title: String(localized: "Paste with \(toneLabel) Skin Tone (\(tonedGlyph))"),
+                    icon: .paste(target, fallback: "hand.raised"),
+                    startsSection: isDefault,
+                    shortcut: isDefault ? "⌥⌘V" : nil
+                ) {
+                    core.emojiCoordinator.pasteEmoji(entry, tone: tone, query: query)
+                })
+            }
+
+            for tone in EmojiSkinTone.allCases {
+                let tonedGlyph = entry.display(tone: tone)
+                let isDefault = (tone == .none)
+                let toneLabel = tone.title
+                items.append(PopoverMenuItem(
+                    title: String(localized: "Copy with \(toneLabel) Skin Tone (\(tonedGlyph))"),
+                    systemImage: "doc.on.doc",
+                    startsSection: isDefault,
+                    shortcut: isDefault ? "⌥⌘C" : nil
+                ) {
+                    core.emojiCoordinator.copyEmoji(entry, tone: tone, query: query)
+                })
+            }
+        }
+
+        // Copy Unicode
+        let unicodeScalars = entry.glyph.unicodeScalars
+            .map { String(format: "U+%04X", $0.value) }
+            .joined(separator: " ")
+        items.append(PopoverMenuItem(
+            title: String(localized: "Copy Unicode"),
+            icon: .symbol("number"),
+            startsSection: !entry.supportsSkinTone,
+            shortcut: "⌥⇧⌘C",
+            detail: unicodeScalars,
+            action: {
+                core.emojiCoordinator.copyUnicode(entry)
+            }
+        ))
+
+        // Edit Custom Keywords
+        items.append(PopoverMenuItem(
+            title: String(localized: "Assign Custom Keywords…"),
+            systemImage: "tag",
+            shortcut: "⌘E"
+        ) {
+            core.emojiCoordinator.editCustomKeywords(for: entry)
+        })
+
+        // Pin/Unpin
+        items.append(PopoverMenuItem(
+            title: pinPosition == nil
+                ? String(localized: "Pin \(noun)") : String(localized: "Unpin \(noun)"),
+            systemImage: pinPosition == nil ? "pin" : "pin.slash",
+            startsSection: true, shortcut: "⌘.", action: togglePin))
+
         if let pinPosition {
             items.append(
                 PopoverMenuItem(
@@ -222,6 +337,8 @@ enum EmojiActionsMenu {
                     isEnabled: pinPosition < pinCount - 1, shortcut: "⌥⌘↓"
                 ) { movePin(1) })
         }
+
+        // Zoom options
         items.append(contentsOf: [
             PopoverMenuItem(
                 title: String(localized: "Actual Size"), systemImage: "magnifyingglass",
@@ -236,6 +353,7 @@ enum EmojiActionsMenu {
                 isEnabled: canZoom(.zoomOut), shortcut: "⌘-"
             ) { zoom(.zoomOut) }
         ])
-        return PopoverMenuContent(header: entry.displayName, items: items)
+
+        return PopoverMenuContent(header: "\(entry.glyph) \(entry.displayName)", items: items)
     }
 }

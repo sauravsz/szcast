@@ -45,12 +45,35 @@ enum Paster {
     }
 
     /// Put a string on the pasteboard unmarked, so it enters history like any other copy.
+    /// If text contains markdown formatting, registers .rtf alongside plain text.
     @MainActor @discardableResult
     static func copyPlainText(_ text: String) -> Bool {
         let pb = NSPasteboard.general
         pb.clearContents()
-        pb.declareTypes([.string], owner: nil)
-        return pb.setString(text, forType: .string)
+        var types: [NSPasteboard.PasteboardType] = [.string]
+        let rtf = richTextData(for: text)
+        if rtf != nil { types.append(.rtf) }
+        pb.declareTypes(types, owner: nil)
+        let success = pb.setString(text, forType: .string)
+        if let rtf { pb.setData(rtf, forType: .rtf) }
+        return success
+    }
+
+    /// Converts markdown syntax to RTF data for rich text insertion across editors.
+    static func richTextData(for text: String) -> Data? {
+        guard text.contains("**") || text.contains("*") || text.contains("`") || text.contains("[") || text.contains("#") else {
+            return nil
+        }
+        guard let attributed = try? NSAttributedString(
+            markdown: text,
+            options: AttributedString.MarkdownParsingOptions(interpretedSyntax: .inlineOnlyPreservingWhitespace)
+        ) else { return nil }
+        let range = NSRange(location: 0, length: attributed.length)
+        guard range.length > 0 else { return nil }
+        return try? attributed.data(
+            from: range,
+            documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf]
+        )
     }
 
     /// Put a secret string on the pasteboard tagged with standard macOS concealed and transient markers.
@@ -140,9 +163,17 @@ enum Paster {
             pb.setData(Data(), forType: appleSensitive)
             pb.setData(Data(), forType: ClipboardManager.internalType)
         } else {
-            pb.declareTypes([.string, ClipboardManager.internalType], owner: nil)
-            pb.setString(text, forType: .string)
-            pb.setData(Data(), forType: ClipboardManager.internalType)
+            let rtf = richTextData(for: text)
+            if let rtf {
+                pb.declareTypes([.string, .rtf, ClipboardManager.internalType], owner: nil)
+                pb.setString(text, forType: .string)
+                pb.setData(rtf, forType: .rtf)
+                pb.setData(Data(), forType: ClipboardManager.internalType)
+            } else {
+                pb.declareTypes([.string, ClipboardManager.internalType], owner: nil)
+                pb.setString(text, forType: .string)
+                pb.setData(Data(), forType: ClipboardManager.internalType)
+            }
         }
     }
 

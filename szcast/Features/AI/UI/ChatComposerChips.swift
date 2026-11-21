@@ -78,7 +78,7 @@ struct AttachmentChip: View {
         switch attachment.kind {
         case .image:
             ComposerThumbnail(data: attachment.preview, id: attachment.id)
-        case .pdf, .text:
+        case .pdf, .text, .wordDocument, .epub:
             Image(systemName: attachment.glyph)
                 .font(metrics.typography.chip)
                 .symbolRenderingMode(.hierarchical)
