@@ -25,84 +25,79 @@
   <img src="docs/screenshot.png" alt="szcast command palette">
 </p>
 
-## About
+## Overview
 
-szcast is a lightweight, keyboard-driven launcher and offline AI dictation engine for macOS. It combines fast app searching, local speech-to-text, custom system tweaks, and Raycast extension compatibility into a single native binary. Built in Swift with zero Electron overhead and zero analytics.
+szcast is a lightweight, keyboard-driven launcher and local AI dictation system for macOS. It combines instant search, local speech-to-text, system telemetry, and Raycast extension compatibility into a single native binary. Built in pure Swift with zero Electron overhead and zero telemetry.
 
-## Installation
+## Quick Install
 
-Download the latest `.dmg` from [Releases](https://github.com/sauravsz/szcast/releases/latest), open it, and move **szcast** to `/Applications`.
+Download the latest `.dmg` from [Releases](https://github.com/sauravsz/szcast/releases/latest), mount it, and move **szcast** to `/Applications`.
 
 ```bash
 xattr -cr /Applications/szcast.app
 open /Applications/szcast.app
 ```
 
-## Key Features
+## Features
 
-### Core vs Extended Modular Architecture
-- **Streamlined Settings Taxonomy**: Cleanly divides launcher capabilities into Core Features (always-ready essentials including Dictation, Notes, File Search, AI, Clipboard, Quicklinks, Snippets, Emoji & Symbols, Window Management) and Extended Features (modular power tools).
-- **Extended Features Suite**: Houses System Stats (CPU, RAM, Disk, Battery, Network telemetry & individual menu bar monitors), Interactive Text Transformer, Ente Auth 2FA, KeePassXC, DuckDuckGo Mail, Display Tweaks & Gamma Control, Calendar HUD, and Clean Keyboard. Disabled by default on clean installs for minimal footprint; smart migration preserves active configurations seamlessly across updates.
-- **Dynamic Sidebar & Command Gating**: Settings sidebar and launcher command routing dynamically reflect active features, keeping navigation focused and uncluttered.
+### Fast Native Launcher
+- **Instant Search**: Search applications, preference panes, files, and custom shell commands with fuzzy ranking.
+- **Scope Filters**: Switch contexts instantly with category chips (`All`, `Apps`, `Commands`, `Quicklinks`, `Snippets`, `Files`, `Actions`).
+- **File Previews**: Arrow through file search results with instant native Quick Look previews (`⌘Y`).
+- **Clipboard History**: SQLite FTS5-indexed history with code syntax highlighting, line numbers, and interactive color swatches.
+- **Quicklinks & Snippets**: Parameterized URLs with cached favicons and instant dynamic text expansions.
+- **Window Management**: Half, quarter, and multi-display layout management without external window daemons.
 
-### System Telemetry & Hardware Monitors (Stats Integration)
-- **System Stats Dashboard & Sparklines**: Full native telemetry dashboard tracking CPU load, RAM memory pressure, Disk space, Battery health/cycles, and Network throughput (upload/download) with rolling 30-sample quadratic Bezier sparkline graphs.
-- **Modular Menu Bar Items**: Individual, togglable menu bar indicators for CPU, RAM, Disk, Battery, and Network with configurable update cadences (1s, 2s, 5s, 10s).
-- **Stats Parity**: Replicates exelban/stats architecture using pure Mach host statistics, IOKit power sources, and BSD system interfaces with zero daemon overhead.
+### Raycast Extension Runtime
+- **Native Extension Compatibility**: Run Raycast store extensions directly inside an embedded JavaScriptCore runtime.
+- **Zero-Config Import**: Import `.rayconfig` exports to migrate quicklinks, snippets, and preferences in one step.
+- **In-App Hotkeys & Aliases**: Assign dedicated shortcuts and custom keyword aliases to any extension command.
 
-### Raycast-Parity Emoji & Symbols Picker
-- **Natural Language & Semantic Search**: Search emojis by Unicode name, category, and meaning with local semantic search.
-- **Custom Keywords**: Assign personal keywords to any emoji or symbol via `⌘E` for instant recall, saved to local JSON storage.
-- **Inline Autocomplete (`:`)**: Type `:` inside any text input (Notes, AI Chat, Snippet Editor, Quicklink Editor) for instant inline emoji completions.
-- **Grid Customization & Tone Modifiers**: Configurable 6 to 10 column grid with `⌘-` / `⌘+` zoom (`⌘0` default), default skin tone picker, and contextual copy/paste with specific tone (`⌥⌘C` / `⌥⌘V`).
+### Offline Speech Dictation
+- **Local Speech Recognition**: Transcribe speech locally using Core ML-accelerated Parakeet v3 or Qwen3-ASR models.
+- **GPU Grammar Polish**: Pre-warmed local S1-mini model cleans up filler words, punctuation, and grammar before pasting.
+- **Floating Waveform Pill**: Minimal glass capsule showing real-time transcription status, haptic cues, and single-shot insertion.
+- **Dictation Telemetry**: Track WPM, speech cadence tiers, streak calendar, and application usage locally.
+
+### System Telemetry & Hardware Monitors
+- **Resource Dashboard**: Real-time tracking of CPU load, RAM memory pressure, Disk space, Battery health, and Network throughput.
+- **Rolling Sparklines**: Live 30-sample quadratic Bezier sparklines for immediate telemetry visualization.
+- **Modular Menu Bar Items**: Togglable menu bar indicators with customizable polling intervals (1s to 10s).
+
+### Emoji & Symbols Picker
+- **Natural Language Search**: Find emojis and Unicode symbols by name, category, or semantic intent.
+- **Custom Keywords (`⌘E`)**: Attach custom search keywords to any symbol for immediate recall.
+- **Inline Autocomplete (`:`)**: Trigger instant inline emoji suggestions directly inside Notes, AI Chat, and Snippet editors.
+- **Tone & Grid Modifiers**: Configurable 6–10 column grid with zoom shortcuts (`⌘-`/`⌘+`/`⌘0`) and quick skin tone selectors (`⌥⌘V`/`⌥⌘C`).
 
 ### Interactive Text Transformer
-- **Instant Conversions**: Real-time transformation across 15+ formats: camelCase, snake_case, kebab-case, PascalCase, UPPERCASE, lowercase, Title Case, Slugify, Base64 encode/decode, URL encode/decode, SHA-256 hash, MD5, and UUID v4.
-- **Side-by-Side Diff Inspector (`⌘D`)**: Toggle between stacked preview and dual-column side-by-side diff view with live metrics (characters, words, lines, byte size).
-- **Clipboard & App Injection**: Instant single-key copy (`⌘C`) or paste directly to the active application (`↵`).
+- **Instant Text Conversions**: Convert selected text across 15+ formats (camelCase, snake_case, kebab-case, PascalCase, Slugify, Base64, URL encode/decode, SHA-256, MD5, UUID).
+- **Side-by-Side Diff Inspector (`⌘D`)**: Dual-column diff view with real-time word, line, and character count comparisons.
 
-### Rich Developer Previews & Ergonomics
-- **Clipboard Syntax Highlighting**: Automatic language detection (JSON, Swift, JavaScript, Python, SQL, Shell, HTML) with line numbers gutter and token coloring in Clipboard preview.
-- **Color Swatches & Conversion Pills**: Color swatch preview with one-click interactive copy pills for Hex, RGBA, HSL, and NSColor.
-- **Dynamic Footer Shortcut Strip**: Live contextual keyboard shortcut legend in the launcher footer (`⌘↵ Finder`, `⌘I Info`, `⌘. Pin`, `⌥↵ Plain Text`, `⌘D Diff`) positioned beside the primary action capsule.
-- **Launcher Category Scope Filter Chips**: Horizontal filter chips (`All`, `Apps`, `Commands`, `Quicklinks`, `Snippets`, `Files`, `Actions`) for instant narrowing of search results.
-- **AI Code Block Direct Injections**: 1-click "Insert at Cursor" (paste into frontmost app) and "Run in Terminal" action buttons on all AI-generated code blocks.
-- **Split Action Panel (⌘K)**: Action menus structured into distinct sections (`Primary Actions`, `Shortcuts & Favorites`, `Process Control`, `Danger Zone`).
-- **Tactile & Visual Feedback**: Dictation start alignment haptics and completion levelChange haptics with an animated checkmark pulse, plus Settings search target accent glow pulse.
+### Modular Power Tools
+- **Ente Auth 2FA (`Hyper + T`)**: Instant TOTP generation with auto-discovery from `ente_auth.txt`.
+- **KeePassXC Integration**: Rapid password vault lookup via `keepassxc-cli` (`⌘C` password, `⌘T` TOTP, `⌘B` username).
+- **DuckDuckGo Email (`Hyper + D`)**: Generate and copy private `@duck.com` forwarding addresses on demand.
+- **Display Tweaks & Gamma Control**: Hardware LUT calibration (`CGSetDisplayTransferByTable`) with 3-point luminance sliders and one-click contrast presets.
+- **Clean Keyboard Mode**: Suppress keystrokes via `CGEventTap` for safe physical keyboard cleaning.
 
-### Extension Customization & Fast Navigation
-- **Precise Command Query Routing**: Activating launcher commands cleanly strips leading command keywords before opening sub-screens, preventing query collisions when launching filtered views.
-- **Centralized Extension Aliases**: Set custom aliases and global hotkeys for any installed Raycast extension command from a single view in Settings &rarr; Commands.
-- **List & Submenu Shortcuts (`⌘1`..`⌘9`)**: Press `⌘1` through `⌘9` to instantly activate any item in search results, extension lists (e.g. `brew search`), and nested submenus, with dynamic keycap badges when holding `Command`.
-- **Dual-Mode Snippet & Extension Icons**: Adaptive SVG icons for ChatGPT, OpenAI, and Raycast snippets that render crisply across both light and dark themes.
-- **Window Geometry & Navigation Polish**: Enforced 840x600 minimum layout floor preventing sidebar truncation, 20pt unified form and settings insets, and restored visible navigation titles beside toolbar back/forward platter buttons on solid native dark chrome.
+## Architecture
 
-### Offline Speech Dictation & Indic Romanization
-- **Dictation Insights & Speech Analytics**: Real-time Wispr Flow-style telemetry dashboard driven 100% by local dictation metrics. Track Words Per Minute (WPM), cadence meter (Top % tier), S1-mini normalization corrections, total words dictated, application-level breakdown (AI Prompts, Work Messages, Personal Messages, Documents, Emails), and interactive 16-week speech cadence streak calendar.
-- **Persistent Zero-Latency Daemons**: Local S1-mini normalization engine (~460 MB RAM) and offline Parakeet v3 ASR engine pre-warmed and kept persistent via launch daemons, eliminating first-dictation cold start delays entirely.
-- **Audio & Video File Transcription**: Transcribe media files directly from the menu bar using local Neural Engine or cloud Groq models, with S1 normalization and instant clipboard copy.
-- **Bengali & Hindi Romanization**: Dictate in Bengali or Hindi and receive clean Latin text (Banglish & Hinglish) via local S1-mini LLM or 0ms deterministic Avro/Hunterian rules.
-- **Quiet Dictation Pill & Single-Shot Paste**: Visual waveform feedback in a floating glass pill, with polished text pasted in one shot upon completion.
-- **Audio Ducking & Domain Vocabulary**: Automatic media volume lowering for Spotify and Apple Music, plus built-in domain dictionaries (tech, medical, legal, brands).
+- **Language**: Swift 6 (Strict Concurrency enabled)
+- **UI Framework**: Native AppKit + SwiftUI
+- **Local Storage**: SQLite FTS5 for clipboard and file indexing; local JSON configuration
+- **Privacy**: No telemetry, no external analytics, no user tracking
 
-### Display Tweaks & Gamma Control
-- **Display Tweaks & Gamma Control**: Direct GPU gamma table controls (`CGSetDisplayTransferByTable`) with native 3-point inspector (`[ Black | Middle | White ]` tabs) featuring individual RGB and luminance sliders, 5-box checkerboard calibration targets, grayscale ramp, and RGB gradient strips matching `.gammaset` profiles for deep OLED-grade blacks without color banding.
-- **Display Mirroring**: One-key hardware display mirroring toggle.
+## Building from Source
 
-### Built-In Productivity Tools
-- **Ente Auth 2FA (`Hyper + T`)**: Instant TOTP generation with live countdown tickers and auto-discovery from `ente_auth.txt`.
-- **KeePassXC Manager**: Fast password vault lookups via `keepassxc-cli` with window state resumption and dedicated shortcuts (`⌘C` password, `⌘T` TOTP, `⌘B` username, `⌘U` URL).
-- **DuckDuckGo Email (`Hyper + D`)**: Generate and copy private `@duck.com` alias addresses on demand.
-- **Clean Keyboard Mode**: Low-level keystroke suppression via `CGEventTap` for cleaning keyboards, with floating countdown HUD and safety unlocks (Hold Escape 3s or `Ctrl + U`).
-- **In-App Version Changelog**: Native Settings pane tracking release milestones, feature highlights, and architectural improvements directly inside the app.
+Requires macOS 26+ and Xcode 27+.
 
-### Core Launcher Capabilities
-- **Universal Search & Aliases**: Fast fuzzy search across applications, system settings, files, and scripts.
-- **Quick Look Previews (`⌘Y`)**: Floating native file preview in search results that follows arrow navigation.
-- **Clipboard History**: Searchable text and image clipboard buffer with favorites and quick paste.
-- **Quicklinks**: Fast bookmark launcher with automatic favicon resolution.
-- **Window Snapping**: Keyboard grid snapping and multi-display window movement.
-- **Raycast Store Compatibility**: Install and run community Raycast extensions natively.
+```bash
+git clone https://github.com/sauravsz/szcast.git
+cd szcast
+xcodebuild -project Szcast.xcodeproj -scheme Szcast -configuration Debug build
+./Scripts/run-tests.sh
+```
 
 ## Acknowledgements
 
@@ -110,12 +105,10 @@ open /Applications/szcast.app
 - **[EnviousWispr](https://github.com/saurabhav88/EnviousWispr)** by saurabhav88: Dictation pipeline architecture, domain vocabulary packs, and audio ducking.
 - **[Raycast](https://raycast.com)**: Extension runtime model and API specifications.
 - **[Stats](https://github.com/exelban/stats)** by Serhiy Mytrovtsiy (exelban): macOS system monitor telemetry architecture.
-- **[FreeDisplay](https://github.com/huberdf/FreeDisplay)** by huberdf: Display management and screen mirroring.
-- **[gamma-control](https://github.com/Qiueyed/gamma-control)** by Qiueyed: Display gamma transfer curve mathematics and hardware LUT calculation.
-- **[Avro Keyboard](https://github.com/omicronlab/avro-pad)** by Mehdi Hasan Khan & OmicronLab: Phonetic Bengali romanization rules.
+- **[FreeDisplay](https://github.com/huberdf/FreeDisplay)** & **[gamma-control](https://github.com/Qiueyed/gamma-control)**: Display management and gamma transfer LUT mathematics.
 
 Third-party licenses are documented in [NOTICE.md](NOTICE.md).
 
 ## License
 
-szcast is open source software licensed under the [GNU AGPL v3](LICENSE). Copyright © 2026 Saurav.
+szcast is licensed under the [GNU AGPL v3](LICENSE).

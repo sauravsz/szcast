@@ -328,13 +328,11 @@
 
 <header class="hero" id="top">
   <div class="wrap">
-    <span class="pill"><span class="dot"></span><b>v1.1.2</b> · macOS 26+ · Apple silicon</span>
+    <span class="pill"><span class="dot"></span><b>v1.1.5</b> · macOS 26+ · Apple silicon</span>
     <h1>The launcher that <em>stays native</em>.</h1>
     <p class="lede">
-      szcast is a keyboard-first launcher for macOS, written in Swift and SwiftUI with no
-      dependencies and no Electron shell. Search everything, run your Raycast extensions, and
-      never leave the keyboard — with offline dictation that formats what you said, and a focus
-      timer that keeps out of the way.
+      A fast, keyboard-first macOS launcher and offline dictation system.
+      Universal search, Raycast extension runtime, live system telemetry, and local AI formatting — zero Electron, zero telemetry.
     </p>
     <div class="cta">
       <a class="btn" href="https://github.com/sauravsz/szcast/releases/latest">Download for macOS</a>
@@ -360,14 +358,13 @@
 
     <div class="row">
       <div class="row-copy">
-        <h3>Clipboard history that survives</h3>
-        <p>Every copy is indexed in a local SQLite FTS5 database and searchable the moment you
-           open the palette. Pins stay resident forever; the rest rotates through a bounded window.</p>
+        <h3>Clipboard history with developer previews</h3>
+        <p>Every copy is indexed in local SQLite FTS5 for instant search. Syntax highlighting with line numbers for code, plus interactive color swatches with one-click Hex, RGB, and HSL copy pills.</p>
         <ul class="ticks">
-          <li><b>Full-text search</b> across the last 1,000 entries</li>
-          <li><b>Type filters</b> for text, links, images and files</li>
-          <li><b>Pin</b> what matters so it never ages out</li>
-          <li>Excluded apps never record at all</li>
+          <li><b>Full-text search</b> across text, links, images, and files</li>
+          <li><b>Syntax highlighting</b> with line numbers for code snippets</li>
+          <li><b>Interactive color swatches</b> with one-click conversion pills</li>
+          <li><b>Pinned clippings</b> that never age out of the buffer</li>
         </ul>
       </div>
       <div class="row-shot">
@@ -379,13 +376,11 @@
     <div class="row flip">
       <div class="row-copy">
         <h3>Quicklinks with real favicons</h3>
-        <p>Turn any URL into a search target with <code class="kbd">{argument name="Query"}</code>
-           placeholders. szcast fetches and caches favicons from Google, DuckDuckGo and the
-           origin itself, so the list reads like an app drawer instead of a bookmark folder.</p>
+        <p>Turn any URL into a search target with parameter placeholders. szcast resolves and caches favicons from Google, DuckDuckGo, and the origin for instant, offline recognition.</p>
         <ul class="ticks">
-          <li>Parameterised links with named arguments</li>
-          <li>Favicon cache with three-tier fallback</li>
-          <li>Import an existing Raycast set in one pass</li>
+          <li>Parameterized links with named arguments</li>
+          <li>Three-tier favicon cache with disk persistence</li>
+          <li>One-step migration from Raycast exports</li>
         </ul>
       </div>
       <div class="row-shot">
@@ -396,13 +391,13 @@
 
     <div class="row">
       <div class="row-copy">
-        <h3>Emoji and symbols, without the lag</h3>
-        <p>The full Unicode set with skin-tone variants, keyword aliases and category filters.
-           Frequently used entries rise to the top and stay there.</p>
+        <h3>Emoji and symbols, Raycast parity</h3>
+        <p>Search emojis by name, category, or semantic intent. Assign custom keywords, trigger inline autocomplete, and adjust grid zoom density without breaking focus.</p>
         <ul class="ticks">
-          <li>Every category, 559 in Smileys &amp; People alone</li>
-          <li>Search by name or alias, not just glyph</li>
-          <li>Pastes straight into the frontmost app</li>
+          <li><b>Inline autocomplete (<code>:</code>)</b> across Notes, AI Chat, and Snippets</li>
+          <li><b>Custom keywords (<code>⌘E</code>)</b> for personal recall</li>
+          <li><b>Tone modifiers</b> and 6–10 column grid zoom (<code>⌘-</code>/<code>⌘+</code>)</li>
+          <li>Single-key paste directly into the active application</li>
         </ul>
       </div>
       <div class="row-shot">
@@ -577,65 +572,52 @@
 <section class="yours" id="beyond">
   <div class="wrap">
     <div class="sec-head">
-      <p class="eyebrow">Beyond the fork</p>
-      <h2>What szcast adds that Tinycast doesn't have</h2>
-      <p>szcast started from <a href="https://github.com/abue-ammar/tinycast">Tinycast</a> and kept
-         its licence, its shape and its best ideas. Everything below was built here — a focus
-         timer and its cue engine that did not exist upstream, and three shared features grown
-         well past the point we forked.</p>
+      <p class="eyebrow">Extended Architecture</p>
+      <h2>Engineered beyond the basics</h2>
+      <p>Independent native modules designed specifically for deep macOS integration.</p>
     </div>
 
     <div class="grid">
       <div class="card">
         <span class="badge plus">Extended</span>
-        <h4>Dictation with insights, vocabulary and zero-lag cleanup</h4>
-        <p>Tinycast ships dictation on Parakeet and Qwen3-ASR. szcast keeps both and grew the
-           feature to <em>43 source files from 27</em>: real-time speech analytics dashboard,
-           persistent launch daemons for 0ms latency, vocabulary packs, a custom word list,
-           transcription history, a hotkey preset picker, an idle-release policy, and audio
-           ducking so your music steps back while you speak.</p>
-        <p>The cleanup pass is the part worth pointing at. A pinned <em>S1-mini</em> model stays hot
-           in Metal GPU memory to fix grammar, punctuation, and filler words — with tone, structure,
-           and sign-off controls — so the text lands formatted instead of raw.</p>
-        <div class="detail">DictationInsightsView · DictationS1Polisher · DictationLlamaServerManager<br />
-          Tech · Medical · Legal · Brands · Names</div>
+        <h4>Offline dictation with GPU grammar polish</h4>
+        <p>Local Parakeet and Qwen3-ASR models with pre-warmed launch daemons for 0ms latency. Pinned S1-mini model on Metal GPU removes filler words and structures punctuation before pasting.</p>
+        <div class="detail">Real-time WPM analytics · 16-week streak calendar · Domain vocab packs</div>
+      </div>
+
+      <div class="card">
+        <span class="badge">New module</span>
+        <h4>System telemetry &amp; hardware monitors</h4>
+        <p>Pure Mach and IOKit hardware telemetry dashboard tracking CPU load, RAM pressure, Disk space, Battery health, and Network throughput with rolling Bezier sparkline graphs.</p>
+        <div class="detail">Stats integration · Modular menu bar monitors · 1s–10s polling cadences</div>
+      </div>
+
+      <div class="card">
+        <span class="badge">New module</span>
+        <h4>Interactive text transformer &amp; diff</h4>
+        <p>Real-time transformation across 15+ cases, hashes, slugs, and encodings. Includes side-by-side diff inspector (⌘D) with live line, word, and byte comparisons.</p>
+        <div class="detail">camelCase · kebab-case · Base64 · SHA-256 · URL · Markdown diff</div>
       </div>
 
       <div class="card">
         <span class="badge">New module</span>
         <h4>Focus timer with ambient cues</h4>
-        <p>A Pomodoro timer that lives in the menu bar and never steals focus. Work, short and
-           long break cycles, each with its own cue, plus a confetti burst where the moment
-           deserves one.</p>
-        <p>It is the only feature in szcast that did not exist in any form upstream — the
-           <em>Sensory</em> module was written to support it, then reused everywhere else.</p>
-        <div class="detail">FocusTimerEngine · SensoryCoordinator · ConfettiWindowController<br />
-          start it from ⌘Space — no window, no dock icon</div>
+        <p>Pomodoro cycles with menu bar countdown, sensory audio cues, and confetti celebrations that never steal focus.</p>
+        <div class="detail">FocusTimerEngine · SensoryCoordinator · Menu bar HUD</div>
       </div>
 
       <div class="card">
         <span class="badge plus">Extended</span>
         <h4>Live web search in AI chat</h4>
-        <p>Search without switching provider. szcast talks to <em>Tavily</em>, <em>Exa</em> and
-           <em>Jina</em> directly, so any model in the picker can read the live web — including
-           local ones, which have no hosted search to fall back on. Results come back as numbered
-           citations you can open.</p>
-        <p>Point it at your own API key or leave it off entirely — nothing is proxied through us.
-           Upstream added each provider's own hosted search tool in November; this is the
-           provider-agnostic complement to it.</p>
-        <div class="detail">WebSearchService · WebSearchAIProvider · ChatCitations<br />
-          279 lines · three search providers · works with local models</div>
+        <p>Ground any local or cloud AI model with live web citations via Tavily, Exa, or Jina. Conversations stay strictly local in SQLite.</p>
+        <div class="detail">WebSearchService · Numbered citations · Zero cloud proxying</div>
       </div>
 
       <div class="card">
         <span class="badge plus">Extended</span>
-        <h4>Quicklink favicons that actually resolve</h4>
-        <p>Tinycast stores a quicklink as a name and a URL. szcast resolves a real favicon for each
-           one through a three-tier fallback — Google, then DuckDuckGo, then the origin's own
-           <code>/favicon.ico</code> — and caches it so the list loads without a network round trip.</p>
-        <p>It also ships a starter set, so a fresh install has somewhere to go.</p>
-        <div class="detail">QuicklinkFaviconService · DefaultQuicklinks<br />
-          Google → DuckDuckGo → origin, cached to disk</div>
+        <h4>Developer previews &amp; ergonomics</h4>
+        <p>Clipboard syntax highlighting with line numbers, interactive color conversion pills, launcher category chips, and split ⌘K action menu.</p>
+        <div class="detail">SyntaxLexer · ColorConverter · Contextual shortcut footer</div>
       </div>
     </div>
   </div>
@@ -654,42 +636,37 @@
       <div class="card">
         <div class="ico">▦</div>
         <h4>Install from a link</h4>
-        <p>Paste a Raycast store URL and szcast resolves, verifies and installs the package from
-           the trusted release CDN.</p>
+        <p>Paste any Raycast store URL to resolve, verify, and install packages directly from the trusted CDN.</p>
       </div>
       <div class="card">
         <div class="ico">↻</div>
-        <h4>Updates in place</h4>
-        <p>Extension updates arrive without a restart and without a second app to keep running.</p>
+        <h4>In-place updates</h4>
+        <p>Extensions update seamlessly in the background without restarting or keeping companion processes alive.</p>
       </div>
       <div class="card">
         <div class="ico">⇪</div>
         <h4>Import your export</h4>
-        <p>Reads the <code>.rayconfig</code> written by Raycast 2.x — an authenticated AES-256-GCM
-           container — and rebuilds quicklinks, snippets and settings.</p>
+        <p>Import authenticated <code>.rayconfig</code> archives (AES-256-GCM) to restore quicklinks, snippets, and settings in one pass.</p>
       </div>
       <div class="card">
         <div class="ico">⌘</div>
-        <h4>Hotkeys in-house</h4>
-        <p>A Carbon <code>RegisterEventHotKey</code> layer with combos, double-taps, sided modifiers
-           and a Hyper key. Zero dependencies.</p>
+        <h4>Native hotkeys</h4>
+        <p>Carbon hotkey engine supporting key combinations, double-taps, sided modifiers, and custom Hyper keys.</p>
       </div>
       <div class="card">
         <div class="ico">⌥</div>
-        <h4>Custom commands</h4>
-        <p>Name a shell command, give it arguments if it needs them, and it becomes a searchable
-           launcher row with its own shortcut.</p>
+        <h4>Custom shell commands</h4>
+        <p>Turn any terminal command or script into a searchable launcher row with its own dedicated shortcut.</p>
       </div>
       <div class="card">
         <div class="ico">◫</div>
         <h4>Window management</h4>
-        <p>Halves, quarters, maximise and saved multi-display layouts — resolved as fractions of the
-           visible frame, so they survive a monitor change.</p>
+        <p>Keyboard-driven halves, quarters, maximize, and fractional multi-display layout persistence.</p>
       </div>
       <div class="card">
         <div class="ico">⚿</div>
         <h4>Ente Auth 2FA (Hyper + T)</h4>
-        <p>Instant TOTP code calculation, visual urgency indicators, automatic <code>ente_auth.txt</code> import, and single-keystroke clipboard copy.</p>
+        <p>Instant TOTP calculation, visual urgency indicators, and automatic <code>ente_auth.txt</code> discovery.</p>
       </div>
       <div class="card">
         <div class="ico">@</div>
@@ -698,43 +675,43 @@
       </div>
       <div class="card">
         <div class="ico">⌗</div>
-        <h4>KeePassXC Password Vault</h4>
-        <p>Offline credentials wrapper with persistent window resumption: toggle szcast to instantly resume copying password (⌘C), TOTP (⌘T), username (⌘B), or URL (⌘U).</p>
+        <h4>KeePassXC Vault</h4>
+        <p>Fast password and TOTP lookup via <code>keepassxc-cli</code> with seamless window focus resumption.</p>
       </div>
       <div class="card">
         <div class="ico">␣</div>
         <h4>Clean Keyboard Mode</h4>
-        <p>Safely wipe down your physical keyboard with complete input blocking, glass countdown HUD, and hold Escape (3s) or Control+U safe unlock.</p>
+        <p>Low-level event suppression with a countdown HUD for safely cleaning physical keyboards.</p>
       </div>
       <div class="card">
         <div class="ico">◐</div>
-        <h4>Display Tweaks &amp; Gamma Control</h4>
-        <p>Direct hardware LUT calibration via <code>CGSetDisplayTransferByTable</code> with 0.00–1.00 fine Black, Middle, and White luminance controls, RGB gain balance, and instant Gamma Control preset for OLED-grade contrast.</p>
+        <h4>Display Tweaks &amp; Gamma</h4>
+        <p>Hardware LUT calibration via <code>CGSetDisplayTransferByTable</code> with 3-point luminance sliders and contrast presets.</p>
       </div>
       <div class="card">
         <div class="ico">⚡</div>
-        <h4>Dictation Insights &amp; Analytics</h4>
-        <p>Real-time speech analytics dashboard tracking Words Per Minute, cadence percentile meter, S1-mini normalization corrections, 16-week streak calendar, and application usage breakdown.</p>
+        <h4>Dictation Analytics</h4>
+        <p>Real-time speech analytics dashboard tracking Words Per Minute, cadence tiers, and an interactive 16-week streak calendar.</p>
       </div>
       <div class="card">
         <div class="ico">⌨</div>
-        <h4>Extension Command Aliases</h4>
-        <p>Assign custom aliases and global hotkeys to any installed Raycast extension command from a single view in Settings.</p>
+        <h4>Command Aliases</h4>
+        <p>Assign custom aliases and global shortcuts to any installed Raycast extension command from a single Settings view.</p>
       </div>
       <div class="card">
         <div class="ico">☊</div>
-        <h4>Audio &amp; Video File Transcription</h4>
-        <p>Transcribe recordings directly from the menu bar with local Neural Engine or Groq models, S1-mini normalization, and auto-copy.</p>
+        <h4>Media Transcription</h4>
+        <p>Transcribe audio and video files directly from the menu bar using local Core ML or Groq models.</p>
       </div>
       <div class="card">
         <div class="ico">文</div>
-        <h4>Bengali &amp; Hindi Romanization</h4>
-        <p>Dictate in Bengali or Hindi and receive clean phonetic Latin script (Banglish &amp; Hinglish) using local S1-mini or 0ms Avro rules.</p>
+        <h4>Indic Romanization</h4>
+        <p>Dictate in Bengali or Hindi and receive clean phonetic Latin text (Banglish &amp; Hinglish) with zero latency.</p>
       </div>
       <div class="card">
         <div class="ico">✦</div>
-        <h4>Core &amp; Extended Architecture</h4>
-        <p>Cleanly decoupled settings taxonomy. Power-user features stay modular and disabled by default on clean installs for zero resource footprint.</p>
+        <h4>Modular Architecture</h4>
+        <p>Cleanly decoupled settings taxonomy. Power-user features stay disabled by default on clean installs for zero footprint.</p>
       </div>
     </div>
   </div>
@@ -834,9 +811,9 @@ open szcast.xcodeproj
     </div>
     <p class="foot-note">
       szcast is a fork of <a href="https://github.com/abue-ammar/tinycast">Tinycast</a> by Abue Ammar,
-      distributed under the GNU AGPL v3. Dictation architecture, vocabulary packs and speech
+      distributed under the GNU AGPL v3. Dictation architecture, vocabulary packs, and speech
       normalization were inspired by <a href="https://github.com/saurabhav88/EnviousWispr">EnviousWispr</a>
-      by saurabhav88. Display tweaks adapt techniques from <a href="https://github.com/Qiueyed/gamma-control">gamma-control</a> and <a href="https://github.com/huberdf/FreeDisplay">FreeDisplay</a>. Built-in productivity features draw from <a href="https://github.com/raycast/extensions">Raycast community extensions</a> and Alfred workflows for Ente Auth, DuckDuckGo Email, Clean Keyboard, and KeePassXC. Full third-party attribution lives in <a href="https://github.com/sauravsz/szcast/blob/main/NOTICE.md">NOTICE.md</a>.
+      by saurabhav88. Telemetry and hardware monitors adapt architecture from <a href="https://github.com/exelban/stats">Stats</a> by Serhiy Mytrovtsiy (exelban). Display tweaks adapt techniques from <a href="https://github.com/Qiueyed/gamma-control">gamma-control</a> and <a href="https://github.com/huberdf/FreeDisplay">FreeDisplay</a>. Built-in productivity features draw from <a href="https://github.com/raycast/extensions">Raycast community extensions</a> and Alfred workflows for Ente Auth, DuckDuckGo Email, Clean Keyboard, and KeePassXC. Full third-party attribution lives in <a href="https://github.com/sauravsz/szcast/blob/main/NOTICE.md">NOTICE.md</a>.
     </p>
   </div>
 </footer>
