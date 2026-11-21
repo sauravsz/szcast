@@ -30,6 +30,7 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - **Rich Developer Previews**: Clipboard code syntax highlighting with language detection and line numbers gutter; interactive Color Swatch card with one-click Hex, RGBA, HSL, and NSColor copy pills.
   - **Scoping & Action Ergonomics**: Launcher category scope filter chips (`All`, `Apps`, `Commands`, `Quicklinks`, `Snippets`, `Files`, `Actions`), AI code block direct injection ("Insert at Cursor" and "Run in Terminal"), and structured split Action Panel (`⌘K`).
   - **Tactile & Visual Feedback**: Dictation haptic cues on start/finish with an animated checkmark completion pulse; Settings search target accent glow pulse.
+  - **Documentation & Web Modernization**: Streamlined `README.md` to a crisp 115-line architecture & feature guide; updated `site/index.html` to v1.1.5 with concise cards and deployed live to `szcast.vercel.app` (commits `97ec8bae`, `191bf48b`).
 
 - **Release v1.1.4**:
   - Full codebase audit defect fixes: clipboard concealment markers across KeePassXC and Ente Auth to avoid history leaks, zero-error Push-to-Talk sub-100ms cancellation, safe unwrap bounds in Calendar/Insights/Ente, RunLoop timer modes in Clean Keyboard, safe HTTP & file size checks for S1 models, and scheme validation in URLSanitizer.
