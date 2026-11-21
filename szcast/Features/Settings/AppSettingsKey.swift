@@ -159,6 +159,7 @@ enum AppSettingsKey: String, CaseIterable {
     case displayTweaksContrast = "displayTweaksContrast"
     case displayTweaksBrightness = "displayTweaksBrightness"
     case displayTweaksPreset = "displayTweaksPreset"
+    case displayTweaksGammaSetData = "displayTweaksGammaSetData"
     case supportReminders = "supportReminders"
     case settingsFileEnabled = "settingsFileEnabled"
     case allowedDeepLinks = "allowedDeepLinks"

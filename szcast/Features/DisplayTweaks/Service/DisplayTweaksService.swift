@@ -264,7 +264,7 @@ final class DisplayTweaksService {
 
     // MARK: - GammaSet Profile Support (.gammaset)
 
-    struct GammaSetData: Equatable {
+    struct GammaSetData: Equatable, Codable, Sendable {
         var blackPointR: Double = 0.05
         var blackPointG: Double = 0.05
         var blackPointB: Double = 0.05
@@ -287,6 +287,67 @@ final class DisplayTweaksService {
         var gammaPointWhiteG: Double = 1.0
         var gammaPointWhiteB: Double = 1.0
         var blendingMode: Int = 1
+
+        mutating func updateResolvedPoints() {
+            blackPointR = max(0.0, min(1.0, masterBlack + gammaPointBlackR))
+            blackPointG = max(0.0, min(1.0, masterBlack + gammaPointBlackG))
+            blackPointB = max(0.0, min(1.0, masterBlack + gammaPointBlackB))
+
+            middlePointR = max(0.1, masterMiddle * gammaPointMiddleR)
+            middlePointG = max(0.1, masterMiddle * gammaPointMiddleG)
+            middlePointB = max(0.1, masterMiddle * gammaPointMiddleB)
+
+            whitePointR = max(0.0, min(1.0, masterWhite * gammaPointWhiteR))
+            whitePointG = max(0.0, min(1.0, masterWhite * gammaPointWhiteG))
+            whitePointB = max(0.0, min(1.0, masterWhite * gammaPointWhiteB))
+        }
+
+        static func make(for preset: DisplayTweaksPreset) -> GammaSetData {
+            var data: GammaSetData
+            switch preset {
+            case .neutral:
+                data = GammaSetData(
+                    blackPointR: 0.0, blackPointG: 0.0, blackPointB: 0.0,
+                    whitePointR: 1.0, whitePointG: 1.0, whitePointB: 1.0,
+                    middlePointR: 1.0, middlePointG: 1.0, middlePointB: 1.0,
+                    masterBlack: 0.0, masterWhite: 1.0, masterMiddle: 1.0,
+                    gammaPointBlackR: 0.0, gammaPointBlackG: 0.0, gammaPointBlackB: 0.0,
+                    gammaPointMiddleR: 1.0, gammaPointMiddleG: 1.0, gammaPointMiddleB: 1.0,
+                    gammaPointWhiteR: 1.0, gammaPointWhiteG: 1.0, gammaPointWhiteB: 1.0
+                )
+            case .gammaControl:
+                data = GammaSetData(
+                    blackPointR: 0.05, blackPointG: 0.05, blackPointB: 0.05,
+                    whitePointR: 0.89, whitePointG: 0.89, whitePointB: 0.89,
+                    middlePointR: 1.0, middlePointG: 1.0, middlePointB: 1.0,
+                    masterBlack: 0.05, masterWhite: 0.89, masterMiddle: 1.0,
+                    gammaPointBlackR: 0.0, gammaPointBlackG: 0.0, gammaPointBlackB: 0.0,
+                    gammaPointMiddleR: 1.0, gammaPointMiddleG: 1.0, gammaPointMiddleB: 1.0,
+                    gammaPointWhiteR: 1.0, gammaPointWhiteG: 1.0, gammaPointWhiteB: 1.0
+                )
+            default:
+                let v = preset.values
+                data = GammaSetData(
+                    blackPointR: max(0.0, v.blacks),
+                    blackPointG: max(0.0, v.blacks),
+                    blackPointB: max(0.0, v.blacks),
+                    whitePointR: v.whites > 0 ? v.whites : (1.0 + v.whites),
+                    whitePointG: v.whites > 0 ? v.whites : (1.0 + v.whites),
+                    whitePointB: v.whites > 0 ? v.whites : (1.0 + v.whites),
+                    middlePointR: v.contrast != 0 ? (1.0 - v.contrast * 0.3) : 1.0,
+                    middlePointG: v.contrast != 0 ? (1.0 - v.contrast * 0.3) : 1.0,
+                    middlePointB: v.contrast != 0 ? (1.0 - v.contrast * 0.3) : 1.0,
+                    masterBlack: max(0.0, v.blacks),
+                    masterWhite: v.whites > 0 ? v.whites : (1.0 + v.whites),
+                    masterMiddle: 1.0,
+                    gammaPointBlackR: 0.0, gammaPointBlackG: 0.0, gammaPointBlackB: 0.0,
+                    gammaPointMiddleR: v.red, gammaPointMiddleG: v.green, gammaPointMiddleB: v.blue,
+                    gammaPointWhiteR: 1.0, gammaPointWhiteG: 1.0, gammaPointWhiteB: 1.0
+                )
+            }
+            data.updateResolvedPoints()
+            return data
+        }
 
         static func parse(from url: URL) -> GammaSetData? {
             guard let data = try? Data(contentsOf: url),
@@ -334,21 +395,23 @@ final class DisplayTweaksService {
 
     /// Calculate 256-entry transfer tables from a GammaSetData configuration.
     func calculateGammaSetTables(_ set: GammaSetData) -> (r: [Float], g: [Float], b: [Float]) {
+        var resolved = set
+        resolved.updateResolvedPoints()
         var tableR = [Float](repeating: 0, count: 256)
         var tableG = [Float](repeating: 0, count: 256)
         var tableB = [Float](repeating: 0, count: 256)
 
-        let blackR = Float(max(0.0, min(1.0, set.blackPointR)))
-        let blackG = Float(max(0.0, min(1.0, set.blackPointG)))
-        let blackB = Float(max(0.0, min(1.0, set.blackPointB)))
+        let blackR = Float(max(0.0, min(1.0, resolved.blackPointR)))
+        let blackG = Float(max(0.0, min(1.0, resolved.blackPointG)))
+        let blackB = Float(max(0.0, min(1.0, resolved.blackPointB)))
 
-        let whiteR = Float(max(0.0, min(1.0, set.whitePointR)))
-        let whiteG = Float(max(0.0, min(1.0, set.whitePointG)))
-        let whiteB = Float(max(0.0, min(1.0, set.whitePointB)))
+        let whiteR = Float(max(0.0, min(1.0, resolved.whitePointR)))
+        let whiteG = Float(max(0.0, min(1.0, resolved.whitePointG)))
+        let whiteB = Float(max(0.0, min(1.0, resolved.whitePointB)))
 
-        let middleR = Float(max(0.1, set.middlePointR))
-        let middleG = Float(max(0.1, set.middlePointG))
-        let middleB = Float(max(0.1, set.middlePointB))
+        let middleR = Float(max(0.1, resolved.middlePointR))
+        let middleG = Float(max(0.1, resolved.middlePointG))
+        let middleB = Float(max(0.1, resolved.middlePointB))
 
         for i in 0..<256 {
             let x = Float(i) / 255.0
@@ -366,22 +429,31 @@ final class DisplayTweaksService {
 
     /// Apply an exact GammaSetData configuration to the hardware LUT.
     func applyGammaSet(_ set: GammaSetData, displayID: CGDirectDisplayID? = nil) {
-        lastAppliedGammaSet = (set, displayID)
-        let targets: [CGDirectDisplayID] = (displayID != nil && displayID != 0) ? [displayID!] : enumerateDisplays().map(\.id)
+        var resolvedSet = set
+        resolvedSet.updateResolvedPoints()
+        lastAppliedGammaSet = (resolvedSet, displayID)
 
-        let blackR = Float(set.blackPointR)
-        let blackG = Float(set.blackPointG)
-        let blackB = Float(set.blackPointB)
+        let available = enumerateDisplays().map(\.id)
+        let targets: [CGDirectDisplayID]
+        if let displayID, displayID != 0, available.contains(displayID) {
+            targets = [displayID]
+        } else {
+            targets = available
+        }
 
-        let whiteR = Float(set.whitePointR)
-        let whiteG = Float(set.whitePointG)
-        let whiteB = Float(set.whitePointB)
+        let blackR = Float(resolvedSet.blackPointR)
+        let blackG = Float(resolvedSet.blackPointG)
+        let blackB = Float(resolvedSet.blackPointB)
 
-        let middleR = Float(set.middlePointR)
-        let middleG = Float(set.middlePointG)
-        let middleB = Float(set.middlePointB)
+        let whiteR = Float(resolvedSet.whitePointR)
+        let whiteG = Float(resolvedSet.whitePointG)
+        let whiteB = Float(resolvedSet.whitePointB)
 
-        let (tableR, tableG, tableB) = calculateGammaSetTables(set)
+        let middleR = Float(resolvedSet.middlePointR)
+        let middleG = Float(resolvedSet.middlePointG)
+        let middleB = Float(resolvedSet.middlePointB)
+
+        let (tableR, tableG, tableB) = calculateGammaSetTables(resolvedSet)
 
         for target in targets {
             let formulaErr = CGSetDisplayTransferByFormula(

@@ -56,7 +56,8 @@ struct DisplayTweaksSettingsView: View {
                             Button(settings.displayTweaksEnabled ? "Enabled" : "Disabled") {
                                 bSettings.displayTweaksEnabled.toggle()
                                 if settings.displayTweaksEnabled {
-                                    updateResolvedPoints()
+                                    gammaSet.updateResolvedPoints()
+                                    settings.displayTweaksGammaSet = gammaSet
                                     service.applyGammaSet(gammaSet, displayID: settings.displayTweaksDisplayID)
                                 } else {
                                     service.restoreGamma()
@@ -224,7 +225,8 @@ struct DisplayTweaksSettingsView: View {
                 settings.displayTweaksDisplayID = first.id
             }
 
-            updateResolvedPoints()
+            gammaSet = settings.displayTweaksGammaSet
+            gammaSet.updateResolvedPoints()
 
             if settings.displayTweaksEnabled {
                 service.applyGammaSet(gammaSet, displayID: settings.displayTweaksDisplayID)
@@ -234,86 +236,34 @@ struct DisplayTweaksSettingsView: View {
         }
     }
 
-    private func updateResolvedPoints() {
-        gammaSet.blackPointR = max(0.0, min(1.0, gammaSet.masterBlack + gammaSet.gammaPointBlackR))
-        gammaSet.blackPointG = max(0.0, min(1.0, gammaSet.masterBlack + gammaSet.gammaPointBlackG))
-        gammaSet.blackPointB = max(0.0, min(1.0, gammaSet.masterBlack + gammaSet.gammaPointBlackB))
-
-        gammaSet.middlePointR = max(0.1, gammaSet.masterMiddle * gammaSet.gammaPointMiddleR)
-        gammaSet.middlePointG = max(0.1, gammaSet.masterMiddle * gammaSet.gammaPointMiddleG)
-        gammaSet.middlePointB = max(0.1, gammaSet.masterMiddle * gammaSet.gammaPointMiddleB)
-
-        gammaSet.whitePointR = max(0.0, min(1.0, gammaSet.masterWhite * gammaSet.gammaPointWhiteR))
-        gammaSet.whitePointG = max(0.0, min(1.0, gammaSet.masterWhite * gammaSet.gammaPointWhiteG))
-        gammaSet.whitePointB = max(0.0, min(1.0, gammaSet.masterWhite * gammaSet.gammaPointWhiteB))
-    }
-
     private func onGammaSetChanged() {
-        updateResolvedPoints()
+        gammaSet.updateResolvedPoints()
         settings.displayTweaksPreset = "Custom"
         if !settings.displayTweaksEnabled {
             settings.displayTweaksEnabled = true
         }
+        settings.displayTweaksGammaSet = gammaSet
         service.applyGammaSet(gammaSet, displayID: settings.displayTweaksDisplayID)
     }
 
     private func resetToDefaults() {
-        gammaSet = DisplayTweaksService.GammaSetData(
-            blackPointR: 0.0, blackPointG: 0.0, blackPointB: 0.0,
-            whitePointR: 1.0, whitePointG: 1.0, whitePointB: 1.0,
-            middlePointR: 1.0, middlePointG: 1.0, middlePointB: 1.0,
-            masterBlack: 0.0, masterWhite: 1.0, masterMiddle: 1.0,
-            gammaPointBlackR: 0.0, gammaPointBlackG: 0.0, gammaPointBlackB: 0.0,
-            gammaPointMiddleR: 1.0, gammaPointMiddleG: 1.0, gammaPointMiddleB: 1.0,
-            gammaPointWhiteR: 1.0, gammaPointWhiteG: 1.0, gammaPointWhiteB: 1.0
-        )
-        updateResolvedPoints()
+        gammaSet = DisplayTweaksService.GammaSetData.make(for: .neutral)
         settings.displayTweaksPreset = "Default"
         settings.displayTweaksEnabled = false
+        settings.displayTweaksGammaSet = gammaSet
         service.restoreGamma()
     }
 
     private func applyPreset(_ preset: DisplayTweaksPreset) {
-        settings.displayTweaksPreset = preset.rawValue
-
         if preset == .neutral {
             resetToDefaults()
             return
         }
 
-        if preset == .gammaControl {
-            gammaSet = DisplayTweaksService.GammaSetData(
-                blackPointR: 0.05, blackPointG: 0.05, blackPointB: 0.05,
-                whitePointR: 0.89, whitePointG: 0.89, whitePointB: 0.89,
-                middlePointR: 1.0, middlePointG: 1.0, middlePointB: 1.0,
-                masterBlack: 0.05, masterWhite: 0.89, masterMiddle: 1.0,
-                gammaPointBlackR: 0.0, gammaPointBlackG: 0.0, gammaPointBlackB: 0.0,
-                gammaPointMiddleR: 1.0, gammaPointMiddleG: 1.0, gammaPointMiddleB: 1.0,
-                gammaPointWhiteR: 1.0, gammaPointWhiteG: 1.0, gammaPointWhiteB: 1.0
-            )
-        } else {
-            let v = preset.values
-            gammaSet = DisplayTweaksService.GammaSetData(
-                blackPointR: max(0.0, v.blacks),
-                blackPointG: max(0.0, v.blacks),
-                blackPointB: max(0.0, v.blacks),
-                whitePointR: v.whites > 0 ? v.whites : (1.0 + v.whites),
-                whitePointG: v.whites > 0 ? v.whites : (1.0 + v.whites),
-                whitePointB: v.whites > 0 ? v.whites : (1.0 + v.whites),
-                middlePointR: v.contrast != 0 ? (1.0 - v.contrast * 0.3) : 1.0,
-                middlePointG: v.contrast != 0 ? (1.0 - v.contrast * 0.3) : 1.0,
-                middlePointB: v.contrast != 0 ? (1.0 - v.contrast * 0.3) : 1.0,
-                masterBlack: max(0.0, v.blacks),
-                masterWhite: v.whites > 0 ? v.whites : (1.0 + v.whites),
-                masterMiddle: 1.0,
-                gammaPointBlackR: 0.0, gammaPointBlackG: 0.0, gammaPointBlackB: 0.0,
-                gammaPointMiddleR: v.red, gammaPointMiddleG: v.green, gammaPointMiddleB: v.blue,
-                gammaPointWhiteR: 1.0, gammaPointWhiteG: 1.0, gammaPointWhiteB: 1.0
-            )
-        }
-
-        updateResolvedPoints()
+        gammaSet = DisplayTweaksService.GammaSetData.make(for: preset)
+        settings.displayTweaksPreset = preset.rawValue
         settings.displayTweaksEnabled = true
+        settings.displayTweaksGammaSet = gammaSet
         service.applyGammaSet(gammaSet, displayID: settings.displayTweaksDisplayID)
     }
 
@@ -329,9 +279,10 @@ struct DisplayTweaksSettingsView: View {
         if panel.runModal() == .OK, let url = panel.url {
             if let data = DisplayTweaksService.GammaSetData.parse(from: url) {
                 gammaSet = data
-                updateResolvedPoints()
+                gammaSet.updateResolvedPoints()
                 settings.displayTweaksPreset = "Gamma Control"
                 settings.displayTweaksEnabled = true
+                settings.displayTweaksGammaSet = gammaSet
                 service.applyGammaSet(gammaSet, displayID: settings.displayTweaksDisplayID)
             }
         }

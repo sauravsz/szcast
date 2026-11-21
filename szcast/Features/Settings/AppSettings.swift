@@ -649,6 +649,14 @@ final class AppSettings {
         didSet { defaults.set(displayTweaksPreset, forKey: Key.displayTweaksPreset.rawValue) }
     }
 
+    var displayTweaksGammaSet: DisplayTweaksService.GammaSetData {
+        didSet {
+            if let data = try? JSONEncoder().encode(displayTweaksGammaSet) {
+                defaults.set(data, forKey: Key.displayTweaksGammaSetData.rawValue)
+            }
+        }
+    }
+
     var notesRendersMarkdown: Bool {
         didSet { defaults.set(notesRendersMarkdown, forKey: Key.notesRendersMarkdown.rawValue) }
     }
@@ -1258,7 +1266,8 @@ final class AppSettings {
         dictationAutoApplyTransform = defaults.bool(forKey: Key.dictationAutoApplyTransform.rawValue)
         dictationActiveTransformID = defaults.string(forKey: Key.dictationActiveTransformID.rawValue)
 
-        displayTweaksEnabled = defaults.bool(forKey: Key.displayTweaksEnabled.rawValue)
+        let isTweaksEnabled = defaults.bool(forKey: Key.displayTweaksEnabled.rawValue)
+        displayTweaksEnabled = isTweaksEnabled
         displayTweaksDisplayID = UInt32(defaults.integer(forKey: Key.displayTweaksDisplayID.rawValue))
         let rawRed = defaults.object(forKey: Key.displayTweaksRed.rawValue) == nil ? 50.0 : defaults.double(forKey: Key.displayTweaksRed.rawValue)
         displayTweaksRed = rawRed <= 2.0 ? 50.0 : rawRed
@@ -1278,7 +1287,15 @@ final class AppSettings {
         displayTweaksContrast = rawContrast <= 1.0 && rawContrast >= -1.0 ? 50.0 + rawContrast * 50.0 : rawContrast
         let rawBrightness = defaults.object(forKey: Key.displayTweaksBrightness.rawValue) == nil ? 50.0 : defaults.double(forKey: Key.displayTweaksBrightness.rawValue)
         displayTweaksBrightness = rawBrightness <= 1.0 && rawBrightness >= -1.0 ? 50.0 + rawBrightness * 50.0 : rawBrightness
-        displayTweaksPreset = defaults.string(forKey: Key.displayTweaksPreset.rawValue) ?? "Default"
+        let savedPreset = defaults.string(forKey: Key.displayTweaksPreset.rawValue) ?? "Default"
+        displayTweaksPreset = savedPreset
+        if let data = defaults.data(forKey: Key.displayTweaksGammaSetData.rawValue),
+           let decoded = try? JSONDecoder().decode(DisplayTweaksService.GammaSetData.self, from: data) {
+            displayTweaksGammaSet = decoded
+        } else {
+            let preset = DisplayTweaksPreset(rawValue: savedPreset) ?? .gammaControl
+            displayTweaksGammaSet = DisplayTweaksService.GammaSetData.make(for: preset == .neutral && isTweaksEnabled ? .gammaControl : preset)
+        }
         notesRendersMarkdown =
             defaults.object(forKey: Key.notesRendersMarkdown.rawValue) == nil
             || defaults.bool(forKey: Key.notesRendersMarkdown.rawValue)

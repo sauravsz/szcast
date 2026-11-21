@@ -24,9 +24,36 @@ struct DisplayTweaksTests {
         testTonalAdjustmentsAndClamping()
         testExtremeValuesClamp()
         testGammaSetParsing()
+        testGammaSetCodableAndPresets()
 
         print("DisplayTweaksTests: \(passes) passed, \(failures) failed")
         exit(failures == 0 ? 0 : 1)
+    }
+
+    static func testGammaSetCodableAndPresets() {
+        let gc = DisplayTweaksService.GammaSetData.make(for: .gammaControl)
+        expect(abs(gc.masterBlack - 0.05) < 0.001, "gc masterBlack is 0.05")
+        expect(abs(gc.masterWhite - 0.89) < 0.001, "gc masterWhite is 0.89")
+        expect(abs(gc.blackPointR - 0.05) < 0.001, "gc blackPointR is 0.05")
+        expect(abs(gc.whitePointR - 0.89) < 0.001, "gc whitePointR is 0.89")
+
+        let neutral = DisplayTweaksService.GammaSetData.make(for: .neutral)
+        expect(abs(neutral.masterBlack - 0.0) < 0.001, "neutral masterBlack is 0.0")
+        expect(abs(neutral.masterWhite - 1.0) < 0.001, "neutral masterWhite is 1.0")
+
+        guard let encoded = try? JSONEncoder().encode(gc),
+              let decoded = try? JSONDecoder().decode(DisplayTweaksService.GammaSetData.self, from: encoded) else {
+            expect(false, "GammaSetData failed to encode or decode JSON")
+            return
+        }
+        expect(decoded == gc, "round-trip JSON encoding preserves GammaSetData")
+
+        var custom = DisplayTweaksService.GammaSetData()
+        custom.masterBlack = 0.12
+        custom.masterWhite = 0.85
+        custom.updateResolvedPoints()
+        expect(abs(custom.blackPointR - 0.12) < 0.001, "updateResolvedPoints resolves masterBlack")
+        expect(abs(custom.whitePointR - 0.85) < 0.001, "updateResolvedPoints resolves masterWhite")
     }
 
     static func testGammaSetParsing() {

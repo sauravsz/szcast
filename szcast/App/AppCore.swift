@@ -439,17 +439,9 @@ final class AppCore {
 
             // Display Tweaks: only apply if explicitly enabled; default is off and native ColorSync gamma restored
             if settings.displayTweaksEnabled {
-                DisplayTweaksService.shared.applyPercent(
-                    displayID: settings.displayTweaksDisplayID,
-                    red: settings.displayTweaksRed,
-                    green: settings.displayTweaksGreen,
-                    blue: settings.displayTweaksBlue,
-                    blacks: settings.displayTweaksBlacks,
-                    shadows: settings.displayTweaksShadows,
-                    highlights: settings.displayTweaksHighlights,
-                    whites: settings.displayTweaksWhites,
-                    contrast: settings.displayTweaksContrast,
-                    brightness: settings.displayTweaksBrightness
+                DisplayTweaksService.shared.applyGammaSet(
+                    settings.displayTweaksGammaSet,
+                    displayID: settings.displayTweaksDisplayID
                 )
             } else {
                 DisplayTweaksService.shared.restoreGamma()

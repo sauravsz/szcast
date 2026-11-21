@@ -299,6 +299,8 @@ enum SettingsBackupCoverage {
             "Display tonal calibration is hardware-specific to this Mac.",
         AppSettingsKey.displayTweaksPreset.rawValue:
             "Display calibration preset is hardware-specific to this Mac.",
+        AppSettingsKey.displayTweaksGammaSetData.rawValue:
+            "Display LUT calibration data is hardware-specific to this Mac.",
         AppSettingsKey.enteAuthEnabled.rawValue:
             "Extended feature toggle state.",
         AppSettingsKey.keepassxcEnabled.rawValue:
