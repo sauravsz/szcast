@@ -723,22 +723,37 @@ enum SettingsSearchCatalog {
             .stats, "Enable System Stats",
             keywords: ["telemetry", "hardware", "stats", "monitor"]),
         .init(
-            .stats, "CPU Monitoring",
+            .statsModules, "CPU Monitoring",
             keywords: ["processor", "load", "cores", "usage"]),
         .init(
-            .stats, "Memory Monitoring",
+            .statsModules, "Memory Monitoring",
             keywords: ["ram", "active", "wired", "swap"]),
         .init(
-            .stats, "Disk Monitoring",
+            .statsModules, "Disk Monitoring",
             keywords: ["storage", "volume", "free space"]),
         .init(
-            .stats, "Battery & Power",
+            .statsModules, "Battery & Power",
             keywords: ["charge", "ac", "health", "time remaining"]),
         .init(
-            .stats, "Network Monitoring",
+            .statsModules, "Network Monitoring",
             keywords: ["bandwidth", "download", "upload", "interfaces"]),
         .init(
-            .stats, "Refresh Cadence",
+            .statsMenuBar, "Show CPU in Menu Bar",
+            keywords: ["cpu", "status bar", "menu bar"]),
+        .init(
+            .statsMenuBar, "Show Memory in Menu Bar",
+            keywords: ["ram", "memory", "status bar", "menu bar"]),
+        .init(
+            .statsMenuBar, "Show Disk in Menu Bar",
+            keywords: ["disk", "storage", "ssd", "status bar", "menu bar"]),
+        .init(
+            .statsMenuBar, "Show Battery in Menu Bar",
+            keywords: ["battery", "power", "status bar", "menu bar"]),
+        .init(
+            .statsMenuBar, "Show Network in Menu Bar",
+            keywords: ["network", "speed", "bandwidth", "status bar", "menu bar"]),
+        .init(
+            .statsPerformance, "Refresh Cadence",
             keywords: ["interval", "frequency", "performance"])
     ]
 

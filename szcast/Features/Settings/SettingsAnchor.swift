@@ -152,6 +152,9 @@ extension SettingsAnchor {
     static let textTransformerCommands = Self(tab: .textTransformer, title: "Commands")
 
     static let stats = Self(tab: .stats, title: "System Stats")
+    static let statsModules = Self(tab: .stats, title: "Modules")
+    static let statsMenuBar = Self(tab: .stats, title: "Menu Bar Items")
+    static let statsPerformance = Self(tab: .stats, title: "Performance")
 
     static let extendedFeatures = Self(tab: .extendedFeatures, title: "Extended Features")
 

@@ -255,11 +255,8 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
         commandEscapeTap.disable()
         guard isVisible, !core.isShowingDialog else { return }
         if core.palette.menuOpen { return }
-        // Keep palette visible only when the Quick Look preview panel itself takes key focus.
-        if NSApp.keyWindow is QLPreviewPanel { return }
-        if QuickLookCoordinator.shared.isVisible {
-            QuickLookCoordinator.shared.close()
-        }
+        // Keep palette visible when Quick Look preview panel takes key focus.
+        if QuickLookCoordinator.shared.isVisible || NSApp.keyWindow is QLPreviewPanel { return }
         // A file panel sets its own level under ours, so sink rather than dismiss.
         if NSApp.modalWindow != nil {
             panel?.level = .normal
