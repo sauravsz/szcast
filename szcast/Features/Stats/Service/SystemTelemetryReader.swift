@@ -332,6 +332,8 @@ final class SystemTelemetryReader {
     // MARK: - Top Processes
 
     func readTopProcesses(limit: Int = 5) -> (byCPU: [SystemProcessInfo], byRAM: [SystemProcessInfo]) {
+        guard limit > 0 else { return ([], []) }
+
         let task = Process()
         task.launchPath = "/bin/ps"
         // ps -A -c -o pid=,pcpu=,rss=,comm= -r

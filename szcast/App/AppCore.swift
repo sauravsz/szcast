@@ -940,7 +940,34 @@ final class AppCore {
             reproject: { $0.extensionCoordinator.applyExtensionsLauncherPresence() })
         track({ _ = $0.snippetsFolder }, reproject: { $0.applySnippetsFolder() })
         track({ _ = $0.notesFolder }, reproject: { $0.applyNotesFolder() })
+        track(
+            {
+                _ = $0.statsEnabled
+                _ = $0.statsRefreshInterval
+                _ = $0.statsCPUEnabled
+                _ = $0.statsRAMEnabled
+                _ = $0.statsDiskEnabled
+                _ = $0.statsBatteryEnabled
+                _ = $0.statsNetworkEnabled
+                _ = $0.statsCPUMenuBar
+                _ = $0.statsRAMMenuBar
+                _ = $0.statsDiskMenuBar
+                _ = $0.statsBatteryMenuBar
+                _ = $0.statsNetworkMenuBar
+            },
+            reproject: { $0.applyStatsSettings() }
+        )
         trackChatRoute()
+    }
+
+    private func applyStatsSettings() {
+        if settings.statsEnabled {
+            StatsMonitor.shared.start(interval: settings.statsRefreshInterval)
+            StatsMenuBarManager.shared.syncWithSettings()
+        } else {
+            StatsMonitor.shared.stop()
+            StatsMenuBarManager.shared.removeAll()
+        }
     }
 
     /// `.system` resolves to `nil`, so AppKit follows macOS with nothing polling.

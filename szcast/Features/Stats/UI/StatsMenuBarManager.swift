@@ -14,6 +14,9 @@ final class StatsMenuBarManager: NSObject {
 
     override init() {
         super.init()
+        StatsMonitor.shared.onUpdate = { [weak self] snapshot in
+            self?.updateTitles(with: snapshot)
+        }
     }
 
     func syncWithSettings() {
@@ -96,11 +99,17 @@ final class StatsMenuBarManager: NSObject {
                 networkItem = nil
             }
         }
+
+        // Populate titles from current snapshot so items have non-zero width
+        updateTitles(with: StatsMonitor.shared.snapshot)
     }
 
     func update(with snapshot: StatsSnapshot) {
         syncWithSettings()
+        updateTitles(with: snapshot)
+    }
 
+    private func updateTitles(with snapshot: StatsSnapshot) {
         // 1. CPU
         if let btn = cpuItem?.button {
             btn.title = "CPU \(Int(snapshot.cpu.totalUsage.rounded()))%"
@@ -152,15 +161,18 @@ final class StatsMenuBarManager: NSObject {
         button.target = self
         button.action = action
         button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+        button.font = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .regular)
     }
 
     private func formatRate(_ bytesPerSec: Double) -> String {
-        if bytesPerSec >= 1_048_576 {
-            return String(format: "%.1fM", bytesPerSec / 1_048_576.0)
+        if bytesPerSec >= 1_048_576_000 {
+            return String(format: "%.1f GB/s", bytesPerSec / 1_073_741_824.0)
+        } else if bytesPerSec >= 1_048_576 {
+            return String(format: "%.1f MB/s", bytesPerSec / 1_048_576.0)
         } else if bytesPerSec >= 1024 {
-            return String(format: "%.0fK", bytesPerSec / 1024.0)
+            return String(format: "%.0f KB/s", bytesPerSec / 1024.0)
         } else {
-            return "0K"
+            return "0 KB/s"
         }
     }
 
@@ -265,8 +277,8 @@ final class StatsMenuBarManager: NSObject {
         let menu = NSMenu()
         let snap = StatsMonitor.shared.snapshot.network
         menu.addItem(NSMenuItem(title: "Interface: \(snap.interfaceName) (\(snap.localIP))", action: nil, keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: "Download: \(formatRate(snap.downloadBytesPerSecond))/s", action: nil, keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: "Upload: \(formatRate(snap.uploadBytesPerSecond))/s", action: nil, keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Download: \(formatRate(snap.downloadBytesPerSecond))", action: nil, keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Upload: \(formatRate(snap.uploadBytesPerSecond))", action: nil, keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
         let openItem = NSMenuItem(title: "Open System Stats…", action: #selector(openStatsAction), keyEquivalent: "")
         openItem.target = self

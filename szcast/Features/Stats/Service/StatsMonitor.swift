@@ -8,6 +8,10 @@ final class StatsMonitor {
 
     private(set) var snapshot: StatsSnapshot = .empty
     private(set) var isRunning: Bool = false
+    var isDashboardActive: Bool = false
+
+    /// Closure invoked on MainActor whenever a fresh telemetry snapshot is captured.
+    var onUpdate: (@MainActor (StatsSnapshot) -> Void)?
 
     // Rolling history for sparklines (up to 30 points)
     private(set) var cpuHistory: [Double] = []
@@ -17,11 +21,11 @@ final class StatsMonitor {
 
     private var timer: Timer?
     private let reader = SystemTelemetryReader.shared
-    private var lastInterval: Double = 2.0
+    private var lastInterval: Double = 1.0
 
     init() {}
 
-    func start(interval: Double = 2.0) {
+    func start(interval: Double = 1.0) {
         guard !isRunning else {
             if interval != lastInterval {
                 stop()
@@ -57,7 +61,7 @@ final class StatsMonitor {
     }
 
     private func update() {
-        let snap = reader.captureSnapshot(processLimit: 6)
+        let snap = reader.captureSnapshot(processLimit: isDashboardActive ? 6 : 0)
         snapshot = snap
 
         // Append history
@@ -73,5 +77,7 @@ final class StatsMonitor {
 
         networkUploadHistory.append(snap.network.uploadBytesPerSecond)
         if networkUploadHistory.count > maxPoints { networkUploadHistory.removeFirst() }
+
+        onUpdate?(snap)
     }
 }

@@ -1058,7 +1058,7 @@ final class AppSettings {
         statsDiskMenuBar = defaults.bool(forKey: Key.statsDiskMenuBar.rawValue)
         statsBatteryMenuBar = defaults.bool(forKey: Key.statsBatteryMenuBar.rawValue)
         statsNetworkMenuBar = defaults.object(forKey: Key.statsNetworkMenuBar.rawValue) == nil || defaults.bool(forKey: Key.statsNetworkMenuBar.rawValue)
-        statsRefreshInterval = defaults.double(forKey: Key.statsRefreshInterval.rawValue) > 0 ? defaults.double(forKey: Key.statsRefreshInterval.rawValue) : 2.0
+        statsRefreshInterval = defaults.double(forKey: Key.statsRefreshInterval.rawValue) > 0 ? defaults.double(forKey: Key.statsRefreshInterval.rawValue) : 1.0
 
         // Every feature switch defaults on, so absence has to outrank a stored `false`.
         // `defaults.object(forKey:) == nil` is how each one tells "never set" from "set to off".

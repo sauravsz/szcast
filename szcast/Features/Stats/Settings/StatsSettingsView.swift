@@ -23,8 +23,14 @@ struct StatsSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .onChange(of: settings.statsEnabled) { _, _ in
-            StatsMenuBarManager.shared.syncWithSettings()
+        .onChange(of: settings.statsEnabled) { _, isEnabled in
+            if isEnabled {
+                StatsMonitor.shared.start(interval: settings.statsRefreshInterval)
+                StatsMenuBarManager.shared.syncWithSettings()
+            } else {
+                StatsMonitor.shared.stop()
+                StatsMenuBarManager.shared.removeAll()
+            }
         }
         .onChange(of: settings.statsCPUMenuBar) { _, _ in
             StatsMenuBarManager.shared.syncWithSettings()
@@ -103,8 +109,8 @@ struct StatsSettingsView: View {
         @Bindable var settings = settings
         Section {
             Picker(selection: $settings.statsRefreshInterval) {
-                Text("1 second").tag(1.0)
-                Text("2 seconds (Recommended)").tag(2.0)
+                Text("1 second (Recommended)").tag(1.0)
+                Text("2 seconds").tag(2.0)
                 Text("3 seconds").tag(3.0)
                 Text("5 seconds").tag(5.0)
             } label: {

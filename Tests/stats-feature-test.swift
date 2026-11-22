@@ -64,6 +64,8 @@ struct StatsFeatureTests {
         if let topProc = processes.byCPU.first {
             expect(topProc.id > 0, "Top CPU process has valid PID: \(topProc.id) (\(topProc.name))")
         }
+        let zeroProcesses = reader.readTopProcesses(limit: 0)
+        expect(zeroProcesses.byCPU.isEmpty && zeroProcesses.byRAM.isEmpty, "Top processes with limit 0 returns empty without spawning /bin/ps")
 
         // 7. Full Snapshot capture
         let snapshot = reader.captureSnapshot(processLimit: 5)

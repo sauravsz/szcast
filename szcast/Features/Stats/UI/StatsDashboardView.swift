@@ -44,6 +44,13 @@ struct StatsDashboardView: View {
             }
             .padding(Theme.Spacing.lg)
         }
+        .onAppear {
+            monitor.isDashboardActive = true
+            monitor.start(interval: settings.statsRefreshInterval)
+        }
+        .onDisappear {
+            monitor.isDashboardActive = false
+        }
     }
 }
 

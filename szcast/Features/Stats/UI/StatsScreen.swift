@@ -37,7 +37,11 @@ struct StatsScreen: PaletteScreen {
         AnyView(
             StatsDashboardView(monitor: monitor)
                 .onAppear {
+                    monitor.isDashboardActive = true
                     monitor.start(interval: core.settings.statsRefreshInterval)
+                }
+                .onDisappear {
+                    monitor.isDashboardActive = false
                 }
         )
     }
