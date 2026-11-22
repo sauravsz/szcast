@@ -21,8 +21,17 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
 
 ## Build / verify (macOS 27, Xcode 27.2)
 - `xcodebuild -project szcast.xcodeproj -scheme Szcast -configuration Debug build`
-- `Scripts/run-tests.sh` — all 134 harnesses pass (167s).
+- `Scripts/run-tests.sh` — all 134 harnesses pass (240s).
 - `node Scripts/check-settings-search.js` — 0 errors.
+
+- **Weekly Upstream Tinycast Radar (Synced to 876b61dc)**:
+  - Reviewed 22 upstream commits since baseline `6fa8ba12`.
+  - **Calculator Satoshi Conversions (`08dda28d`)**: Added `satoshi` definition, `satoshisPerBitcoin = 100_000_000.0`, and rate conversion in `CalcCurrency.swift`.
+  - **Suppressed HotKeys of Disabled Features (`6f479455`)**: Added `suppressedActions`, `applyAllowance()`, and registration guards in `HotKeyManager.swift` and `AppCore.swift` dynamically unregistering shortcuts when features or extensions are toggled off.
+  - **Keyboard-Driven Snippet Argument Prompts (`c1eeb12f`)**: Added `SnippetArgumentsState.swift`, curly quotes delimiter parsing in `SnippetTemplateEngine.swift`, arrow/tab navigation across option lists and text fields, and removed deprecated `DialogChip.swift`.
+  - **Universal Control Hyper Forwarding (`9e9be988`)**: Prevented forwarded Hyper chords from toggling Caps Lock via `PhysicalHyperKeyPress` and `ForwardedQuickPressMonitor` correlating physical HID releases with Quartz event taps.
+  - **File Search Folder Matching & Hidden Files (`99d1d17a`)**: Enabled multi-term query matching through parent directory names, agent worktree ignore patterns (`.claude/worktrees`, `conductor/workspaces`), and added `includeHiddenFiles` setting in `AppSettings` with Settings search catalog synchronization.
+  - Skipped out-of-scope commits: Dictation shortcut removal (violates single-shot and Fn/Globe invariants), iCloud sync (requires Developer ID), out-of-process Settings XPC architecture shift, and monochrome icon styling.
 
 - **Full Codebase Audit & Hardening**:
   - **Accessibility Type Safety**: Added `CFGetTypeID(focusedElement) == AXUIElementGetTypeID()` verification in `AgenticToolService.swift` preventing crashes on non-AXUIElement system objects.

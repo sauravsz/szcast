@@ -190,6 +190,10 @@ struct AIProvidersPanel: View {
                 pendingRemoval = selectedConnection
             } label: {
                 Image(systemName: "minus")
+                    .frame(
+                        width: Theme.Size.settingsRowButton, height: Theme.Size.settingsRowButton
+                    )
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.borderless)
             .disabled(selectedConnection == nil)

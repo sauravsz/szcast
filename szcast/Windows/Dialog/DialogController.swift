@@ -7,6 +7,7 @@ final class DialogController: NSObject, NSWindowDelegate {
     private let settings: AppSettings
     private let onPresentationChanged: (Bool) -> Void
     private var panel: DialogPanel?
+    private var accessory: DialogAccessory?
     private var continuation: CheckedContinuation<Int, Never>?
 
     init(settings: AppSettings, onPresentationChanged: @escaping (Bool) -> Void) {
@@ -83,8 +84,7 @@ final class DialogController: NSObject, NSWindowDelegate {
     ) async -> [String: String]? {
         let state = SnippetArgumentsState(arguments: arguments)
         let request = DialogRequest(
-            title: snippetName, message: String(localized: "Fill in the template fields."),
-            symbol: "curlybraces", tone: .neutral,
+            title: snippetName, message: nil, symbol: "curlybraces", tone: .neutral,
             actions: [
                 DialogAction(title: String(localized: "Expand")),
                 DialogAction(title: String(localized: "Cancel"), role: .cancel)
@@ -210,6 +210,8 @@ final class DialogController: NSObject, NSWindowDelegate {
             let width =
                 switch request.accessory {
                 case nil, .volume: metrics.size.dialogCompactWidth
+                case .snippetArguments(let arguments) where arguments.asksOnlyForChoices:
+                    metrics.size.dialogCompactWidth
                 case .snippetArguments, .clipboardText: metrics.size.dialogWidth
                 case .aliasInput, .hotKeyRecord, .emojiKeywords: max(metrics.size.dialogCompactWidth, 340)
                 }
@@ -222,6 +224,7 @@ final class DialogController: NSObject, NSWindowDelegate {
                 width: width, minHeight: 0)
             let panel = DialogPanel(content: content, cornerRadius: metrics.radius.panel)
             panel.handlesArrowKeys = request.accessory?.claimsArrowKeys ?? false
+            panel.handlesTabKey = request.accessory?.claimsTabKey ?? false
             panel.acceptsLineBreaks = request.accessory?.acceptsLineBreaks ?? false
             panel.delegate = self
             panel.onKey = { [weak self] key in
@@ -235,14 +238,17 @@ final class DialogController: NSObject, NSWindowDelegate {
                     // Keying the slider lands on the same values Volume Up/Down produce.
                     guard case .volume(let volume) = request.accessory else { return }
                     volume.level = VolumeLevel.stepped(volume.level, up: key == .increment)
+                case .tab, .backtab:
+                    guard case .snippetArguments(let arguments) = request.accessory else { return }
+                    arguments.moveFocus(backwards: key == .backtab)
                 }
             }
             self.panel = panel
+            accessory = request.accessory
             place(panel)
             // Non-activating like the palette: key focus without pulling the user out.
             panel.makeKeyAndOrderFront(nil)
             panel.orderFrontRegardless()
-            panel.focusFirstTextField()
         }
     }
 
@@ -252,6 +258,7 @@ final class DialogController: NSObject, NSWindowDelegate {
         onPresentationChanged(false)
         let closing = panel
         panel = nil
+        accessory = nil
         closing?.delegate = nil
         closing?.onKey = nil
         continuation.resume(returning: index)
@@ -286,7 +293,14 @@ final class DialogController: NSObject, NSWindowDelegate {
     /// After AppKit's own first-responder pick, which a view's focus request can't outlast.
     func windowDidBecomeKey(_ notification: Notification) {
         guard let panel, notification.object as? NSWindow === panel else { return }
-        panel.focusFirstTextField()
+        // A text field must be made first responder by AppKit; SwiftUI's request for one is lost.
+        if case .snippetArguments(let arguments) = accessory,
+            arguments.arguments.first?.options.isEmpty == false
+        {
+            arguments.focusFirstArgument()
+        } else {
+            panel.focusFirstTextField()
+        }
     }
 
     /// Click-away resolves as a dismissal rather than leaving an orphaned dialog behind.

@@ -674,6 +674,7 @@ run slow snippets-test     $L/SearchRelevance.swift \
                            Szcast/Features/Snippets/Model/*.swift \
                            Szcast/Features/Snippets/Service/*.swift \
                            Szcast/Features/Snippets/UI/SnippetEditorSession.swift \
+                           Szcast/Features/Snippets/UI/SnippetArgumentsState.swift \
                            Szcast/Features/Dictation/Model/DictationPasteMode.swift \
                            Szcast/Features/TextInjection/Service/*.swift
 run notes-test             Szcast/Platform/Signposts.swift \
@@ -748,6 +749,7 @@ run slow -O raycast-test   Szcast/Features/Backup/Model/RaycastImportError.swift
 run settings-backup-test   Szcast/Features/Settings/AppSettingsKey.swift \
                            Szcast/Features/Backup/Model/SettingsBackupCoverage.swift
 run hyper-key-engine-test  Szcast/Features/HotKeys/Model/HyperKeyEngine.swift \
+                           Szcast/Features/HotKeys/Model/PhysicalHyperKeyPress.swift \
                            Szcast/Features/HotKeys/Model/HyperKey.swift \
                            Szcast/Features/HotKeys/Model/HIDKeyMapping.swift \
                            Szcast/Features/HotKeys/Model/ModifierKey.swift \

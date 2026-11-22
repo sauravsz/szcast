@@ -14,6 +14,9 @@ struct CurrencyRates: Codable, Equatable, Sendable {
     let fetchedAt: Date
 
     func rate(for code: String) -> Double? {
+        if code == CalcCurrency.satoshi.code {
+            return rate(for: "BTC").map { $0 * CalcCurrency.satoshisPerBitcoin }
+        }
         if let rate = rates[code], rate > 0, rate.isFinite { return rate }
         return code == base ? 1 : nil
     }
@@ -175,6 +178,10 @@ enum CalcCurrency {
     /// `CurrencyRateStore` builds its request from this, so the two lists cannot drift apart.
     static let cryptoCodes: [String] = crypto.map(\.code)
 
+    /// A fixed split of BTC, so it is priced off that rate and never fetched as a coin of its own.
+    static let satoshi = CurrencyDef(code: "SATS", name: "Satoshi")
+    static let satoshisPerBitcoin = 100_000_000.0
+
     /// Lookup by lowercased ident, generated data first so the hand-written tables above win.
     static let byName: [String: CurrencyDef] = {
         var defs: [String: CurrencyDef] = [:]
@@ -187,6 +194,7 @@ enum CalcCurrency {
             table[entry.code.lowercased()] = def
         }
         for (word, code) in CurrencyData.aliases { table[word] = defs[code] }
+        table[satoshi.code.lowercased()] = satoshi
         // After the generated nouns, so a ticker beats one: `sol` is Solana, `soles` stays PEN.
         for entry in crypto {
             let def = CurrencyDef(code: entry.code, name: entry.name)
