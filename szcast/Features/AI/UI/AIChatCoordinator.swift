@@ -325,10 +325,33 @@ final class AIChatCoordinator {
     func send(_ input: String, in chat: AIChatState) -> Bool {
         guard settings.aiEnabled else { return false }
         do {
-            let address = MCPComposerAddress.parse(input, slugs: core.mcpCoordinator.slugs)
+            var textToSend = input
+            var forceWebSearch = false
+            if textToSend.hasPrefix("@web ") {
+                textToSend = String(textToSend.dropFirst(5)).trimmingCharacters(in: .whitespacesAndNewlines)
+                forceWebSearch = true
+            } else if textToSend == "@web" {
+                textToSend = ""
+                forceWebSearch = true
+            }
+            if textToSend.contains("@clipboard") {
+                let clip = NSPasteboard.general.string(forType: .string) ?? ""
+                textToSend = textToSend.replacingOccurrences(of: "@clipboard", with: clip.isEmpty ? "(empty clipboard)" : clip)
+            }
+            if textToSend.contains("@selection") {
+                let sel: String
+                if let app = paletteCoordinator.targetApp,
+                   case .text(let extracted) = AccessibilityText.read(in: app) {
+                    sel = extracted
+                } else {
+                    sel = "(no selection)"
+                }
+                textToSend = textToSend.replacingOccurrences(of: "@selection", with: sel)
+            }
+            let address = MCPComposerAddress.parse(textToSend, slugs: core.mcpCoordinator.slugs)
             let sent = chat.send(
                 address.rest, using: try provider(for: chat, scopedTo: address.slug),
-                model: model(for: chat), webSearch: webSearch(for: chat),
+                model: model(for: chat), webSearch: forceWebSearch || webSearch(for: chat),
                 instructions: instructions(for: chat), contextBudget: contextBudget(for: chat),
                 toolScope: address.slug)
             // Named while the answer streams, so the sidebar has a title before the reply ends.

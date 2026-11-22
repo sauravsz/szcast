@@ -188,6 +188,16 @@ final class LauncherCoordinator {
             core.quickActionCoordinator.run(.simplify)
         case .changeTone:
             core.quickActionCoordinator.run(.changeTone)
+        case .toneProfessional:
+            core.quickActionCoordinator.run(.toneProfessional)
+        case .toneCasual:
+            core.quickActionCoordinator.run(.toneCasual)
+        case .toneDirect:
+            core.quickActionCoordinator.run(.toneDirect)
+        case .toneAcademic:
+            core.quickActionCoordinator.run(.toneAcademic)
+        case .toneDiplomatic:
+            core.quickActionCoordinator.run(.toneDiplomatic)
         case .translate:
             core.quickActionCoordinator.run(.translate)
         case .summarize:
@@ -317,6 +327,16 @@ final class LauncherCoordinator {
             ScreenCaptureService.shared.capture(mode: .textOCR, showMessage: { [weak core] msg in
                 core?.showMessage(msg)
             })
+        case .askAIAboutScreenArea:
+            guard core.settings.aiEnabled else { return }
+            dismissPalette()
+            ScreenCaptureService.shared.capture(mode: .textOCR, showMessage: nil) { [weak core] result in
+                guard let text = result?.rawText.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else {
+                    core?.showMessage(String(localized: "No text recognized in selected screen area"), tone: .danger)
+                    return
+                }
+                core?.quickAICoordinator.show(draft: text)
+            }
         case .scanQRCode:
             dismissPalette()
             ScreenCaptureService.shared.capture(mode: .qrCode, showMessage: { [weak core] msg in

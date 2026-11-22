@@ -7,6 +7,11 @@ enum BuiltInQuickAction: String, CaseIterable, Codable, Identifiable, Sendable {
     case makeLonger
     case simplify
     case changeTone
+    case toneProfessional
+    case toneCasual
+    case toneDirect
+    case toneAcademic
+    case toneDiplomatic
     case translate
     case summarize
     case explain
@@ -29,6 +34,11 @@ enum BuiltInQuickAction: String, CaseIterable, Codable, Identifiable, Sendable {
         case .makeLonger: return "Make Longer"
         case .simplify: return "Simplify"
         case .changeTone: return "Change Tone"
+        case .toneProfessional: return "Tone: Professional"
+        case .toneCasual: return "Tone: Casual"
+        case .toneDirect: return "Tone: Direct & Concise"
+        case .toneAcademic: return "Tone: Academic"
+        case .toneDiplomatic: return "Tone: Diplomatic"
         case .translate: return "Translate"
         case .summarize: return "Summarize"
         case .explain: return "Explain"
@@ -48,6 +58,11 @@ enum BuiltInQuickAction: String, CaseIterable, Codable, Identifiable, Sendable {
         case .makeLonger: return "arrow.up.left.and.arrow.down.right"
         case .simplify: return "text.bubble"
         case .changeTone: return "slider.horizontal.3"
+        case .toneProfessional: return "briefcase"
+        case .toneCasual: return "cup.and.saucer"
+        case .toneDirect: return "bolt"
+        case .toneAcademic: return "graduationcap"
+        case .toneDiplomatic: return "hand.raised"
         case .translate: return "translate"
         case .summarize: return "text.line.3.summary"
         case .explain: return "lightbulb"
@@ -67,6 +82,11 @@ enum BuiltInQuickAction: String, CaseIterable, Codable, Identifiable, Sendable {
         case .makeLonger: return String(localized: "Making Longer…")
         case .simplify: return String(localized: "Simplifying…")
         case .changeTone: return String(localized: "Changing Tone…")
+        case .toneProfessional: return String(localized: "Applying Professional Tone…")
+        case .toneCasual: return String(localized: "Applying Casual Tone…")
+        case .toneDirect: return String(localized: "Applying Direct Tone…")
+        case .toneAcademic: return String(localized: "Applying Academic Tone…")
+        case .toneDiplomatic: return String(localized: "Applying Diplomatic Tone…")
         case .translate: return String(localized: "Translating…")
         case .summarize: return String(localized: "Summarizing…")
         case .explain: return String(localized: "Explaining…")
@@ -82,7 +102,8 @@ enum BuiltInQuickAction: String, CaseIterable, Codable, Identifiable, Sendable {
         switch self {
         case .summarize, .explain, .findActionItems, .convertTypeScript, .slackReply, .emailReply, .summarizeYouTube:
             return true
-        case .fixGrammar, .rewrite, .makeShorter, .makeLonger, .simplify, .changeTone, .translate:
+        case .fixGrammar, .rewrite, .makeShorter, .makeLonger, .simplify, .changeTone,
+             .toneProfessional, .toneCasual, .toneDirect, .toneAcademic, .toneDiplomatic, .translate:
             return false
         }
     }
@@ -91,7 +112,8 @@ enum BuiltInQuickAction: String, CaseIterable, Codable, Identifiable, Sendable {
 
     var showsDiff: Bool {
         switch self {
-        case .fixGrammar, .rewrite, .makeShorter, .makeLonger, .simplify, .changeTone:
+        case .fixGrammar, .rewrite, .makeShorter, .makeLonger, .simplify, .changeTone,
+             .toneProfessional, .toneCasual, .toneDirect, .toneAcademic, .toneDiplomatic:
             return true
         default:
             return false

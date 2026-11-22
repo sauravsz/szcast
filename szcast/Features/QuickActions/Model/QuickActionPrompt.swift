@@ -56,6 +56,43 @@ enum QuickActionPrompt {
                 Adjust the tone of the text to be professional, polished, and balanced while \
                 maintaining clarity and all core facts.
                 """
+        case .toneProfessional:
+            boundary + """
+
+
+                Adjust the tone of the text to be professional, polished, and executive. Use \
+                refined vocabulary, clear structure, and appropriate workplace etiquette while \
+                keeping the core message intact.
+                """
+        case .toneCasual:
+            boundary + """
+
+
+                Adjust the tone of the text to be warm, friendly, and conversational. Use a \
+                relaxed register, natural phrasing, and contractions where appropriate, while \
+                keeping the meaning clear.
+                """
+        case .toneDirect:
+            boundary + """
+
+
+                Rewrite the text to be exceptionally direct, crisp, and concise. Strip all filler \
+                phrases, hedge words, and unnecessary pleasantries. Use active voice and get straight to the point.
+                """
+        case .toneAcademic:
+            boundary + """
+
+
+                Elevate the tone of the text to be formal, scholarly, and analytical. Use precise \
+                terminology, objective phrasing, and coherent argumentative flow suitable for academic or research writing.
+                """
+        case .toneDiplomatic:
+            boundary + """
+
+
+                Rephrase the text with high diplomatic tact, empathy, and constructive framing. \
+                Soften blunt statements, prevent friction, and emphasize collaboration while preserving the underlying message.
+                """
         case .summarize:
             """
             You summarize text for a reader who has already seen it.
@@ -136,6 +173,16 @@ enum QuickActionPrompt {
         var lines = ["Text:", selection]
         if let builtIn = action.builtInAction {
             switch builtIn {
+            case .toneProfessional:
+                lines.insert("Adjust the tone to be professional.", at: 0)
+            case .toneCasual:
+                lines.insert("Adjust the tone to be casual and friendly.", at: 0)
+            case .toneDirect:
+                lines.insert("Make the tone direct and concise.", at: 0)
+            case .toneAcademic:
+                lines.insert("Elevate the tone to be academic and scholarly.", at: 0)
+            case .toneDiplomatic:
+                lines.insert("Adjust the tone to be diplomatic and tactful.", at: 0)
             case .summarize:
                 lines.insert("Summarize the text below.", at: 0)
             case .explain:

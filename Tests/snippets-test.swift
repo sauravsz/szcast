@@ -1757,6 +1757,20 @@ struct SnippetsTests {
         check(
             "a parameter named query is still an argument, not the alias",
             expand("{argument name=\"query\"}", arguments: ["query": "kept"]).text == "kept")
+
+        check(
+            "expandPrompt expands selection and clipboard placeholders",
+            SnippetTemplateEngine.expandPrompt(
+                "Translate {selection} with context {clipboard}",
+                selection: "Hello",
+                clipboard: "World"
+            ) == "Translate Hello with context World")
+        check(
+            "expandPrompt resolves arguments",
+            SnippetTemplateEngine.expandPrompt(
+                "Tone: {argument name=\"tone\" default=\"formal\"}",
+                userArguments: ["tone": "direct"]
+            ) == "Tone: direct")
     }
 
     private static func testKeywordPolicy() {

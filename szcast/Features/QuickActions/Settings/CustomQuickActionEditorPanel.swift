@@ -134,8 +134,8 @@ struct CustomQuickActionEditorPanel: View {
                 }
             Text(
                 """
-                szcast always tells the model to return only the transformed text, and to treat \
-                your selection as material rather than as instructions.
+                szcast tells the model to return only the transformed text. You can use dynamic \
+                placeholders like {selection}, {clipboard}, {date}, and {argument}.
                 """
             )
             .font(.caption)

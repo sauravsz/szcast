@@ -57,11 +57,12 @@ extension SettingsTab {
         case .commands: [.createCustomCommand, .searchCustomCommands]
         case .quicklinks:
             [.createQuicklink, .searchQuicklinks, .importQuicklinks, .exportQuicklinks]
-        case .ai: [.quickAI, .aiChat]
+        case .ai: [.quickAI, .aiChat, .askAIAboutScreenArea]
         case .quickActions:
             [
                 .fixGrammar, .rewrite, .makeShorter, .makeLonger, .simplify,
-                .changeTone, .translate, .summarize, .explain, .findActionItems,
+                .changeTone, .toneProfessional, .toneCasual, .toneDirect, .toneAcademic, .toneDiplomatic,
+                .translate, .summarize, .explain, .findActionItems,
                 .convertTypeScript, .slackReply, .emailReply, .summarizeYouTube
             ]
         case .fileSearch: [.searchFiles]

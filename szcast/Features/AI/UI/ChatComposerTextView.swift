@@ -178,17 +178,30 @@ final class ComposerTextView: NSTextView, InjectableTextView {
     static var defaultEmojiSuggestionProvider: ((_ text: String, _ cursor: Int) -> (range: NSRange, suggestions: [String])?)?
     var emojiSuggestionProvider: ((_ text: String, _ cursor: Int) -> (range: NSRange, suggestions: [String])?)? = ComposerTextView.defaultEmojiSuggestionProvider
 
+    static var defaultMentionSuggestionProvider: ((_ text: String, _ cursor: Int) -> (range: NSRange, suggestions: [String])?)?
+    var mentionSuggestionProvider: ((_ text: String, _ cursor: Int) -> (range: NSRange, suggestions: [String])?)? = ComposerTextView.defaultMentionSuggestionProvider
+
     override func insertText(_ string: Any, replacementRange: NSRange) {
         super.insertText(string, replacementRange: replacementRange)
-        if let str = string as? String, !str.isEmpty,
-           let provider = emojiSuggestionProvider,
-           provider(self.string, selectedRange().location) != nil {
+        guard let str = string as? String, !str.isEmpty else { return }
+        let cursor = selectedRange().location
+        if let mentionProvider = mentionSuggestionProvider,
+           mentionProvider(self.string, cursor) != nil {
+            complete(nil)
+            return
+        }
+        if let emojiProvider = emojiSuggestionProvider,
+           emojiProvider(self.string, cursor) != nil {
             complete(nil)
         }
     }
 
     override var rangeForUserCompletion: NSRange {
         let cursor = selectedRange().location
+        if let mentionProvider = mentionSuggestionProvider,
+           let match = mentionProvider(string, cursor) {
+            return match.range
+        }
         if let provider = emojiSuggestionProvider,
            let match = provider(string, cursor) {
             return match.range
@@ -198,6 +211,12 @@ final class ComposerTextView: NSTextView, InjectableTextView {
 
     override func completions(forPartialWordRange charRange: NSRange, indexOfSelectedItem index: UnsafeMutablePointer<Int>?) -> [String]? {
         let cursor = selectedRange().location
+        if let mentionProvider = mentionSuggestionProvider,
+           let match = mentionProvider(string, cursor),
+           !match.suggestions.isEmpty {
+            index?.pointee = 0
+            return match.suggestions
+        }
         if let provider = emojiSuggestionProvider,
            let match = provider(string, cursor),
            !match.suggestions.isEmpty {
@@ -209,6 +228,60 @@ final class ComposerTextView: NSTextView, InjectableTextView {
         }
         var dummy = 0
         return super.completions(forPartialWordRange: charRange, indexOfSelectedItem: &dummy)
+    }
+}
+
+@MainActor
+final class InlineMentionCompletionService {
+    static let shared = InlineMentionCompletionService()
+
+    /// Detects if cursor is after an @ token like @ or @web (up to 30 characters).
+    func detectTrigger(in text: String, cursorLocation: Int) -> (token: String, range: NSRange)? {
+        guard cursorLocation > 0 else { return nil }
+        let nsText = text as NSString
+        guard cursorLocation <= nsText.length else { return nil }
+
+        let atRange = nsText.range(of: "@", options: .backwards, range: NSRange(location: 0, length: cursorLocation))
+        guard atRange.location != NSNotFound else { return nil }
+        let tokenStart = atRange.location
+
+        if tokenStart > 0 {
+            let prevChar = nsText.substring(with: NSRange(location: tokenStart - 1, length: 1))
+            guard prevChar.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                return nil
+            }
+        }
+
+        let tokenLength = cursorLocation - tokenStart
+        guard tokenLength >= 1, tokenLength <= 30 else { return nil }
+
+        let candidate = tokenLength > 1
+            ? nsText.substring(with: NSRange(location: tokenStart + 1, length: tokenLength - 1))
+            : ""
+        guard !candidate.contains(where: { $0.isWhitespace || $0.isNewline }) else { return nil }
+
+        return (token: candidate, range: NSRange(location: tokenStart, length: tokenLength))
+    }
+
+    /// Built-in context mentions and dynamic MCP slugs
+    func suggestions(for token: String, mcpSlugs: Set<String> = []) -> [String] {
+        let builtInMentions = [
+            "@web",
+            "@selection",
+            "@clipboard",
+            "@screen",
+            "@window",
+            "@notes",
+            "@calendar"
+        ]
+        let mcpMentions = mcpSlugs.map { "@\($0)" }.sorted()
+        let all = builtInMentions + mcpMentions
+
+        if token.isEmpty {
+            return all
+        }
+        let lower = token.lowercased()
+        return all.filter { $0.dropFirst().lowercased().hasPrefix(lower) }
     }
 }
 

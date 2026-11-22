@@ -170,12 +170,12 @@ final class QuickActionCoordinator {
         ranking.reset(itemKey: action.entryID)
     }
 
-    func run(id: UUID) {
+    func run(id: UUID, forceInPlace: Bool = false) {
         guard let action = customActions.action(id: id) else { return }
-        run(.custom(action))
+        run(.custom(action), forceInPlace: forceInPlace)
     }
 
-    func run(_ action: QuickAction) {
+    func run(_ action: QuickAction, forceInPlace: Bool = false) {
         guard settings.quickActionsEnabled, running == nil else { return }
         let source =
             paletteCoordinator.isVisible
@@ -194,7 +194,7 @@ final class QuickActionCoordinator {
         if paletteCoordinator.isVisible {
             paletteCoordinator.hidePalette(restoreFocus: source?.ownEditor is NoteTextView)
         }
-        start { [weak self] in await self?.begin(action, target: target) }
+        start { [weak self] in await self?.begin(action, target: target, forceInPlace: forceInPlace) }
     }
 
     func cancel() {
@@ -217,7 +217,7 @@ final class QuickActionCoordinator {
         }
     }
 
-    private func begin(_ action: QuickAction, target: Target) async {
+    private func begin(_ action: QuickAction, target: Target, forceInPlace: Bool = false) async {
         let selection: String
         if action == .summarizeYouTube {
             var candidate: String?
@@ -266,10 +266,22 @@ final class QuickActionCoordinator {
         case .external(let app):
             state.targetAppName = app?.localizedName
             state.targetAppIcon = app?.icon
+            if let app {
+                let name = app.localizedName ?? ""
+                let bundleID = app.bundleIdentifier ?? ""
+                if !name.isEmpty && !bundleID.isEmpty {
+                    state.appContext = "\(name) (\(bundleID))"
+                } else if !name.isEmpty {
+                    state.appContext = name
+                } else if !bundleID.isEmpty {
+                    state.appContext = bundleID
+                }
+            }
         case .note:
             state.targetAppName = "Notes"
+            state.appContext = "Notes"
         }
-        let previews = store.settings.previewsResult(action)
+        let previews = forceInPlace ? false : store.settings.previewsResult(action)
         if previews { present(state, target: target) }
         await perform(state, target: target, previewing: previews)
     }
@@ -345,6 +357,7 @@ final class QuickActionCoordinator {
         return try await QuickActionRunner.run(
             state.action, selection: state.original, using: provider,
             instructionOverride: store.settings.instructionOverride(for: state.action),
+            appContext: state.appContext,
             onDelta: { delta in
                 guard streaming else { return }
                 state.append(delta)

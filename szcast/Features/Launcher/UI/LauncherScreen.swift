@@ -384,9 +384,24 @@ struct LauncherScreen: PaletteScreen {
             core.fileSearchCoordinator.showInFinder(file)
             return true
         }
-        guard let app = entry(at: selection), app.canRevealInFinder else { return false }
-        core.launcherCoordinator.showInFinder(app)
-        return true
+        if let app = entry(at: selection) {
+            if app.kind == .quickAction {
+                if let command = CommandCatalog.command(for: app),
+                   let builtIn = command.builtInQuickAction {
+                    core.quickActionCoordinator.run(.builtIn(builtIn), forceInPlace: true)
+                    return true
+                }
+                if let id = CustomQuickAction.id(fromEntryID: app.id) {
+                    core.quickActionCoordinator.run(id: id, forceInPlace: true)
+                    return true
+                }
+            }
+            if app.canRevealInFinder {
+                core.launcherCoordinator.showInFinder(app)
+                return true
+            }
+        }
+        return false
     }
 
     private func runningApplication(at selection: Int) -> AppEntry? {

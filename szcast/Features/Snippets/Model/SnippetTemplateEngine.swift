@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 enum SnippetTemplateEngine {
@@ -120,6 +121,25 @@ enum SnippetTemplateEngine {
                 depth: 0,
                 visitedIDs: []
             ))
+    }
+
+    /// Expands dynamic prompt placeholders ({selection}, {clipboard}, {date}, {argument}, etc.)
+    /// for custom AI actions and prompts.
+    static func expandPrompt(
+        _ prompt: String,
+        selection: String = "",
+        clipboard: String? = nil,
+        userArguments: [String: String] = [:]
+    ) -> String {
+        let clip = clipboard ?? (NSPasteboard.general.string(forType: .string) ?? "")
+        let context = ExpansionContext(
+            clipboard: clip,
+            selection: selection,
+            now: Date(),
+            calendar: .current,
+            locale: .current,
+            timeZone: .current)
+        return expand(text: prompt, context: context, userArguments: userArguments).text
     }
 
     /// The `{argument}`s a template declares, in written order — what a form has to ask for.

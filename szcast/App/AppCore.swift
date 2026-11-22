@@ -344,6 +344,18 @@ final class AppCore {
             FormTextArea.defaultEmojiSuggestionProvider = emojiProvider
             NoteTextView.defaultEmojiSuggestionProvider = emojiProvider
             ComposerTextView.defaultEmojiSuggestionProvider = emojiProvider
+            ComposerTextView.defaultMentionSuggestionProvider = { [weak self] text, cursor in
+                guard let self,
+                      let trigger = InlineMentionCompletionService.shared.detectTrigger(in: text, cursorLocation: cursor) else {
+                    return nil
+                }
+                let suggestions = InlineMentionCompletionService.shared.suggestions(
+                    for: trigger.token,
+                    mcpSlugs: mcpCoordinator.slugs
+                )
+                guard !suggestions.isEmpty else { return nil }
+                return (trigger.range, suggestions)
+            }
 
             appIndex.start(settings: settings)
             clipboardCoordinator.applyEnabled()

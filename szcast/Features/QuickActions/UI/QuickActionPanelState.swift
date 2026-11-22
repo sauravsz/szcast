@@ -21,6 +21,7 @@ final class QuickActionPanelState {
     var targetLanguage: Locale.Language
     var targetAppName: String?
     var targetAppIcon: NSImage?
+    var appContext: String?
     var isPinned: Bool = false
 
     @ObservationIgnored private var cachedDiff: [TextDiffEngine.Chunk]?

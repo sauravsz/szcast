@@ -39,11 +39,17 @@ final class QuickActionRunner {
     static func run(
         _ action: QuickAction, selection: String, using provider: any AIProvider,
         instructionOverride: String?,
+        appContext: String? = nil,
         onDelta: @MainActor (String) -> Void = { _ in }
     ) async throws -> String {
+        let rawInstructions = QuickActionPrompt.instructions(
+            for: action, override: instructionOverride)
+        var instructions = SnippetTemplateEngine.expandPrompt(rawInstructions, selection: selection)
+        if let appContext = appContext?.trimmingCharacters(in: .whitespacesAndNewlines), !appContext.isEmpty {
+            instructions = "[Active Application: \(appContext)]\n\n" + instructions
+        }
         let request = AIRequest(
-            instructions: QuickActionPrompt.instructions(
-                for: action, override: instructionOverride),
+            instructions: instructions,
             messages: [
                 AIMessage(
                     role: .user,

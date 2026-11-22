@@ -10,6 +10,11 @@ enum CommandID: String, CaseIterable, Sendable {
     case makeLonger = "command:make-longer"
     case simplify = "command:simplify"
     case changeTone = "command:change-tone"
+    case toneProfessional = "command:tone-professional"
+    case toneCasual = "command:tone-casual"
+    case toneDirect = "command:tone-direct"
+    case toneAcademic = "command:tone-academic"
+    case toneDiplomatic = "command:tone-diplomatic"
     case translate = "command:translate"
     case summarize = "command:summarize"
     case explain = "command:explain"
@@ -60,6 +65,7 @@ enum CommandID: String, CaseIterable, Sendable {
     case support = "command:support"
     case focusTimer = "command:focus-timer"
     case captureScreenText = "command:capture-screen-text"
+    case askAIAboutScreenArea = "command:ask-ai-about-screen-area"
     case scanQRCode = "command:scan-qr-code"
     case cleanClipboardURL = "command:clean-clipboard-url"
     case enteAuth = "command:ente-auth"
@@ -107,6 +113,11 @@ enum CommandID: String, CaseIterable, Sendable {
         case .makeLonger: return BuiltInQuickAction.makeLonger.titleResource
         case .simplify: return BuiltInQuickAction.simplify.titleResource
         case .changeTone: return BuiltInQuickAction.changeTone.titleResource
+        case .toneProfessional: return BuiltInQuickAction.toneProfessional.titleResource
+        case .toneCasual: return BuiltInQuickAction.toneCasual.titleResource
+        case .toneDirect: return BuiltInQuickAction.toneDirect.titleResource
+        case .toneAcademic: return BuiltInQuickAction.toneAcademic.titleResource
+        case .toneDiplomatic: return BuiltInQuickAction.toneDiplomatic.titleResource
         case .translate: return BuiltInQuickAction.translate.titleResource
         case .summarize: return BuiltInQuickAction.summarize.titleResource
         case .explain: return BuiltInQuickAction.explain.titleResource
@@ -157,6 +168,7 @@ enum CommandID: String, CaseIterable, Sendable {
         case .support: return "Support szcast"
         case .focusTimer: return "Focus Timer"
         case .captureScreenText: return "Capture Screen Text (OCR)"
+        case .askAIAboutScreenArea: return "Ask AI About Screen Area"
         case .scanQRCode: return "Scan QR Code"
         case .cleanClipboardURL: return "Clean URL in Clipboard"
         case .enteAuth: return "Ente Auth (2FA)"
@@ -180,6 +192,11 @@ enum CommandID: String, CaseIterable, Sendable {
         case .makeLonger: return BuiltInQuickAction.makeLonger.symbol
         case .simplify: return BuiltInQuickAction.simplify.symbol
         case .changeTone: return BuiltInQuickAction.changeTone.symbol
+        case .toneProfessional: return BuiltInQuickAction.toneProfessional.symbol
+        case .toneCasual: return BuiltInQuickAction.toneCasual.symbol
+        case .toneDirect: return BuiltInQuickAction.toneDirect.symbol
+        case .toneAcademic: return BuiltInQuickAction.toneAcademic.symbol
+        case .toneDiplomatic: return BuiltInQuickAction.toneDiplomatic.symbol
         case .translate: return BuiltInQuickAction.translate.symbol
         case .summarize: return BuiltInQuickAction.summarize.symbol
         case .explain: return BuiltInQuickAction.explain.symbol
@@ -229,6 +246,7 @@ enum CommandID: String, CaseIterable, Sendable {
         case .support: return "heart"
         case .focusTimer: return "timer"
         case .captureScreenText: return "text.viewfinder"
+        case .askAIAboutScreenArea: return "viewfinder"
         case .scanQRCode: return "qrcode.viewfinder"
         case .cleanClipboardURL: return "link.badge.plus"
         case .enteAuth: return "key.fill"
@@ -251,6 +269,11 @@ enum CommandID: String, CaseIterable, Sendable {
         case .makeLonger: self = .makeLonger
         case .simplify: self = .simplify
         case .changeTone: self = .changeTone
+        case .toneProfessional: self = .toneProfessional
+        case .toneCasual: self = .toneCasual
+        case .toneDirect: self = .toneDirect
+        case .toneAcademic: self = .toneAcademic
+        case .toneDiplomatic: self = .toneDiplomatic
         case .translate: self = .translate
         case .summarize: self = .summarize
         case .explain: self = .explain
@@ -270,6 +293,11 @@ enum CommandID: String, CaseIterable, Sendable {
         case .makeLonger: return .makeLonger
         case .simplify: return .simplify
         case .changeTone: return .changeTone
+        case .toneProfessional: return .toneProfessional
+        case .toneCasual: return .toneCasual
+        case .toneDirect: return .toneDirect
+        case .toneAcademic: return .toneAcademic
+        case .toneDiplomatic: return .toneDiplomatic
         case .translate: return .translate
         case .summarize: return .summarize
         case .explain: return .explain
@@ -287,6 +315,7 @@ enum CommandID: String, CaseIterable, Sendable {
         switch self {
         case .quickAI: ["ai"]
         case .aiChat: ["chat"]
+        case .askAIAboutScreenArea: ["ask ai", "screen area", "screenshot", "screen ocr", "vision", "ask about screen", "marquee"]
         case .focusTimer: ["focus", "pomodoro", "timer"]
         case .captureScreenText: ["ocr", "screen text", "grab text", "text recognition"]
         case .scanQRCode: ["qr", "scan qr", "barcode", "scan barcode"]
@@ -300,12 +329,17 @@ enum CommandID: String, CaseIterable, Sendable {
         case .dictationInsights: ["insights", "wpm", "words per minute", "dictation insights", "dictation dashboard", "streak"]
         case .showNotes: ["scratchpad", "notes", "notepad", "sticky note", "floating note"]
         case .changelog: ["changelog", "whats new", "what's new", "release notes", "version", "changes", "updates"]
-        case .fixGrammar: ["grammar", "spell", "spelling", "proofread", "typos"]
+        case .fixGrammar: ["quick fix", "quickfix", "grammar", "spell", "spelling", "proofread", "typos"]
         case .rewrite: ["improve", "improve writing", "polish", "clarity", "rephrase"]
         case .makeShorter: ["short", "shorter", "condense", "trim", "brief"]
         case .makeLonger: ["longer", "expand", "elaborate", "more"]
         case .simplify: ["simplify", "plain", "clear", "simpler"]
         case .changeTone: ["tone", "change tone", "tone of voice"]
+        case .toneProfessional: ["professional", "formal", "executive", "tone professional", "corporate"]
+        case .toneCasual: ["casual", "friendly", "informal", "tone casual", "conversational"]
+        case .toneDirect: ["direct", "concise", "blunt", "tone direct", "straightforward", "assertive"]
+        case .toneAcademic: ["academic", "scholarly", "technical", "tone academic", "rigorous"]
+        case .toneDiplomatic: ["diplomatic", "polite", "tactful", "tone diplomatic", "empathetic"]
         case .explain: ["explain", "explain this", "concept", "breakdown"]
         case .findActionItems: ["action items", "action points", "todos", "tasks", "next steps"]
         case .convertTypeScript: ["typescript", "ts", "interface", "type", "json to ts"]
