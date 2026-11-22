@@ -46,6 +46,7 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - **In-Memory Cache Boundaries**: Enforced a 50-entry FIFO eviction cap across `FlightTrackerService`, `WeatherService`, and `TravelTimeService`.
 
 - **Release v1.1.5 / UI & UX Major Suite**:
+  - **Menu Bar System Stats Visibility & 1-Second Telemetry Refresh**: Resolved invisible menu bar status items (`CPU`, `RAM`, `Disk`, `Battery`, `Network`) caused by missing snapshot projection and 0-width items. Decoupled `StatsMonitor` from UI via an `@MainActor` `onUpdate` closure, populated non-zero initial titles on status item creation, and applied monospaced digit typography (`NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .regular)`) to eliminate horizontal width jitter. Changed default refresh cadence to 1.0 second (`statsRefreshInterval = 1.0`), delivering per-second network download/upload indicators in the menu bar. Throttled `/bin/ps` process spawning to only execute when `StatsDashboardView` is active (`isDashboardActive`), eliminating background CPU churn during routine 1-second menu bar ticks. Added dynamic observation tracking in `AppCore.swift` for all stats settings.
   - **Display Tweaks Auto-Apply & Persistence**: Resolved issue where display tweaks did not take effect on launch or after app updates until opening Settings -> Display Tweaks. Made `DisplayTweaksService.GammaSetData` `Codable`, persisted active gamma profile to `AppSettings.displayTweaksGammaSet`, and updated `AppCore.swift` and `ExtendedFeaturesSettingsView` to immediately apply `applyGammaSet` on app launch and toggle with fallback to `Gamma Control` reference profile. Added automatic resolved points synchronization and active display enumeration matching across wake/reconnect events.
   - **System Telemetry & Hardware Monitors**: Integrated Stats (exelban/stats architecture) directly into szcast with CPU, RAM, Disk, Battery, and Network monitors, rolling 30-sample quadratic Bezier sparkline graphs in `StatsDashboardView`, and individual togglable menu bar items with configurable cadences.
   - **Raycast-Parity Emoji & Symbols**: Replaced legacy emoji picker with full Raycast feature parity: semantic search, custom keywords stored in JSON via `⌘E`, inline autocomplete `:` in text fields, tone modifiers (`⌥⌘C`/`⌥⌘V`), and grid zooming (`⌘-`/`⌘+`/`⌘0`).
@@ -306,7 +307,7 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - Made the `CURRENT` release badge in `ChangelogSettingsView` dynamic based on the active running build version.
 
 ## Active State & Next Steps
-- **Active State**: Installed and running at `/Applications/szcast.app` (v1.1.5) with exact snippet body substring search (fuzzy search removed) and synchronized changelog catalog. All 134 test harnesses pass.
+- **Active State**: Installed and running at `/Applications/szcast.app` (v1.1.5) with live menu bar stats, 1-second network rate updates, exact snippet body search, and synchronized changelog catalog. All 134 test harnesses pass.
 - **Immediate Next Steps**:
   1. Test long continuous dictation (5+ minutes) in real-world workflows across Hindi and Bengali models.
   2. Perform weekly upstream radar audit (`./Scripts/upstream-radar.sh`).
