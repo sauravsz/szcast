@@ -46,11 +46,14 @@ private struct SearchPill: ViewModifier {
 
 /// A `Section`'s name, and where a result that matched the whole group lands.
 struct SettingsSectionHeader<Label: View>: View {
+    @Environment(AppSettings.self) private var settings
     let anchor: SettingsAnchor
     @ViewBuilder var label: Label
 
     var body: some View {
-        label.modifier(SearchPill(target: .section(anchor)))
+        label
+            .font(.system(size: max(settings.settingsRowTitleFontSize - 2, 11), weight: .semibold))
+            .modifier(SearchPill(target: .section(anchor)))
     }
 }
 
@@ -64,6 +67,7 @@ extension SettingsSectionHeader where Label == Text {
 /// One setting's own name, in place of the `Text` a row's label would otherwise hold. This is what
 /// a row-level search result scrolls to and lights up.
 struct SettingsRowTitle: View {
+    @Environment(AppSettings.self) private var settings
     let anchor: SettingsAnchor
     let title: String
 
@@ -77,7 +81,9 @@ struct SettingsRowTitle: View {
     }
 
     var body: some View {
-        Text(title).modifier(SearchPill(target: .row(anchor, title)))
+        Text(title)
+            .font(.system(size: settings.settingsRowTitleFontSize))
+            .modifier(SearchPill(target: .row(anchor, title)))
     }
 }
 

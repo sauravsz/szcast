@@ -70,6 +70,13 @@ enum ChangelogData {
                     items: [
                         "Normalized split dividers, card borders, and rules to Theme.Size.hairline across Calendar, Extensions, Clipboard, Dictionary, and Onboarding."
                     ]
+                ),
+                ChangelogCategory(
+                    name: "Settings Typography Controls",
+                    icon: "textformat.size",
+                    items: [
+                        "Configurable title and subtitle font sizes for Settings panes in General -> Appearance with dynamic live preview and search catalog indexing."
+                    ]
                 )
             ]
         ),

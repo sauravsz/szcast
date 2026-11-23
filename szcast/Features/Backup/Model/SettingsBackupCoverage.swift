@@ -244,6 +244,10 @@ enum SettingsBackupCoverage {
             "Launcher typography sizing is a display-local preference on this Mac.",
         AppSettingsKey.launcherFontFamily.rawValue:
             "Launcher font family depends on fonts installed on this Mac.",
+        AppSettingsKey.settingsRowTitleFontSize.rawValue:
+            "Settings typography sizing is a display-local preference on this Mac.",
+        AppSettingsKey.settingsRowSubtitleFontSize.rawValue:
+            "Settings typography sizing is a display-local preference on this Mac.",
         AppSettingsKey.chatFontSize.rawValue:
             "AI Chat typography sizing is a display-local preference on this Mac.",
         AppSettingsKey.chatFontFamily.rawValue:

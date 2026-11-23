@@ -81,6 +81,7 @@ open /Applications/szcast.app
 - **Display Tweaks & Gamma Control**: Hardware LUT calibration (`CGSetDisplayTransferByTable`) with 3-point luminance sliders and one-click contrast presets.
 - **Clean Keyboard Mode**: Suppress keystrokes via `CGEventTap` for safe physical keyboard cleaning.
 - **In-App Changelog & Version Sync**: Native release notes, feature highlights, and version history dynamically tracking the running app build (`v1.1.6`).
+- **Custom Launcher & Settings Typography**: Configurable result title and subtitle font sizes for both the launcher search interface and Settings panes with live preview and keyboard search indexing.
 - **Design System & Layout Precision**: Exhaustive 4-phase spacing token normalization across 491 UI components, zero edge clipping, and Retina hairline dividers.
 
 ## Architecture

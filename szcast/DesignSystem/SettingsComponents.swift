@@ -28,6 +28,7 @@ struct SettingsTabIcon: View {
 }
 
 struct SettingsFeatureToggleLabel: View {
+    @Environment(AppSettings.self) private var settings
     let anchor: SettingsAnchor
     let title: LocalizedStringResource
     let subtitle: LocalizedStringResource
@@ -41,7 +42,7 @@ struct SettingsFeatureToggleLabel: View {
                 SettingsRowTitle(anchor, title)
                     .fontWeight(.semibold)
                 Text(subtitle)
-                    .font(.subheadline)
+                    .font(.system(size: settings.settingsRowSubtitleFontSize))
                     .foregroundStyle(.secondary)
             }
         }
@@ -50,6 +51,7 @@ struct SettingsFeatureToggleLabel: View {
 
 /// Not `LabeledContent`: its selectable text field eats the taps a `ShortcutRecorder` needs.
 struct SettingsRow<Icon: View, Trailing: View>: View {
+    @Environment(AppSettings.self) private var settings
     let title: String
     var subtitle: String?
     var subtitleLineLimit = 1
@@ -69,12 +71,13 @@ struct SettingsRow<Icon: View, Trailing: View>: View {
                         SettingsRowTitle(anchor, verbatim: title)
                     } else {
                         Text(title)
+                            .font(.system(size: settings.settingsRowTitleFontSize))
                     }
                 }
                 .lineLimit(1)
                 if let subtitle {
                     Text(subtitle)
-                        .font(.caption)
+                        .font(.system(size: settings.settingsRowSubtitleFontSize))
                         .foregroundStyle(.secondary)
                         .lineLimit(subtitleLineLimit)
                         .fixedSize(horizontal: false, vertical: true)

@@ -538,6 +538,7 @@ private struct ExtensionDisclosure: View {
 }
 
 private struct SettingsCardRow<Control: View>: View {
+    @Environment(AppSettings.self) private var settings
     /// Wide enough for a path field, and the trailing edge every control in the column shares.
     static var controlWidth: CGFloat { 200 }
 
@@ -556,6 +557,7 @@ private struct SettingsCardRow<Control: View>: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
                 HStack(spacing: Theme.Spacing.sm) {
                     Text(title)
+                        .font(.system(size: settings.settingsRowTitleFontSize))
                     if let badge {
                         Text(badge)
                             .font(.caption2)
@@ -567,7 +569,7 @@ private struct SettingsCardRow<Control: View>: View {
                 }
                 if let detail, !detail.isEmpty {
                     Text(detail)
-                        .font(.caption)
+                        .font(.system(size: settings.settingsRowSubtitleFontSize))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }

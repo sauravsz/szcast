@@ -84,6 +84,7 @@ struct GeneralSettingsView: View {
                 }
                 InterfaceSizeRow()
                 LauncherTypographyRows()
+                SettingsTypographyRows()
                 WindowModeRow()
                     .background {
                         if !settings.compactMode {
@@ -343,6 +344,41 @@ private struct LauncherTypographyRows: View {
             return .custom(family, size: size).weight(weight)
         }
         return .system(size: size, weight: weight)
+    }
+}
+
+private struct SettingsTypographyRows: View {
+    @Environment(AppSettings.self) private var settings
+
+    var body: some View {
+        @Bindable var settings = settings
+        Stepper(value: $settings.settingsRowTitleFontSize, in: 11...22, step: 1) {
+            SettingsRowTitle(.generalAppearance, "Settings title font size")
+            Text("\(Int(settings.settingsRowTitleFontSize)) pt (default: 13 pt)")
+        }
+        Stepper(value: $settings.settingsRowSubtitleFontSize, in: 9...18, step: 1) {
+            SettingsRowTitle(.generalAppearance, "Settings subtitle font size")
+            Text("\(Int(settings.settingsRowSubtitleFontSize)) pt (default: 11 pt)")
+        }
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            Text("Settings Preview")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
+                Text("Open in a new window")
+                    .font(.system(size: settings.settingsRowTitleFontSize, weight: .regular))
+                Text("Where the app supports it.")
+                    .font(.system(size: settings.settingsRowSubtitleFontSize, weight: .regular))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(Theme.Spacing.sm)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: Theme.Radius.row, style: .continuous)
+                    .fill(Theme.Colors.controlSurface)
+            )
+        }
+        .padding(.vertical, Theme.Spacing.xs)
     }
 }
 

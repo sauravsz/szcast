@@ -336,6 +336,16 @@ final class AppSettings {
         didSet { defaults.set(Double(launcherRowSubtitleFontSize), forKey: Key.launcherRowSubtitleFontSize.rawValue) }
     }
 
+    /// Font size for row titles in Settings (default: 13pt).
+    var settingsRowTitleFontSize: CGFloat {
+        didSet { defaults.set(Double(settingsRowTitleFontSize), forKey: Key.settingsRowTitleFontSize.rawValue) }
+    }
+
+    /// Font size for subtitles, descriptions, and helper text in Settings (default: 11pt).
+    var settingsRowSubtitleFontSize: CGFloat {
+        didSet { defaults.set(Double(settingsRowSubtitleFontSize), forKey: Key.settingsRowSubtitleFontSize.rawValue) }
+    }
+
     /// Custom font family for launcher text; nil uses the system font.
     var launcherFontFamily: String? {
         didSet { defaults.set(launcherFontFamily, forKey: Key.launcherFontFamily.rawValue) }
@@ -1133,6 +1143,10 @@ final class AppSettings {
         launcherRowTitleFontSize = storedRowTitleSize > 0 ? CGFloat(storedRowTitleSize) : 14.0
         let storedRowSubtitleSize = defaults.double(forKey: Key.launcherRowSubtitleFontSize.rawValue)
         launcherRowSubtitleFontSize = storedRowSubtitleSize > 0 ? CGFloat(storedRowSubtitleSize) : 12.0
+        let storedSettingsRowTitleSize = defaults.double(forKey: Key.settingsRowTitleFontSize.rawValue)
+        settingsRowTitleFontSize = storedSettingsRowTitleSize > 0 ? CGFloat(storedSettingsRowTitleSize) : 13.0
+        let storedSettingsRowSubtitleSize = defaults.double(forKey: Key.settingsRowSubtitleFontSize.rawValue)
+        settingsRowSubtitleFontSize = storedSettingsRowSubtitleSize > 0 ? CGFloat(storedSettingsRowSubtitleSize) : 11.0
         launcherFontFamily = defaults.string(forKey: Key.launcherFontFamily.rawValue)
         compactMode =
             defaults.object(forKey: Key.compactMode.rawValue) == nil

@@ -147,6 +147,21 @@ enum SettingsSearchCatalog {
             .generalAppearance, "Interface size",
             keywords: ["text size", "font size", "scale", "zoom", "bigger", "larger", "legible"]),
         .init(
+            .generalAppearance, "Result title font size",
+            keywords: ["font", "size", "text", "launcher", "result", "title", "typography"]),
+        .init(
+            .generalAppearance, "Subtitle font size",
+            keywords: ["font", "size", "text", "launcher", "subtitle", "typography"]),
+        .init(
+            .generalAppearance, "Custom font",
+            keywords: ["font", "family", "launcher", "typeface", "typography"]),
+        .init(
+            .generalAppearance, "Settings title font size",
+            keywords: ["font", "size", "text", "settings", "title", "larger", "bigger", "typography"]),
+        .init(
+            .generalAppearance, "Settings subtitle font size",
+            keywords: ["font", "size", "text", "settings", "subtitle", "description", "caption", "typography"]),
+        .init(
             .generalAppearance, "Window mode",
             keywords: ["compact", "expanded", "slim", "search bar", "small"]),
         .init(

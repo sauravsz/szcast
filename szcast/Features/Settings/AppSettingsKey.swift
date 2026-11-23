@@ -174,6 +174,8 @@ enum AppSettingsKey: String, CaseIterable {
     case launcherRowTitleFontSize = "launcherRowTitleFontSize"
     case launcherRowSubtitleFontSize = "launcherRowSubtitleFontSize"
     case launcherFontFamily = "launcherFontFamily"
+    case settingsRowTitleFontSize = "settingsRowTitleFontSize"
+    case settingsRowSubtitleFontSize = "settingsRowSubtitleFontSize"
     case chatFontSize = "chatFontSize"
     case chatFontFamily = "chatFontFamily"
     case chatCodeFontFamily = "chatCodeFontFamily"
