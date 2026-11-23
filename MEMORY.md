@@ -33,6 +33,12 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - **File Search Folder Matching & Hidden Files (`99d1d17a`)**: Enabled multi-term query matching through parent directory names, agent worktree ignore patterns (`.claude/worktrees`, `conductor/workspaces`), and added `includeHiddenFiles` setting in `AppSettings` with Settings search catalog synchronization.
   - Skipped out-of-scope commits: Dictation shortcut removal (violates single-shot and Fn/Globe invariants), iCloud sync (requires Developer ID), out-of-process Settings XPC architecture shift, and monochrome icon styling.
 
+- **Settings Typography Controls (v1.1.6)**:
+  - Added configurable title (`settingsRowTitleFontSize`, default: 13pt) and subtitle (`settingsRowSubtitleFontSize`, default: 11pt) font sizes for Settings panes in General -> Appearance.
+  - Bound `SettingsRowTitle`, `SettingsSectionHeader`, `SettingsRow`, `SettingsFeatureToggleLabel`, `SettingsDetailView`, and `ExtensionsSettingsView` to dynamic settings font size properties.
+  - Added live Settings Preview card in `GeneralSettingsView.swift` and synchronized `SettingsSearchCatalog.swift` with 0 errors.
+  - Signed release build packaged into `build/szcast-1.1.6.dmg` & `build/szcast-1.1.6.zip`, uploaded to GitHub Release `v1.1.6`, deployed to `origin/main` (Vercel), and installed locally to `/Applications/szcast.app`.
+
 - **Exhaustive UI Padding, Spacing & Layout Margin Audit & Full Remediation**:
   - Conducted full automated & structural design system audit across all 491 presentation and interaction files in szcast.
   - Identified 6 Critical clipping/overlap defects, 77 High visual alignment issues, 137 Medium token drifts, and 144 Low style nits; 127 files conform cleanly to `Theme` tokens.
