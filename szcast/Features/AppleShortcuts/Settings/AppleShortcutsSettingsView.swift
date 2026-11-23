@@ -38,6 +38,7 @@ struct AppleShortcutsSettingsView: View {
         .task(id: settings.appleShortcutsEnabled) { core.appleShortcutCoordinator.refresh() }
     }
 
+    @ViewBuilder
     private var library: some View {
         Section {
             SettingsFilterField(prompt: "Search shortcuts…", query: $query)

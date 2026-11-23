@@ -336,14 +336,14 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - Test harness: Updated `Tests/snippets-test.swift` verifying that fuzzy subsequence queries (e.g. `bnn`, `shrdng`, `dtpln`) yield zero results while exact substrings in body and title match cleanly (134/134 test harnesses pass).
   - Deployed: Signed release binary built and installed to `/Applications/szcast.app`.
 
-- **Changelog & Build Version Synchronization (v1.1.5)**:
-  - Synchronized `MARKETING_VERSION = 1.1.5` in `Szcast.xcodeproj/project.pbxproj` across Debug and Release configurations.
-  - Dynamically bound `currentAppVersion` via `Bundle.main.infoDictionary["CFBundleShortVersionString"]` in `ChangelogSettingsView.swift` and `AboutView.swift`, eliminating stale hardcoded labels (`v1.1.1` and `v1.1.0`).
-  - Added full release catalogs for `v1.1.5` (UI/UX suite, Stats hardware monitors, Raycast emoji parity, Diff inspector, and snippet body search) and `v1.1.4` (codebase hardening, sensitive pasteboard concealment, Settings taxonomy reorganization).
+- **Changelog & Build Version Synchronization (v1.1.6)**:
+  - Synchronized `MARKETING_VERSION = 1.1.6` in `szcast.xcodeproj/project.pbxproj` across Debug and Release configurations.
+  - Dynamically bound `currentAppVersion` via `Bundle.main.infoDictionary["CFBundleShortVersionString"]` in `ChangelogSettingsView.swift` and `AboutView.swift`.
+  - Added full release catalog for `v1.1.6` (4-phase UI padding & margin audit remediation across 491 files, dynamic dictation panel frame expansion, and unified Retina hairline dividers).
   - Made the `CURRENT` release badge in `ChangelogSettingsView` dynamic based on the active running build version.
 
 ## Active State & Next Steps
-- **Active State**: Installed and running at `/Applications/szcast.app` (v1.1.5) with live menu bar stats, 1-second network rate updates, exact snippet body search, and synchronized changelog catalog. All 134 test harnesses pass.
+- **Active State**: Installed and running at `/Applications/szcast.app` (v1.1.6) with full 4-phase design token padding remediation, live menu bar stats, and synchronized changelog catalog. All 134 test harnesses pass.
 - **Immediate Next Steps**:
   1. Test long continuous dictation (5+ minutes) in real-world workflows across Hindi and Bengali models.
   2. Perform weekly upstream radar audit (`./Scripts/upstream-radar.sh`).

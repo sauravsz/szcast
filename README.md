@@ -56,7 +56,7 @@ open /Applications/szcast.app
 ### Offline Speech Dictation
 - **Local Speech Recognition**: Transcribe speech locally using Core ML-accelerated Parakeet v3 or Qwen3-ASR models.
 - **GPU Grammar Polish**: Pre-warmed local S1-mini model cleans up filler words, punctuation, and grammar before pasting.
-- **Floating Waveform Pill**: Minimal glass capsule showing real-time transcription status, haptic cues, and single-shot insertion.
+- **Floating Waveform Pill**: Minimal glass capsule showing real-time transcription status, dynamic horizontal command mode expansion, haptic cues, and single-shot insertion.
 - **Dictation Telemetry**: Track WPM, speech cadence tiers, streak calendar, and application usage locally.
 
 ### System Telemetry & Hardware Monitors
@@ -80,7 +80,8 @@ open /Applications/szcast.app
 - **DuckDuckGo Email (`Hyper + D`)**: Generate and copy private `@duck.com` forwarding addresses on demand.
 - **Display Tweaks & Gamma Control**: Hardware LUT calibration (`CGSetDisplayTransferByTable`) with 3-point luminance sliders and one-click contrast presets.
 - **Clean Keyboard Mode**: Suppress keystrokes via `CGEventTap` for safe physical keyboard cleaning.
-- **In-App Changelog & Version Sync**: Native release notes, feature highlights, and version history dynamically tracking the running app build.
+- **In-App Changelog & Version Sync**: Native release notes, feature highlights, and version history dynamically tracking the running app build (`v1.1.6`).
+- **Design System & Layout Precision**: Exhaustive 4-phase spacing token normalization across 491 UI components, zero edge clipping, and Retina hairline dividers.
 
 ## Architecture
 

@@ -12,7 +12,7 @@ struct AboutView: View {
     }
 
     private var currentShortVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.1.5"
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.1.6"
     }
 
     // Cached, and read from the bundle: the app icon is generic until LaunchServices registers.

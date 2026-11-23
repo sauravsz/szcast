@@ -40,10 +40,44 @@ struct ChangelogRelease: Identifiable, Sendable {
 enum ChangelogData {
     static let releases: [ChangelogRelease] = [
         ChangelogRelease(
+            id: "1.1.6",
+            version: "1.1.6",
+            date: "November 23, 2026",
+            isLatest: true,
+            summary: "Exhaustive 4-phase design system audit and layout padding remediation across 491 presentation files, dynamic dictation pill frame expansion, and unified Retina hairline dividers.",
+            categories: [
+                ChangelogCategory(
+                    name: "Layout & Padding Remediation",
+                    icon: "ruler",
+                    items: [
+                        "Exhaustive 4-phase design system audit standardizing layout margins and insets to Theme.Spacing tokens across 491 UI files.",
+                        "Resolved AI model checklist bounds overhang and clipped bottom checkboxes in provider settings.",
+                        "Added horizontal safe-inset padding to AI chat sidebar rows, eliminating window boundary title collisions.",
+                        "Harmonized settings card rows and form sections in Quicklinks, KeePassXC, Clean Keyboard, and Ente Auth."
+                    ]
+                ),
+                ChangelogCategory(
+                    name: "Dictation & Command Mode",
+                    icon: "waveform",
+                    items: [
+                        "Dynamic horizontal frame expansion (up to 360pt) for dictation HUD during command and rewrite modes, eliminating preview truncation.",
+                        "Standardized Dictation Insights telemetry cards, velocity streaks, and transformation inspector to design tokens."
+                    ]
+                ),
+                ChangelogCategory(
+                    name: "Retina Hairline Hygiene",
+                    icon: "square.split.2x1",
+                    items: [
+                        "Normalized split dividers, card borders, and rules to Theme.Size.hairline across Calendar, Extensions, Clipboard, Dictionary, and Onboarding."
+                    ]
+                )
+            ]
+        ),
+        ChangelogRelease(
             id: "1.1.5",
             version: "1.1.5",
             date: "November 21, 2026",
-            isLatest: true,
+            isLatest: false,
             summary: "Comprehensive UI/UX modernization suite: Stats system hardware monitors, Raycast-parity Emoji & Symbols, Side-by-Side Diff Inspector, Developer Previews, Category Scoping, and Deep Snippet Body Search.",
             categories: [
                 ChangelogCategory(
@@ -497,7 +531,7 @@ struct ChangelogSettingsView: View {
     private let filterOptions = ["All", "v1.1", "v1.0"]
 
     private var currentAppVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ChangelogData.releases.first?.version ?? "1.1.5"
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ChangelogData.releases.first?.version ?? "1.1.6"
     }
 
     private var filteredReleases: [ChangelogRelease] {
