@@ -56,8 +56,8 @@ struct DictationInsightsDashboardView: View {
                 // Row 3: Desktop App Workflow & Live Normalization Inspector
                 workflowAndTransformationsRow
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
+            .padding(.horizontal, Theme.Spacing.xxl)
+            .padding(.vertical, Theme.Spacing.xl)
             .frame(maxWidth: .infinity, alignment: .topLeading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -405,7 +405,7 @@ struct DictationInsightsDashboardView: View {
 
     private var cadenceHistogramCard: some View {
         cardContainer {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.xl) {
                 HStack(alignment: .center) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Speech Cadence & Momentum")
@@ -415,7 +415,7 @@ struct DictationInsightsDashboardView: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    HStack(spacing: 16) {
+                    HStack(spacing: Theme.Spacing.xl) {
                         VStack(alignment: .trailing, spacing: 2) {
                             Text("\(formatNumber(metrics.dailyAverageWords)) w/day")
                                 .font(.system(size: 12, weight: .bold, design: .rounded))
@@ -510,7 +510,7 @@ struct DictationInsightsDashboardView: View {
                             .multilineTextAlignment(.center)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
+                    .padding(.vertical, Theme.Spacing.xl)
                 } else {
                     VStack(spacing: 10) {
                         ForEach(metrics.appUsage) { app in
@@ -582,7 +582,7 @@ struct DictationInsightsDashboardView: View {
                             .multilineTextAlignment(.center)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
+                    .padding(.vertical, Theme.Spacing.xl)
                 } else {
                     VStack(spacing: 8) {
                         ForEach(metrics.recentTransformations) { item in
@@ -658,9 +658,9 @@ struct DictationInsightsDashboardView: View {
                                     .foregroundStyle(isShowingRaw ? .secondary : .primary)
                                     .lineLimit(2)
                             }
-                            .padding(8)
+                            .padding(Theme.Spacing.md)
                             .background(Color.primary.opacity(0.03))
-                            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                            .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.menu, style: .continuous))
                         }
                     }
                 }
@@ -673,13 +673,13 @@ struct DictationInsightsDashboardView: View {
 
     private func cardContainer<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         content()
-            .padding(14)
+            .padding(Theme.Spacing.xl)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .background(Color(nsColor: .controlBackgroundColor).opacity(0.70))
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(Theme.Colors.cardStroke, lineWidth: 1)
+                RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
+                    .stroke(Theme.Colors.cardStroke, lineWidth: Theme.Size.hairline)
             )
     }
 

@@ -76,6 +76,8 @@ struct QuicklinksSettingsView: View {
             } label: {
                 SettingsRowTitle(.quicklinksQuicklinks, "Add Quicklink")
             }
+        } header: {
+            SettingsSectionHeader(.quicklinksQuicklinks)
         }
     }
 

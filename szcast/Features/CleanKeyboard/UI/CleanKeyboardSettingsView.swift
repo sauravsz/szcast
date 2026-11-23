@@ -51,8 +51,8 @@ struct CleanKeyboardSettingsView: View {
                     Text("Primary")
                         .font(.caption.weight(.medium))
                         .foregroundStyle(.secondary)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
+                        .padding(.horizontal, Theme.Spacing.md)
+                        .padding(.vertical, Theme.Spacing.xxs)
                         .background(Theme.Colors.controlSurface)
                         .clipShape(Capsule())
                 }
@@ -68,8 +68,8 @@ struct CleanKeyboardSettingsView: View {
                     Text("⌃U")
                         .font(.caption.weight(.semibold).monospaced())
                         .foregroundStyle(.secondary)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
+                        .padding(.horizontal, Theme.Spacing.md)
+                        .padding(.vertical, Theme.Spacing.xxs)
                         .background(Theme.Colors.controlSurface)
                         .clipShape(Capsule())
                 }

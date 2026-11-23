@@ -23,7 +23,7 @@ struct ExtensionListView: View {
                 HStack(spacing: 0) {
                     rowList
                         .frame(width: metrics.scaled(Self.detailListWidth))
-                    Rectangle().fill(Theme.Colors.separator).frame(width: 1)
+                    Rectangle().fill(Theme.Colors.separator).frame(width: Theme.Size.hairline)
                     detailPane
                 }
             } else if case .grid(let layout) = screen.kind {

@@ -121,7 +121,7 @@ private struct KeePassXCSetupView: View {
                 .foregroundStyle(Color.accentColor)
                 .padding(.top, Theme.Spacing.xl)
 
-            VStack(spacing: 4) {
+            VStack(spacing: Theme.Spacing.xs) {
                 Text(String(localized: "Connect KeePassXC Database"))
                     .font(.headline)
                 Text(String(localized: "Select your .kdbx database to enable instant search and autofill."))
@@ -130,7 +130,7 @@ private struct KeePassXCSetupView: View {
             }
 
             VStack(alignment: .leading, spacing: Theme.Spacing.md) {
-                HStack {
+                HStack(spacing: Theme.Spacing.md) {
                     TextField("Database path (.kdbx)...", text: $dbPath)
                         .textFieldStyle(.roundedBorder)
 
@@ -162,6 +162,7 @@ private struct KeePassXCSetupView: View {
                 .disabled(dbPath.isEmpty || masterPass.isEmpty)
                 .frame(maxWidth: .infinity, alignment: .trailing)
             }
+            .frame(maxWidth: 420)
             .padding(.horizontal, Theme.Spacing.xl)
             .padding(.bottom, Theme.Spacing.xl)
 
@@ -235,7 +236,7 @@ private struct KeePassXCEntryDetailView: View {
                 }
                 .buttonStyle(.plain)
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
                     Text(activeEntry.title)
                         .font(.headline)
                         .foregroundStyle(.primary)
@@ -264,7 +265,7 @@ private struct KeePassXCEntryDetailView: View {
             Divider()
 
             ScrollView {
-                VStack(spacing: Theme.Spacing.md) {
+                VStack(spacing: 0) {
                     // Username row
                     HStack {
                         Label(String(localized: "Username"), systemImage: "person.fill")
@@ -287,10 +288,9 @@ private struct KeePassXCEntryDetailView: View {
                         .buttonStyle(.bordered)
                         .controlSize(.small)
                     }
-                    .padding(.horizontal, Theme.Spacing.lg)
-                    .padding(.vertical, Theme.Spacing.xs)
+                    .padding(.vertical, Theme.Spacing.sm)
 
-                    Divider().padding(.horizontal, Theme.Spacing.lg)
+                    Divider()
 
                     // Password row
                     HStack {
@@ -335,10 +335,9 @@ private struct KeePassXCEntryDetailView: View {
                         .tint(Color.accentColor)
                         .controlSize(.small)
                     }
-                    .padding(.horizontal, Theme.Spacing.lg)
-                    .padding(.vertical, Theme.Spacing.xs)
+                    .padding(.vertical, Theme.Spacing.sm)
 
-                    Divider().padding(.horizontal, Theme.Spacing.lg)
+                    Divider()
 
                     // TOTP row
                     HStack {
@@ -362,10 +361,9 @@ private struct KeePassXCEntryDetailView: View {
                         .buttonStyle(.bordered)
                         .controlSize(.small)
                     }
-                    .padding(.horizontal, Theme.Spacing.lg)
-                    .padding(.vertical, Theme.Spacing.xs)
+                    .padding(.vertical, Theme.Spacing.sm)
 
-                    Divider().padding(.horizontal, Theme.Spacing.lg)
+                    Divider()
 
                     // URL row
                     HStack {
@@ -391,13 +389,12 @@ private struct KeePassXCEntryDetailView: View {
                         .controlSize(.small)
                         .disabled(activeEntry.url.isEmpty)
                     }
-                    .padding(.horizontal, Theme.Spacing.lg)
-                    .padding(.vertical, Theme.Spacing.xs)
+                    .padding(.vertical, Theme.Spacing.sm)
 
                     if !activeEntry.notes.isEmpty {
-                        Divider().padding(.horizontal, Theme.Spacing.lg)
+                        Divider()
 
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                             Text(String(localized: "Notes"))
                                 .font(.caption.weight(.medium))
                                 .foregroundStyle(.secondary)
@@ -406,10 +403,10 @@ private struct KeePassXCEntryDetailView: View {
                                 .textSelection(.enabled)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, Theme.Spacing.lg)
-                        .padding(.vertical, Theme.Spacing.xs)
+                        .padding(.vertical, Theme.Spacing.sm)
                     }
                 }
+                .padding(.horizontal, Theme.Spacing.lg)
                 .padding(.vertical, Theme.Spacing.md)
             }
 
@@ -441,13 +438,13 @@ private struct ShortcutBadge: View {
     let label: String
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: Theme.Spacing.xs) {
             Text(shortcut)
                 .font(.caption2.monospaced().weight(.semibold))
-                .padding(.horizontal, 4)
-                .padding(.vertical, 2)
+                .padding(.horizontal, Theme.Spacing.xs)
+                .padding(.vertical, Theme.Spacing.xxs)
                 .background(Color.primary.opacity(0.08))
-                .clipShape(RoundedRectangle(cornerRadius: 4))
+                .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.glyph * 2))
             Text(label)
                 .font(.caption2)
                 .foregroundStyle(.secondary)

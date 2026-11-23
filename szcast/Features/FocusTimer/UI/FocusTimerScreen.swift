@@ -140,8 +140,8 @@ struct FocusTimerScreen: PaletteScreen {
                         Spacer()
                         Text(statusDescription)
                             .font(.caption)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, Theme.Spacing.sm)
+                            .padding(.vertical, Theme.Spacing.xxs)
                             .background(statusBadgeBackground)
                             .clipShape(Capsule())
                     }

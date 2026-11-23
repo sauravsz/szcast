@@ -794,14 +794,14 @@ struct RootPaletteView: View {
                         vm.launcherCategoryFilter = filter
                         land(restoringSelection: false)
                     } label: {
-                        HStack(spacing: 3) {
+                        HStack(spacing: metrics.spacing.xxs) {
                             Image(systemName: filter.sfSymbol)
                                 .font(.system(size: 9, weight: .semibold))
                             Text(filter.rawValue)
                                 .font(.system(size: 11, weight: isSelected ? .semibold : .regular))
                         }
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 3)
+                        .padding(.horizontal, metrics.spacing.sm)
+                        .padding(.vertical, metrics.spacing.xxs)
                         .background(
                             Capsule().fill(isSelected ? Color.accentColor.opacity(0.18) : Theme.Colors.controlSurface)
                         )
@@ -814,7 +814,7 @@ struct RootPaletteView: View {
                 }
             }
             .padding(.horizontal, metrics.spacing.md)
-            .padding(.vertical, 4)
+            .padding(.vertical, metrics.spacing.xs)
         }
     }
 

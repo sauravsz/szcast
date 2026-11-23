@@ -19,7 +19,7 @@ struct SettingsTabIcon: View {
                 height: Theme.Size.settingsSidebarGlyph * scale
             )
             .foregroundStyle(tint)
-            .padding(Theme.Spacing.xs * scale)
+            .padding((Theme.Spacing.xs * scale).rounded())
             .background(
                 tint.opacity(0.1),
                 in: RoundedRectangle(
@@ -142,7 +142,7 @@ struct SettingsScopeRow: View {
                 .accessibilityLabel("Remove \(scope)")
             }
         } label: {
-            HStack {
+            HStack(spacing: Theme.Spacing.md) {
                 Image(nsImage: IconCache.icon(forFile: path))
                     .resizable()
                     .renderingMode(.original)
@@ -268,7 +268,8 @@ private struct SettingsEditorTextArea: ViewModifier {
     func body(content: Content) -> some View {
         content
             .scrollContentBackground(.hidden)
-            .padding(Theme.Spacing.sm)
+            .padding(.horizontal, Theme.Spacing.lg)
+            .padding(.vertical, Theme.Spacing.sm)
             .frame(height: height)
             .background(
                 RoundedRectangle(cornerRadius: Theme.Radius.row, style: .continuous)
@@ -369,6 +370,7 @@ struct SettingsFilterField: View {
                 .accessibilityLabel("Clear search")
             }
         }
+        .padding(.vertical, Theme.Spacing.xxs)
         .contentShape(.rect)
         .onTapGesture { focused = true }
     }

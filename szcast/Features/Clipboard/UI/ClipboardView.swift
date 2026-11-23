@@ -301,7 +301,7 @@ struct ClipboardPreview: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 ClipboardInfoSection(item: item, imageURL: store.imageURL(for: item))
             }
-            .padding(.horizontal, 12)
+            .padding(.horizontal, metrics.spacing.xl)
         } else {
             Color.clear
         }
@@ -398,6 +398,7 @@ private struct ClipboardInfoSection: View {
             }
         }
         .padding(.top, metrics.spacing.xl)
+        .padding(.bottom, metrics.spacing.md)
         .task(id: item.id) { await loadDetails() }
     }
 

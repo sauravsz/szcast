@@ -195,6 +195,7 @@ private struct AIChatComposer: View {
                         }
                     }
                 }
+                .padding(.horizontal, Theme.Spacing.sm)
             }
             .scrollIndicators(.never)
         }

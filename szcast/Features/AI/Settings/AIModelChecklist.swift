@@ -37,7 +37,7 @@ struct AIModelChecklist: NSViewRepresentable {
         table.dataSource = context.coordinator
         table.delegate = context.coordinator
         context.coordinator.table = table
-        return ChecklistContainer(table: table, overhang: Self.rowPadding)
+        return ChecklistContainer(table: table)
     }
 
     func updateNSView(_ container: NSView, context: Context) {
@@ -46,7 +46,7 @@ struct AIModelChecklist: NSViewRepresentable {
 
     func sizeThatFits(_ proposal: ProposedViewSize, nsView: NSView, context: Context) -> CGSize? {
         let rows = CGFloat(items.count) * Self.rowHeight
-        return CGSize(width: proposal.width ?? nsView.frame.width, height: rows - 2 * Self.rowPadding)
+        return CGSize(width: proposal.width ?? nsView.frame.width, height: rows)
     }
 
     @MainActor
@@ -90,14 +90,12 @@ struct AIModelChecklist: NSViewRepresentable {
     }
 }
 
-/// Hangs the table into the `Form` row's padding: negative padding doesn't move an AppKit view.
+/// Hosts the table view directly within the bounds assigned by SwiftUI.
 private final class ChecklistContainer: NSView {
     private let table: NSTableView
-    private let overhang: CGFloat
 
-    init(table: NSTableView, overhang: CGFloat) {
+    init(table: NSTableView) {
         self.table = table
-        self.overhang = overhang
         super.init(frame: .zero)
         addSubview(table)
     }
@@ -109,7 +107,7 @@ private final class ChecklistContainer: NSView {
 
     override func setFrameSize(_ newSize: NSSize) {
         super.setFrameSize(newSize)
-        table.frame = bounds.insetBy(dx: 0, dy: -overhang)
+        table.frame = bounds
     }
 }
 

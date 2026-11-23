@@ -82,6 +82,7 @@ struct WeatherCardView: View {
                         }
                     }
                 }
+                .fixedSize(horizontal: true, vertical: false)
             }
         }
         .padding(.horizontal, metrics.spacing.xl)

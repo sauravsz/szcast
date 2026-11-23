@@ -16,7 +16,7 @@ struct ExtensionDetailBody: View {
         HStack(spacing: 0) {
             markdownPane(trailing: stacksMetadata ? metadata : nil)
             if !stacksMetadata, let metadata {
-                Rectangle().fill(Theme.Colors.separator).frame(width: 1)
+                Rectangle().fill(Theme.Colors.separator).frame(width: Theme.Size.hairline)
                 metadataPane(metadata)
             }
         }
@@ -114,7 +114,7 @@ struct ExtensionMetadataView: View {
                         ExtensionTagListView(tags: child.children, assetsPath: assetsPath)
                     }
                 case "Detail.Metadata.Separator":
-                    Rectangle().fill(Theme.Colors.separator).frame(height: 1)
+                    Rectangle().fill(Theme.Colors.separator).frame(height: Theme.Size.hairline)
                 default:
                     EmptyView()
                 }
@@ -303,7 +303,7 @@ struct ExtensionMarkdownView: View {
                     )
                     .hideNativeScrollers()
                 case .rule:
-                    Rectangle().fill(Theme.Colors.separator).frame(height: 1)
+                    Rectangle().fill(Theme.Colors.separator).frame(height: Theme.Size.hairline)
                 case .image(let url):
                     ExtensionMarkdownImage(url: url)
                 case .table(let rows):
@@ -312,7 +312,8 @@ struct ExtensionMarkdownView: View {
                             GridRow {
                                 ForEach(rows[r].indices, id: \.self) { c in
                                     Text(inline(rows[r][c])).fontWeight(r == 0 ? .semibold : nil)
-                                        .padding(.vertical, metrics.spacing.lg)
+                                        .padding(.vertical, metrics.spacing.md)
+                                        .padding(.horizontal, metrics.spacing.md)
                                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                                         .background(r == 0 ? ExtensionColors.detailCardFill : .clear)
                                         .border(Theme.Colors.separator, width: 0.5)

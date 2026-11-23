@@ -45,9 +45,12 @@ struct AppleShortcutsSettingsView: View {
                 entries: entries, query: query, isEnabled: true,
                 emptyMessage: LocalizedStringResource(
                     "apple-shortcuts-empty", defaultValue: "Nothing here yet."))
-            Button("Open Shortcuts") { core.appleShortcutCoordinator.openShortcutsApp() }
         } header: {
             SettingsSectionHeader(.appleShortcutsShortcuts)
+        }
+
+        Section {
+            Button("Open Shortcuts") { core.appleShortcutCoordinator.openShortcutsApp() }
         }
     }
 }

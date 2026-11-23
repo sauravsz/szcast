@@ -191,6 +191,7 @@ private struct ChatSidebarRow<Title: View>: View {
                     .accessibilityLabel("Pinned")
             }
         }
+        .padding(.horizontal, Theme.Spacing.lg)
         // The whole cell, so the pointer never crosses a gap where no row is hovered.
         .frame(maxHeight: .infinity)
         .listRowInsets(EdgeInsets())

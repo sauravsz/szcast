@@ -172,7 +172,7 @@ struct ClipboardScreen: PaletteScreen {
                 .frame(width: metrics.size.clipboardListWidth)
                 Rectangle()
                     .fill(Theme.Colors.separator)
-                    .frame(width: 1)
+                    .frame(width: Theme.Size.hairline)
                 ClipboardPreview(item: selected)
             }
         }

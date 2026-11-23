@@ -33,6 +33,32 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - **File Search Folder Matching & Hidden Files (`99d1d17a`)**: Enabled multi-term query matching through parent directory names, agent worktree ignore patterns (`.claude/worktrees`, `conductor/workspaces`), and added `includeHiddenFiles` setting in `AppSettings` with Settings search catalog synchronization.
   - Skipped out-of-scope commits: Dictation shortcut removal (violates single-shot and Fn/Globe invariants), iCloud sync (requires Developer ID), out-of-process Settings XPC architecture shift, and monochrome icon styling.
 
+- **Exhaustive UI Padding, Spacing & Layout Margin Audit & Full Remediation**:
+  - Conducted full automated & structural design system audit across all 491 presentation and interaction files in szcast.
+  - Identified 6 Critical clipping/overlap defects, 77 High visual alignment issues, 137 Medium token drifts, and 144 Low style nits; 127 files conform cleanly to `Theme` tokens.
+  - **Phase 1 Critical Remediation**:
+    - **`AIModelChecklist.swift` & `AIProvidersPanel.swift`**: Removed negative 9pt bounds overhang (`bounds.insetBy(dx: 0, dy: -overhang)`) in `ChecklistContainer` that was bleeding into `SettingsFilterField` and clipping bottom checkboxes; mapped `table.frame = bounds` directly with exact `sizeThatFits` row calculation.
+    - **`AIChatSidebarView.swift`**: Added `.padding(.horizontal, Theme.Spacing.lg)` inside `ChatSidebarRow`, preventing zero-inset conversation titles and pin icons from colliding with window edges while keeping full-bleed hover highlights.
+    - **`DictationPanel.swift`**: Expanded SwiftUI `DictationPill` maxWidth from 192pt up to 360pt and implemented dynamic NSPanel width calculations in `DictationPanelController.show()` and `updatePreviewText()`, resolving command mode text truncation (`Rewrite: ...`).
+    - **`AppleShortcutsSettingsView.swift`**: Isolated `Button("Open Shortcuts")` into its own discrete Form `Section`, eliminating table bottom overhang bleeding over the action button.
+    - **`ExtensionDetailView.swift`**: Added `.padding(.horizontal, metrics.spacing.md)` to Markdown table cells, giving tabular numbers and text proper breathing room against cell borders.
+  - **Phase 2 High Visual Alignment Remediation**:
+    - **`RootPaletteView.swift`**: Migrated launcher category scope chips (`All`, `Apps`, `Commands`, etc.) to `metrics.spacing.xxs`, `metrics.spacing.sm`, `metrics.spacing.xs`.
+    - **`AIChatDetailView.swift`**: Added `.padding(.horizontal, Theme.Spacing.sm)` on the composer attachment chips container, aligning staged images/files directly over composer input.
+    - **`FocusTimerScreen.swift`**: Converted status chips from hardcoded 6pt/2pt to `Theme.Spacing.sm` and `Theme.Spacing.xxs`.
+    - **`WeatherCardView.swift`**: Added `.fixedSize(horizontal: true, vertical: false)` on 4-hour forecast strip preventing column compression.
+    - **`ChangelogSettingsView.swift`**: Standardized scroll insets and card paddings to `Theme.Spacing.xxl`, `Theme.Spacing.xl`, and `Theme.Spacing.sm`.
+    - **`ClipboardView.swift`**: Replaced raw `12` with `metrics.spacing.xl` and added `.padding(.bottom, metrics.spacing.md)` on info pill row.
+  - **Phase 3 Settings & Dashboard Harmonization**:
+    - **`DictationInsightsDashboardView.swift`**: Standardized card container padding and metrics from `14pt` / `16pt` to `Theme.Spacing.xl` (12pt), `Theme.Spacing.md`, and `Theme.Spacing.xxl`.
+    - **`QuicklinksSettingsView.swift`**: Added `header: { SettingsSectionHeader(.quicklinksQuicklinks) }` to `library` section, restoring standard Form section header spacing above the filter field.
+    - **`KeePassXCScreen.swift`**: Constrained `KeePassXCSetupView` form width with `maxWidth: 420` preventing horizontal window stretching; unified `KeePassXCEntryDetailView` `ScrollView` by eliminating duplicate per-row horizontal padding and replacing double-padding with container insets and clean row spacing; tokenized `ShortcutBadge` geometry.
+    - **`SettingsComponents.swift`**: Aligned `SettingsEditorTextArea` horizontal padding to `Theme.Spacing.lg` matching single-line text fields; rounded `SettingsTabIcon` scaled padding; added explicit spacing to `SettingsScopeRow`; added vertical breathing room to `SettingsFilterField`.
+  - **Phase 4 Token & Hairline Hygiene**:
+    - Converted literal `Rectangle().frame(height: 1)` and `.frame(width: 1)` dividers to `Theme.Size.hairline` across `MeetingDetailsView.swift`, `ExtensionDetailView.swift`, `ExtensionListView.swift`, `ClipboardScreen.swift`, `DictionaryEntryView.swift`, and `OnboardingCard.swift`.
+    - Cleaned magic numbers in `CleanKeyboardSettingsView.swift`, `EnteAuthSettingsView.swift`, and `ExtensionsSettingsView.swift`.
+  - Verified across compiler diagnostics, `node Scripts/check-settings-search.js` (0 errors), and full test suite harness execution.
+
 - **Full Codebase Audit & Hardening**:
   - **Accessibility Type Safety**: Added `CFGetTypeID(focusedElement) == AXUIElementGetTypeID()` verification in `AgenticToolService.swift` preventing crashes on non-AXUIElement system objects.
   - **Calculator UTF-8 Boundary Parsing**: Refactored `CalcFormatter.swift` grouping to Unicode scalar/character boundaries, eliminating byte-slicing crashes and forced unwrap traps on non-ASCII numerals.

@@ -75,7 +75,7 @@ struct MeetingDetailsView: View {
                 .foregroundStyle(Theme.Colors.textTertiary)
             Rectangle()
                 .fill(Theme.Colors.separator)
-                .frame(height: 1)
+                .frame(height: Theme.Size.hairline)
         }
         .padding(.top, metrics.spacing.xl)
     }

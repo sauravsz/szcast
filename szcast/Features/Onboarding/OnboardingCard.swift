@@ -13,7 +13,7 @@ struct OnboardingCard<Content: View>: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-                    .strokeBorder(Theme.Colors.cardStroke, lineWidth: 1)
+                    .strokeBorder(Theme.Colors.cardStroke, lineWidth: Theme.Size.hairline)
             )
     }
 }
@@ -23,7 +23,7 @@ struct OnboardingDivider: View {
     var body: some View {
         Rectangle()
             .fill(Theme.Colors.cardStroke)
-            .frame(height: 1)
+            .frame(height: Theme.Size.hairline)
             .padding(.leading, Theme.Spacing.xl + Theme.Size.settingsRowIcon + Theme.Spacing.lg)
     }
 }

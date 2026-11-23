@@ -140,7 +140,7 @@ struct EnteAuthSettingsView: View {
                     .buttonStyle(.borderedProminent)
                 }
             }
-            .padding(16)
+            .padding(Theme.Spacing.xl)
         }
     }
 

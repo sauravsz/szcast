@@ -154,7 +154,13 @@ private struct DictationPanelView: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .frame(minWidth: 160, maxWidth: state.previewText.isEmpty ? 192 : 360, minHeight: 36, maxHeight: 36)
+        .frame(
+            minWidth: 160,
+            maxWidth: (state.commandModeText != nil && !state.commandModeText!.isEmpty)
+                ? 360
+                : (state.previewText.isEmpty ? 192 : 360),
+            minHeight: 36, maxHeight: 36
+        )
         .glassEffect(.regular, in: .capsule)
         .overlay(
             Capsule()
@@ -200,11 +206,16 @@ final class DictationPanelController {
             ?? DictationPanel(
                 content: NSHostingView(rootView: DictationPanelView(state: state).motionScope()))
         self.panel = panel
-        let pillSize = CGSize(width: 192, height: 36)
-        panel.setFrameOrigin(
-            NSPoint(
+        let isCommand = state.commandModeText != nil && !(state.commandModeText?.isEmpty ?? true)
+        let pillWidth: CGFloat = isCommand ? min(360, max(240, CGFloat((state.commandModeText?.count ?? 0) * 7 + 110))) : 192
+        let pillSize = CGSize(width: pillWidth, height: 36)
+        panel.setFrame(
+            NSRect(
                 x: frame.midX - pillSize.width / 2,
-                y: frame.minY + frame.height * 0.08 - pillSize.height / 2))
+                y: frame.minY + frame.height * 0.08 - pillSize.height / 2,
+                width: pillSize.width,
+                height: pillSize.height),
+            display: true)
         state.phase = .listening
         state.levels = [Float](repeating: 0, count: DictationSpectrum.barCount)
         state.previewText = ""
@@ -218,7 +229,15 @@ final class DictationPanelController {
     func updatePreviewText(_ text: String) {
         state.previewText = text
         guard let panel, let screen = panel.screen ?? NSScreen.main else { return }
-        let targetWidth: CGFloat = text.isEmpty ? 192 : min(360, max(192, CGFloat(text.count * 7 + 85)))
+        let isCommand = state.commandModeText != nil && !(state.commandModeText?.isEmpty ?? true)
+        let targetWidth: CGFloat
+        if isCommand {
+            targetWidth = min(360, max(240, CGFloat((state.commandModeText?.count ?? 0) * 7 + 110)))
+        } else if text.isEmpty {
+            targetWidth = 192
+        } else {
+            targetWidth = min(360, max(192, CGFloat(text.count * 7 + 85)))
+        }
         guard abs(panel.frame.width - targetWidth) > 4 else { return }
         let currentFrame = panel.frame
         let newX = screen.visibleFrame.midX - targetWidth / 2

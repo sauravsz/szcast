@@ -543,8 +543,8 @@ struct ChangelogSettingsView: View {
                     }
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
+            .padding(.horizontal, Theme.Spacing.xxl)
+            .padding(.vertical, Theme.Spacing.xl)
             .frame(maxWidth: .infinity, alignment: .topLeading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -734,18 +734,18 @@ struct ChangelogSettingsView: View {
                                 }
                             }
                         }
-                        .padding(.leading, 6)
+                        .padding(.leading, Theme.Spacing.sm)
                     }
                 }
             }
         }
-        .padding(16)
+        .padding(Theme.Spacing.xl)
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .background(Color(nsColor: .controlBackgroundColor).opacity(0.85))
         .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+                .stroke(Color.primary.opacity(0.08), lineWidth: Theme.Size.hairline)
         )
     }
 

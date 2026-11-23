@@ -561,7 +561,7 @@ private struct SettingsCardRow<Control: View>: View {
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, Theme.Spacing.xs)
-                            .padding(.vertical, 1)
+                            .padding(.vertical, Theme.Size.hairline)
                             .background(Theme.Colors.controlSurface, in: .capsule)
                     }
                 }
