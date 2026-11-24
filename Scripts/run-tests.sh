@@ -490,13 +490,16 @@ run callout-test          Szcast/Platform/Appearance.swift \
                            Szcast/DesignSystem/InterfaceMetrics.swift \
                            Szcast/Features/HotKeys/UI/CalloutPlacement.swift
 run icon-cache-test        Szcast/Platform/Appearance.swift \
+                           Szcast/Platform/Images/SystemIconTheme.swift \
                            Szcast/Platform/Images/RaycastIconTheme.swift \
                            Szcast/Platform/Images/IconCache.swift
 run entry-icon-test        Szcast/Platform/Appearance.swift \
+                           Szcast/Platform/Images/SystemIconTheme.swift \
                            Szcast/Platform/Images/RaycastIconTheme.swift \
                            Szcast/Platform/Images/IconCache.swift \
                            Szcast/Platform/Images/FileIconStamp.swift
 run ext-icon-test          Szcast/Platform/Appearance.swift \
+                           Szcast/Platform/Images/SystemIconTheme.swift \
                            Szcast/Platform/AppDisplayName.swift \
                            Szcast/Platform/Images/RaycastIconTheme.swift \
                            Szcast/Platform/Images/IconCache.swift \
@@ -668,6 +671,7 @@ run slow snippets-test     $L/SearchRelevance.swift \
                            Szcast/Platform/AccessibilityText.swift \
                            Szcast/Platform/AppPaths.swift \
                            Szcast/Platform/Appearance.swift \
+                           Szcast/Platform/Images/SystemIconTheme.swift \
                            Szcast/Platform/Images/RaycastIconTheme.swift \
                            Szcast/Platform/Images/ChatGPTIconProvider.swift \
                            Szcast/Platform/Images/IconCache.swift \
@@ -843,6 +847,7 @@ run slow ext-test          -parse-as-library \
                            $E/UI/ExtensionMenuBarImage.swift \
                            Szcast/Platform/Appearance.swift \
                            Szcast/Platform/AppDisplayName.swift \
+                           Szcast/Platform/Images/SystemIconTheme.swift \
                            Szcast/Platform/Images/RaycastIconTheme.swift \
                            Szcast/Platform/Images/IconCache.swift \
                            Szcast/DesignSystem/PaletteThemePreset.swift Szcast/DesignSystem/Theme.swift \

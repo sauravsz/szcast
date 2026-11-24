@@ -412,7 +412,7 @@ struct LauncherScreen: PaletteScreen {
     }
 
     func perform(_ shortcut: PaletteShortcut, at selection: Int) -> Bool {
-        if shortcut == .toggleFavorite { return toggleFavorite(at: selection) }
+        if shortcut == .toggleFavorite || shortcut == .pin { return toggleFavorite(at: selection) }
         if let file = file(at: selection),
             FileSearchActionsMenu.perform(shortcut, result: file, core: core)
         {
@@ -423,26 +423,104 @@ struct LauncherScreen: PaletteScreen {
         case .quit, .forceQuit: return quit(at: selection, force: shortcut == .forceQuit)
         case .restart: return restart(at: selection)
         case .edit: return editItem(at: selection)
-        case .copyPath: return copyQuicklink(at: selection)
-        case .copyFile: return copyDeepLink(at: selection)
+        case .copyPath: return copyPath(at: selection)
+        case .copyName: return copyName(at: selection)
+        case .copyFile: return copyFile(at: selection)
         case .favoriteSlot(let index): return launchSlot(at: index)
         case .copyCalculation: return copyCalculation(at: selection)
         case .recordHotKey: return recordHotKey(at: selection)
         case .setAlias: return setAlias(at: selection)
         case .configureCommand: return configure(at: selection)
-        case .openInApp, .showDetails:
-            guard let meeting = meeting(at: selection) else { return false }
-            return MeetingActionsMenu.perform(shortcut, meeting: meeting, core: core)
+        case .openInApp: return openWith(at: selection)
+        case .showDetails: return showInfo(at: selection)
+        case .showInFinder: return showInFinder(at: selection)
         default: return false
         }
     }
 
-    private func copyQuicklink(at selection: Int) -> Bool {
-        guard let app = entry(at: selection), app.kind == .quicklink,
-            let quicklink = quicklink(for: app)
-        else { return false }
-        core.quicklinkCoordinator.copyQuicklink(id: quicklink.id)
-        return true
+    private func copyPath(at selection: Int) -> Bool {
+        if let app = entry(at: selection) {
+            if app.kind == .quicklink, let ql = quicklink(for: app) {
+                core.quicklinkCoordinator.copyQuicklink(id: ql.id)
+                return true
+            }
+            Paster.copyPlainText(app.url.path)
+            core.showMessage(String(localized: "Path copied to clipboard"), tone: .neutral)
+            return true
+        }
+        if let file = file(at: selection) {
+            core.fileSearchCoordinator.copyPath(file)
+            return true
+        }
+        return false
+    }
+
+    private func copyName(at selection: Int) -> Bool {
+        if let app = entry(at: selection) {
+            Paster.copyPlainText(app.name)
+            core.showMessage(String(localized: "Copied name"), tone: .neutral)
+            return true
+        }
+        if let file = file(at: selection) {
+            core.fileSearchCoordinator.copyName(file)
+            return true
+        }
+        return false
+    }
+
+    private func copyFile(at selection: Int) -> Bool {
+        if let file = file(at: selection) {
+            core.fileSearchCoordinator.copyFile(file)
+            return true
+        }
+        if let app = entry(at: selection), app.url.isFileURL {
+            PasteboardFiles.write(app.url, to: .general)
+            core.showMessage(String(localized: "Copied file"))
+            return true
+        }
+        return copyDeepLink(at: selection)
+    }
+
+    private func showInfo(at selection: Int) -> Bool {
+        if let meeting = meeting(at: selection) {
+            return MeetingActionsMenu.perform(.showDetails, meeting: meeting, core: core)
+        }
+        if let app = entry(at: selection) {
+            core.launcherCoordinator.showInfo(app)
+            return true
+        }
+        if let file = file(at: selection) {
+            core.fileSearchCoordinator.showInfo(file)
+            return true
+        }
+        return false
+    }
+
+    private func openWith(at selection: Int) -> Bool {
+        if let meeting = meeting(at: selection) {
+            return MeetingActionsMenu.perform(.openInApp, meeting: meeting, core: core)
+        }
+        if let app = entry(at: selection) {
+            core.launcherCoordinator.openWith(app)
+            return true
+        }
+        if let file = file(at: selection) {
+            core.fileSearchCoordinator.openWith(file)
+            return true
+        }
+        return false
+    }
+
+    private func showInFinder(at selection: Int) -> Bool {
+        if let file = file(at: selection) {
+            core.fileSearchCoordinator.showInFinder(file)
+            return true
+        }
+        if let app = entry(at: selection), app.canRevealInFinder {
+            core.launcherCoordinator.showInFinder(app)
+            return true
+        }
+        return false
     }
 
     private func copyDeepLink(at selection: Int) -> Bool {

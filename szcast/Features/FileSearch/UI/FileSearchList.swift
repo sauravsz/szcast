@@ -114,15 +114,12 @@ struct FileSearchRow: View {
                     .truncationMode(.middle)
             }
             Spacer(minLength: 0)
-            if let slot, palette.commandHeld {
-                HStack(spacing: metrics.spacing.xxs) {
-                    KeyCapChip(text: "⌘", style: .outline)
-                    KeyCapChip(text: String(slot), style: .outline)
+            SlotChordReveal(slot: slot) {
+                if showsLocation {
+                    Image(systemName: result.isDirectory ? "folder" : "doc")
+                        .font(metrics.typography.rowTrailing)
+                        .foregroundStyle(.secondary)
                 }
-            } else if showsLocation {
-                Image(systemName: result.isDirectory ? "folder" : "doc")
-                    .font(metrics.typography.rowTrailing)
-                    .foregroundStyle(.secondary)
             }
         }
         .padding(.horizontal, metrics.spacing.md)

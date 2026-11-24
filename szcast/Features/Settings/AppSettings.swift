@@ -231,6 +231,10 @@ final class AppSettings {
         didSet { defaults.set(appearance.rawValue, forKey: Key.appearance.rawValue) }
     }
 
+    var iconStyle: IconStyle {
+        didSet { defaults.set(iconStyle.rawValue, forKey: Key.iconStyle.rawValue) }
+    }
+
     /// Curated native theme preset for the palette and windows.
     var appThemePreset: PaletteThemePreset {
         didSet {
@@ -1128,6 +1132,8 @@ final class AppSettings {
             ?? .navigateBackOrClose
         appearance =
             defaults.string(forKey: Key.appearance.rawValue).flatMap(AppAppearance.init) ?? .system
+        iconStyle =
+            defaults.string(forKey: Key.iconStyle.rawValue).flatMap(IconStyle.init) ?? .system
         let storedPreset =
             defaults.string(forKey: Key.appThemePreset.rawValue).flatMap(PaletteThemePreset.init) ?? .szcastDark
         appThemePreset = storedPreset

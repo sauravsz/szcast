@@ -8,11 +8,11 @@ enum PaletteShortcut: Equatable {
     case delete
     /// ⌃⇧X.
     case deleteAll
-    /// ⇧⌘C.
+    /// ⌘C.
     case copyFile
     /// ⌥⌘C.
     case copyName
-    /// ⌃⌘C.
+    /// ⇧⌘C or ⌃⌘C.
     case copyPath
     /// ⇧⌘T.
     case copyText
@@ -72,9 +72,10 @@ enum PaletteShortcut: Equatable {
     ) -> Self? {
         if isDeleteKey { return command ? .commandDelete : nil }
         if command, matches("c") {
-            if shift { return .copyFile }
+            if shift { return .copyPath }
             if option { return .copyName }
-            return control ? .copyPath : nil
+            if control { return .copyPath }
+            return .copyFile
         }
         if command, shift, matches("v") { return .pasteFile }
         if command, shift, matches("t") { return .copyText }

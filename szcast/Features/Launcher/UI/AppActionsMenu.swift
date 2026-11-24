@@ -288,9 +288,35 @@ enum AppActionsMenu {
         if app.canRevealInFinder {
             items.append(
                 PopoverMenuItem(
+                    title: String(localized: "Open With…"), systemImage: "arrow.up.forward.app", shortcut: "⌘O"
+                ) {
+                    core.launcherCoordinator.openWith(app)
+                })
+            items.append(
+                PopoverMenuItem(
                     title: String(localized: "Show in Finder"), systemImage: "folder", shortcut: "⌘↵"
                 ) {
                     core.launcherCoordinator.showInFinder(app)
+                })
+            items.append(
+                PopoverMenuItem(
+                    title: String(localized: "Show Info in Finder"), systemImage: "info.circle", shortcut: "⌘I"
+                ) {
+                    core.launcherCoordinator.showInfo(app)
+                })
+            items.append(
+                PopoverMenuItem(
+                    title: String(localized: "Copy File"), systemImage: "doc.on.clipboard", shortcut: "⌘C"
+                ) {
+                    PasteboardFiles.write(app.url, to: .general)
+                    core.showMessage(String(localized: "Copied file"))
+                })
+            items.append(
+                PopoverMenuItem(
+                    title: String(localized: "Copy Path"), systemImage: "doc.on.clipboard", shortcut: "⇧⌘C"
+                ) {
+                    Paster.copyPlainText(app.url.path)
+                    core.showMessage(String(localized: "Path copied to clipboard"), tone: .neutral)
                 })
         }
         return items

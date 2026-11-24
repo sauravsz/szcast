@@ -10,8 +10,7 @@ final class QuickActionPanelState {
         case running
         case finished
         case failed(String)
-        /// The pair is supported but not downloaded; the reader fetches it in System Settings.
-        case needsLanguageDownload
+        case needsLanguageDownload(language: String)
     }
 
     let action: QuickAction
@@ -63,8 +62,8 @@ final class QuickActionPanelState {
         phase = .failed(message)
     }
 
-    func requireLanguageDownload() {
-        phase = .needsLanguageDownload
+    func requireLanguageDownload(_ language: String) {
+        phase = .needsLanguageDownload(language: language)
     }
 
     func togglePin() {

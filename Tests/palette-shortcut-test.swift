@@ -39,12 +39,12 @@ struct PaletteShortcutTests {
         expect(resolve(nil, delete: true), nil, "a bare backspace stays with the field")
         expect(resolve(nil, control: true, delete: true), nil, "⌃⌫ is no row chord")
 
-        expect(resolve("c", command: true, shift: true), .copyFile, "⇧⌘C copies the file")
+        expect(resolve("c", command: true, shift: true), .copyPath, "⇧⌘C copies the path")
         expect(resolve("c", command: true, option: true), .copyName, "⌥⌘C copies the name")
         expect(resolve("c", command: true, control: true), .copyPath, "⌃⌘C copies the path")
-        expect(resolve("c", command: true), nil, "bare ⌘C stays with the search field")
+        expect(resolve("c", command: true), .copyFile, "bare ⌘C copies the file")
         expect(
-            resolve("c", command: true, shift: true, option: true, control: true), .copyFile,
+            resolve("c", command: true, shift: true, option: true, control: true), .copyPath,
             "Shift is read first when several second modifiers are held")
         expect(
             resolve("c", command: true, option: true, control: true), .copyName,

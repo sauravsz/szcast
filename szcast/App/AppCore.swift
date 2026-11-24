@@ -321,6 +321,7 @@ final class AppCore {
             dictationAudioDucker.recover()
             applyAppearance()
             applyMotion()
+            applyIconStyle()
             observeEffectiveAppearance()
             pinnedEmoji.onPersistenceFailure = { [weak self] in
                 self?.showMessage(String(localized: "Couldn't save Emoji & Symbols pins"), tone: .danger)
@@ -938,6 +939,7 @@ final class AppCore {
             { _ = $0.snippetsShowInLauncher },
             reproject: { $0.snippetCoordinator.applySnippetsLauncherPresence() })
         track({ _ = $0.appearance }, reproject: { $0.applyAppearance() })
+        track({ _ = $0.iconStyle }, reproject: { $0.applyIconStyle() })
         track({ _ = $0.animationsEnabled }, reproject: { $0.applyMotion() })
         track({ _ = $0.language }, reproject: { $0.offerLanguageRelaunch() })
         track({ _ = $0.interfaceSize }, reproject: { $0.windowController.applyInterfaceSize() })
@@ -985,6 +987,10 @@ final class AppCore {
     /// `.system` resolves to `nil`, so AppKit follows macOS with nothing polling.
     private func applyAppearance() {
         NSApp.appearance = settings.appearance.nsAppearance
+    }
+
+    private func applyIconStyle() {
+        IconCache.style.tilesFollowSystem = settings.iconStyle == .system
     }
 
     /// A built panel keeps the behaviour it was made with, so the live ones are re-pointed.

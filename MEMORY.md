@@ -33,6 +33,18 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - **File Search Folder Matching & Hidden Files (`99d1d17a`)**: Enabled multi-term query matching through parent directory names, agent worktree ignore patterns (`.claude/worktrees`, `conductor/workspaces`), and added `includeHiddenFiles` setting in `AppSettings` with Settings search catalog synchronization.
   - Skipped out-of-scope commits: Dictation shortcut removal (violates single-shot and Fn/Globe invariants), iCloud sync (requires Developer ID), out-of-process Settings XPC architecture shift, and monochrome icon styling.
 
+- **Raycast-Parity ⌘K Action Menu & Upstream Ports (Commits 1–7)**:
+  - **⌘K Action Menu Overhaul & Bottom Bar Cleanup**: Cleared launcher shortcut strip from bottom bar (`Finder`, `Info`, `Pin` moved into `⌘K` popover actions). Added `Open With…` (`⌘O`) opening native `NSOpenPanel` across applications and files.
+  - **Copy Shortcut Remapping**: Remapped file copy shortcuts across `PaletteShortcut.swift`, `FileSearchScreen.swift`, `AppActionsMenu.swift`, and `LauncherScreen.swift` so `⌘C` copies the file directly (`Paster.copyFile` / `PasteboardFiles.write`) and `⇧⌘C` copies the file path (`.copyPath`). Bare `⌘C` with text selection in the search field preserves standard NSTextView copying.
+  - **Commit 1 (`ce2be6ec`)**: In `SzcastApp.swift`, `⌘,` triggers `launcherCoordinator.runCommand(.settings)` so the palette cleanly closes before opening Settings.
+  - **Commit 2 (`9d19a6e5`)**: Stacked thirds vertically on portrait/vertical displays in Window Management (`WindowPlacementEngine.swift`, `WindowActionMemory.swift`, `WindowMover.swift`, `docs/features/window-management.md`, `Tests/window-command-test.swift`).
+  - **Commit 3 (`970bf4e4`)**: Added `SlotChordReveal.swift` sliding ⌘-digit chords into rows without premature hold reveal; `PalettePanel.swift` and `PaletteState.swift` cancel reveal on chord key press; emoji grid arrow chord isolation.
+  - **Commit 4 (`6c3d3b83`)**: Weighted system languages 20x in `TextTranslator.swift` to prevent single-word recognizer misidentifications, and explicitly named the missing translation language in `QuickActionCoordinator.swift`, `QuickActionPanelState.swift`, and `QuickActionResultView.swift`.
+  - **Commit 5 (`b11b060d`)**: Added `IconStyle.swift` and `SystemIconTheme.swift` with dynamic system appearance observing, backup coverage in `SettingsBackup.swift`, and settings schema integration.
+  - **Commit 6 (`a18de2a8`)**: Updated `docs/features/raycast-import.md` with Raycast 2.0 encrypted export passphrase guidance.
+  - **Commit 7 (`e139ed4f`)**: Updated tagline in `AboutView.swift` and `Localizable.xcstrings` to "A native macOS launcher built for productivity. Fast, lightweight, and open source."
+  - **Verification**: Debug build succeeded with zero errors (`xcodebuild -scheme Szcast`), `check-settings-search.js` passed with 0 errors, and all 134 test harnesses passed in `Scripts/run-tests.sh`.
+
 - **Settings Typography Controls (v1.1.6)**:
   - Added configurable title (`settingsRowTitleFontSize`, default: 13pt) and subtitle (`settingsRowSubtitleFontSize`, default: 11pt) font sizes for Settings panes in General -> Appearance.
   - Bound `SettingsRowTitle`, `SettingsSectionHeader`, `SettingsRow`, `SettingsFeatureToggleLabel`, `SettingsDetailView`, and `ExtensionsSettingsView` to dynamic settings font size properties.

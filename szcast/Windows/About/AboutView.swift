@@ -83,7 +83,7 @@ struct AboutView: View {
                 .font(.caption)
             }
 
-            Text("A native macOS launcher for everyday productivity. Lightweight and open source.")
+            Text("A native macOS launcher built for productivity. Fast, lightweight, and open source.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
         }

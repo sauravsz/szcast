@@ -410,6 +410,30 @@ final class LauncherCoordinator {
         AppLauncher.showInFinder(app.url)
     }
 
+    func showInfo(_ app: AppEntry) {
+        paletteCoordinator.hidePalette(restoreFocus: false)
+        Task { await AppLauncher.showInfoInFinder(app.url) }
+    }
+
+    func openWith(_ app: AppEntry) {
+        openWithURL(app.url)
+    }
+
+    func openWithURL(_ url: URL) {
+        paletteCoordinator.hidePalette(restoreFocus: false)
+        let panel = NSOpenPanel()
+        panel.title = String(localized: "Open With…")
+        panel.prompt = String(localized: "Open")
+        panel.allowedContentTypes = [.application]
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        if panel.runModal() == .OK, let appURL = panel.url {
+            NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: NSWorkspace.OpenConfiguration())
+        }
+    }
+
     func argumentValues(for entry: AppEntry) -> [String: String] {
         let palette = core.palette
         switch entry.kind {

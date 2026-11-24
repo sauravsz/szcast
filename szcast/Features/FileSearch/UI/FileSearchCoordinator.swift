@@ -116,6 +116,26 @@ final class FileSearchCoordinator {
         AppLauncher.showInFinder(result.url)
     }
 
+    func showInfo(_ result: FileSearchResult) {
+        paletteCoordinator.hidePalette(restoreFocus: false)
+        Task { await AppLauncher.showInfoInFinder(result.url) }
+    }
+
+    func openWith(_ result: FileSearchResult) {
+        paletteCoordinator.hidePalette(restoreFocus: false)
+        let panel = NSOpenPanel()
+        panel.title = String(localized: "Open With…")
+        panel.prompt = String(localized: "Open")
+        panel.allowedContentTypes = [.application]
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        if panel.runModal() == .OK, let appURL = panel.url {
+            NSWorkspace.shared.open([result.url], withApplicationAt: appURL, configuration: NSWorkspace.OpenConfiguration())
+        }
+    }
+
     func toggleQuickLook(_ result: FileSearchResult) {
         QuickLookCoordinator.shared.toggle(url: result.url)
     }

@@ -388,17 +388,14 @@ private struct AppRow: View {
                 ExtensionRefreshIndicator(state: refresh)
                     .font(metrics.typography.rowTrailing)
             }
-            if let slot, palette.commandHeld {
-                HStack(spacing: metrics.spacing.xxs) {
-                    KeyCapChip(text: "⌘", style: .outline)
-                    KeyCapChip(text: String(slot), style: .outline)
+            SlotChordReveal(slot: slot) {
+                if app.kind == .meeting {
+                    MeetingEntryContent(entryID: app.id) { MeetingTiming(meeting: $0, now: $1) }
+                } else {
+                    Text(app.kindLabel)
+                        .font(metrics.typography.rowTrailing)
+                        .foregroundStyle(.secondary)
                 }
-            } else if app.kind == .meeting {
-                MeetingEntryContent(entryID: app.id) { MeetingTiming(meeting: $0, now: $1) }
-            } else {
-                Text(app.kindLabel)
-                    .font(metrics.typography.rowTrailing)
-                    .foregroundStyle(.secondary)
             }
         }
         .padding(.horizontal, metrics.spacing.md)
