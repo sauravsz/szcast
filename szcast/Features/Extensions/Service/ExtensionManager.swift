@@ -1,6 +1,31 @@
 import AppKit
 import Foundation
 
+/// In-memory cache of evaluated extension bundles to eliminate redundant disk reads across command runs.
+final class ExtensionBundleCache: @unchecked Sendable {
+    static let shared = ExtensionBundleCache()
+    private var cache: [URL: (mtime: Date, code: String)] = [:]
+    private let lock = NSLock()
+
+    func code(for url: URL) -> String? {
+        let mtime = (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date()
+        lock.lock()
+        defer { lock.unlock() }
+        if let entry = cache[url], entry.mtime == mtime {
+            return entry.code
+        }
+        guard let text = try? String(contentsOf: url, encoding: .utf8) else { return nil }
+        cache[url] = (mtime, text)
+        return text
+    }
+
+    func clear() {
+        lock.lock()
+        defer { lock.unlock() }
+        cache.removeAll()
+    }
+}
+
 enum ExtensionSessionState: Equatable {
     case idle
     case launching
@@ -140,6 +165,7 @@ final class ExtensionManager: ExtensionRuntimeDelegate, ExtensionHostContext {
             restartBackgroundLoop()
         }
         menuBars?.synchronize(found)
+        prewarmRuntimeIfNeeded()
     }
 
     func extensionNamed(_ name: String) -> InstalledExtension? {
@@ -471,9 +497,9 @@ final class ExtensionManager: ExtensionRuntimeDelegate, ExtensionHostContext {
             return
         }
 
-        // Reading a few hundred KB of bundle is IO; keep it off the main actor.
+        // Reading a few hundred KB of bundle is IO; keep it off the main actor with in-memory caching.
         let code = await Task.detached(priority: .userInitiated) {
-            (try? String(contentsOf: bundle, encoding: .utf8)) ?? ""
+            ExtensionBundleCache.shared.code(for: bundle) ?? ""
         }.value
         guard !code.isEmpty else {
             state = .failed(ExtensionLaunchError.notBuilt(command.title).localizedDescription)
@@ -527,6 +553,17 @@ final class ExtensionManager: ExtensionRuntimeDelegate, ExtensionHostContext {
         runtime.shutdown()
         storage.flush()
         resetSessionState()
+        prewarmRuntimeIfNeeded()
+    }
+
+    private func prewarmRuntimeIfNeeded() {
+        guard isEnabled else { return }
+        let runtime = self.runtime
+        Task.detached(priority: .utility) {
+            let support = ExtensionCatalog.supportRoot()
+            try? FileManager.default.createDirectory(at: support, withIntermediateDirectories: true)
+            try? await runtime.boot(config: .current(supportDirectory: support))
+        }
     }
 
     private func resetSessionState() {

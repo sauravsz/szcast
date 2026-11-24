@@ -227,14 +227,31 @@ struct ExtensionManifest: Sendable, Hashable {
         }
     }
 
+    private nonisolated(unsafe) static var manifestCache: [URL: (mtime: Date, manifest: ExtensionManifest)] = [:]
+    private static let manifestCacheLock = NSLock()
+
     static func load(directory: URL) throws -> ExtensionManifest {
         let manifestURL = directory.appendingPathComponent("package.json")
+        let mtime = (try? manifestURL.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate
+        if let mtime {
+            manifestCacheLock.lock()
+            if let cached = manifestCache[manifestURL], cached.mtime == mtime {
+                manifestCacheLock.unlock()
+                return cached.manifest
+            }
+            manifestCacheLock.unlock()
+        }
         guard let data = try? Data(contentsOf: manifestURL) else {
             throw ParseError.unreadable(manifestURL)
         }
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
             let manifest = ExtensionManifest(json: json)
         else { throw ParseError.notAnExtension(directory) }
+        if let mtime {
+            manifestCacheLock.lock()
+            manifestCache[manifestURL] = (mtime, manifest)
+            manifestCacheLock.unlock()
+        }
         return manifest
     }
 

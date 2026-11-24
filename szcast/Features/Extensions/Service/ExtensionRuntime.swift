@@ -19,15 +19,66 @@ protocol ExtensionRuntimeDelegate: AnyObject {
     func runtime(_ runtime: ExtensionRuntime, log level: String, message: String)
 }
 
+/// The dedicated execution queue providing an 8MB stack for JavaScriptCore.
+/// Standard GCD worker threads on macOS default to 512KB stack, which causes deep recursion
+/// and BPE tokenizer table initialization (e.g. gpt-tokenizer) to hit RangeError: Maximum call stack size exceeded.
+final class ExtensionExecutionQueue: @unchecked Sendable {
+    private var runLoop: CFRunLoop!
+    private var thread: Thread!
+    private let ready = DispatchSemaphore(value: 0)
+
+    init(label: String, stackSize: Int = 8 * 1024 * 1024) {
+        let readySemaphore = self.ready
+        self.thread = Thread { [weak self] in
+            self?.runLoop = CFRunLoopGetCurrent()
+            readySemaphore.signal()
+            let port = NSMachPort()
+            RunLoop.current.add(port, forMode: .common)
+            while !Thread.current.isCancelled {
+                RunLoop.current.run(mode: .default, before: Date.distantFuture)
+            }
+        }
+        self.thread.name = label
+        self.thread.stackSize = stackSize
+        self.thread.qualityOfService = .userInitiated
+        self.thread.start()
+        self.ready.wait()
+    }
+
+    func async(_ work: @escaping @Sendable () -> Void) {
+        CFRunLoopPerformBlock(runLoop, CFRunLoopMode.commonModes.rawValue, work)
+        CFRunLoopWakeUp(runLoop)
+    }
+
+    deinit {
+        thread.cancel()
+        if let runLoop { CFRunLoopStop(runLoop) }
+    }
+}
+
 /// The one `JSContext` a command runs in; every touch is on `queue`, only values cross.
 final class ExtensionRuntime: @unchecked Sendable {
-    private let queue: DispatchQueue
+    private let queue: ExtensionExecutionQueue
     private var context: JSContext?
     private var timers: [String: DispatchSourceTimer] = [:]
     private var hostTasks: [String: Task<Void, Never>] = [:]
     private var generation = UUID()
     private var idleWaiters: [CheckedContinuation<Void, Never>] = []
     private let nodeShims = ExtensionNodeShims()
+
+    private nonisolated(unsafe) static var cachedRuntimeSource: (url: URL, source: String)?
+    private static let cacheLock = NSLock()
+
+    private static func loadRuntimeSource(from url: URL) -> String? {
+        cacheLock.lock()
+        defer { cacheLock.unlock() }
+        if let cached = cachedRuntimeSource, cached.url == url {
+            return cached.source
+        }
+        guard let source = try? String(contentsOf: url, encoding: .utf8) else { return nil }
+        cachedRuntimeSource = (url, source)
+        return source
+    }
 
     /// Set once at startup; read on the JS queue, so it is written before the runtime ever boots.
     private nonisolated(unsafe) weak var delegate: ExtensionRuntimeDelegate?
@@ -36,8 +87,7 @@ final class ExtensionRuntime: @unchecked Sendable {
 
     /// `runtimeURL` overrides the bundled runtime; only the harness passes it.
     init(hostAPI: ExtensionHostAPI, runtimeURL: URL? = nil, priority: DispatchQoS = .userInitiated) {
-        queue = DispatchQueue(
-            label: "com.sauravsz.szcast.extensions.js", qos: priority, autoreleaseFrequency: .workItem)
+        queue = ExtensionExecutionQueue(label: "com.sauravsz.szcast.extensions.js")
         self.hostAPI = hostAPI
         self.runtimeOverride = runtimeURL
     }
@@ -82,7 +132,7 @@ final class ExtensionRuntime: @unchecked Sendable {
         guard
             let url = runtimeOverride
                 ?? Bundle.main.url(forResource: "RaycastRuntime.generated", withExtension: "js"),
-            let source = try? String(contentsOf: url, encoding: .utf8)
+            let source = ExtensionRuntime.loadRuntimeSource(from: url)
         else { throw RuntimeError.runtimeResourceMissing }
 
         guard let context = JSContext() else { throw RuntimeError.bootFailed("no JSContext") }
@@ -307,7 +357,7 @@ final class ExtensionRuntime: @unchecked Sendable {
     // MARK: - Timers
 
     private func startTimer(id: String, milliseconds: Double, repeats: Bool) {
-        let timer = DispatchSource.makeTimerSource(queue: queue)
+        let timer = DispatchSource.makeTimerSource(queue: DispatchQueue.global(qos: .userInitiated))
         let interval = max(milliseconds, 0) / 1000
         if repeats {
             timer.schedule(deadline: .now() + interval, repeating: max(interval, 0.001))
@@ -316,9 +366,11 @@ final class ExtensionRuntime: @unchecked Sendable {
         }
         timer.setEventHandler { [weak self] in
             guard let self else { return }
-            if !repeats { self.timers[id] = nil }
-            _ = self.context?.objectForKeyedSubscript("__szcast")?
-                .invokeMethod("fireTimer", withArguments: [id])
+            self.queue.async {
+                if !repeats { self.timers[id] = nil }
+                _ = self.context?.objectForKeyedSubscript("__szcast")?
+                    .invokeMethod("fireTimer", withArguments: [id])
+            }
         }
         timers[id]?.cancel()
         timers[id] = timer
