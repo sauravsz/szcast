@@ -84,3 +84,7 @@ EnteAuth/
 *ente*auth*
 accounts.json
 totp-secrets*
+
+# Vault / Workspace Index Files
+Index.md
+
