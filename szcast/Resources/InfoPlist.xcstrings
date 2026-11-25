@@ -237,6 +237,65 @@
         }
       }
     },
+    "NSAudioCaptureUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "szcast erfasst Systemaudio während Meetings, um alle Teilnehmenden lokal auf deinem Mac zu transkribieren."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "szcast captures system audio during meetings to transcribe all participants on your Mac."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "szcast captura el audio del sistema durante las reuniones para transcribir a todos los participantes en tu Mac."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "szcast capture l’audio système pendant les réunions pour transcrire tous les participants sur votre Mac."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "szcastは会議中のシステムオーディオをキャプチャし、すべての参加者をMac上で文字起こしします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "szcast는 회의 중 시스템 오디오를 캡처하여 Mac에서 모든 참여자의 발화를 텍스트로 변환합니다."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O szcast captura o áudio do sistema durante reuniões para transcrever todos os participantes no seu Mac."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "szcast захватывает системный звук во время встреч для расшифровки всех участников на вашем Mac."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "szcast 在会议期间捕获系统音频，并在你的 Mac 上转录所有与会者的发言。"
+          }
+        }
+      }
+    },
     "NSMicrophoneUsageDescription" : {
       "extractionState" : "manual",
       "localizations" : {

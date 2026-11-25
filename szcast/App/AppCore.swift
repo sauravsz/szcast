@@ -113,6 +113,15 @@ final class AppCore {
         showMessage: { [unowned self] in self.showMessage($0, tone: $1) })
     @ObservationIgnored private(set) lazy var meetingNotetaker = MeetingNotetakerCoordinator(
         settings: settings, models: dictationModels,
+        store: dictationCoordinator.historyStore.store,
+        showMessage: { [unowned self] in self.showMessage($0, tone: $1) })
+    @ObservationIgnored private(set) lazy var transcriptStudio = TranscriptStudioCoordinator(
+        store: dictationCoordinator.historyStore.store,
+        models: dictationModels,
+        settings: settings,
+        dictionaryStore: dictationCoordinator.dictionaryStore,
+        meetingNotetaker: meetingNotetaker,
+        activationPolicy: activationPolicy,
         showMessage: { [unowned self] in self.showMessage($0, tone: $1) })
     @ObservationIgnored private(set) lazy var quicklinkCoordinator = QuicklinkCoordinator(
         store: quicklinks, settings: settings,
@@ -429,10 +438,12 @@ final class AppCore {
             hotKeys.modifierTapMonitor.healthTicker = healthTicker
             snippetListener.healthTicker = healthTicker
 
+            TranscriptJSONMigration.run(into: dictationCoordinator.historyStore.store)
             hotKeys.onTogglePalette = { [weak self] in self?.paletteCoordinator.togglePalette() }
             hotKeys.dictationEnabled = settings.dictationEnabled
             hotKeys.dictationHoldToTalk = settings.dictationMode == .pushToTalk
             hotKeys.onDictationPressed = { [weak self] in self?.dictationCoordinator.pressed() }
+            hotKeys.onDictationSecondaryPressed = { [weak self] in self?.dictationCoordinator.pressedSecondary() }
             hotKeys.onDictationReleased = { [weak self] in self?.dictationCoordinator.released() }
             hotKeys.onDictationCancelled = { [weak self] in self?.dictationCoordinator.cancel() }
             hotKeys.onDictationAddWord = { [weak self] in self?.dictationCoordinator.addSelectedWordToDictionary() }
@@ -637,7 +648,7 @@ final class AppCore {
     func allowsHotKeyAction(_ action: HotKeyAction) -> Bool {
         guard visibility.allowsHotKey(action) else { return false }
         switch action {
-        case .dictation, .dictationAddWord, .dictationPasteLast, .dictationCopyLast:
+        case .dictation, .dictationSecondary, .dictationAddWord, .dictationPasteLast, .dictationCopyLast:
             return settings.dictationEnabled
         case .command(let id): return appIndex.isCommandEnabled(id)
         case .windowCommand, .customWindowSize, .windowLayout, .windowRoom:
@@ -691,7 +702,7 @@ final class AppCore {
             return snippetsStore.record(id: id)?.snippet.name
         case .extensionCommand(let entryID):
             return appIndex.apps.first { $0.kind == .extensionCommand && $0.id == entryID }?.name
-        case .togglePalette, .dictation, .dictationAddWord, .dictationPasteLast, .dictationCopyLast, .command, .systemAction, .windowCommand:
+        case .togglePalette, .dictation, .dictationSecondary, .dictationAddWord, .dictationPasteLast, .dictationCopyLast, .command, .systemAction, .windowCommand:
             return nil
         }
     }

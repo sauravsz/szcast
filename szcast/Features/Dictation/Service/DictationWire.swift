@@ -14,7 +14,7 @@ nonisolated enum DictationWire {
 
     static let sampleRate = 16_000
     static let maximumSamples = sampleRate * 60 * 20
-    static let maximumMessageBytes = 64_000
+    static let maximumMessageBytes = 16_000_000
 
     struct Request: Codable, Sendable {
         let id: UUID
@@ -22,6 +22,32 @@ nonisolated enum DictationWire {
         let directory: URL
         let sampleCount: Int
         let language: String?
+        let useVAD: Bool
+        let vadDirectory: URL?
+        let diarizeSpeakers: Int?
+        let diarizationDirectory: URL?
+
+        init(
+            id: UUID,
+            model: DictationModel,
+            directory: URL,
+            sampleCount: Int,
+            language: String?,
+            useVAD: Bool = false,
+            vadDirectory: URL? = nil,
+            diarizeSpeakers: Int? = nil,
+            diarizationDirectory: URL? = nil
+        ) {
+            self.id = id
+            self.model = model
+            self.directory = directory
+            self.sampleCount = sampleCount
+            self.language = language
+            self.useVAD = useVAD
+            self.vadDirectory = vadDirectory
+            self.diarizeSpeakers = diarizeSpeakers
+            self.diarizationDirectory = diarizationDirectory
+        }
     }
 
     struct Response: Codable, Sendable {
@@ -29,6 +55,22 @@ nonisolated enum DictationWire {
         let id: UUID
         let status: Status
         var text = ""
+        var words: [TranscriptWord] = []
+        var segments: [TranscriptSegment] = []
+
+        init(
+            id: UUID,
+            status: Status,
+            text: String = "",
+            words: [TranscriptWord] = [],
+            segments: [TranscriptSegment] = []
+        ) {
+            self.id = id
+            self.status = status
+            self.text = text
+            self.words = words
+            self.segments = segments
+        }
     }
 
     static func read<Value: Decodable>(_ type: Value.Type, from handle: FileHandle) throws -> Value? {

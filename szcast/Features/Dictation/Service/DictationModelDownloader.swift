@@ -19,6 +19,58 @@ enum DictationModelDownloader {
         protocolClasses: [AnyClass]? = nil,
         onProgress: @escaping @Sendable (Int64, Int64) -> Void = { _, _ in }
     ) async throws {
+        var extraSpecs: [(repository: String, revision: String, components: Set<String>)] = []
+        if model.isQwen {
+            extraSpecs.append((
+                repository: "Qwen/Qwen3-ASR-0.6B",
+                revision: "5eb144179a02acc5e5ba31e748d22b0cf3e303b0",
+                components: ["vocab.json", "merges.txt"]
+            ))
+        }
+        try await downloadRepository(
+            repository: model.repository,
+            revision: model.revision,
+            components: model.isQwen ? model.components : model.requiredFiles,
+            extraManifests: extraSpecs,
+            destination: destination,
+            token: token,
+            baseURL: baseURL,
+            protocolClasses: protocolClasses,
+            onProgress: onProgress
+        )
+    }
+
+    static func download(
+        _ supportModel: DictationSupportModel, destination: URL,
+        token: String? = nil,
+        baseURL: URL = URL(string: "https://huggingface.co/")!,
+        protocolClasses: [AnyClass]? = nil,
+        onProgress: @escaping @Sendable (Int64, Int64) -> Void = { _, _ in }
+    ) async throws {
+        try await downloadRepository(
+            repository: supportModel.repository,
+            revision: supportModel.revision,
+            components: supportModel.requiredFiles,
+            extraManifests: [],
+            destination: destination,
+            token: token,
+            baseURL: baseURL,
+            protocolClasses: protocolClasses,
+            onProgress: onProgress
+        )
+    }
+
+    private static func downloadRepository(
+        repository: String,
+        revision: String,
+        components: Set<String>,
+        extraManifests: [(repository: String, revision: String, components: Set<String>)],
+        destination: URL,
+        token: String? = nil,
+        baseURL: URL = URL(string: "https://huggingface.co/")!,
+        protocolClasses: [AnyClass]? = nil,
+        onProgress: @escaping @Sendable (Int64, Int64) -> Void = { _, _ in }
+    ) async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.urlCache = nil
         configuration.protocolClasses = protocolClasses
@@ -54,20 +106,12 @@ enum DictationModelDownloader {
         try fileManager.createDirectory(at: staging, withIntermediateDirectories: true)
         defer { try? fileManager.removeItem(at: staging) }
         var files = try await manifest(
-            repository: model.repository, revision: model.revision,
-            components: model.components, token: token, baseURL: baseURL, using: session)
-        if model.isQwen {
+            repository: repository, revision: revision,
+            components: components, token: token, baseURL: baseURL, using: session)
+        for extra in extraManifests {
             files += try await manifest(
-                repository: "Qwen/Qwen3-ASR-0.6B",
-                revision: "5eb144179a02acc5e5ba31e748d22b0cf3e303b0",
-                components: ["vocab.json", "merges.txt"],
-                token: token, baseURL: baseURL, using: session)
-        } else if model == .whisperApex {
-            files += try await manifest(
-                repository: "openai/whisper-large-v3-turbo",
-                revision: "main",
-                components: ["vocab.json", "merges.txt"],
-                token: token, baseURL: baseURL, using: session)
+                repository: extra.repository, revision: extra.revision,
+                components: extra.components, token: token, baseURL: baseURL, using: session)
         }
         var total: Int64 = 0
         for (file, _) in files {
@@ -107,8 +151,9 @@ enum DictationModelDownloader {
             .appending(queryItems: [URLQueryItem(name: "recursive", value: "true")])
         let files = try JSONDecoder().decode([File].self, from: try await data(from: tree, token: token, using: session))
             .filter { file in
-                file.type == "file"
-                    && components.contains(file.path.split(separator: "/").first.map(String.init) ?? "")
+                file.type == "file" && components.contains { component in
+                    file.path == component || file.path.hasPrefix(component + "/")
+                }
             }
         guard
             components.allSatisfy({ component in

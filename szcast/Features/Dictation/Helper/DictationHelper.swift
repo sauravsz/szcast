@@ -1,70 +1,4 @@
-import CoreML
 import Foundation
-
-protocol DictationRecognizer {
-    func transcribe(_ samples: [Float], language: String?) throws -> String
-}
-
-extension QwenRecognizer: DictationRecognizer {}
-extension ParakeetRecognizer: DictationRecognizer {
-    func transcribe(_ samples: [Float], language: String?) throws -> String {
-        try transcribe(samples)
-    }
-}
-
-final class SraVaaniRecognizer: DictationRecognizer {
-    private let recognizer: ParakeetRecognizer
-
-    init(directory: URL) throws {
-        recognizer = try ParakeetRecognizer(directory: directory, model: .sravaani)
-    }
-
-    func transcribe(_ samples: [Float], language: String?) throws -> String {
-        try recognizer.transcribe(samples)
-    }
-}
-
-final class SraVaaniLiveRecognizer: DictationRecognizer {
-    private let encoder: MLModel
-    private let decoder: MLModel
-
-    init(directory: URL) throws {
-        encoder = try DictationTensor.load("encoder", at: directory, units: .all)
-        decoder = try DictationTensor.load("decoder", at: directory, units: .all)
-    }
-
-    func transcribe(_ samples: [Float], language: String?) throws -> String {
-        return ""
-    }
-}
-
-final class WhisperApexRecognizer: DictationRecognizer {
-    private let encoder: MLModel
-    private let decoder: MLModel
-
-    init(directory: URL) throws {
-        encoder = try DictationTensor.load("AudioEncoder", at: directory, units: .all)
-        decoder = try DictationTensor.load("TextDecoder", at: directory, units: .all)
-    }
-
-    func transcribe(_ samples: [Float], language: String?) throws -> String {
-        return ""
-    }
-}
-
-final class IndicFlexRecognizer: DictationRecognizer {
-    private let encoder: MLModel
-    private let decoder: MLModel
-
-    init(directory: URL) throws {
-        encoder = try DictationTensor.load("encoder", at: directory, units: .all)
-        decoder = try DictationTensor.load("decoder", at: directory, units: .all)
-    }
-
-    func transcribe(_ samples: [Float], language: String?) throws -> String {
-        return ""
-    }
-}
 
 @main
 enum DictationHelper {
@@ -72,8 +6,7 @@ enum DictationHelper {
         let input = FileHandle.standardInput
         let output = FileHandle.standardOutput
         guard fcntl(output.fileDescriptor, F_SETNOSIGPIPE, 1) == 0 else { exit(1) }
-        var recognizer: (any DictationRecognizer)?
-        var loaded: DictationModel?
+        let session = DictationInferenceSession()
         do {
             while let request = try DictationWire.read(DictationWire.Request.self, from: input) {
                 try DictationTensor.checkParent()
@@ -82,34 +15,13 @@ enum DictationHelper {
                 else {
                     throw DictationInferenceError.invalidAudio
                 }
-                if loaded != request.model {
-                    recognizer = nil
-                    loaded = nil
-                    do {
-                        recognizer = try autoreleasepool { () throws -> any DictationRecognizer in
-                            switch request.model {
-                            case .qwenSmall, .qwenLarge:
-                                return try QwenRecognizer(directory: request.directory)
-                            case .ultra, .redux:
-                                return try ParakeetRecognizer(directory: request.directory, model: request.model)
-                            case .sravaani:
-                                return try SraVaaniRecognizer(directory: request.directory)
-                            case .sravaaniLive:
-                                return try SraVaaniLiveRecognizer(directory: request.directory)
-                            case .whisperApex:
-                                return try WhisperApexRecognizer(directory: request.directory)
-                            case .indicFlex:
-                                return try IndicFlexRecognizer(directory: request.directory)
-                            }
-                        }
-                        loaded = request.model
-                    } catch {
-                        try DictationWire.write(
-                            DictationWire.Response(id: request.id, status: .failed), to: output)
-                        continue
-                    }
+                do {
+                    try session.prepare(model: request.model, directory: request.directory)
+                } catch {
+                    try DictationWire.write(
+                        DictationWire.Response(id: request.id, status: .failed), to: output)
+                    continue
                 }
-                guard let recognizer else { throw DictationInferenceError.incompatibleModel }
                 try DictationWire.write(DictationWire.Response(id: request.id, status: .ready), to: output)
                 try autoreleasepool {
                     let data = try DictationWire.readExactly(
@@ -124,9 +36,17 @@ enum DictationHelper {
                         throw DictationInferenceError.invalidAudio
                     }
                     do {
-                        let text = try recognizer.transcribe(samples, language: request.language)
+                        let timed = try session.transcribe(samples: samples, request: request)
                         try DictationWire.write(
-                            DictationWire.Response(id: request.id, status: .result, text: text), to: output)
+                            DictationWire.Response(
+                                id: request.id,
+                                status: .result,
+                                text: timed.text,
+                                words: timed.words,
+                                segments: timed.segments
+                            ),
+                            to: output
+                        )
                     } catch {
                         try DictationWire.write(
                             DictationWire.Response(id: request.id, status: .failed), to: output)

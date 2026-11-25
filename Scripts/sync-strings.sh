@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.." || exit 1
 
 DERIVED=build/strings
-xcodebuild build -project szcast.xcodeproj -scheme szcast -configuration Debug \
+xcodebuild build -project szcast.xcodeproj -scheme Szcast -configuration Debug \
     CODE_SIGNING_ALLOWED=NO -derivedDataPath "$DERIVED" -quiet
 
 # A read loop rather than `mapfile`, which is bash 4 — macOS ships bash 3.2.

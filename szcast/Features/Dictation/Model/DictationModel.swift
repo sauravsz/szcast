@@ -7,12 +7,14 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
         let encoderUsesGPU: Bool
     }
     enum Family: String, CaseIterable, Identifiable {
-        case parakeet = "Parakeet", qwen = "Qwen", sravaani = "SraVaani", specialized = "Specialized"
+        case parakeet = "Parakeet", nemotron = "Nemotron", qwen = "Qwen", sravaani = "SraVaani", specialized = "Specialized"
         var id: Self { self }
         var summary: String {
             switch self {
             case .parakeet:
                 return String(localized: "Fast and memory-efficient")
+            case .nemotron:
+                return String(localized: "NVIDIA cache-aware streaming Conformer-RNNT")
             case .qwen:
                 return String(localized: "More languages, but slower")
             case .sravaani:
@@ -24,6 +26,7 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
     }
     case redux
     case ultra
+    case nemotron = "nemotron-0.6b"
     case qwenSmall = "qwen-0.6b"
     case qwenLarge = "qwen-1.7b"
     case sravaani = "sravaani-1.0"
@@ -37,6 +40,7 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
         switch self {
         case .ultra: "Ultra"
         case .redux: "Redux"
+        case .nemotron: "0.6B Streaming"
         case .qwenSmall: "0.6B"
         case .qwenLarge: "1.7B"
         case .sravaani: "1.0 (65 Languages)"
@@ -50,6 +54,7 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
         switch self {
         case .redux: String(localized: "Lightweight and efficient.")
         case .ultra: String(localized: "Higher accuracy, larger download.")
+        case .nemotron: String(localized: "Cache-aware streaming English ASR optimized for Apple Neural Engine.")
         case .qwenSmall: String(localized: "Smaller and faster.")
         case .qwenLarge: String(localized: "Higher accuracy, more memory.")
         case .sravaani: String(localized: "IISc/ARTPARK FastConformer-TDT covering 65 Indic languages.")
@@ -62,11 +67,13 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
     var family: Family {
         switch self {
         case .ultra, .redux: .parakeet
+        case .nemotron: .nemotron
         case .qwenSmall, .qwenLarge: .qwen
         case .sravaani, .sravaaniLive: .sravaani
         case .whisperApex, .indicFlex: .specialized
         }
     }
+    var isNemotron: Bool { family == .nemotron }
     var isQwen: Bool { family == .qwen }
     var isSraVaani: Bool { family == .sravaani }
     var isSpecialized: Bool { family == .specialized }
@@ -77,13 +84,14 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
             return .init(joint: "JointDecisionv3", blankToken: 8192, encoderUsesGPU: self == .redux)
         case .sravaani:
             return .init(joint: "JointDecisionv3", blankToken: 8192, encoderUsesGPU: true)
-        case .sravaaniLive, .whisperApex, .indicFlex, .qwenSmall, .qwenLarge:
+        case .nemotron, .sravaaniLive, .whisperApex, .indicFlex, .qwenSmall, .qwenLarge:
             return nil
         }
     }
     var coverage: String {
         switch self {
         case .ultra, .redux: String(localized: "25 languages")
+        case .nemotron: String(localized: "English (1120ms streaming)")
         case .qwenSmall, .qwenLarge: String(localized: "30 languages and 22 Chinese dialects")
         case .sravaani: String(localized: "65 Indian languages and regional dialects")
         case .sravaaniLive: String(localized: "63 Indian languages (streaming)")
@@ -94,6 +102,7 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
     var folderName: String {
         switch self {
         case .ultra, .redux: "parakeet-\(rawValue)"
+        case .nemotron: "nemotron-speech-streaming-en-0.6b-coreml"
         case .qwenSmall, .qwenLarge: rawValue
         case .sravaani: "sravaani-1.0"
         case .sravaaniLive: "sravaani-0.5-live"
@@ -107,6 +116,8 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
             return ["parakeet-ultra", "parakeet-ultra-coreml"]
         case .redux:
             return ["parakeet-redux", "parakeet-tdt-0.6b-v3", "parakeet-tdt-0.6b-v3-coreml"]
+        case .nemotron:
+            return ["nemotron-speech-streaming-en-0.6b-coreml", "nemotron-0.6b"]
         case .qwenSmall:
             return ["qwen-0.6b", "Qwen3-ASR-0.6B-CoreML-INT8"]
         case .qwenLarge:
@@ -125,12 +136,13 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
         switch self {
         case .ultra: 632
         case .redux: 220
+        case .nemotron: 610
         case .qwenSmall: 940
         case .qwenLarge: 2352
         case .sravaani: 920
         case .sravaaniLive: 510
-        case .whisperApex: 1600
-        case .indicFlex: 1250
+        case .whisperApex: 825
+        case .indicFlex: 1220
         }
     }
 
@@ -142,6 +154,14 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
                 "Preprocessor.mlmodelc", "Encoder.mlmodelc", "Decoder.mlmodelc",
                 configuration.joint + ".mlmodelc", "parakeet_vocab.json"
             ]
+        case .nemotron:
+            return [
+                "nemotron_coreml_1120ms/preprocessor.mlmodelc",
+                "nemotron_coreml_1120ms/encoder/encoder_int8.mlmodelc",
+                "nemotron_coreml_1120ms/decoder.mlmodelc",
+                "nemotron_coreml_1120ms/joint.mlmodelc",
+                "nemotron_coreml_1120ms/metadata.json"
+            ]
         case .qwenSmall, .qwenLarge:
             return ["encoder.mlmodelc", "decoder.mlmodelc", "embedding.mlmodelc", "config.json"]
         case .sravaani:
@@ -151,7 +171,12 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
         case .whisperApex:
             return ["AudioEncoder.mlmodelc", "TextDecoder.mlmodelc", "MelSpectrogram.mlmodelc", "config.json"]
         case .indicFlex:
-            return ["encoder.mlmodelc", "decoder.mlmodelc", "tokenizer.json"]
+            return [
+                "int8/indic_flex_preprocessor.mlpackage",
+                "int8/indic_flex_encoder.mlpackage",
+                "int8/indic_flex_decoder_stateful.mlpackage",
+                "int8/metadata.json"
+            ]
         }
     }
 
@@ -159,6 +184,8 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
         switch self {
         case .ultra, .redux:
             return components
+        case .nemotron:
+            return components.union(["nemotron_coreml_1120ms/tokenizer.json"])
         case .qwenSmall, .qwenLarge:
             return components.union(["vocab.json", "merges.txt"])
         case .sravaani:
@@ -168,13 +195,14 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
         case .whisperApex:
             return components.union(["vocab.json", "merges.txt"])
         case .indicFlex:
-            return components
+            return components.union(["int8/vocab.json", "int8/tokenizer_config.json"])
         }
     }
 
     var repository: String {
         switch self {
         case .ultra, .redux: "FluidInference/\(folderName)-coreml"
+        case .nemotron: "FluidInference/nemotron-speech-streaming-en-0.6b-coreml"
         case .qwenSmall: "UniMocha/Qwen3-ASR-0.6B-CoreML-INT8"
         case .qwenLarge: "UniMocha/Qwen3-ASR-1.7B-CoreML-INT8"
         case .sravaani: "ARTPARK-IISc/SraVaani-1.0"
@@ -188,11 +216,12 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
         switch self {
         case .ultra: "95eaa59a39d4394f047a4dc5cce480388a60d1b6"
         case .redux: "8c5ef97a29cd120dc76b354b3f22b7fec3b486f9"
+        case .nemotron: "0651794847e50f9687bcaa096c3f8ec696ac6fc4"
         case .qwenSmall: "27b7a26835d7c2cd1cf774b4c490eb5519ca71a0"
         case .qwenLarge: "06312fbac1383cd22e1000c28b017634e03251a2"
         case .sravaani: "a7254684e699e464fb70d10ad301e28fa0330cad"
         case .sravaaniLive: "29a15303a55673367134eee9e1d18cb1a2dcaabf"
-        case .whisperApex: "f1cc87f9820d55650413305d00218343cb1d0da6"
+        case .whisperApex: "668ef2d23517d6f3da41622aff6b46089e466104"
         case .indicFlex: "c7bf7a566a555083466399b0c9072db2202486a1"
         }
     }

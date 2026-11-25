@@ -66,8 +66,9 @@ struct EmojiTests {
 
         let packDirectory = URL(fileURLWithPath: "szcast/Resources/EmojiKeywords")
         let packs =
-            (try? FileManager.default.contentsOfDirectory(
-                at: packDirectory, includingPropertiesForKeys: nil)) ?? []
+            ((try? FileManager.default.contentsOfDirectory(
+                at: packDirectory, includingPropertiesForKeys: nil)) ?? [])
+            .filter { $0.pathExtension == "txt" }
         let available = packs.map { $0.deletingPathExtension().lastPathComponent }
         expect(
             Set(available) == ["de", "es", "fr", "ja", "ko", "pt", "ru", "zh-Hans"],

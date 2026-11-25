@@ -361,10 +361,17 @@ final class AppSettings {
     var dictationAutoLearnDictionary = true
     var dictationAutoApplyTransform = false
     var dictationActiveTransformID: String?
+    var dictationRetainCancelled = false
+    var dictationSpeakerCount = 0
+    var dictationVADEnabled = true
+    var dictationMeetingCapturesSystemAudio = true
+    var dictationMeetingStartMuted = false
+    var dictationAutoStopSilenceSeconds: Double = 0
+    var calendarSuggestsMeetingRecording = false
     var groqAPIKey = ""
 }
 
-enum HotKeyAction { case dictation, dictationAddWord, dictationPasteLast, dictationCopyLast }
+enum HotKeyAction { case dictation, dictationSecondary, dictationAddWord, dictationPasteLast, dictationCopyLast }
 
 @MainActor
 final class HotKeyManager {
@@ -384,12 +391,24 @@ final class DictationCapture {
     var onLimit: (() -> Void)?
     var onSilenceWarning: ((Bool) -> Void)?
     var onClamshellWarning: ((Bool) -> Void)?
+    var onAutoStopSilence: (() -> Void)?
     var isRecording = false
+    var isMuted = false
     var isBluetooth = false
     var stopCount = 0
 
     init() { Self.latest = self }
-    func start(microphoneID: String?, whisperMode: Bool = false) async throws { isRecording = true }
+    func setMuted(_ muted: Bool) { isMuted = muted }
+    func start(
+        microphoneID: String?,
+        whisperMode: Bool = false,
+        allowLongCapture: Bool = false,
+        startMuted: Bool = false,
+        autoStopSilenceSeconds: TimeInterval = 0
+    ) async throws {
+        isMuted = startMuted
+        isRecording = true
+    }
     var snapshotSamples: [Float] = []
     func snapshot() -> [Float] { snapshotSamples }
     func stop() async -> [Float] {
@@ -417,6 +436,17 @@ final class DictationModelStore {
         return try await withCheckedThrowingContinuation { pending = $0 }
     }
 
+    func transcribeTimed(
+        _ samples: [Float],
+        model: DictationModel,
+        language: String? = nil,
+        useVAD: Bool = true,
+        diarizeSpeakers: Int? = nil
+    ) async throws -> TimedTranscript {
+        let text = try await transcribe(samples, model: model, language: language)
+        return TimedTranscript(text: text)
+    }
+
     func finish(_ text: String) {
         let continuation = pending
         pending = nil
@@ -436,7 +466,10 @@ final class DictationPanelController {
         var isWhisperMode: Bool = false
         var isMicSilent: Bool = false
         var isClamshellMuffled: Bool = false
+        var isMuted: Bool = false
+        var isRawMode: Bool = false
         var commandModeText: String? = nil
+        var onToggleMute: (() -> Void)?
     }
     static weak var latest: DictationPanelController?
     let state = State()

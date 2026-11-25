@@ -75,6 +75,8 @@
 	<string>szcast shows a camera preview so you can check yourself, and take a photo to the clipboard.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>szcast records audio only while you use Dictation, to transcribe it on your Mac.</string>
+	<key>NSAudioCaptureUsageDescription</key>
+	<string>szcast captures system audio during meetings to transcribe all participants on your Mac.</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>szcast accesses your events to show your schedule and let you join meetings.</string>
 	<key>NSRemindersFullAccessUsageDescription</key>

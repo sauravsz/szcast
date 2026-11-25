@@ -368,6 +368,22 @@ struct DictationSettingsView: View {
                     Spacer()
                     ShortcutRecorder(action: .dictationCopyLast)
                 }
+
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        SettingsRowTitle(.dictationCommands, "Secondary dictation (Raw mode)")
+                        Text("Records literal verbatim text bypassing AI polish.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    ShortcutRecorder(action: .dictationSecondary)
+                }
+
+                Toggle(isOn: $bSettings.dictationRetainCancelled) {
+                    SettingsRowTitle(.dictationCommands, "Retain cancelled dictations")
+                    Text("Transcribes and saves cancelled (Esc) recordings to history instead of discarding.")
+                }
             } header: {
                 Text("Dictation Shortcuts")
             }
@@ -461,6 +477,118 @@ struct DictationSettingsView: View {
             }
 
             groqCloudSection(settings: settings)
+            audioIntelligenceAndCLISection(settings: settings)
+        }
+    }
+
+    @ViewBuilder
+    private func audioIntelligenceAndCLISection(settings: AppSettings) -> some View {
+        @Bindable var bSettings = settings
+        Section {
+            Toggle(isOn: $bSettings.dictationVADEnabled) {
+                SettingsRowTitle(.dictationModel, "Voice activity detection (VAD)")
+                Text("Skips long silence via CoreML Silero VAD before ASR decoding.")
+            }
+
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(DictationSupportModel.sileroVAD.title)
+                    Text(
+                        coordinator.models.supportDirectoryIfInstalled(.sileroVAD) != nil
+                            ? "Installed on-device (~2 MB)"
+                            : "Not installed yet (uses RMS fallback until downloaded)"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+                Spacer()
+                if coordinator.models.supportDirectoryIfInstalled(.sileroVAD) == nil {
+                    Button("Download VAD") {
+                        Task { _ = try? await coordinator.models.downloadSupportModel(.sileroVAD) }
+                    }
+                    .controlSize(.small)
+                }
+            }
+
+            Picker(selection: $bSettings.dictationSpeakerCount) {
+                Text("Auto detect speakers").tag(0)
+                ForEach(1...12, id: \.self) { count in
+                    Text("\(count) Speaker\(count == 1 ? "" : "s")").tag(count)
+                }
+            } label: {
+                SettingsRowTitle(.dictationModel, "Speaker diarization")
+                Text("Segments multi-speaker files and remote meeting participants offline.")
+            }
+
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(DictationSupportModel.speakerDiarization.title)
+                    Text(
+                        coordinator.models.supportDirectoryIfInstalled(.speakerDiarization) != nil
+                            ? "Installed on-device (~28 MB)"
+                            : "Required for multi-speaker separation"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+                Spacer()
+                if coordinator.models.supportDirectoryIfInstalled(.speakerDiarization) == nil {
+                    Button("Download Diarizer") {
+                        Task { _ = try? await coordinator.models.downloadSupportModel(.speakerDiarization) }
+                    }
+                    .controlSize(.small)
+                }
+            }
+
+            Toggle(isOn: $bSettings.dictationMeetingCapturesSystemAudio) {
+                SettingsRowTitle(.dictationOutput, "Capture system audio in meetings")
+                Text("Uses macOS Process Tap (no Screen Recording permission) for remote \"Others\" track.")
+            }
+
+            Toggle(isOn: $bSettings.dictationMeetingStartMuted) {
+                SettingsRowTitle(.dictationOutput, "Start meetings muted")
+                Text("Starts Meeting Notetaker with microphone muted so only system audio records until unmuted.")
+            }
+
+            Picker(selection: $bSettings.dictationAutoStopSilenceSeconds) {
+                Text("Off").tag(0.0)
+                Text("30 seconds").tag(30.0)
+                Text("60 seconds").tag(60.0)
+                Text("2 minutes").tag(120.0)
+            } label: {
+                SettingsRowTitle(.dictationOutput, "Auto-stop on prolonged silence")
+                Text("Automatically ends forgotten recordings after continuous silence.")
+            }
+
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    SettingsRowTitle(.dictationCommands, "Transcript Studio & CLI")
+                    Text(
+                        CLIToolInstaller.installedURL.map { "szcast-cli installed at \($0.path)" }
+                            ?? "Install szcast-cli into PATH for terminal transcription and 8-format export."
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Button("Open Studio…") {
+                    AppCore.shared.transcriptStudio.showWindow()
+                }
+                .controlSize(.small)
+                if CLIToolInstaller.installedURL == nil {
+                    Button("Install CLI") {
+                        _ = try? CLIToolInstaller.install()
+                    }
+                    .controlSize(.small)
+                } else {
+                    Button("Uninstall CLI") {
+                        CLIToolInstaller.uninstall()
+                    }
+                    .controlSize(.small)
+                }
+            }
+        } header: {
+            Text("Long Audio, Diarization & CLI")
         }
     }
 
@@ -1300,6 +1428,7 @@ struct DictationSettingsView: View {
             set: { family in
                 switch family {
                 case .parakeet: settings.dictationModel = .ultra
+                case .nemotron: settings.dictationModel = .nemotron
                 case .qwen: settings.dictationModel = .qwenSmall
                 case .sravaani: settings.dictationModel = .sravaani
                 case .specialized: settings.dictationModel = .whisperApex
@@ -1380,6 +1509,10 @@ struct DictationSettingsView: View {
                 LocalizedStringResource(
                     "downloading-dictation-model-parakeet-ultra",
                     defaultValue: "Downloading Parakeet Ultra…")
+            case .nemotron:
+                LocalizedStringResource(
+                    "downloading-dictation-model-nemotron",
+                    defaultValue: "Downloading Nemotron Streaming…")
             case .sravaani:
                 LocalizedStringResource(
                     "downloading-dictation-model-sravaani",

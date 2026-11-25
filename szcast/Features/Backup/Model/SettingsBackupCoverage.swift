@@ -281,6 +281,20 @@ enum SettingsBackupCoverage {
             "Auto-apply transform preference stays local to this Mac.",
         AppSettingsKey.dictationActiveTransformID.rawValue:
             "Active transform selection stays local to this Mac.",
+        AppSettingsKey.dictationRetainCancelled.rawValue:
+            "Cancelled dictation retention stays local to this Mac.",
+        AppSettingsKey.dictationSpeakerCount.rawValue:
+            "Diarization speaker count stays local to this Mac.",
+        AppSettingsKey.dictationVADEnabled.rawValue:
+            "Voice activity detection preference stays local to this Mac.",
+        AppSettingsKey.dictationMeetingCapturesSystemAudio.rawValue:
+            "System audio capture toggle stays local to this Mac.",
+        AppSettingsKey.dictationMeetingStartMuted.rawValue:
+            "Start-muted meeting preference stays local to this Mac.",
+        AppSettingsKey.dictationAutoStopSilenceSeconds.rawValue:
+            "Silence auto-stop preference stays local to this Mac.",
+        AppSettingsKey.calendarSuggestsMeetingRecording.rawValue:
+            "Meeting recording reminders depend on local Calendar access.",
         AppSettingsKey.displayTweaksEnabled.rawValue:
             "Display LUT calibration is local to this Mac's attached screens.",
         AppSettingsKey.displayTweaksDisplayID.rawValue:

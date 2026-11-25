@@ -374,7 +374,15 @@ enum SettingsSearchCatalog {
         .init(.dictationOutput, "Input device", keywords: ["microphone", "audio", "input"]),
         .init(.dictationOutput, "When finished"),
         .init(.dictationOutput, "Pasting method", keywords: ["paste", "typewriter", "instant"]),
-        .init(.dictationOutput, "Enable AI Polish (S1-mini)", keywords: ["s1", "polish", "clean", "normalize"])
+        .init(.dictationOutput, "Enable AI Polish (S1-mini)", keywords: ["s1", "polish", "clean", "normalize"]),
+        .init(.dictationCommands, "Secondary dictation (Raw mode)", keywords: ["shortcut", "raw", "verbatim", "hotkey"]),
+        .init(.dictationCommands, "Retain cancelled dictations", keywords: ["escape", "cancel", "history", "save"]),
+        .init(.dictationModel, "Voice activity detection (VAD)", keywords: ["silero", "vad", "silence", "chunking"]),
+        .init(.dictationModel, "Speaker diarization", keywords: ["speakers", "diarize", "meeting", "labels"]),
+        .init(.dictationOutput, "Capture system audio in meetings", keywords: ["process tap", "others", "dual track"]),
+        .init(.dictationOutput, "Start meetings muted", keywords: ["mute", "mic", "meeting"]),
+        .init(.dictationOutput, "Auto-stop on prolonged silence", keywords: ["timeout", "idle", "stop"]),
+        .init(.dictationCommands, "Transcript Studio & CLI", keywords: ["szcast-cli", "terminal", "studio", "export"])
     ]
 
     private static let fileSearch: [SettingsSearchEntry] = [
@@ -594,6 +602,9 @@ enum SettingsSearchCatalog {
         .init(
             .calendarJoining, "Camera Preview",
             keywords: ["webcam", "mirror", "video", "check"]),
+        .init(
+            .calendarJoining, "Suggest meeting recording",
+            keywords: ["record", "notetaker", "transcript", "prompt"]),
         .init(
             .calendarJoining, "Open Meeting Links In",
             keywords: ["browser", "chrome", "safari", "firefox", "meet", "web"]),

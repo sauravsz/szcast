@@ -13,7 +13,10 @@ final class DictationDisplayState {
     var isWhisperMode: Bool = false
     var isMicSilent: Bool = false
     var isClamshellMuffled: Bool = false
+    var isMuted: Bool = false
+    var isRawMode: Bool = false
     var commandModeText: String? = nil
+    var onToggleMute: (() -> Void)?
 }
 
 private struct DictationWaveform: View {
@@ -136,9 +139,25 @@ private struct DictationPanelView: View {
                         .fixedSize(horizontal: true, vertical: false)
                 }
 
-                if state.isLockedHandsFree {
-                    Image(systemName: "lock.fill")
-                        .font(.system(size: 9, weight: .bold))
+                if state.isLockedHandsFree || state.onToggleMute != nil {
+                    if let toggleMute = state.onToggleMute {
+                        Button(action: toggleMute) {
+                            Image(systemName: state.isMuted ? "mic.slash.fill" : "mic.fill")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundStyle(state.isMuted ? Color.red : Color.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .help(state.isMuted ? "Unmute Microphone" : "Mute Microphone")
+                    }
+                    if state.isLockedHandsFree {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundStyle(Color.secondary)
+                    }
+                }
+                if state.isRawMode {
+                    Text("RAW")
+                        .font(.system(size: 8, weight: .bold))
                         .foregroundStyle(Color.secondary)
                 }
             } else {

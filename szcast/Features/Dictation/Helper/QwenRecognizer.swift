@@ -41,15 +41,37 @@ final class QwenRecognizer {
     }
 
     func transcribe(_ samples: [Float], language: String?) throws -> String {
+        try transcribeTimed(samples, language: language).text
+    }
+
+    func transcribeTimed(_ samples: [Float], language: String?) throws -> TimedTranscript {
         guard !samples.isEmpty, samples.count <= DictationWire.maximumSamples else {
             throw DictationInferenceError.invalidAudio
         }
-        return try DictationAudioChunks.ranges(in: samples, maximum: 480_000).map { range in
-            try autoreleasepool {
+        var chunks = [String]()
+        var words = [TranscriptWord]()
+        for range in DictationAudioChunks.ranges(in: samples, maximum: 480_000) {
+            let chunkText = try autoreleasepool {
                 try decode(samples[range], language: language)
                     .trimmingCharacters(in: .whitespacesAndNewlines)
             }
-        }.joined(separator: " ")
+            guard !chunkText.isEmpty else { continue }
+            chunks.append(chunkText)
+            let tokens = chunkText.split(whereSeparator: \.isWhitespace).map(String.init)
+            let chunkStart = Double(range.lowerBound) / Double(DictationWire.sampleRate)
+            let chunkDuration = Double(range.count) / Double(DictationWire.sampleRate)
+            let perWord = chunkDuration / Double(max(1, tokens.count))
+            for (idx, tok) in tokens.enumerated() {
+                let s = chunkStart + Double(idx) * perWord
+                words.append(TranscriptWord(text: tok, start: s, end: s + perWord))
+            }
+        }
+        let fullText = chunks.joined(separator: " ")
+        return TimedTranscript(
+            text: fullText,
+            words: words,
+            segments: TranscriptSegmentBuilder.build(words: words, fallbackText: fullText)
+        )
     }
 
     private func decode(_ samples: ArraySlice<Float>, language: String?) throws -> String {

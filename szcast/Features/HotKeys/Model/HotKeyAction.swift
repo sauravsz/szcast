@@ -4,6 +4,7 @@ enum HotKeyAction: Hashable, Sendable {
     /// Fixed actions with no command row of their own.
     case togglePalette
     case dictation
+    case dictationSecondary
     case dictationAddWord
     case dictationPasteLast
     case dictationCopyLast
@@ -29,6 +30,7 @@ enum HotKeyAction: Hashable, Sendable {
         switch self {
         case .togglePalette: "hotkey.togglePalette"
         case .dictation: "hotkey.dictation"
+        case .dictationSecondary: "hotkey.dictationSecondary"
         case .dictationAddWord: "hotkey.dictationAddWord"
         case .dictationPasteLast: "hotkey.dictationPasteLast"
         case .dictationCopyLast: "hotkey.dictationCopyLast"

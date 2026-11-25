@@ -45,7 +45,7 @@ extension HotKeyAction {
         case .quicklink(let id): Quicklink.entryIDPrefix + id.uuidString.lowercased()
         case .appleShortcut(let id): AppleShortcut.entryID(for: id)
         case .snippet(let id): StoredSnippet.entryIDPrefix + id
-        case .togglePalette, .dictation, .dictationAddWord, .dictationPasteLast, .dictationCopyLast,
+        case .togglePalette, .dictation, .dictationSecondary, .dictationAddWord, .dictationPasteLast, .dictationCopyLast,
             .app, .settingsPane, .extensionCommand: nil
         }
     }

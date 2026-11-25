@@ -64,9 +64,55 @@ enum DictationTensor {
         if units == .cpuAndGPU || units == .all {
             configuration.allowLowPrecisionAccumulationOnGPU = true
         }
-        return try MLModel(
-            contentsOf: directory.appendingPathComponent(name + ".mlmodelc"),
-            configuration: configuration)
+        let compiledURL = directory.appendingPathComponent(
+            name.hasSuffix(".mlmodelc") ? name : name + ".mlmodelc"
+        )
+        if FileManager.default.fileExists(atPath: compiledURL.path) {
+            return try MLModel(contentsOf: compiledURL, configuration: configuration)
+        }
+        let packageName = name.hasSuffix(".mlpackage") ? name : name + ".mlpackage"
+        let packageURL = directory.appendingPathComponent(packageName)
+        guard FileManager.default.fileExists(atPath: packageURL.path) else {
+            return try MLModel(contentsOf: compiledURL, configuration: configuration)
+        }
+        let tempCompiled = try MLModel.compileModel(at: packageURL)
+        let cachedCompiled = packageURL.deletingPathExtension().appendingPathExtension("mlmodelc")
+        if !FileManager.default.fileExists(atPath: cachedCompiled.path) {
+            try? FileManager.default.moveItem(at: tempCompiled, to: cachedCompiled)
+        }
+        let loadURL = FileManager.default.fileExists(atPath: cachedCompiled.path) ? cachedCompiled : tempCompiled
+        return try MLModel(contentsOf: loadURL, configuration: configuration)
+    }
+
+    static func floatValues(from array: MLMultiArray) throws -> [Float] {
+        guard array.count > 0 else { return [] }
+        switch array.dataType {
+        case .float32:
+            var out = [Float](repeating: 0, count: array.count)
+            array.withUnsafeBufferPointer(ofType: Float.self) { buf in
+                for i in 0..<min(out.count, buf.count) { out[i] = buf[i] }
+            }
+            return out
+        case .float16:
+            return try [Float](unsafeUninitializedCapacity: array.count) { values, initialized in
+                try array.withUnsafeBytes { bytes in
+                    var source = vImage_Buffer(
+                        data: UnsafeMutableRawPointer(mutating: bytes.baseAddress!),
+                        height: 1, width: vImagePixelCount(array.count), rowBytes: array.count * 2)
+                    var destination = vImage_Buffer(
+                        data: values.baseAddress!,
+                        height: 1, width: vImagePixelCount(array.count), rowBytes: array.count * 4)
+                    let status = vImageConvert_Planar16FtoPlanarF(
+                        &source, &destination, vImage_Flags(kvImageDoNotTile))
+                    guard status == kvImageNoError else {
+                        throw DictationInferenceError.incompatibleModel
+                    }
+                }
+                initialized = array.count
+            }
+        default:
+            return (0..<array.count).map { array[$0].floatValue }
+        }
     }
 
     static func checkParent() throws {

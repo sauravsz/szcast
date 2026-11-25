@@ -610,6 +610,34 @@ final class AppSettings {
         didSet { defaults.set(dictationActiveTransformID, forKey: Key.dictationActiveTransformID.rawValue) }
     }
 
+    var dictationRetainCancelled: Bool {
+        didSet { defaults.set(dictationRetainCancelled, forKey: Key.dictationRetainCancelled.rawValue) }
+    }
+
+    var dictationSpeakerCount: Int {
+        didSet { defaults.set(dictationSpeakerCount, forKey: Key.dictationSpeakerCount.rawValue) }
+    }
+
+    var dictationVADEnabled: Bool {
+        didSet { defaults.set(dictationVADEnabled, forKey: Key.dictationVADEnabled.rawValue) }
+    }
+
+    var dictationMeetingCapturesSystemAudio: Bool {
+        didSet { defaults.set(dictationMeetingCapturesSystemAudio, forKey: Key.dictationMeetingCapturesSystemAudio.rawValue) }
+    }
+
+    var dictationMeetingStartMuted: Bool {
+        didSet { defaults.set(dictationMeetingStartMuted, forKey: Key.dictationMeetingStartMuted.rawValue) }
+    }
+
+    var dictationAutoStopSilenceSeconds: Double {
+        didSet { defaults.set(dictationAutoStopSilenceSeconds, forKey: Key.dictationAutoStopSilenceSeconds.rawValue) }
+    }
+
+    var calendarSuggestsMeetingRecording: Bool {
+        didSet { defaults.set(calendarSuggestsMeetingRecording, forKey: Key.calendarSuggestsMeetingRecording.rawValue) }
+    }
+
     var groqAPIKey: String {
         get { (try? KeychainSecretStore.groqAPIKeys.secret(for: "groq")) ?? "" }
         set {
@@ -1294,6 +1322,15 @@ final class AppSettings {
             || defaults.bool(forKey: Key.dictationAutoLearnDictionary.rawValue)
         dictationAutoApplyTransform = defaults.bool(forKey: Key.dictationAutoApplyTransform.rawValue)
         dictationActiveTransformID = defaults.string(forKey: Key.dictationActiveTransformID.rawValue)
+        dictationRetainCancelled = defaults.bool(forKey: Key.dictationRetainCancelled.rawValue)
+        dictationSpeakerCount = max(0, min(12, defaults.integer(forKey: Key.dictationSpeakerCount.rawValue)))
+        dictationVADEnabled = defaults.object(forKey: Key.dictationVADEnabled.rawValue) == nil
+            || defaults.bool(forKey: Key.dictationVADEnabled.rawValue)
+        dictationMeetingCapturesSystemAudio = defaults.object(forKey: Key.dictationMeetingCapturesSystemAudio.rawValue) == nil
+            || defaults.bool(forKey: Key.dictationMeetingCapturesSystemAudio.rawValue)
+        dictationMeetingStartMuted = defaults.bool(forKey: Key.dictationMeetingStartMuted.rawValue)
+        dictationAutoStopSilenceSeconds = defaults.double(forKey: Key.dictationAutoStopSilenceSeconds.rawValue)
+        calendarSuggestsMeetingRecording = defaults.bool(forKey: Key.calendarSuggestsMeetingRecording.rawValue)
 
         let isTweaksEnabled = defaults.bool(forKey: Key.displayTweaksEnabled.rawValue)
         displayTweaksEnabled = isTweaksEnabled

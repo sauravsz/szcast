@@ -6,6 +6,7 @@ import Foundation
 final class HotKeyManager {
     var onTogglePalette: (() -> Void)?
     var onDictationPressed: (() -> Void)?
+    var onDictationSecondaryPressed: (() -> Void)?
     var onDictationReleased: (() -> Void)?
     var onDictationCancelled: (() -> Void)?
     var onDictationAddWord: (() -> Void)?
@@ -258,7 +259,7 @@ final class HotKeyManager {
             index(id, bound: binding != nil, key: boundSnippetKey)
         case .extensionCommand(let entryID):
             index(entryID, bound: binding != nil, key: boundExtensionCommandKey)
-        case .togglePalette, .dictation, .dictationAddWord, .dictationPasteLast, .dictationCopyLast, .command, .systemAction, .windowCommand:
+        case .togglePalette, .dictation, .dictationSecondary, .dictationAddWord, .dictationPasteLast, .dictationCopyLast, .command, .systemAction, .windowCommand:
             break
         }
         candidateActionsCache = nil
@@ -407,6 +408,8 @@ final class HotKeyManager {
             return String(localized: "App Launcher")
         case .dictation:
             return String(localized: "Dictation")
+        case .dictationSecondary:
+            return String(localized: "Dictation (Raw Mode)")
         case .dictationAddWord:
             return String(localized: "Add Selected Word to Dictionary")
         case .dictationPasteLast:
@@ -482,6 +485,7 @@ final class HotKeyManager {
         switch action {
         case .togglePalette: onTogglePalette?()
         case .dictation: onDictationPressed?()
+        case .dictationSecondary: onDictationSecondaryPressed?()
         case .dictationAddWord: onDictationAddWord?()
         case .dictationPasteLast: onDictationPasteLast?()
         case .dictationCopyLast: onDictationCopyLast?()

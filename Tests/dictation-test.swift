@@ -228,7 +228,7 @@ struct DictationTest {
                 else {
                     fatalError("Parakeet download and inference disagree")
                 }
-            } else if !model.isQwen && !model.isSraVaani && !model.isSpecialized {
+            } else if !model.isQwen && !model.isSraVaani && !model.isSpecialized && !model.isNemotron {
                 fatalError("Missing Parakeet decoding configuration")
             }
         }

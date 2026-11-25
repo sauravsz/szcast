@@ -36,18 +36,35 @@ final class ParakeetRecognizer {
     }
 
     func transcribe(_ samples: [Float]) throws -> String {
+        try transcribeTimed(samples).text
+    }
+
+    func transcribeTimed(_ samples: [Float]) throws -> TimedTranscript {
         guard !samples.isEmpty, samples.count <= DictationWire.maximumSamples else {
             throw DictationInferenceError.invalidAudio
         }
-        return try DictationAudioChunks.ranges(in: samples, maximum: Self.windowSamples).map { range in
-            try autoreleasepool {
-                try decode(samples[range]).joined().replacingOccurrences(of: "▁", with: " ")
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-            }
-        }.joined(separator: " ")
+        var allPieces = [(piece: String, start: TimeInterval, end: TimeInterval)]()
+        var chunkTexts = [String]()
+        for range in DictationAudioChunks.ranges(in: samples, maximum: Self.windowSamples) {
+            let offsetSeconds = Double(range.lowerBound) / Double(DictationWire.sampleRate)
+            let chunkPieces = try autoreleasepool { try decode(samples[range], offsetSeconds: offsetSeconds) }
+            allPieces.append(contentsOf: chunkPieces)
+            let chunkText = chunkPieces.map(\.piece).joined()
+                .replacingOccurrences(of: "▁", with: " ")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if !chunkText.isEmpty { chunkTexts.append(chunkText) }
+        }
+        let text = chunkTexts.joined(separator: " ")
+        let words = TranscriptSegmentBuilder.mergeSubwordPieces(allPieces)
+        let segments = TranscriptSegmentBuilder.build(words: words, fallbackText: text)
+        return TimedTranscript(text: text, words: words, segments: segments)
     }
 
-    private func decode(_ samples: ArraySlice<Float>) throws -> [String] {
+    private func decode(
+        _ samples: ArraySlice<Float>,
+        offsetSeconds: TimeInterval
+    ) throws -> [(piece: String, start: TimeInterval, end: TimeInterval)] {
+        let frameSeconds = 0.08
         let audio = try DictationTensor.zeros([1, Self.windowSamples])
         audio.withUnsafeMutableBufferPointer(ofType: Float.self) { buffer, _ in
             for (index, sample) in samples.enumerated() { buffer[index] = sample }
@@ -91,7 +108,7 @@ final class ParakeetRecognizer {
         let frame = try DictationTensor.zeros([1, 1024, 1])
         var time = 0
         var emissions = 0
-        var pieces = [String]()
+        var pieces = [(piece: String, start: TimeInterval, end: TimeInterval)]()
         while time < length {
             vectors.withUnsafeShapedBufferPointer { source, _, strides in
                 frame.withUnsafeMutableBufferPointer(ofType: Float.self) { target, _ in
@@ -113,7 +130,11 @@ final class ParakeetRecognizer {
                 throw DictationInferenceError.incompatibleModel
             }
             if token != blank {
-                if let piece = vocabulary[token], !piece.hasPrefix("<|") { pieces.append(piece) }
+                if let piece = vocabulary[token], !piece.hasPrefix("<|") {
+                    let start = offsetSeconds + Double(time) * frameSeconds
+                    let end = offsetSeconds + Double(time + max(1, duration)) * frameSeconds
+                    pieces.append((piece, start, end))
+                }
                 projection = try advance(token)
                 emissions += 1
             }

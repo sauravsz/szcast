@@ -148,6 +148,8 @@ targets:
       - Szcast/Features/Dictation/Model/DictationModel.swift
       - Szcast/Features/Dictation/Model/DictationAudioChunks.swift
       - Szcast/Features/Dictation/Model/DictationLanguage.swift
+      - Szcast/Features/Dictation/Model/TimedTranscript.swift
+      - Szcast/Features/Dictation/Model/SpeakerClustering.swift
       - Szcast/Features/Dictation/Service/DictationWire.swift
     settings:
       base:
@@ -156,5 +158,48 @@ targets:
         WRAPPER_NAME: "$(DICTATION_EXECUTABLE_NAME).app"
         PRODUCT_MODULE_NAME: DictationHelper
         PRODUCT_BUNDLE_IDENTIFIER: "$(SZCAST_BUNDLE_IDENTIFIER).dictation"
+        SKIP_INSTALL: YES
+        SWIFT_OPTIMIZATION_LEVEL: -O
+
+  szcast-cli:
+    type: tool
+    platform: macOS
+    sources:
+      - Szcast/Features/Dictation/CLI/SzcastCLI.swift
+      - Szcast/Features/Dictation/Helper/DictationTensor.swift
+      - Szcast/Features/Dictation/Helper/DictationMel.swift
+      - Szcast/Features/Dictation/Helper/DictationTokenizer.swift
+      - Szcast/Features/Dictation/Helper/ParakeetRecognizer.swift
+      - Szcast/Features/Dictation/Helper/QwenRecognizer.swift
+      - Szcast/Features/Dictation/Helper/NemotronRecognizer.swift
+      - Szcast/Features/Dictation/Helper/WhisperApexRecognizer.swift
+      - Szcast/Features/Dictation/Helper/IndicFlexRecognizer.swift
+      - Szcast/Features/Dictation/Helper/SileroVADProcessor.swift
+      - Szcast/Features/Dictation/Helper/SpeakerDiarizer.swift
+      - Szcast/Features/Dictation/Helper/DictationInferenceRunner.swift
+      - Szcast/Features/Dictation/Model/DictationModel.swift
+      - Szcast/Features/Dictation/Model/DictationSupportModel.swift
+      - Szcast/Features/Dictation/Model/DictationAudioChunks.swift
+      - Szcast/Features/Dictation/Model/DictationLanguage.swift
+      - Szcast/Features/Dictation/Model/TimedTranscript.swift
+      - Szcast/Features/Dictation/Model/SpeakerClustering.swift
+      - Szcast/Features/Dictation/Model/DictationHistoryItem.swift
+      - Szcast/Features/Dictation/Model/MeetingNote.swift
+      - Szcast/Features/Dictation/Model/TranscriptExporter.swift
+      - Szcast/Features/Dictation/Model/TranscriptStore.swift
+      - Szcast/Features/Dictation/Service/DictationWire.swift
+      - Szcast/Features/Dictation/Service/DictationModelDownloader.swift
+      - Szcast/Features/Dictation/Service/DictationFileTranscriber.swift
+      - Szcast/Features/Dictation/Service/MediaFetchService.swift
+      - Szcast/Features/Dictation/Service/TranscriptPDFExporter.swift
+      - Szcast/Platform/AppPaths.swift
+      - Szcast/Platform/ExecutableLocator.swift
+      - Szcast/Platform/ProcessExit.swift
+      - Szcast/Platform/Compression/Zlib.swift
+    settings:
+      base:
+        EXECUTABLE_NAME: szcast-cli
+        PRODUCT_NAME: szcast-cli
+        PRODUCT_MODULE_NAME: szcast_cli
         SKIP_INSTALL: YES
         SWIFT_OPTIMIZATION_LEVEL: -O

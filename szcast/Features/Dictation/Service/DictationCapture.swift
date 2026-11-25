@@ -47,7 +47,9 @@ final class DictationCapture {
     var onSamples: (@Sendable ([Float]) -> Void)?
     var onSilenceWarning: ((Bool) -> Void)?
     var onClamshellWarning: ((Bool) -> Void)?
+    var onAutoStopSilence: (() -> Void)?
     var isWhisperMode = false
+    private(set) var isMuted = false
 
     private(set) var isBluetooth = false
     private(set) var isClamshellMuffled = false
@@ -55,7 +57,19 @@ final class DictationCapture {
     private var output: AVCaptureAudioDataOutput?
     private var collector: AudioCollector?
 
-    func start(microphoneID: String?, whisperMode: Bool = false) async throws {
+    func setMuted(_ muted: Bool) {
+        isMuted = muted
+        collector?.setMuted(muted)
+    }
+
+    func start(
+        microphoneID: String?,
+        whisperMode: Bool = false,
+        allowLongCapture: Bool = false,
+        startMuted: Bool = false,
+        autoStopSilenceSeconds: TimeInterval = 0
+    ) async throws {
+        isMuted = startMuted
         let permission = AVCaptureDevice.authorizationStatus(for: .audio)
         let granted: Bool
         if permission == .notDetermined {
@@ -108,8 +122,15 @@ final class DictationCapture {
         capture.addInput(input)
         capture.addOutput(output)
         let samplesHandler = self.onSamples
+        let maxSamples = allowLongCapture
+            ? DictationWire.sampleRate * 3_600 * 6
+            : DictationWire.maximumSamples
         let collector = try AudioCollector(
             whisperMode: whisperMode,
+            maximumSamples: maxSamples,
+            startMuted: startMuted,
+            autoStopSilenceSamples: autoStopSilenceSeconds > 0
+                ? Int(autoStopSilenceSeconds * Double(DictationWire.sampleRate)) : 0,
             onLevels: { [weak self] levels in
                 Task { @MainActor [weak self] in self?.onLevels?(levels) }
             },
@@ -121,6 +142,9 @@ final class DictationCapture {
             },
             onSilenceWarning: { [weak self] silent in
                 Task { @MainActor [weak self] in self?.onSilenceWarning?(silent) }
+            },
+            onAutoStopSilence: { [weak self] in
+                Task { @MainActor [weak self] in self?.onAutoStopSilence?() }
             })
         output.setSampleBufferDelegate(collector, queue: collector.queue)
         self.session = capture
@@ -173,25 +197,44 @@ private final class AudioCollector: NSObject, AVCaptureAudioDataOutputSampleBuff
     private var totalSamplesProcessed = 0
     private var energySum: Float = 0
     private var silenceReported = false
+    private let maximumSamples: Int
+    private var muted: Bool
+    private let autoStopSilenceSamples: Int
+    private var trailingSilentSamples = 0
+    private var autoStopTriggered = false
+    private var heardAnySpeech = false
     private let onLevels: @Sendable ([Float]) -> Void
     private let onLimit: @Sendable () -> Void
     private let onSamples: (@Sendable ([Float]) -> Void)?
     private let onSilenceWarning: (@Sendable (Bool) -> Void)?
+    private let onAutoStopSilence: (@Sendable () -> Void)?
 
     init(
         whisperMode: Bool = false,
+        maximumSamples: Int = DictationWire.maximumSamples,
+        startMuted: Bool = false,
+        autoStopSilenceSamples: Int = 0,
         onLevels: @escaping @Sendable ([Float]) -> Void,
         onLimit: @escaping @Sendable () -> Void,
         onSamples: (@Sendable ([Float]) -> Void)? = nil,
-        onSilenceWarning: (@Sendable (Bool) -> Void)? = nil
+        onSilenceWarning: (@Sendable (Bool) -> Void)? = nil,
+        onAutoStopSilence: (@Sendable () -> Void)? = nil
     ) throws {
         self.whisperMode = whisperMode
+        self.maximumSamples = maximumSamples
+        self.muted = startMuted
+        self.autoStopSilenceSamples = autoStopSilenceSamples
         spectrum = try DictationSpectrum()
         displayedLevels = [Float](repeating: 0, count: DictationSpectrum.barCount)
         self.onLevels = onLevels
         self.onLimit = onLimit
         self.onSamples = onSamples
         self.onSilenceWarning = onSilenceWarning
+        self.onAutoStopSilence = onAutoStopSilence
+    }
+
+    func setMuted(_ isMuted: Bool) {
+        queue.async { self.muted = isMuted }
     }
 
     func captureOutput(
@@ -210,40 +253,57 @@ private final class AudioCollector: NSObject, AVCaptureAudioDataOutputSampleBuff
             flags: 0, blockBufferOut: &blockBuffer)
         guard status == noErr, let data = bufferList.mBuffers.mData else { return }
         let count = Int(bufferList.mBuffers.mDataByteSize) / MemoryLayout<Float>.size
-        guard count > 0, samples.count < DictationWire.maximumSamples else { return }
+        guard count > 0, samples.count < maximumSamples else { return }
         let floats = data.assumingMemoryBound(to: Float.self)
-        let accepted = min(count, DictationWire.maximumSamples - samples.count)
-        var chunk = Array(UnsafeBufferPointer(start: floats, count: accepted))
-        if whisperMode {
-            for i in 0..<chunk.count {
-                let sample = chunk[i] * 3.2
-                chunk[i] = sample / (1.0 + abs(sample) * 0.2)
+        let accepted = min(count, maximumSamples - samples.count)
+        var chunk: [Float]
+        if muted {
+            chunk = [Float](repeating: 0, count: accepted)
+        } else {
+            chunk = Array(UnsafeBufferPointer(start: floats, count: accepted))
+            if whisperMode {
+                for i in 0..<chunk.count {
+                    let sample = chunk[i] * 3.2
+                    chunk[i] = sample / (1.0 + abs(sample) * 0.2)
+                }
             }
         }
         samples.append(contentsOf: chunk)
         onSamples?(chunk)
 
-        if totalSamplesProcessed < 32000 {
+        var chunkEnergy: Float = 0
+        for s in chunk { chunkEnergy += s * s }
+        let chunkRms = sqrt(chunkEnergy / Float(max(1, chunk.count)))
+        if chunkRms >= 0.003 { heardAnySpeech = true }
+
+        if totalSamplesProcessed < 32_000, !muted {
             totalSamplesProcessed += chunk.count
-            for s in chunk { energySum += s * s }
-            if totalSamplesProcessed >= 24000 && !silenceReported {
+            energySum += chunkEnergy
+            if totalSamplesProcessed >= 24_000 && !silenceReported {
                 let rms = sqrt(energySum / Float(totalSamplesProcessed))
                 if rms < 0.0012 {
                     silenceReported = true
                     onSilenceWarning?(true)
                 }
             }
-        } else if silenceReported {
-            var chunkEnergy: Float = 0
-            for s in chunk { chunkEnergy += s * s }
-            let chunkRms = sqrt(chunkEnergy / Float(chunk.count))
-            if chunkRms > 0.003 {
-                silenceReported = false
-                onSilenceWarning?(false)
+        } else if silenceReported, chunkRms > 0.003 || muted {
+            silenceReported = false
+            onSilenceWarning?(false)
+        }
+
+        if autoStopSilenceSamples > 0, heardAnySpeech, !muted, !autoStopTriggered {
+            if chunkRms < 0.0015 {
+                trailingSilentSamples += chunk.count
+                if trailingSilentSamples >= autoStopSilenceSamples {
+                    autoStopTriggered = true
+                    onAutoStopSilence?()
+                }
+            } else {
+                trailingSilentSamples = 0
             }
         }
 
-        if samples.count == DictationWire.maximumSamples, !reachedLimit {
+        if samples.count == maximumSamples, !reachedLimit {
             reachedLimit = true
             onLimit()
         }

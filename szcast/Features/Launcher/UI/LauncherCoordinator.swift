@@ -380,6 +380,19 @@ final class LauncherCoordinator {
         case .dictationInsights:
             dismissPalette()
             core.settingsCoordinator.showSettings(tab: .dictation)
+        case .transcriptStudio:
+            dismissPalette()
+            core.transcriptStudio.showWindow()
+        case .recordMeeting:
+            dismissPalette()
+            if core.meetingNotetaker.isRecording {
+                core.meetingNotetaker.stopRecording()
+            } else {
+                core.meetingNotetaker.startRecording()
+            }
+        case .transcribeMediaURL:
+            dismissPalette()
+            core.transcriptStudio.showWindow(openURLSheet: true)
         case .quit:
             NSApp.terminate(nil)
         }

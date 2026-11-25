@@ -144,7 +144,18 @@ final class DictationModelStore {
     func transcribe(
         _ samples: [Float], model: DictationModel, language: String? = nil
     ) async throws -> String {
+        try await transcribeTimed(samples, model: model, language: language).text
+    }
+
+    func transcribeTimed(
+        _ samples: [Float],
+        model: DictationModel,
+        language: String? = nil,
+        useVAD: Bool = true,
+        diarizeSpeakers: Int? = nil
+    ) async throws -> TimedTranscript {
         try Task.checkCancellation()
+        guard !samples.isEmpty else { return TimedTranscript(text: "") }
         guard !transcribing, removing != model else { throw Failure.busy }
         guard isInstalled(model) else { throw Failure.notInstalled }
         releaseTask?.cancel()
@@ -163,18 +174,110 @@ final class DictationModelStore {
             }
             try Task.checkCancellation()
             let worker = try getOrMakeWorker()
-            let request = DictationWire.Request(
-                id: UUID(), model: model, directory: directory(for: model),
-                sampleCount: samples.count, language: (model.isQwen || model.isSraVaani || model.isSpecialized) ? language : nil)
-            let text = try await worker.transcribe(samples, request: request) { [weak self] in
-                guard let self, self.worker === worker, self.transcribing else { return }
-                self.loadedModel = model
+            let vadDir = useVAD ? supportDirectoryIfInstalled(.sileroVAD) : nil
+            let diarDir = diarizeSpeakers != nil ? supportDirectoryIfInstalled(.speakerDiarization) : nil
+            let sendLanguage = (model.isQwen || model.isSraVaani || model.isSpecialized) ? language : nil
+
+            let ranges = samples.count <= DictationWire.maximumSamples
+                ? [0..<samples.count]
+                : DictationAudioChunks.ranges(in: samples, maximum: DictationWire.maximumSamples)
+
+            var allWords = [TranscriptWord]()
+            var allSegments = [TranscriptSegment]()
+            var texts = [String]()
+
+            for range in ranges {
+                try Task.checkCancellation()
+                let chunkSamples = Array(samples[range])
+                let request = DictationWire.Request(
+                    id: UUID(),
+                    model: model,
+                    directory: directory(for: model),
+                    sampleCount: chunkSamples.count,
+                    language: sendLanguage,
+                    useVAD: useVAD,
+                    vadDirectory: vadDir,
+                    diarizeSpeakers: diarizeSpeakers,
+                    diarizationDirectory: diarDir
+                )
+                let part = try await worker.transcribeTimed(chunkSamples, request: request) { [weak self] in
+                    guard let self, self.worker === worker, self.transcribing else { return }
+                    self.loadedModel = model
+                }
+                let offset = Double(range.lowerBound) / Double(DictationWire.sampleRate)
+                let cleanPart = part.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !cleanPart.isEmpty { texts.append(cleanPart) }
+                Self.appendShifted(part, offset: offset, words: &allWords, segments: &allSegments)
             }
-            return text.trimmingCharacters(in: .whitespacesAndNewlines)
+            let fullText = texts.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+            return TimedTranscript(text: fullText, words: allWords, segments: allSegments)
         } catch {
             await release()
             throw error
         }
+    }
+
+    private static func appendShifted(
+        _ part: TimedTranscript,
+        offset: TimeInterval,
+        words: inout [TranscriptWord],
+        segments: inout [TranscriptSegment]
+    ) {
+        for word in part.words {
+            words.append(TranscriptWord(
+                text: word.text,
+                start: word.start + offset,
+                end: word.end + offset,
+                confidence: word.confidence
+            ))
+        }
+        for seg in part.segments {
+            var shiftedWords = [TranscriptWord]()
+            shiftedWords.reserveCapacity(seg.words.count)
+            for word in seg.words {
+                shiftedWords.append(TranscriptWord(
+                    text: word.text,
+                    start: word.start + offset,
+                    end: word.end + offset,
+                    confidence: word.confidence
+                ))
+            }
+            segments.append(TranscriptSegment(
+                id: seg.id,
+                speaker: seg.speaker,
+                text: seg.text,
+                start: seg.start + offset,
+                end: seg.end + offset,
+                words: shiftedWords
+            ))
+        }
+    }
+
+    func supportDirectoryIfInstalled(_ supportModel: DictationSupportModel) -> URL? {
+        let candidateRoots = [
+            root,
+            FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/FluidAudio/Models"),
+            FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/EnviousWispr/Models")
+        ]
+        for candidateRoot in candidateRoots {
+            for folder in supportModel.possibleFolderNames {
+                let candidate = candidateRoot.appendingPathComponent(folder)
+                if supportModel.requiredFiles.allSatisfy({
+                    FileManager.default.fileExists(atPath: candidate.appendingPathComponent($0).path)
+                }) {
+                    return candidate
+                }
+            }
+        }
+        return nil
+    }
+
+    func downloadSupportModel(_ supportModel: DictationSupportModel) async throws -> URL {
+        if let existing = supportDirectoryIfInstalled(supportModel) { return existing }
+        let dest = root.appendingPathComponent(supportModel.folderName)
+        let token = tokenProvider?()
+        try await DictationModelDownloader.download(supportModel, destination: dest, token: token)
+        return dest
     }
 
     func ensurePrewarmed(_ model: DictationModel) {

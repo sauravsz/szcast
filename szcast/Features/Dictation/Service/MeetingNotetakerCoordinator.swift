@@ -2,6 +2,7 @@ import AVFoundation
 import AppKit
 import Foundation
 import OSLog
+import UniformTypeIdentifiers
 
 @MainActor
 @Observable
@@ -18,29 +19,30 @@ final class MeetingNotetakerCoordinator {
 
     private(set) var phase: Phase = .idle
     private(set) var notes: [MeetingNote] = []
+    private(set) var isMuted = false
+    private(set) var activeTitle: String = "Meeting"
 
     private let capture = DictationCapture()
+    private let systemAudioCapture = SystemAudioTapCapture()
     private let models: DictationModelStore
     private let s1Polisher = DictationS1Polisher()
     private let groqAudio = GroqAudioService()
     private let groqPolish = GroqPolishService()
     private let settings: AppSettings
+    private let store: TranscriptStore
     private let showMessage: (String, DialogTone) -> Void
-    private let fileURL: URL
 
     init(
         settings: AppSettings,
         models: DictationModelStore,
+        store: TranscriptStore? = nil,
         showMessage: @escaping (String, DialogTone) -> Void
     ) {
         self.settings = settings
         self.models = models
+        self.store = store ?? TranscriptStore()
         self.showMessage = showMessage
-
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let dir = appSupport.appendingPathComponent("szcast", isDirectory: true)
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        self.fileURL = dir.appendingPathComponent("meeting-notes.json")
+        self.capture.onAutoStopSilence = { [weak self] in self?.stopRecording() }
         loadNotes()
     }
 
@@ -49,14 +51,41 @@ final class MeetingNotetakerCoordinator {
         return false
     }
 
-    public func startRecording() {
+    public func toggleMute() {
+        isMuted.toggle()
+        capture.setMuted(isMuted)
+    }
+
+    public func startRecording(title: String? = nil, startMuted: Bool? = nil) {
         guard !isRecording else { return }
+        let mutedStart = startMuted ?? settings.dictationMeetingStartMuted
+        activeTitle = title?.isEmpty == false ? title! : "Meeting"
+        isMuted = mutedStart
         Task {
             do {
-                try await capture.start(microphoneID: settings.dictationMicrophone, whisperMode: false)
+                if settings.dictationMeetingCapturesSystemAudio {
+                    do {
+                        try await systemAudioCapture.start()
+                    } catch {
+                        Self.logger.warning("System audio tap unavailable: \(error.localizedDescription)")
+                    }
+                }
+                try await capture.start(
+                    microphoneID: settings.dictationMicrophone,
+                    whisperMode: false,
+                    allowLongCapture: true,
+                    startMuted: mutedStart,
+                    autoStopSilenceSeconds: settings.dictationAutoStopSilenceSeconds
+                )
                 phase = .recording(startedAt: Date())
-                showMessage(String(localized: "Meeting recording started"), .neutral)
+                showMessage(
+                    mutedStart
+                        ? String(localized: "Meeting recording started (muted)")
+                        : String(localized: "Meeting recording started"),
+                    .neutral
+                )
             } catch {
+                _ = systemAudioCapture.stop()
                 phase = .failed(error.localizedDescription)
                 showMessage(error.localizedDescription, .danger)
             }
@@ -69,14 +98,22 @@ final class MeetingNotetakerCoordinator {
         phase = .processing(progress: String(localized: "Processing meeting audio…"))
 
         Task {
-            let samples = await capture.stop()
-            guard !samples.isEmpty else {
+            let micSamples = await capture.stop()
+            let systemSamples = systemAudioCapture.stop()
+            isMuted = false
+
+            guard !micSamples.isEmpty || !systemSamples.isEmpty else {
                 phase = .failed(String(localized: "No audio captured during meeting"))
                 showMessage(String(localized: "No audio captured"), .danger)
                 return
             }
 
-            await processMeetingAudio(samples: samples, duration: duration, titlePrefix: "Meeting")
+            await processDualTrackMeeting(
+                micSamples: micSamples,
+                systemSamples: systemSamples,
+                duration: max(duration, Double(max(micSamples.count, systemSamples.count)) / 16_000.0),
+                titlePrefix: activeTitle
+            )
         }
     }
 
@@ -84,6 +121,8 @@ final class MeetingNotetakerCoordinator {
         guard isRecording else { return }
         Task {
             _ = await capture.stop()
+            _ = systemAudioCapture.stop()
+            isMuted = false
             phase = .idle
             showMessage(String(localized: "Meeting recording cancelled"), .neutral)
         }
@@ -94,8 +133,13 @@ final class MeetingNotetakerCoordinator {
         Task {
             do {
                 let samples = try await DictationFileTranscriber.extractSamples(from: url)
-                let duration = Double(samples.count) / 16000.0
-                await processMeetingAudio(samples: samples, duration: duration, titlePrefix: url.deletingPathExtension().lastPathComponent)
+                let duration = Double(samples.count) / 16_000.0
+                await processMeetingAudio(
+                    samples: samples,
+                    duration: duration,
+                    titlePrefix: url.deletingPathExtension().lastPathComponent,
+                    sourceURL: url.path
+                )
             } catch {
                 phase = .failed(error.localizedDescription)
                 showMessage(error.localizedDescription, .danger)
@@ -103,151 +147,238 @@ final class MeetingNotetakerCoordinator {
         }
     }
 
-    private func processMeetingAudio(samples: [Float], duration: TimeInterval, titlePrefix: String) async {
-        phase = .processing(progress: String(localized: "Transcribing meeting speech…"))
+    private func processDualTrackMeeting(
+        micSamples: [Float],
+        systemSamples: [Float],
+        duration: TimeInterval,
+        titlePrefix: String
+    ) async {
+        phase = .processing(progress: String(localized: "Transcribing meeting audio…"))
 
-        let transcript: String
+        let hasMicSignal = micSamples.contains { abs($0) > 0.002 }
+        let hasSystemSignal = systemSamples.contains { abs($0) > 0.002 }
+
+        if !hasSystemSignal {
+            await processMeetingAudio(samples: micSamples, duration: duration, titlePrefix: titlePrefix)
+            return
+        }
+
         do {
-            if settings.dictationTranscriptionProvider == .groq, !settings.groqAPIKey.isEmpty {
-                transcript = try await groqAudio.transcribe(
-                    samples: samples,
-                    apiKey: settings.groqAPIKey,
-                    model: settings.dictationGroqTranscriptionModel,
-                    language: settings.dictationLanguage
-                )
-            } else {
-                let model = models.isInstalled(settings.dictationModel) ? settings.dictationModel : .redux
-                transcript = try await models.transcribe(samples, model: model, language: settings.dictationLanguage)
+            var micTimed = TimedTranscript(text: "")
+            var systemTimed = TimedTranscript(text: "")
+
+            if hasMicSignal {
+                micTimed = try await transcribeSamples(micSamples, diarizeSpeakers: nil)
+                micTimed.segments = micTimed.segments.map { seg in
+                    var next = seg
+                    next.speaker = "Me"
+                    return next
+                }
             }
+            systemTimed = try await transcribeSamples(
+                systemSamples, diarizeSpeakers: settings.dictationSpeakerCount
+            )
+            systemTimed.segments = systemTimed.segments.map { seg in
+                var next = seg
+                if next.speaker.isEmpty || next.speaker == "Unattributed" {
+                    next.speaker = "Others"
+                } else {
+                    next.speaker = next.speaker.replacingOccurrences(of: "Speaker", with: "Others")
+                }
+                return next
+            }
+
+            let mergedSegments = TranscriptSegmentBuilder.mergeTracks(
+                mic: micTimed.segments, system: systemTimed.segments)
+            let mixed = mixTracks(micSamples, systemSamples)
+            let transcriptText = mergedSegments.map {
+                "\($0.speaker): \($0.text)"
+            }.joined(separator: "\n")
+
+            await generateMemoAndNote(
+                from: transcriptText,
+                segments: mergedSegments,
+                samples: mixed,
+                duration: duration,
+                titlePrefix: titlePrefix,
+                sourceURL: nil
+            )
         } catch {
             phase = .failed(error.localizedDescription)
             showMessage(error.localizedDescription, .danger)
-            return
         }
-
-        guard !transcript.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            phase = .failed(String(localized: "No speech recognized in meeting audio"))
-            showMessage(String(localized: "No speech recognized in meeting"), .neutral)
-            return
-        }
-
-        await generateMemoAndNote(from: transcript, duration: duration, titlePrefix: titlePrefix)
     }
 
-    private func generateMemoAndNote(from transcript: String, duration: TimeInterval, titlePrefix: String) async {
-        phase = .processing(progress: String(localized: "Generating meeting summary & action items…"))
-
-        let memoPrompt = """
-        You are an executive meeting assistant. Analyze the provided meeting transcript and produce clean markdown notes with:
-        1. Executive Summary: A clear 2-3 paragraph summary of the meeting discussion.
-        2. Key Decisions: Bullet points of all decisions reached.
-        3. Action Items: A bulleted checklist of tasks with owners if mentioned.
-        Do not include pleasantries. Output only the structured markdown notes.
-        """
-
-        var summaryText = ""
-        let s1 = DictationS1Settings(
-            enabled: true,
-            tone: .formal,
-            structure: .lists,
-            context: .general,
-            idleRelease: settings.dictationS1IdleRelease
-        )
-
-        if settings.dictationPolishProvider == .groq, !settings.groqAPIKey.isEmpty {
-            if let memo = try? await groqPolish.transform(
-                text: transcript,
-                instruction: memoPrompt,
-                apiKey: settings.groqAPIKey,
-                model: settings.dictationGroqPolishModel
-            ) {
-                summaryText = memo
+    private func processMeetingAudio(
+        samples: [Float],
+        duration: TimeInterval,
+        titlePrefix: String,
+        sourceURL: String? = nil
+    ) async {
+        phase = .processing(progress: String(localized: "Transcribing meeting speech…"))
+        do {
+            let timed = try await transcribeSamples(samples, diarizeSpeakers: settings.dictationSpeakerCount)
+            guard !timed.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                phase = .failed(String(localized: "No speech detected in recording"))
+                showMessage(String(localized: "No speech detected"), .neutral)
+                return
             }
-        }
-
-        if summaryText.isEmpty {
-            summaryText = await s1Polisher.transform(
-                text: transcript,
-                instruction: memoPrompt,
-                settings: s1
+            await generateMemoAndNote(
+                from: timed.text,
+                segments: timed.segments,
+                samples: samples,
+                duration: duration,
+                titlePrefix: titlePrefix,
+                sourceURL: sourceURL
             )
+        } catch {
+            phase = .failed(error.localizedDescription)
+            showMessage(error.localizedDescription, .danger)
+        }
+    }
+
+    private func transcribeSamples(_ samples: [Float], diarizeSpeakers: Int?) async throws -> TimedTranscript {
+        if settings.dictationTranscriptionProvider == .groq, !settings.groqAPIKey.isEmpty {
+            let text = try await groqAudio.transcribe(
+                samples: samples,
+                apiKey: settings.groqAPIKey,
+                model: settings.dictationGroqTranscriptionModel,
+                language: settings.dictationLanguage
+            )
+            return TimedTranscript(text: text)
+        }
+        let model = models.isInstalled(settings.dictationModel) ? settings.dictationModel : .redux
+        return try await models.transcribeTimed(
+            samples,
+            model: model,
+            language: settings.dictationLanguage,
+            useVAD: settings.dictationVADEnabled,
+            diarizeSpeakers: diarizeSpeakers
+        )
+    }
+
+    private func generateMemoAndNote(
+        from transcript: String,
+        segments: [TranscriptSegment],
+        samples: [Float],
+        duration: TimeInterval,
+        titlePrefix: String,
+        sourceURL: String?
+    ) async {
+        phase = .processing(progress: String(localized: "Extracting summary, action items & decisions…"))
+        let recordID = UUID()
+        var wavName: String?
+        if !samples.isEmpty {
+            let filename = "\(recordID.uuidString).wav"
+            let url = store.audioDirectory.appending(path: filename)
+            DictationHistoryStore.writeWAV(samples: samples, to: url)
+            if FileManager.default.fileExists(atPath: url.path) { wavName = filename }
         }
 
-        let title = "\(titlePrefix) (\(Date().formatted(date: .abbreviated, time: .shortened)))"
-        let note = MeetingNote(
-            title: title,
-            date: Date(),
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        let fallbackTitle = "\(titlePrefix) — \(formatter.string(from: Date()))"
+
+        let draftRecord = TranscriptRecord(
+            id: recordID,
+            kind: .meeting,
+            title: fallbackTitle,
+            createdAt: Date(),
             duration: duration,
-            transcript: transcript,
-            summary: summaryText.isEmpty ? transcript : summaryText
+            text: transcript,
+            rawText: transcript,
+            segments: segments,
+            sourceURL: sourceURL,
+            audioFilename: wavName,
+            modelID: settings.dictationModel.rawValue
         )
 
-        addNote(note)
-        phase = .completed(note)
+        let polishProvider: DictationPolishProvider =
+            (settings.dictationPolishProvider == .groq && !settings.groqAPIKey.isEmpty) ? .groq : .localS1
+        let extracted = await TranscriptAIService.generateStructuredNotes(
+            from: draftRecord,
+            provider: polishProvider,
+            groqAPIKey: settings.groqAPIKey,
+            groqModel: settings.dictationGroqPolishModel,
+            polisher: s1Polisher,
+            groq: groqPolish
+        )
 
-        // Copy markdown memo to clipboard
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(note.markdownMemo, forType: .string)
-        showMessage(String(localized: "Meeting notes generated & copied to clipboard"), .success)
+        var finalRecord = draftRecord
+        if let extracted {
+            if !extracted.title.isEmpty { finalRecord.title = extracted.title }
+            finalRecord.summary = extracted.summary
+            finalRecord.actionItems = extracted.actionItems
+            finalRecord.decisions = extracted.decisions
+        } else {
+            finalRecord.summary = String(transcript.prefix(240))
+        }
+
+        store.upsert(finalRecord)
+        loadNotes()
+        let note = finalRecord.toMeetingNote()
+        phase = .completed(note)
+        Paster.copyPlainText(note.markdownMemo)
+        showMessage(String(localized: "Meeting note & action items copied to clipboard"), .success)
     }
 
     public func importTranscript(from url: URL) async {
-        guard let data = try? Data(contentsOf: url),
-              let content = String(data: data, encoding: .utf8) else {
-            showMessage(String(localized: "Failed to read transcript file"), .danger)
-            return
+        do {
+            let content = try String(contentsOf: url, encoding: .utf8)
+            let name = url.deletingPathExtension().lastPathComponent
+            let wordCount = content.split(separator: " ").count
+            let estimatedDuration = Double(max(60, wordCount / 2))
+            await generateMemoAndNote(
+                from: content,
+                segments: [],
+                samples: [],
+                duration: estimatedDuration,
+                titlePrefix: "Imported: \(name)",
+                sourceURL: url.path
+            )
+        } catch {
+            phase = .failed(error.localizedDescription)
+            showMessage(String(localized: "Could not read transcript file: \(error.localizedDescription)"), .danger)
         }
-
-        phase = .processing(progress: "Importing transcript…")
-        let titleBase = url.deletingPathExtension().lastPathComponent
-            .replacingOccurrences(of: "_", with: " ")
-            .replacingOccurrences(of: "-", with: " ")
-
-        await generateMemoAndNote(
-            from: content,
-            duration: 0,
-            titlePrefix: titleBase
-        )
     }
 
     public func promptImportTranscript() {
         let panel = NSOpenPanel()
-        panel.canChooseFiles = true
-        panel.canChooseDirectories = false
+        panel.title = String(localized: "Import Meeting Transcript (Otter, Granola, Text, Markdown)")
+        panel.allowedContentTypes = [.plainText, UTType(filenameExtension: "md") ?? .plainText]
         panel.allowsMultipleSelection = false
-        panel.allowedContentTypes = [.text, .plainText, .json]
-        panel.prompt = "Import"
-        panel.message = "Choose an Otter.ai or Granola transcript to import into Meeting Notetaker"
-
-        NSApp.activate(ignoringOtherApps: true)
         panel.begin { [weak self] response in
             guard response == .OK, let url = panel.url else { return }
-            Task { @MainActor [weak self] in
+            Task { @MainActor in
                 await self?.importTranscript(from: url)
             }
         }
     }
 
     public func addNote(_ note: MeetingNote) {
-        notes.insert(note, at: 0)
-        saveNotes()
+        store.upsert(TranscriptRecord(from: note))
+        loadNotes()
     }
 
     public func removeNote(id: UUID) {
-        notes.removeAll { $0.id == id }
-        saveNotes()
+        store.delete(id: id)
+        loadNotes()
+    }
+
+    private func mixTracks(_ a: [Float], _ b: [Float]) -> [Float] {
+        let len = max(a.count, b.count)
+        guard len > 0 else { return [] }
+        var mixed = [Float](repeating: 0, count: len)
+        for i in 0..<len {
+            let av = i < a.count ? a[i] : 0
+            let bv = i < b.count ? b[i] : 0
+            mixed[i] = max(-1.0, min(1.0, (av + bv) * 0.7))
+        }
+        return mixed
     }
 
     private func loadNotes() {
-        guard let data = try? Data(contentsOf: fileURL) else { return }
-        if let decoded = try? JSONDecoder().decode([MeetingNote].self, from: data) {
-            self.notes = decoded
-        }
-    }
-
-    private func saveNotes() {
-        if let encoded = try? JSONEncoder().encode(notes) {
-            try? encoded.write(to: fileURL, options: .atomic)
-        }
+        notes = store.all(kind: .meeting, limit: 500).map { $0.toMeetingNote() }
     }
 }

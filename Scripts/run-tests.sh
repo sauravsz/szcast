@@ -191,7 +191,7 @@ run ente-auth-test         Szcast/Features/EnteAuth/Model/*.swift Szcast/Feature
 run duckduckgo-email-test  Szcast/Features/DuckDuckGoEmail/Service/*.swift Szcast/Platform/KeychainSecretStore.swift
 run clean-keyboard-test    Szcast/Features/CleanKeyboard/Service/*.swift
 run keepassxc-test         Szcast/Features/KeePassXC/Model/*.swift Szcast/Features/KeePassXC/Service/*.swift Szcast/Platform/KeychainSecretStore.swift
-run stats-feature-test          Szcast/Features/Stats/Model/*.swift Szcast/Features/Stats/Service/*.swift
+run stats-feature-test          Szcast/Features/Stats/Model/*.swift Szcast/Features/Stats/Service/*.swift Szcast/Platform/ProcessExit.swift
 run screen-capture-test    Szcast/Features/ScreenCapture/Model/*.swift Szcast/Features/ScreenCapture/Service/*.swift Szcast/Features/Launcher/Model/CommandID.swift Szcast/Features/HotKeys/Model/HotKeyAction.swift Szcast/Features/SystemActions/Model/SystemAction.swift Szcast/Features/WindowManagement/Model/WindowCommand.swift Szcast/Features/Snippets/Model/Snippet.swift Szcast/Features/QuickActions/Model/BuiltInQuickAction.swift Szcast/Features/Quicklinks/Model/Quicklink.swift Szcast/Features/Quicklinks/Model/QuicklinkDestination.swift Szcast/Platform/LocalizedResource.swift
 run index calc-performance Szcast/Features/Calculator/Model/*.swift Szcast/Platform/URLSanitizer.swift
 run calendar-test          Szcast/Features/Calendar/Model/*.swift \
@@ -403,9 +403,10 @@ run fallback-test          Szcast/Features/Launcher/Model/Fallback.swift \
                            Szcast/Platform/LocalizedResource.swift
 run dictionary-test        Szcast/Features/Dictionary/Model/DictionaryEntry.swift \
                            Szcast/Features/Dictionary/Model/DictionaryMarkup.swift
-run dictation-test         Szcast/Platform/ASCIIKeyboardLayout.swift Szcast/Features/HotKeys/Model/HIDKeyMapping.swift Szcast/Features/HotKeys/Model/HyperKey.swift Szcast/Features/HotKeys/Model/DoubleTapModifier.swift Szcast/Features/HotKeys/Model/ModifierKey.swift Szcast/Features/HotKeys/Model/HotKeyBinding.swift Szcast/Features/HotKeys/Service/KeyShortcut.swift Szcast/Features/Dictation/Model/DictationHotkeyPreset.swift Szcast/Features/Dictation/Model/DictationModel.swift Szcast/Features/Dictation/Model/DictationIdleRelease.swift Szcast/Features/Dictation/Model/DictationPasteMode.swift Szcast/Features/Dictation/Model/DictationLanguage.swift Szcast/Features/Dictation/Model/DictationTextFormatter.swift Szcast/Features/Dictation/Model/DictationBengaliMode.swift Szcast/Features/Dictation/Model/AvroPhoneticConverter.swift Szcast/Features/Dictation/Model/DictationHindiMode.swift Szcast/Features/Dictation/Model/HinglishPhoneticConverter.swift Szcast/Features/Dictation/Model/DictationS1Settings.swift Szcast/Features/Dictation/Model/AppStyleRouter.swift Szcast/Features/Dictation/Model/DictationTransform.swift Szcast/Features/Dictation/Model/DictationHistoryItem.swift Szcast/Features/Dictation/Service/DictationHistoryStore.swift Szcast/Features/Dictation/Model/CustomWord.swift Szcast/Features/Dictation/Model/DictationSnippet.swift Szcast/Features/Dictation/Model/VocabularyPack.swift Szcast/Features/Dictation/Service/DictationDictionaryStore.swift Szcast/Features/Dictation/Service/DictationS1Polisher.swift Szcast/Features/Dictation/Service/DictationS1Downloader.swift Szcast/Features/Dictation/Service/DictationLlamaServerManager.swift Szcast/Platform/AppPaths.swift
+run dictation-test         Szcast/Platform/ASCIIKeyboardLayout.swift Szcast/Features/HotKeys/Model/HIDKeyMapping.swift Szcast/Features/HotKeys/Model/HyperKey.swift Szcast/Features/HotKeys/Model/DoubleTapModifier.swift Szcast/Features/HotKeys/Model/ModifierKey.swift Szcast/Features/HotKeys/Model/HotKeyBinding.swift Szcast/Features/HotKeys/Service/KeyShortcut.swift Szcast/Features/Dictation/Model/DictationHotkeyPreset.swift Szcast/Features/Dictation/Model/DictationModel.swift Szcast/Features/Dictation/Model/DictationSupportModel.swift Szcast/Features/Dictation/Model/DictationIdleRelease.swift Szcast/Features/Dictation/Model/DictationPasteMode.swift Szcast/Features/Dictation/Model/DictationLanguage.swift Szcast/Features/Dictation/Model/DictationTextFormatter.swift Szcast/Features/Dictation/Model/DictationBengaliMode.swift Szcast/Features/Dictation/Model/AvroPhoneticConverter.swift Szcast/Features/Dictation/Model/DictationHindiMode.swift Szcast/Features/Dictation/Model/HinglishPhoneticConverter.swift Szcast/Features/Dictation/Model/DictationS1Settings.swift Szcast/Features/Dictation/Model/AppStyleRouter.swift Szcast/Features/Dictation/Model/DictationTransform.swift Szcast/Features/Dictation/Model/DictationHistoryItem.swift Szcast/Features/Dictation/Model/MeetingNote.swift Szcast/Features/Dictation/Model/TimedTranscript.swift Szcast/Features/Dictation/Model/TranscriptExporter.swift Szcast/Features/Dictation/Model/TranscriptStore.swift Szcast/Features/Dictation/Service/DictationHistoryStore.swift Szcast/Features/Dictation/Model/CustomWord.swift Szcast/Features/Dictation/Model/DictationSnippet.swift Szcast/Features/Dictation/Model/VocabularyPack.swift Szcast/Features/Dictation/Service/DictationDictionaryStore.swift Szcast/Features/Dictation/Service/DictationS1Polisher.swift Szcast/Features/Dictation/Service/DictationS1Downloader.swift Szcast/Features/Dictation/Service/DictationLlamaServerManager.swift Szcast/Platform/AppPaths.swift Szcast/Platform/Compression/Zlib.swift
 run dictation-cue-test     Szcast/Features/Dictation/Service/DictationCueRunner.swift
 run dictation-field-test   Szcast/Features/Dictation/Model/DictationModel.swift \
+                           Szcast/Features/Dictation/Model/DictationSupportModel.swift \
                            Szcast/Features/Dictation/Model/DictationPasteMode.swift \
                            Szcast/Features/Dictation/Model/DictationAudioChunks.swift \
                            Szcast/Features/Dictation/Model/DictationMode.swift \
@@ -424,13 +425,19 @@ run dictation-field-test   Szcast/Features/Dictation/Model/DictationModel.swift 
                            Szcast/Features/Dictation/Model/VocabularyPack.swift \
                            Szcast/Features/Dictation/Model/DictationSnippet.swift \
                            Szcast/Features/Dictation/Model/DictationHistoryItem.swift \
+                           Szcast/Features/Dictation/Model/MeetingNote.swift \
+                           Szcast/Features/Dictation/Model/TimedTranscript.swift \
+                           Szcast/Features/Dictation/Model/TranscriptExporter.swift \
+                           Szcast/Features/Dictation/Model/TranscriptStore.swift \
                            Szcast/Features/Dictation/Model/DictationProvider.swift \
                            Szcast/Features/Dictation/Service/DictationFileTranscriber.swift \
                            Szcast/Features/Dictation/Service/DictationLivePreviewRecognizer.swift \
+                           Szcast/Features/Dictation/Service/DictationWire.swift \
                            Szcast/Features/Dictation/Service/DictationCoordinator.swift \
                            Szcast/Features/Dictation/Service/DictationInsertionContext.swift \
                            Szcast/Features/Dictation/Service/DictationDictionaryStore.swift \
                            Szcast/Features/Dictation/Service/DictationHistoryStore.swift \
+                           Szcast/Features/Dictation/Service/TranscriptAIService.swift \
                            Szcast/Features/Dictation/Service/DictationS1Polisher.swift \
                            Szcast/Features/Dictation/Service/DictationS1Downloader.swift \
                            Szcast/Features/Dictation/Service/DictationLlamaServerManager.swift \
@@ -445,6 +452,7 @@ run dictation-field-test   Szcast/Features/Dictation/Model/DictationModel.swift 
                            Szcast/Platform/AccessibilityText.swift \
                            Szcast/Platform/PasteboardFiles.swift \
                            Szcast/Platform/AppPaths.swift \
+                           Szcast/Platform/Compression/Zlib.swift \
                            Szcast/Platform/Appearance.swift Szcast/DesignSystem/PaletteThemePreset.swift Szcast/DesignSystem/Theme.swift
 run dictation-volume-test  Szcast/Features/Dictation/Model/DictationVolumeSnapshot.swift \
                            Szcast/Features/Dictation/Model/DictationOtherAudioMode.swift \
@@ -452,18 +460,69 @@ run dictation-volume-test  Szcast/Features/Dictation/Model/DictationVolumeSnapsh
                            Szcast/Platform/AppPaths.swift
 run index -O dictation-performance Szcast/Platform/ProcessExit.swift \
                            Szcast/Features/Dictation/Model/DictationModel.swift \
+                           Szcast/Features/Dictation/Model/TimedTranscript.swift \
                            Szcast/Features/Dictation/Service/DictationWire.swift
 run dictation-inference-test Szcast/Features/Dictation/Model/DictationAudioChunks.swift \
+    Szcast/Features/Dictation/Model/TimedTranscript.swift \
+    Szcast/Features/Dictation/Model/SpeakerClustering.swift \
     Szcast/Features/Dictation/Service/DictationSpectrum.swift \
     Szcast/Features/Dictation/Helper/DictationTensor.swift Szcast/Features/Dictation/Helper/DictationTokenizer.swift \
     Szcast/Features/Dictation/Helper/DictationMel.swift
 run dictation-worker-test  Szcast/Features/Dictation/Model/DictationModel.swift \
+                           Szcast/Features/Dictation/Model/DictationSupportModel.swift \
                            Szcast/Features/Dictation/Model/DictationIdleRelease.swift \
+                           Szcast/Features/Dictation/Model/DictationAudioChunks.swift \
+                           Szcast/Features/Dictation/Model/TimedTranscript.swift \
                            Szcast/Features/Dictation/Service/DictationWire.swift \
                            Szcast/Features/Dictation/Service/DictationWorker.swift \
                            Szcast/Features/Dictation/Service/DictationModelStore.swift \
                            Szcast/Features/Dictation/Service/DictationModelDownloader.swift \
                            Szcast/Platform/ProcessExit.swift Szcast/Platform/AppPaths.swift
+run transcript-store-test  Szcast/Features/Dictation/Model/DictationHistoryItem.swift \
+                           Szcast/Features/Dictation/Model/MeetingNote.swift \
+                           Szcast/Features/Dictation/Model/TimedTranscript.swift \
+                           Szcast/Features/Dictation/Model/TranscriptStore.swift \
+                           Szcast/Features/Dictation/Service/DictationHistoryStore.swift \
+                           Szcast/Platform/AppPaths.swift
+run transcript-migration-test Szcast/Features/Dictation/Model/DictationHistoryItem.swift \
+                           Szcast/Features/Dictation/Model/MeetingNote.swift \
+                           Szcast/Features/Dictation/Model/TimedTranscript.swift \
+                           Szcast/Features/Dictation/Model/TranscriptStore.swift \
+                           Szcast/Features/Dictation/Service/TranscriptJSONMigration.swift \
+                           Szcast/Platform/AppPaths.swift
+run transcript-export-test Szcast/Features/Dictation/Model/TimedTranscript.swift \
+                           Szcast/Features/Dictation/Model/TranscriptExporter.swift \
+                           Szcast/Features/Dictation/Service/TranscriptPDFExporter.swift \
+                           Szcast/Platform/Compression/Zlib.swift
+run dictation-vad-diarization-test \
+                           Szcast/Features/Dictation/Model/DictationModel.swift \
+                           Szcast/Features/Dictation/Model/DictationProvider.swift \
+                           Szcast/Features/Dictation/Model/DictationSupportModel.swift \
+                           Szcast/Features/Dictation/Model/DictationHistoryItem.swift \
+                           Szcast/Features/Dictation/Model/MeetingNote.swift \
+                           Szcast/Features/Dictation/Model/DictationS1Settings.swift \
+                           Szcast/Features/Dictation/Model/DictationIdleRelease.swift \
+                           Szcast/Features/Dictation/Model/DictationBengaliMode.swift \
+                           Szcast/Features/Dictation/Model/AvroPhoneticConverter.swift \
+                           Szcast/Features/Dictation/Model/DictationHindiMode.swift \
+                           Szcast/Features/Dictation/Model/HinglishPhoneticConverter.swift \
+                           Szcast/Features/Dictation/Model/TimedTranscript.swift \
+                           Szcast/Features/Dictation/Model/TranscriptExporter.swift \
+                           Szcast/Features/Dictation/Model/SpeakerClustering.swift \
+                           Szcast/Features/Dictation/Service/TranscriptAIService.swift \
+                           Szcast/Features/Dictation/Service/DictationS1Polisher.swift \
+                           Szcast/Features/Dictation/Service/DictationS1Downloader.swift \
+                           Szcast/Features/Dictation/Service/DictationLlamaServerManager.swift \
+                           Szcast/Features/Dictation/Service/GroqPolishService.swift \
+                           Szcast/Platform/AppPaths.swift \
+                           Szcast/Platform/Compression/Zlib.swift
+run media-ingest-test      Szcast/Features/Dictation/Model/TimedTranscript.swift \
+                           Szcast/Features/Dictation/Model/DictationHistoryItem.swift \
+                           Szcast/Features/Dictation/Model/MeetingNote.swift \
+                           Szcast/Features/Dictation/Service/DictationFileTranscriber.swift \
+                           Szcast/Features/Dictation/Service/MediaFetchService.swift \
+                           Szcast/Platform/ExecutableLocator.swift \
+                           Szcast/Platform/ProcessExit.swift
 run hotkey-test            Szcast/Features/HotKeys/Model/DoubleTapModifier.swift \
                            Szcast/Features/HotKeys/Model/ModifierKey.swift \
                            Szcast/Features/HotKeys/Model/ModifierKeyDetector.swift \

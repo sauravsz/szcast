@@ -34,7 +34,7 @@ enum DeepLinkConsentPolicy {
             requiresConsent(id)
         case .togglePalette, .settingsPane:
             false
-        case .dictation, .dictationAddWord, .dictationPasteLast, .dictationCopyLast,
+        case .dictation, .dictationSecondary, .dictationAddWord, .dictationPasteLast, .dictationCopyLast,
             .app, .customCommand, .systemAction, .windowCommand, .windowLayout,
             .windowRoom, .customWindowSize, .quicklink, .quickAction, .appleShortcut, .snippet,
             .extensionCommand:
@@ -51,7 +51,7 @@ enum DeepLinkConsentPolicy {
             .explain, .findActionItems, .convertTypeScript, .slackReply, .emailReply, .summarizeYouTube,
             .pasteSequentially, .openCamera,
             .joinNextMeeting, .copyMeetingLink, .openInCalendar, .captureWindowLayout, .captureScreenText, .askAIAboutScreenArea, .scanQRCode, .openInBrowser,
-            .runShellCommand, .enteAuth, .generateDuckAddress, .cleanKeyboard, .keepassxc, .quit:
+            .runShellCommand, .enteAuth, .generateDuckAddress, .cleanKeyboard, .keepassxc, .recordMeeting, .quit:
             true
         case .quickAI, .aiChat, .calculatorHistory, .clipboardHistory, .searchEmoji, .searchFiles,
             .searchMenuItems, .switchWindows, .switchWindowsBackwards, .createCustomCommand,
@@ -59,7 +59,7 @@ enum DeepLinkConsentPolicy {
             .searchNotes, .createWindowLayout, .switchRoom, .createRoom, .createQuicklink,
             .searchQuicklinks, .importQuicklinks, .exportQuicklinks, .searchSnippets, .createSnippet,
             .exportSettings, .importSettings, .importFromRaycast, .checkForUpdates, .settings, .about,
-            .support, .focusTimer, .cleanClipboardURL, .dictationInsights, .changelog, .textTransformer, .systemStats:
+            .support, .focusTimer, .cleanClipboardURL, .dictationInsights, .transcriptStudio, .transcribeMediaURL, .changelog, .textTransformer, .systemStats:
             false
         }
     }

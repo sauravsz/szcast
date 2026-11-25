@@ -45,6 +45,13 @@ final class DictationWorker: Sendable {
         _ samples: [Float], request: DictationWire.Request,
         onReady: @escaping @MainActor @Sendable () -> Void
     ) async throws -> String {
+        try await transcribeTimed(samples, request: request, onReady: onReady).text
+    }
+
+    func transcribeTimed(
+        _ samples: [Float], request: DictationWire.Request,
+        onReady: @escaping @MainActor @Sendable () -> Void
+    ) async throws -> TimedTranscript {
         try Task.checkCancellation()
         guard samples.count == request.sampleCount, (1...DictationWire.maximumSamples).contains(samples.count)
         else {
@@ -87,14 +94,18 @@ final class DictationWorker: Sendable {
                     }
                 }
             }
-            var text: String?
+            var finalResponse: DictationWire.Response?
             for try await response in responses {
                 if response.status == .ready { await onReady() }
-                if response.status == .result { text = response.text }
+                if response.status == .result { finalResponse = response }
             }
             try Task.checkCancellation()
-            guard let text else { throw DictationWire.Failure.unavailable }
-            return text
+            guard let finalResponse else { throw DictationWire.Failure.unavailable }
+            return TimedTranscript(
+                text: finalResponse.text,
+                words: finalResponse.words,
+                segments: finalResponse.segments
+            )
         } onCancel: {
             self.terminate()
         }

@@ -38,6 +38,7 @@ final class DictationCoordinator {
     @ObservationIgnored private var cueTask: Task<Void, Never>?
     @ObservationIgnored private var pendingStartCue: UUID?
     @ObservationIgnored private var finishWhenStarted = false
+    @ObservationIgnored private var rawModeSession = false
     @ObservationIgnored private var target: InjectionTarget?
     /// The field a mic button is dictating into; nil for a shortcut's session.
     private(set) var field: DictationField?
@@ -63,6 +64,7 @@ final class DictationCoordinator {
             if pendingStartCue == token { playStartCue() }
         }
         capture.onLimit = { [weak self] in self?.accept() }
+        capture.onAutoStopSilence = { [weak self] in self?.accept() }
         capture.onSilenceWarning = { [weak self] silent in
             self?.panel.state.isMicSilent = silent
         }
@@ -136,9 +138,18 @@ final class DictationCoordinator {
     }
 
     func pressed() {
+        pressed(rawMode: false)
+    }
+
+    func pressedSecondary() {
+        pressed(rawMode: true)
+    }
+
+    private func pressed(rawMode: Bool) {
         guard settings.dictationEnabled else { return }
         if phase == .stopping { return }
         if settings.dictationMode == .pushToTalk,
+            !rawMode,
             hotKeys.binding(for: .dictation)?.shortcut == nil,
             hotKeys.binding(for: .dictation)?.holdKey == nil
         {
@@ -158,13 +169,14 @@ final class DictationCoordinator {
         }
 
         if phase != .idle {
-            if isHandsFreeLocked || settings.dictationMode == .toggle {
+            if isHandsFreeLocked || settings.dictationMode == .toggle || rawMode {
                 isHandsFreeLocked = false
                 panel.state.isLockedHandsFree = false
                 finish()
             }
             return
         }
+        rawModeSession = rawMode
         begin(target: InjectionTarget.current())
     }
 
@@ -236,12 +248,26 @@ final class DictationCoordinator {
         }
         panel.state.isWhisperMode = settings.dictationWhisperMode
         panel.state.isLockedHandsFree = isHandsFreeLocked
+        panel.state.isRawMode = rawModeSession
+        panel.state.isMuted = false
+        panel.state.onToggleMute = { [weak self] in
+            guard let self else { return }
+            let next = !capture.isMuted
+            capture.setMuted(next)
+            panel.state.isMuted = next
+        }
         pendingStartCue = settings.dictationPlaysSounds ? current : nil
         if pendingStartCue == nil { audioDucker.begin(mode: settings.dictationOtherAudioMode) }
         startTask = Task { [weak self] in
             guard let self else { return }
             do {
-                try await capture.start(microphoneID: settings.dictationMicrophone, whisperMode: settings.dictationWhisperMode)
+                try await capture.start(
+                    microphoneID: settings.dictationMicrophone,
+                    whisperMode: settings.dictationWhisperMode,
+                    allowLongCapture: isHandsFreeLocked || rawModeSession,
+                    startMuted: false,
+                    autoStopSilenceSeconds: settings.dictationAutoStopSilenceSeconds
+                )
                 guard token == current, settings.dictationEnabled else {
                     _ = await capture.stop()
                     return
@@ -319,22 +345,27 @@ final class DictationCoordinator {
                 return
             }
             do {
-                let transcript: String
+                var timed = TimedTranscript(text: "")
                 if settings.dictationTranscriptionProvider == .groq {
                     guard !settings.groqAPIKey.isEmpty else {
                         throw GroqAudioService.GroqAudioError.missingAPIKey
                     }
-                    transcript = try await groqAudio.transcribe(
+                    let text = try await groqAudio.transcribe(
                         samples: samples,
                         apiKey: settings.groqAPIKey,
                         model: settings.dictationGroqTranscriptionModel,
                         language: language
                     )
+                    timed = TimedTranscript(text: text)
                 } else {
-                    transcript = try await models.transcribe(
-                        samples, model: model,
-                        language: language)
+                    timed = try await models.transcribeTimed(
+                        samples,
+                        model: model,
+                        language: language,
+                        useVAD: settings.dictationVADEnabled
+                    )
                 }
+                let transcript = timed.text
                 guard token == current else { return }
 
                 var processed = transcript
@@ -406,22 +437,18 @@ final class DictationCoordinator {
                     } else {
                         processed = await s1Polisher.transform(text: processed, instruction: transform.systemPrompt, settings: s1)
                     }
-                } else if settings.dictationS1Enabled {
-                    if settings.dictationPolishProvider == .groq, !settings.groqAPIKey.isEmpty {
-                        do {
-                            processed = try await groqPolish.polish(
-                                processed,
-                                apiKey: settings.groqAPIKey,
-                                settings: s1,
-                                model: settings.dictationGroqPolishModel
-                            )
-                        } catch {
-                            // Fallback to local S1 on error
-                            processed = await s1Polisher.polish(processed, settings: s1)
-                        }
-                    } else {
-                        processed = await s1Polisher.polish(processed, settings: s1)
-                    }
+                } else if settings.dictationS1Enabled, !rawModeSession {
+                    let polishProvider: DictationPolishProvider =
+                        (settings.dictationPolishProvider == .groq && !settings.groqAPIKey.isEmpty) ? .groq : .localS1
+                    processed = await TranscriptAIService.polishLongTranscript(
+                        processed,
+                        provider: polishProvider,
+                        s1Settings: s1,
+                        groqAPIKey: settings.groqAPIKey,
+                        groqModel: settings.dictationGroqPolishModel,
+                        polisher: s1Polisher,
+                        groq: groqPolish
+                    )
                     // Authoritative post-pass: ensure user custom words, vocabulary packs, and snippets
                     // are never undone or mis-cased by the speech normalization model
                     processed = dictionaryStore.applyDictionaryAndPacks(processed)
@@ -453,7 +480,10 @@ final class DictationCoordinator {
                 historyStore.add(
                     text: text, rawText: transcript, duration: Double(samples.count) / 16000.0,
                     appName: frontApp?.localizedName, appBundleID: frontApp?.bundleIdentifier,
-                    samples: samples)
+                    samples: samples,
+                    words: timed.words,
+                    segments: timed.segments,
+                    modelID: model.rawValue)
 
                 NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .default)
                 panel.showSuccessAndClose()
@@ -522,13 +552,40 @@ final class DictationCoordinator {
         guard phase != .stopping, phase != .idle || !settings.dictationEnabled else { return }
         let pendingStart = startTask
         let pendingTranscription = transcriptionTask
+        let retainCancelled = settings.dictationRetainCancelled
+        let capturedSnapshot = retainCancelled && phase == .listening ? capture.snapshot() : []
+        let activeModel = settings.dictationModel
+        let activeLanguage = settings.dictationLanguage
+        let frontApp = target?.externalApp ?? NSWorkspace.shared.frontmostApplication
         reset()
         phase = .stopping
         let current = token
         stopTask = Task { [weak self] in
             guard let self else { return }
             await pendingStart?.value
-            _ = await capture.stop()
+            let stoppedSamples = await capture.stop()
+            let samplesToKeep = stoppedSamples.isEmpty ? capturedSnapshot : stoppedSamples
+            if retainCancelled, samplesToKeep.count >= 8_000,
+                settings.dictationTranscriptionProvider == .parakeet,
+                models.isInstalled(activeModel)
+            {
+                if let timed = try? await models.transcribeTimed(
+                    samplesToKeep, model: activeModel, language: activeLanguage,
+                    useVAD: settings.dictationVADEnabled
+                ), !timed.text.isEmpty {
+                    historyStore.add(
+                        text: timed.text,
+                        rawText: timed.text,
+                        duration: Double(samplesToKeep.count) / Double(DictationWire.sampleRate),
+                        appName: frontApp?.localizedName,
+                        appBundleID: frontApp?.bundleIdentifier,
+                        samples: samplesToKeep,
+                        words: timed.words,
+                        segments: timed.segments,
+                        modelID: activeModel.rawValue
+                    )
+                }
+            }
             await pendingTranscription?.value
             if !settings.dictationEnabled { await models.stop() }
             if token == current { phase = .idle; stopTask = nil }
@@ -552,6 +609,10 @@ final class DictationCoordinator {
         panel.state.commandModeText = nil
         panel.state.isLockedHandsFree = false
         panel.state.isWhisperMode = false
+        panel.state.isMuted = false
+        panel.state.isRawMode = false
+        panel.state.onToggleMute = nil
+        rawModeSession = false
         isHandsFreeLocked = false
         commandModeSelectedText = nil
         if cancelTranscription { transcriptionTask?.cancel() }
@@ -671,17 +732,20 @@ final class DictationCoordinator {
             }
 
             let language = settings.dictationLanguage
-            let transcript: String
+            var timed = TimedTranscript(text: "")
+            var usedModelID = settings.dictationModel.rawValue
             if settings.dictationTranscriptionProvider == .groq {
                 guard !settings.groqAPIKey.isEmpty else {
                     throw GroqAudioService.GroqAudioError.missingAPIKey
                 }
-                transcript = try await groqAudio.transcribe(
+                let text = try await groqAudio.transcribe(
                     samples: samples,
                     apiKey: settings.groqAPIKey,
                     model: settings.dictationGroqTranscriptionModel,
                     language: language
                 )
+                timed = TimedTranscript(text: text)
+                usedModelID = settings.dictationGroqTranscriptionModel
             } else {
                 var model = settings.dictationModel
                 if settings.dictationHindiMode == .whisperApex, models.isInstalled(.whisperApex) {
@@ -693,8 +757,16 @@ final class DictationCoordinator {
                     showMessage(String(localized: "Download the dictation model in Settings first"), .danger)
                     return
                 }
-                transcript = try await models.transcribe(samples, model: model, language: language)
+                usedModelID = model.rawValue
+                timed = try await models.transcribeTimed(
+                    samples,
+                    model: model,
+                    language: language,
+                    useVAD: settings.dictationVADEnabled,
+                    diarizeSpeakers: settings.dictationSpeakerCount
+                )
             }
+            let transcript = timed.text
 
             var processed = transcript
             processed = DictationTextFormatter.collapseRepetitions(processed)
@@ -720,20 +792,17 @@ final class DictationCoordinator {
                     bengaliMode: settings.dictationBengaliMode,
                     hindiMode: settings.dictationHindiMode
                 )
-                if settings.dictationPolishProvider == .groq, !settings.groqAPIKey.isEmpty {
-                    do {
-                        processed = try await groqPolish.polish(
-                            processed,
-                            apiKey: settings.groqAPIKey,
-                            settings: s1,
-                            model: settings.dictationGroqPolishModel
-                        )
-                    } catch {
-                        processed = await s1Polisher.polish(processed, settings: s1)
-                    }
-                } else {
-                    processed = await s1Polisher.polish(processed, settings: s1)
-                }
+                let polishProvider: DictationPolishProvider =
+                    (settings.dictationPolishProvider == .groq && !settings.groqAPIKey.isEmpty) ? .groq : .localS1
+                processed = await TranscriptAIService.polishLongTranscript(
+                    processed,
+                    provider: polishProvider,
+                    s1Settings: s1,
+                    groqAPIKey: settings.groqAPIKey,
+                    groqModel: settings.dictationGroqPolishModel,
+                    polisher: s1Polisher,
+                    groq: groqPolish
+                )
                 processed = dictionaryStore.applyDictionaryAndPacks(processed)
                 processed = dictionaryStore.applySnippets(processed)
             }
@@ -756,7 +825,24 @@ final class DictationCoordinator {
             }
 
             lastDictation = text
-            historyStore.add(text: text, rawText: transcript, duration: Double(samples.count) / 16000.0, samples: samples)
+            let fileID = UUID()
+            let wavName = "\(fileID.uuidString).wav"
+            let wavURL = historyStore.store.audioDirectory.appending(path: wavName)
+            DictationHistoryStore.writeWAV(samples: samples, to: wavURL)
+            let record = TranscriptRecord(
+                id: fileID,
+                kind: .fileImport,
+                title: url.deletingPathExtension().lastPathComponent,
+                createdAt: Date(),
+                duration: Double(samples.count) / Double(DictationWire.sampleRate),
+                text: text,
+                rawText: transcript,
+                segments: timed.segments,
+                sourceURL: url.path,
+                audioFilename: FileManager.default.fileExists(atPath: wavURL.path) ? wavName : nil,
+                modelID: usedModelID
+            )
+            historyStore.store.upsert(record)
             Paster.copyPlainText(text)
             showMessage(String(localized: "\(url.lastPathComponent) transcribed & copied to clipboard"), .success)
         } catch {
