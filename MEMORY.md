@@ -369,8 +369,13 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - Added full release catalog for `v1.1.6` (4-phase UI padding & margin audit remediation across 491 files, dynamic dictation panel frame expansion, and unified Retina hairline dividers).
   - Made the `CURRENT` release badge in `ChangelogSettingsView` dynamic based on the active running build version.
 
+- **Selective Upstream Radar Ports (2026-11-25, Tinycast + EnviousWispr)**:
+  - **Tinycast**: Ported `75f00462` (pasted/partial file path search `#1988`), `90a35d39` + `ce14fd3d` (`Switch to Previous Room` / `Tidy Current Room` commands, `Room.previous(to:in:)`, shared `pillPresenter` + `RoomHUDController`/`RoomHUDView`, dropping `Add Window to Current Room`), and clean `970bf4e4` fixes (`AppleShortcutRunner` cancellation check, `EmojiScreen` horizontal arrow guard at `count <= 1`, `NoteRevealPolicy.restingCaret` + `fitsWindowToNote` / `Fit Window to Note` titlebar action). Skipped `#1989` AI plan usage menu bar, iCloud sync, and `IconTile`/`Backup v2`.
+  - **EnviousWispr** (excluding EQ-1): Ported `722fb06` (AX setter read-back verification in `TextInjector.replaceUsingAccessibility` + `TextReplacementPolicy.accessibilityWriteDisposition` to stop Telegram/TickTick double-pasting), `421578e` + `f515a84`/`5091a32` (mid-take dead-air warning & recovery in `DictationCapture`, serialized session start/stop transitions with 4s start timeout, panel silence state reset), `eeddfab` (`DictationDictionaryStore` + `collapseRepetitions` normalization on meeting transcripts), `4adb364` (compiled regex caching in `DictationTextFormatter` & `DictationDictionaryStore`), `854135d` + `09fbe74` (`DictationLanguage.previewLocale(for:)` BCP-47 resolution, Mandarin vs Cantonese `isCantonese` fallback separation, `SpeechAnalyzer` cache reset on error), `10387be` (post-download model prewarm), and `eea574c` (`SettingsSearchCatalog.prewarm()` off-main on Settings open).
+  - Updated `.upstream-synced` and `.enviouswispr-synced` markers; verified Debug/Release `xcodebuild`, `sync-strings.sh`, `check-localizations.js`, `check-settings-search.js`, `check-migrations.sh`, and 139/139 test harnesses.
+
 ## Active State & Next Steps
-- **Active State**: Installed and running at `/Applications/szcast.app` (v1.1.6) with full 4-phase design token padding remediation, live menu bar stats, and synchronized changelog catalog. All 134 test harnesses pass.
+- **Active State**: Upstream Tinycast and EnviousWispr ports integrated on `main`; Debug/Release builds, localization/settings-search/migration checks, and all 139 test harnesses pass.
 - **Immediate Next Steps**:
   1. Test long continuous dictation (5+ minutes) in real-world workflows across Hindi and Bengali models.
   2. Perform weekly upstream radar audit (`./Scripts/upstream-radar.sh`).
