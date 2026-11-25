@@ -13,12 +13,13 @@ design follows [fsearch](https://github.com/noahdunnagan/fsearch).
   exits; the app only maps the file, whose clean pages never count toward its footprint.
 - **Full Disk Access is required, and nothing is indexed without it.** `Permissions.hasFullDiskAccess()`
   probes a TCC-guarded file, which never prompts. The pane and the palette both say how to grant it.
-- **Scopes are the crawl roots.** Only what lies under a scope is indexed or searched; a scope inside
+- **Scopes are the crawl roots.** Only what lies under a scope appears in indexed results. A scope inside
   another stays listed but folds into it at crawl time, and a cleared list indexes nothing. The default
   is home (`~`): dotfiles are user files, the rest of the disk is the system's, and apps are the
   launcher's.
 - **A matching ignore pattern skips a folder and everything in it at crawl time.** Changing either list
-  rebuilds the index, debounced by a second; the old index serves until the new one maps.
+  rebuilds the index, debounced by a second; the old index serves until the new one maps. Clearing
+  every scope drops the index at once.
 - **Hidden files and bundle contents are indexed.** They rank last instead (see Ranking), and the ignore
   list is how a user narrows further. Mount points are never entered, which keeps firmlinked files from
   appearing twice through `/System/Volumes/Data` and keeps other volumes out.
@@ -90,6 +91,15 @@ the overall best 200 have their paths built, and the overlay of live additions i
 One score orders the results: exact name +4000, name starts with the first term +2000, first term at a
 word or camel-case boundary +1000, terms typed in order +1500, first term ending a word +500, the prior
 × 1500, minus 4 per name byte. Ties go to the shorter path.
+
+A `/` separates terms as a space does, since no name holds one, and a leading `~/` or a bare `~` is
+dropped, so `szcast/szcast/App` or `~/.claude/skills` matches through folders like the same words
+with spaces.
+A query that reads as a local path (`/`, `/…`, `~`, `~/…` or a local `file://` URL) is also checked on disk.
+With Full Disk Access this works during the first crawl or with an empty scope list. When the type filter
+admits it, the entry lists first, even if it is hidden, ignored or outside every scope. The filesystem
+resolves parent components and supplies the canonical spelling used to deduplicate indexed hits. A path
+that names a symbolic link directly keeps that link as the target of row actions.
 
 `prior` is set per folder at crawl time and inherited by its files: 2 under home and the cloud drives,
 1 elsewhere in plain sight (`/Applications`, `/Users/Shared`), 0 for hidden paths, system folders,
@@ -270,8 +280,9 @@ delay old, since the reset clears its session.
 **Show in launcher** (`fileSearchShowInLauncher`, under the feature switch) adds a **Files** section to
 root search, between the ranked results and the `Use "…" with` fallbacks, so ↵ on a typed app name never
 opens a file. It lists the top five hits (`FileSearchQuery.launcherLimit`) once the trimmed query has
-three characters (`launcherMinimumLength`), the threshold category search uses. Shorter cancels the
-query and releases its rows.
+three characters (`launcherMinimumLength`), the threshold category search uses. Shorter queries
+cancel the search and release its rows, except a path with no words (`/`, `~`, `~/`), which lists only
+its own row.
 
 The launcher borrows this screen's `FileSearchSession` rather than keeping its own. Only one palette
 mode shows at a time, so nothing is held twice. An index swap or a trashed row updates both. And the

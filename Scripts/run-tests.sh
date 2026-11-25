@@ -408,6 +408,7 @@ run dictation-cue-test     Szcast/Features/Dictation/Service/DictationCueRunner.
 run dictation-field-test   Szcast/Features/Dictation/Model/DictationModel.swift \
                            Szcast/Features/Dictation/Model/DictationSupportModel.swift \
                            Szcast/Features/Dictation/Model/DictationPasteMode.swift \
+                           Szcast/Features/Dictation/Model/DictationLanguage.swift \
                            Szcast/Features/Dictation/Model/DictationAudioChunks.swift \
                            Szcast/Features/Dictation/Model/DictationMode.swift \
                            Szcast/Features/Dictation/Model/DictationDestination.swift \

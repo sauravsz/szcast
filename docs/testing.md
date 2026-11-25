@@ -158,7 +158,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `volume-test` | `SystemActions/Model/VolumeLevel.swift` |
 | `window-command-test` | `WindowManagement/WindowCommand.swift`, `WindowPlacementEngine.swift`, `WindowActionMemory.swift` |
 | `window-layout-test` | `WindowManagement/Model/WindowLayout*.swift` and `CustomWindowSize*.swift` — the layout record, its geometry and its inverse, the plan and the store; custom sizes' units, frames and store |
-| `window-room-test` | `WindowManagement/Model/Room*.swift` — every room layout and its minimum sizes, the grid, arrangement reading, window matching, parking, the plan, Tab's choices and the three stores |
+| `window-room-test` | `WindowManagement/Model/Room*.swift` — every room layout and its minimum sizes, the grid, arrangement reading, window matching, parking, the plan, Tab's choices, going back and the three stores |
 | `custom-command-test` | Command storage and execution, editor drafts, argument identities and dynamic keyboard focus |
 | `custom-command-list-test` | Browser result snapshots, observation, row actions and empty-library messages |
 | `uninstall-test` | all five pure files in `Uninstall/Model/` |
@@ -898,6 +898,10 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
   with the gap, hides other apps and parks their extra windows; quitting, `kill -9` then relaunching, and
   turning Window Management off each bring every window back.
   Repeat on two displays and with Reduce Motion on
+- Rooms by shortcut: entering one shows the room HUD (never with the preview); Switch to Previous
+  Room toggles between the last two, including two presses during the first transition. With a
+  different room previewed, the shortcut fades that preview and shows the destination HUD. Tidy
+  Current Room puts moved windows back
 
 ### Deeplinks
 

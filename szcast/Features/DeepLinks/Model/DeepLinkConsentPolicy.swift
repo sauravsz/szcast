@@ -51,7 +51,8 @@ enum DeepLinkConsentPolicy {
             .explain, .findActionItems, .convertTypeScript, .slackReply, .emailReply, .summarizeYouTube,
             .pasteSequentially, .openCamera,
             .joinNextMeeting, .copyMeetingLink, .openInCalendar, .captureWindowLayout, .captureScreenText, .askAIAboutScreenArea, .scanQRCode, .openInBrowser,
-            .runShellCommand, .enteAuth, .generateDuckAddress, .cleanKeyboard, .keepassxc, .recordMeeting, .quit:
+            .runShellCommand, .enteAuth, .generateDuckAddress, .cleanKeyboard, .keepassxc, .recordMeeting,
+            .switchToPreviousRoom, .tidyCurrentRoom, .quit:
             true
         case .quickAI, .aiChat, .calculatorHistory, .clipboardHistory, .searchEmoji, .searchFiles,
             .searchMenuItems, .switchWindows, .switchWindowsBackwards, .createCustomCommand,

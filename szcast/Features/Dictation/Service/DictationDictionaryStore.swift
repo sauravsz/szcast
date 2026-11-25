@@ -9,17 +9,27 @@ final class DictationDictionaryStore {
     private let fileURL: URL
     private let snippetsFileURL: URL
 
-    private(set) var words: [CustomWord] = []
-    private(set) var snippets: [DictationSnippet] = []
+    private(set) var words: [CustomWord] = [] {
+        didSet { cachedCustomRules = nil }
+    }
+    private(set) var snippets: [DictationSnippet] = [] {
+        didSet { cachedSnippetRules = nil }
+    }
     var enabledPacks: Set<VocabularyPackType> = [.tech, .brands] {
         didSet {
             saveEnabledPacks()
+            cachedPackRules = nil
         }
     }
     var selfLearningEnabled: Bool = true
 
     // Vocabulary packs storage: pack -> (canonical -> [aliases])
-    private var packTerms: [VocabularyPackType: [String: [String]]] = [:]
+    private var packTerms: [VocabularyPackType: [String: [String]]] = [:] {
+        didSet { cachedPackRules = nil }
+    }
+    @ObservationIgnored private var cachedCustomRules: [CompiledReplacementRule]?
+    @ObservationIgnored private var cachedPackRules: [CompiledReplacementRule]?
+    @ObservationIgnored private var cachedSnippetRules: [CompiledReplacementRule]?
 
     init(
         fileURL: URL = AppPaths.applicationSupport().appending(path: "dictation-words.json"),
@@ -95,38 +105,65 @@ final class DictationDictionaryStore {
         let canonical: String
     }
 
-    func applyDictionaryAndPacks(_ text: String) -> String {
-        var result = text
+    private struct CompiledReplacementRule {
+        let regex: NSRegularExpression
+        let template: String
+    }
 
-        // 1. Apply user custom words (highest priority)
-        var customRules: [ReplacementRule] = []
+    private static func compileRules(
+        _ rules: [ReplacementRule],
+        normalizeApostrophes: Bool
+    ) -> [CompiledReplacementRule] {
+        // Sort by phrase length descending to match longer compound expressions first.
+        let sorted = rules.sorted { $0.phrase.count > $1.phrase.count }
+        return sorted.compactMap { rule in
+            let escaped = NSRegularExpression.escapedPattern(for: rule.phrase)
+            let body = normalizeApostrophes ? escaped.replacingOccurrences(of: "'", with: "['’]") : escaped
+            let pattern = #"\b"# + body + #"\b"#
+            guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
+                return nil
+            }
+            return CompiledReplacementRule(
+                regex: regex,
+                template: NSRegularExpression.escapedTemplate(for: rule.canonical)
+            )
+        }
+    }
+
+    private static func applyCompiled(_ rules: [CompiledReplacementRule], to text: String) -> String {
+        guard !rules.isEmpty, !text.isEmpty else { return text }
+        var result = text
+        for rule in rules {
+            let range = NSRange(result.startIndex..<result.endIndex, in: result)
+            result = rule.regex.stringByReplacingMatches(
+                in: result, options: [], range: range, withTemplate: rule.template
+            )
+        }
+        return result
+    }
+
+    private func customRules() -> [CompiledReplacementRule] {
+        if let cachedCustomRules { return cachedCustomRules }
+        var rules: [ReplacementRule] = []
         for word in words {
             let canon = word.canonical.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !canon.isEmpty else { continue }
             for alias in word.aliases {
                 let clean = alias.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !clean.isEmpty {
-                    customRules.append(ReplacementRule(phrase: clean, canonical: canon))
+                    rules.append(ReplacementRule(phrase: clean, canonical: canon))
                 }
             }
-            customRules.append(ReplacementRule(phrase: canon, canonical: canon))
+            rules.append(ReplacementRule(phrase: canon, canonical: canon))
         }
-        // Sort by phrase length descending to match longer compound expressions first
-        customRules.sort { $0.phrase.count > $1.phrase.count }
+        let compiled = Self.compileRules(rules, normalizeApostrophes: true)
+        cachedCustomRules = compiled
+        return compiled
+    }
 
-        for rule in customRules {
-            let escaped = NSRegularExpression.escapedPattern(for: rule.phrase)
-            let patternString = escaped.replacingOccurrences(of: "'", with: "['’]")
-            let pattern = #"\b"# + patternString + #"\b"#
-            if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) {
-                let range = NSRange(result.startIndex..<result.endIndex, in: result)
-                let template = NSRegularExpression.escapedTemplate(for: rule.canonical)
-                result = regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: template)
-            }
-        }
-
-        // 2. Apply active vocabulary packs
-        var packRules: [ReplacementRule] = []
+    private func packRules() -> [CompiledReplacementRule] {
+        if let cachedPackRules { return cachedPackRules }
+        var rules: [ReplacementRule] = []
         for pack in enabledPacks {
             guard let dict = packTerms[pack] else { continue }
             for (canonical, aliases) in dict {
@@ -135,25 +172,32 @@ final class DictationDictionaryStore {
                 for alias in aliases {
                     let clean = alias.trimmingCharacters(in: .whitespacesAndNewlines)
                     if !clean.isEmpty {
-                        packRules.append(ReplacementRule(phrase: clean, canonical: canon))
+                        rules.append(ReplacementRule(phrase: clean, canonical: canon))
                     }
                 }
-                packRules.append(ReplacementRule(phrase: canon, canonical: canon))
+                rules.append(ReplacementRule(phrase: canon, canonical: canon))
             }
         }
-        packRules.sort { $0.phrase.count > $1.phrase.count }
+        let compiled = Self.compileRules(rules, normalizeApostrophes: true)
+        cachedPackRules = compiled
+        return compiled
+    }
 
-        for rule in packRules {
-            let escaped = NSRegularExpression.escapedPattern(for: rule.phrase)
-            let patternString = escaped.replacingOccurrences(of: "'", with: "['’]")
-            let pattern = #"\b"# + patternString + #"\b"#
-            if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) {
-                let range = NSRange(result.startIndex..<result.endIndex, in: result)
-                let template = NSRegularExpression.escapedTemplate(for: rule.canonical)
-                result = regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: template)
-            }
+    private func snippetRules() -> [CompiledReplacementRule] {
+        if let cachedSnippetRules { return cachedSnippetRules }
+        let rules = snippets.compactMap { snippet -> ReplacementRule? in
+            let kw = snippet.keyword.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !kw.isEmpty else { return nil }
+            return ReplacementRule(phrase: kw, canonical: snippet.expansion)
         }
+        let compiled = Self.compileRules(rules, normalizeApostrophes: false)
+        cachedSnippetRules = compiled
+        return compiled
+    }
 
+    func applyDictionaryAndPacks(_ text: String) -> String {
+        var result = Self.applyCompiled(customRules(), to: text)
+        result = Self.applyCompiled(packRules(), to: result)
         return result
     }
 
@@ -174,19 +218,7 @@ final class DictationDictionaryStore {
 
     func applySnippets(_ text: String) -> String {
         guard !snippets.isEmpty else { return text }
-        var result = text
-        let sorted = snippets.sorted { $0.keyword.count > $1.keyword.count }
-        for snippet in sorted {
-            let kw = snippet.keyword.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !kw.isEmpty else { continue }
-            let pattern = #"\b"# + NSRegularExpression.escapedPattern(for: kw) + #"\b"#
-            if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) {
-                let range = NSRange(result.startIndex..<result.endIndex, in: result)
-                let template = NSRegularExpression.escapedTemplate(for: snippet.expansion)
-                result = regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: template)
-            }
-        }
-        return result
+        return Self.applyCompiled(snippetRules(), to: text)
     }
 
     private func loadSnippets() {

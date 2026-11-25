@@ -114,6 +114,7 @@ final class AppCore {
     @ObservationIgnored private(set) lazy var meetingNotetaker = MeetingNotetakerCoordinator(
         settings: settings, models: dictationModels,
         store: dictationCoordinator.historyStore.store,
+        dictionaryStore: dictationCoordinator.dictionaryStore,
         showMessage: { [unowned self] in self.showMessage($0, tone: $1) })
     @ObservationIgnored private(set) lazy var transcriptStudio = TranscriptStudioCoordinator(
         store: dictationCoordinator.historyStore.store,
@@ -168,7 +169,8 @@ final class AppCore {
         store: rooms, minimums: roomMinimums, ledger: roomParking, session: roomSession,
         settings: settings, appIndex: appIndex, hotKeys: hotKeys, favorites: favorites,
         visibility: visibility, ranking: launcherRanking, aliases: aliases, palette: palette,
-        paletteCoordinator: paletteCoordinator, core: self)
+        paletteCoordinator: paletteCoordinator,
+        hud: RoomHUDController(settings: settings, presenter: pillPresenter), core: self)
     @ObservationIgnored private(set) lazy var customCommandCoordinator = CustomCommandCoordinator(
         store: customCommands, settings: settings, appIndex: appIndex,
         paletteCoordinator: paletteCoordinator, settingsCoordinator: settingsCoordinator,
@@ -178,8 +180,9 @@ final class AppCore {
         settings: settings, appIndex: appIndex, hotKeys: hotKeys, favorites: favorites,
         visibility: visibility, ranking: launcherRanking, aliases: aliases,
         paletteCoordinator: paletteCoordinator, core: self)
-    /// Window state, not a preference: it rides `UserDefaults` like the active note's filename.
+    /// Window state, not preferences: they ride `UserDefaults` like the active note's filename.
     private nonisolated static let noteFormattingBarKey = "notesFormattingBarExpanded"
+    private nonisolated static let noteWindowFitsKey = "notesWindowFitsNote"
     @ObservationIgnored private(set) lazy var notesCoordinator = NotesCoordinator(
         store: notesStore,
         settings: settings,
@@ -188,7 +191,9 @@ final class AppCore {
         isFormattingBarExpanded: UserDefaults.standard.bool(forKey: Self.noteFormattingBarKey),
         saveFormattingBarExpanded: {
             UserDefaults.standard.set($0, forKey: Self.noteFormattingBarKey)
-        })
+        },
+        fitsWindowToNote: UserDefaults.standard.object(forKey: Self.noteWindowFitsKey) as? Bool ?? true,
+        saveFitsWindowToNote: { UserDefaults.standard.set($0, forKey: Self.noteWindowFitsKey) })
 
     @ObservationIgnored private(set) lazy var launcherCoordinator = LauncherCoordinator(
         ranking: launcherRanking, windowController: windowController,
@@ -280,7 +285,12 @@ final class AppCore {
     @ObservationIgnored private(set) lazy var textTransformerCoordinator = TextTransformerCoordinator()
 
     @ObservationIgnored private lazy var windowController = PaletteWindowController(core: self)
-    @ObservationIgnored private lazy var messageHUD = MessageHUDController(settings: settings)
+    /// Every pill shares this panel, so a later one replaces the earlier rather than stacking.
+    @ObservationIgnored private lazy var pillPresenter = HUDPresenter(
+        anchor: .edgeInset(Theme.Size.hudEdgeOffset), dwell: Theme.Duration.messageHUD,
+        screen: { [settings] in settings.openOnCursorScreen ? .underCursor : .primary })
+    @ObservationIgnored private lazy var messageHUD = MessageHUDController(
+        settings: settings, presenter: pillPresenter)
     private(set) var isShowingDialog = false
     /// A link that launched the app can arrive before `start` wires anything; it waits, then runs.
     @ObservationIgnored private var pendingURLs: [URL]? = []

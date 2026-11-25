@@ -10,6 +10,7 @@ final class NotesWindowController: NSObject, NSWindowDelegate {
     private weak var editor: NoteTextView?
     private var editorObservers: [NotificationToken] = []
     private var fitTask: Task<Void, Never>?
+    private var liveResizeStartHeight: CGFloat?
     private var previousApp: NSRunningApplication?
     private weak var previousOwnWindow: NSWindow?
 
@@ -152,8 +153,8 @@ final class NotesWindowController: NSObject, NSWindowDelegate {
         }
     }
 
-    private func fitToEditor() {
-        guard let panel, panel.isVisible, !panel.inLiveResize,
+    func fitToEditor() {
+        guard coordinator.fitsWindowToNote, let panel, panel.isVisible, !panel.inLiveResize,
             let editor, let clipView = editor.enclosingScrollView?.contentView,
             let visibleFrame = (panel.screen ?? NSScreen.main)?.visibleFrame
         else { return }

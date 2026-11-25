@@ -70,7 +70,10 @@ extension SettingsTab {
         case .snippets: [.searchSnippets, .createSnippet]
         case .navigation: [.switchWindows, .switchWindowsBackwards, .searchMenuItems]
         case .windowManagement:
-            [.createWindowLayout, .captureWindowLayout, .switchRoom, .createRoom]
+            [
+                .createWindowLayout, .captureWindowLayout, .switchRoom, .createRoom,
+                .switchToPreviousRoom, .tidyCurrentRoom
+            ]
         case .clipboard: [.clipboardHistory, .pasteSequentially]
         case .emoji: [.searchEmoji]
         case .calendar:

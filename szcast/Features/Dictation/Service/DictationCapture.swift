@@ -1,6 +1,7 @@
 import AVFoundation
 import AudioToolbox
 import CoreMedia
+import os
 
 @MainActor
 final class DictationCapture {
@@ -56,6 +57,9 @@ final class DictationCapture {
     private var session: AVCaptureSession?
     private var output: AVCaptureAudioDataOutput?
     private var collector: AudioCollector?
+    private var sessionStartTask: Task<Void, Never>?
+    private var sessionStopTask: Task<Void, Never>?
+    private static let sessionStartTimeoutSeconds: Double = 4.0
 
     func setMuted(_ muted: Bool) {
         isMuted = muted
@@ -150,9 +154,20 @@ final class DictationCapture {
         self.session = capture
         self.output = output
         self.collector = collector
+        if let pendingStop = sessionStopTask {
+            let drained = await Self.awaitWithin(seconds: Self.sessionStartTimeoutSeconds) {
+                await pendingStop.value
+            }
+            if drained { sessionStopTask = nil }
+        }
         let box = CaptureSessionBox(capture)
-        await Task.detached { box.session.startRunning() }.value
-        guard capture.isRunning else {
+        let startTask = Task.detached { box.session.startRunning() }
+        sessionStartTask = startTask
+        let started = await Self.awaitWithin(seconds: Self.sessionStartTimeoutSeconds) {
+            await startTask.value
+        }
+        if started { sessionStartTask = nil }
+        guard started, self.session === capture, capture.isRunning else {
             _ = await stop()
             throw Failure.captureUnavailable
         }
@@ -166,8 +181,36 @@ final class DictationCapture {
         let samples = collector?.finish() ?? []
         collector = nil
         let box = CaptureSessionBox(session)
-        Task.detached(priority: .utility) { box.session.stopRunning() }
+        let previousStart = sessionStartTask
+        sessionStartTask = nil
+        let previousStop = sessionStopTask
+        sessionStopTask = Task.detached(priority: .utility) {
+            await previousStop?.value
+            await previousStart?.value
+            box.session.stopRunning()
+        }
         return samples
+    }
+
+    private static func awaitWithin(
+        seconds: Double,
+        operation: @escaping @Sendable () async -> Void
+    ) async -> Bool {
+        let settled = OSAllocatedUnfairLock(initialState: false)
+        return await withCheckedContinuation { continuation in
+            Task.detached {
+                await operation()
+                if settled.withLock({ let was = $0; $0 = true; return !was }) {
+                    continuation.resume(returning: true)
+                }
+            }
+            Task.detached {
+                try? await Task.sleep(for: .seconds(seconds))
+                if settled.withLock({ let was = $0; $0 = true; return !was }) {
+                    continuation.resume(returning: false)
+                }
+            }
+        }
     }
 
     func snapshot() -> [Float] {
@@ -194,8 +237,7 @@ private final class AudioCollector: NSObject, AVCaptureAudioDataOutputSampleBuff
     private var lastLevelUpdate: TimeInterval = 0
     private var reachedLimit = false
     private let whisperMode: Bool
-    private var totalSamplesProcessed = 0
-    private var energySum: Float = 0
+    private var silentSamples = 0
     private var silenceReported = false
     private let maximumSamples: Int
     private var muted: Bool
@@ -276,19 +318,28 @@ private final class AudioCollector: NSObject, AVCaptureAudioDataOutputSampleBuff
         let chunkRms = sqrt(chunkEnergy / Float(max(1, chunk.count)))
         if chunkRms >= 0.003 { heardAnySpeech = true }
 
-        if totalSamplesProcessed < 32_000, !muted {
-            totalSamplesProcessed += chunk.count
-            energySum += chunkEnergy
-            if totalSamplesProcessed >= 24_000 && !silenceReported {
-                let rms = sqrt(energySum / Float(totalSamplesProcessed))
-                if rms < 0.0012 {
+        if muted {
+            silentSamples = 0
+            if silenceReported {
+                silenceReported = false
+                onSilenceWarning?(false)
+            }
+        } else {
+            let threshold: Float = heardAnySpeech ? 0.0003 : 0.0012
+            let requiredSamples = heardAnySpeech ? 48_000 : 24_000
+            if chunkRms < threshold {
+                silentSamples += chunk.count
+                if silentSamples >= requiredSamples, !silenceReported {
                     silenceReported = true
                     onSilenceWarning?(true)
                 }
+            } else {
+                silentSamples = 0
+                if silenceReported, chunkRms > 0.003 {
+                    silenceReported = false
+                    onSilenceWarning?(false)
+                }
             }
-        } else if silenceReported, chunkRms > 0.003 || muted {
-            silenceReported = false
-            onSilenceWarning?(false)
         }
 
         if autoStopSilenceSamples > 0, heardAnySpeech, !muted, !autoStopTriggered {

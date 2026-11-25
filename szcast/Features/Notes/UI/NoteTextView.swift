@@ -6,6 +6,7 @@ final class NoteTextView: NSTextView, InjectableTextView {
     weak var editing: NoteTextViewEditing?
     /// True during `mouseDown`'s drag loop; revealing mid-drag would shift text under the pointer.
     private(set) var isDragSelecting = false
+    private(set) var isSteppingByCharacter = false
 
     /// Tracked here because the window still names this view first responder while it resigns.
     private var isFirstResponder = false
@@ -134,6 +135,24 @@ final class NoteTextView: NSTextView, InjectableTextView {
         }
         var dummy = 0
         return super.completions(forPartialWordRange: charRange, indexOfSelectedItem: &dummy)
+    }
+
+    override func moveLeft(_ sender: Any?) {
+        steppingByCharacter { super.moveLeft(sender) }
+    }
+
+    override func moveRight(_ sender: Any?) {
+        steppingByCharacter { super.moveRight(sender) }
+    }
+
+    override func moveBackward(_ sender: Any?) {
+        steppingByCharacter { super.moveBackward(sender) }
+    }
+
+    private func steppingByCharacter(_ move: () -> Void) {
+        isSteppingByCharacter = true
+        defer { isSteppingByCharacter = false }
+        move()
     }
 
     override func insertTab(_ sender: Any?) {

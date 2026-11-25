@@ -64,6 +64,48 @@ enum TextReplacementPolicy {
         expected.replaceSubrange(stringRange, with: insertedText)
         return observedValue == expected
     }
+
+    enum AccessibilityWriteDisposition: Equatable {
+        case delivered
+        case fallbackToEvents
+        case rejectWithoutFallback
+    }
+
+    /// Setter return codes do not prove what landed (e.g., Telegram returns `kAXErrorFailure`
+    /// while applying the write); verify the field for addressable errors and only use the error
+    /// code to break ties when the field cannot be proven.
+    static func accessibilityWriteDisposition(
+        setterError: AXError,
+        originalValue: String,
+        replacementRange: NSRange,
+        insertedText: String,
+        observedValue: String?
+    ) -> AccessibilityWriteDisposition {
+        switch setterError {
+        case .cannotComplete:
+            return .rejectWithoutFallback
+        case .invalidUIElement:
+            return .fallbackToEvents
+        default:
+            if confirmsReplacement(
+                originalValue: originalValue,
+                replacementRange: replacementRange,
+                insertedText: insertedText,
+                observedValue: observedValue)
+            {
+                return .delivered
+            }
+            if observedValue == originalValue {
+                return .fallbackToEvents
+            }
+            switch setterError {
+            case .success, .failure:
+                return .rejectWithoutFallback
+            default:
+                return observedValue == nil ? .fallbackToEvents : .rejectWithoutFallback
+            }
+        }
+    }
 }
 
 @MainActor
@@ -665,34 +707,42 @@ final class TextInjector {
         guard setSelectedRange(target.replacementRange, in: target.element) else {
             return .unavailable
         }
-        guard
-            AXUIElementSetAttributeValue(
-                target.element,
-                kAXSelectedTextAttribute as CFString,
-                injected.text as CFString) == .success
-        else {
-            _ = setSelectedRange(target.originalRange, in: target.element)
+        let setterError = AXUIElementSetAttributeValue(
+            target.element,
+            kAXSelectedTextAttribute as CFString,
+            injected.text as CFString)
+        // Skip extra AX reads on stalled (.cannotComplete) or dead (.invalidUIElement) targets.
+        let observed: String? =
+            switch setterError {
+            case .cannotComplete, .invalidUIElement:
+                nil
+            default:
+                stringValue(in: target.element)
+            }
+        switch TextReplacementPolicy.accessibilityWriteDisposition(
+            setterError: setterError,
+            originalValue: target.value,
+            replacementRange: target.replacementRange,
+            insertedText: injected.text,
+            observedValue: observed)
+        {
+        case .delivered:
+            _ = setSelectedRange(
+                NSRange(
+                    location: target.replacementRange.location + injected.caretPrefixLength, length: 0),
+                in: target.element)
+            return .delivered
+        case .fallbackToEvents:
+            if setterError != .invalidUIElement {
+                _ = setSelectedRange(target.originalRange, in: target.element)
+            }
             return .unavailable
+        case .rejectWithoutFallback:
+            if setterError != .cannotComplete {
+                _ = setSelectedRange(target.originalRange, in: target.element)
+            }
+            return .rejected
         }
-
-        let observed = stringValue(in: target.element)
-        guard
-            TextReplacementPolicy.confirmsReplacement(
-                originalValue: target.value,
-                replacementRange: target.replacementRange,
-                insertedText: injected.text,
-                observedValue: observed)
-        else {
-            _ = setSelectedRange(target.originalRange, in: target.element)
-            // An untouched value is a tier that did nothing; anything else moved text we cannot name.
-            return observed == target.value ? .unavailable : .rejected
-        }
-
-        _ = setSelectedRange(
-            NSRange(
-                location: target.replacementRange.location + injected.caretPrefixLength, length: 0),
-            in: target.element)
-        return .delivered
     }
 
     /// Rule 2: a renderer applies the keystroke before it says so, so a short lag is not a mismatch.

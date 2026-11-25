@@ -107,8 +107,8 @@ final class DictationCoordinator {
             settings.dictationEnabled = true
             if settings.dictationDestination.pastes { Permissions.ensureAccessibility() }
             if settings.dictationLivePreviewEnabled {
-                let lang = settings.dictationLanguage ?? "en-US"
-                livePreviewCoordinator.prewarm(locale: Locale(identifier: lang))
+                livePreviewCoordinator.prewarm(
+                    locale: DictationLanguage.previewLocale(for: settings.dictationLanguage))
             }
             if settings.dictationS1Enabled {
                 DictationLlamaServerManager.shared.prewarm(idleRelease: settings.dictationS1IdleRelease)
@@ -117,7 +117,12 @@ final class DictationCoordinator {
     }
 
     func downloadModel(_ model: DictationModel) async {
-        do { try await models.download(model) } catch is CancellationError {
+        do {
+            try await models.download(model)
+            if settings.dictationEnabled, settings.dictationModel == model {
+                models.ensurePrewarmed(model)
+            }
+        } catch is CancellationError {
         } catch let error as URLError where error.code == .cancelled {
         } catch { showMessage(error.localizedDescription, .danger) }
     }
@@ -206,8 +211,8 @@ final class DictationCoordinator {
         guard settings.dictationEnabled else { return }
         models.ensurePrewarmed(settings.dictationModel)
         if settings.dictationLivePreviewEnabled {
-            let lang = settings.dictationLanguage ?? "en-US"
-            livePreviewCoordinator.prewarm(locale: Locale(identifier: lang))
+            livePreviewCoordinator.prewarm(
+                locale: DictationLanguage.previewLocale(for: settings.dictationLanguage))
         }
         if settings.dictationS1Enabled {
             DictationLlamaServerManager.shared.startDaemon(idleRelease: settings.dictationS1IdleRelease)
@@ -276,8 +281,8 @@ final class DictationCoordinator {
                 panel.show()
                 NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .default)
                 if settings.dictationLivePreviewEnabled {
-                    let langIdentifier = settings.dictationLanguage ?? "en-US"
-                    livePreviewCoordinator.start(locale: Locale(identifier: langIdentifier))
+                    livePreviewCoordinator.start(
+                        locale: DictationLanguage.previewLocale(for: settings.dictationLanguage))
                 }
                 if finishWhenStarted { accept() }
             } catch {
@@ -387,8 +392,8 @@ final class DictationCoordinator {
                 let bundleID = frontApp?.bundleIdentifier
 
                 if settings.dictationLivePreviewEnabled {
-                    let lang = settings.dictationLanguage ?? "en-US"
-                    livePreviewCoordinator.prewarm(locale: Locale(identifier: lang))
+                    livePreviewCoordinator.prewarm(
+                        locale: DictationLanguage.previewLocale(for: settings.dictationLanguage))
                 }
 
                 var s1 = DictationS1Settings(
@@ -610,6 +615,8 @@ final class DictationCoordinator {
         panel.state.isLockedHandsFree = false
         panel.state.isWhisperMode = false
         panel.state.isMuted = false
+        panel.state.isMicSilent = false
+        panel.state.isClamshellMuffled = false
         panel.state.isRawMode = false
         panel.state.onToggleMute = nil
         rawModeSession = false

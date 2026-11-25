@@ -327,6 +327,33 @@ struct DictationTest {
             fatalError("WAV file byte length mismatch")
         }
 
+        // DictationLanguage live-preview locale resolution
+        let fallbackLocale = Locale(identifier: "fr-FR")
+        check(DictationLanguage.previewLocale(for: nil, current: fallbackLocale).identifier, "fr-FR")
+        check(DictationLanguage.previewLocale(for: "Chinese", current: fallbackLocale).identifier, "zh-CN")
+        check(DictationLanguage.previewLocale(for: "Cantonese", current: fallbackLocale).identifier, "zh-HK")
+        check(DictationLanguage.previewLocale(for: "English", current: fallbackLocale).identifier, "en-US")
+        check(DictationLanguage.previewLocale(for: "es-MX", current: fallbackLocale).identifier, "es-MX")
+
+        // Cached Dictionary & Snippet rules invalidate cleanly across mutations
+        let cachedWordsURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "-cached-words.json")
+        let cachedSnippetsURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "-cached-snippets.json")
+        defer {
+            try? FileManager.default.removeItem(at: cachedWordsURL)
+            try? FileManager.default.removeItem(at: cachedSnippetsURL)
+        }
+        let dictStore = DictationDictionaryStore(fileURL: cachedWordsURL, snippetsFileURL: cachedSnippetsURL)
+        dictStore.addWord(canonical: "PostgreSQL", aliases: ["post gres"])
+        check(dictStore.applyDictionaryAndPacks("we run post gres daily"), "we run PostgreSQL daily")
+        dictStore.addWord(canonical: "Kubernetes", aliases: ["kube"])
+        check(dictStore.applyDictionaryAndPacks("deploy kube on post gres"), "deploy Kubernetes on PostgreSQL")
+        if let kubeID = dictStore.words.first(where: { $0.canonical == "Kubernetes" })?.id {
+            dictStore.removeWord(id: kubeID)
+        }
+        check(dictStore.applyDictionaryAndPacks("deploy kube on post gres"), "deploy kube on PostgreSQL")
+        dictStore.addSnippet(keyword: "my sig", expansion: "Best, Sz")
+        check(dictStore.applySnippets("Thanks, my sig"), "Thanks, Best, Sz")
+
         print("Dictation text formatting passed")
     }
 }

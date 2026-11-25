@@ -13,6 +13,7 @@ actor DictationLivePreviewRecognizer {
     private var converter: AVAudioConverter?
     private var sourceFormat: AVAudioFormat?
     private var targetFormat: AVAudioFormat?
+    private var cachedRequestedLocaleID: String?
     private var cachedEffectiveLocale: Locale?
     private var isSessionActive = false
     private var committedText = ""
@@ -32,10 +33,21 @@ actor DictationLivePreviewRecognizer {
         )
     }
 
+    private func resetAudioPreparationCache() {
+        targetFormat = nil
+        converter = nil
+        cachedEffectiveLocale = nil
+        cachedRequestedLocaleID = nil
+    }
+
     func prewarm(locale: Locale = .current) async {
-        guard targetFormat == nil else { return }
+        if cachedRequestedLocaleID == locale.identifier, targetFormat != nil { return }
+        if cachedRequestedLocaleID != locale.identifier {
+            resetAudioPreparationCache()
+        }
         guard let source = sourceFormat else { return }
         let effectiveLocale = await resolveEffectiveLocale(locale)
+        cachedRequestedLocaleID = locale.identifier
         self.cachedEffectiveLocale = effectiveLocale
         let probe = DictationTranscriber(locale: effectiveLocale, preset: .progressiveLongDictation)
         guard let target = await SpeechAnalyzer.bestAvailableAudioFormat(
@@ -59,6 +71,10 @@ actor DictationLivePreviewRecognizer {
         committedText = ""
         inFlightText = ""
 
+        if cachedRequestedLocaleID != locale.identifier {
+            resetAudioPreparationCache()
+        }
+
         guard let source = sourceFormat else { return }
         do {
             let effectiveLocale: Locale
@@ -67,6 +83,7 @@ actor DictationLivePreviewRecognizer {
             } else {
                 effectiveLocale = await resolveEffectiveLocale(locale)
                 cachedEffectiveLocale = effectiveLocale
+                cachedRequestedLocaleID = locale.identifier
             }
 
             let module = DictationTranscriber(locale: effectiveLocale, preset: .progressiveLongDictation)
@@ -79,7 +96,7 @@ actor DictationLivePreviewRecognizer {
                     compatibleWith: [module],
                     considering: source
                 ) else {
-                    startSFSpeechFallback(locale: locale, onText: onText)
+                    startSFSpeechFallback(locale: effectiveLocale, onText: onText)
                     return
                 }
                 targetFormat = resolvedTarget
@@ -115,6 +132,8 @@ actor DictationLivePreviewRecognizer {
                 }
             }
         } catch {
+            // Clear stale SpeechAnalyzer format/locale caches on failure so the next take recovers cleanly.
+            resetAudioPreparationCache()
             self.analyzer = nil
             self.streamContinuation = nil
             startSFSpeechFallback(locale: locale, onText: onText)
@@ -127,16 +146,37 @@ actor DictationLivePreviewRecognizer {
 
     private func resolveEffectiveLocale(_ locale: Locale) async -> Locale {
         let installed = await DictationTranscriber.installedLocales
-        if installed.contains(where: { $0.identifier == locale.identifier }) {
-            return locale
-        } else if let match = installed.first(where: { $0.language.languageCode == locale.language.languageCode }) {
-            return match
-        } else if let first = installed.first {
-            return first
-        } else {
-            return (await DictationTranscriber.supportedLocale(equivalentTo: locale))
-                ?? Locale(identifier: "en-US")
+        if let matched = Self.matchingInstalledLocale(for: locale, in: installed) {
+            return matched
         }
+        return (await DictationTranscriber.supportedLocale(equivalentTo: locale))
+            ?? Locale(identifier: "en-US")
+    }
+
+    /// Distinguishes Cantonese (`zh-HK`, `yue`) from Mandarin (`zh-CN`, `zh-TW`) so fallback
+    /// never crosses spoken Chinese languages (#4828).
+    static func isCantonese(_ tag: String) -> Bool {
+        let parts = Locale.Language.Components(identifier: tag)
+        guard let code = parts.languageCode?.identifier else { return false }
+        return code == "yue" || (code == "zh" && parts.region?.identifier == "HK")
+    }
+
+    static func matchingInstalledLocale(for requested: Locale, in installed: [Locale]) -> Locale? {
+        if let exact = installed.first(where: { $0.identifier == requested.identifier }) {
+            return exact
+        }
+        let isChineseGroup = ["zh", "yue"].contains(requested.language.languageCode?.identifier ?? "")
+        let wantsCantonese = isCantonese(requested.identifier)
+        if let sameLanguage = installed.first(where: { candidate in
+            let candidateCode = candidate.language.languageCode?.identifier ?? ""
+            if isChineseGroup {
+                return ["zh", "yue"].contains(candidateCode) && isCantonese(candidate.identifier) == wantsCantonese
+            }
+            return candidate.language.languageCode == requested.language.languageCode
+        }) {
+            return sameLanguage
+        }
+        return installed.first
     }
 
     private func startSFSpeechFallback(

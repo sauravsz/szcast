@@ -15,6 +15,56 @@ enum DictationLanguage: String, CaseIterable, Identifiable, Sendable {
     /// The raw value is what the model is prompted with; the picker shows the reader's own name.
     func displayName(locale: Locale) -> String { locale.localizedString(forLanguageCode: code) ?? rawValue }
 
+    /// BCP-47 locale tag for on-device live preview recognition.
+    var previewLocaleIdentifier: String {
+        switch self {
+        case .arabic: "ar-SA"
+        case .bengali: "bn-BD"
+        case .cantonese: "zh-HK"
+        case .chinese: "zh-CN"
+        case .czech: "cs-CZ"
+        case .danish: "da-DK"
+        case .dutch: "nl-NL"
+        case .english: "en-US"
+        case .filipino: "fil-PH"
+        case .finnish: "fi-FI"
+        case .french: "fr-FR"
+        case .german: "de-DE"
+        case .greek: "el-GR"
+        case .hindi: "hi-IN"
+        case .hungarian: "hu-HU"
+        case .indonesian: "id-ID"
+        case .italian: "it-IT"
+        case .japanese: "ja-JP"
+        case .korean: "ko-KR"
+        case .macedonian: "mk-MK"
+        case .malay: "ms-MY"
+        case .persian: "fa-IR"
+        case .polish: "pl-PL"
+        case .portuguese: "pt-BR"
+        case .romanian: "ro-RO"
+        case .russian: "ru-RU"
+        case .spanish: "es-ES"
+        case .swedish: "sv-SE"
+        case .thai: "th-TH"
+        case .turkish: "tr-TR"
+        case .vietnamese: "vi-VN"
+        }
+    }
+
+    /// Resolves a stored language preference (`rawValue`, BCP-47 identifier, or `nil` for auto).
+    static func previewLocale(for settingValue: String?, current: Locale = .current) -> Locale {
+        guard let trimmed = settingValue?.trimmingCharacters(in: .whitespacesAndNewlines),
+            !trimmed.isEmpty
+        else {
+            return current
+        }
+        if let language = Self(rawValue: trimmed) {
+            return Locale(identifier: language.previewLocaleIdentifier)
+        }
+        return Locale(identifier: trimmed)
+    }
+
     private var code: String {
         switch self {
         case .arabic: "ar"

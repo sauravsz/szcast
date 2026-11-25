@@ -922,6 +922,54 @@ struct SnippetsTests {
                 replacementRange: NSRange(location: 0, length: 8),
                 insertedText: "PROBE_OK",
                 observedValue: nil))
+        check(
+            "a .failure setter error whose field holds our text counts as delivered",
+            TextReplacementPolicy.accessibilityWriteDisposition(
+                setterError: .failure,
+                originalValue: "!tcprobe",
+                replacementRange: NSRange(location: 0, length: 8),
+                insertedText: "PROBE_OK",
+                observedValue: "PROBE_OK") == .delivered)
+        check(
+            "a setter refusal whose field stays identical falls back to events",
+            TextReplacementPolicy.accessibilityWriteDisposition(
+                setterError: .notImplemented,
+                originalValue: "!tcprobe",
+                replacementRange: NSRange(location: 0, length: 8),
+                insertedText: "PROBE_OK",
+                observedValue: "!tcprobe") == .fallbackToEvents)
+        check(
+            "an unreadable value after .failure refuses a second paste",
+            TextReplacementPolicy.accessibilityWriteDisposition(
+                setterError: .failure,
+                originalValue: "!tcprobe",
+                replacementRange: NSRange(location: 0, length: 8),
+                insertedText: "PROBE_OK",
+                observedValue: nil) == .rejectWithoutFallback)
+        check(
+            "an unreadable value after an explicit refusal keeps the event fallback",
+            TextReplacementPolicy.accessibilityWriteDisposition(
+                setterError: .notImplemented,
+                originalValue: "!tcprobe",
+                replacementRange: NSRange(location: 0, length: 8),
+                insertedText: "PROBE_OK",
+                observedValue: nil) == .fallbackToEvents)
+        check(
+            ".invalidUIElement keeps the event fallback",
+            TextReplacementPolicy.accessibilityWriteDisposition(
+                setterError: .invalidUIElement,
+                originalValue: "!tcprobe",
+                replacementRange: NSRange(location: 0, length: 8),
+                insertedText: "PROBE_OK",
+                observedValue: nil) == .fallbackToEvents)
+        check(
+            ".cannotComplete refuses a second paste",
+            TextReplacementPolicy.accessibilityWriteDisposition(
+                setterError: .cannotComplete,
+                originalValue: "!tcprobe",
+                replacementRange: NSRange(location: 0, length: 8),
+                insertedText: "PROBE_OK",
+                observedValue: nil) == .rejectWithoutFallback)
 
         check(
             "a Unicode keystroke never carries more than Blink's four-unit cap",

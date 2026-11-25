@@ -105,6 +105,10 @@ enum SettingsSearchCatalog {
     // MARK: - The index
     // Pane order, then section order within a pane, so this reads as a table of contents.
 
+    static func prewarm() {
+        _ = entries
+    }
+
     static let entries: [SettingsSearchEntry] =
         general + applications + systemSettings + systemActions + commands + quicklinks
         + appleShortcuts + fallbacks + clipboard + snippets + fileSearch + windowManagement

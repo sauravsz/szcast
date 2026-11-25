@@ -75,24 +75,32 @@ enum DictationTextFormatter {
         ("peace", "✌️")
     ]
 
+    private static let compiledEmojiRules: [(regex: NSRegularExpression, template: String)] = {
+        let sorted = emojiDictionary.sorted { $0.phrase.count > $1.phrase.count }
+        var rules: [(regex: NSRegularExpression, template: String)] = []
+        rules.reserveCapacity(sorted.count * 2)
+        for (phrase, glyph) in sorted {
+            let escaped = NSRegularExpression.escapedPattern(for: phrase)
+            let template = NSRegularExpression.escapedTemplate(for: glyph)
+            let suffixPattern = #"\b"# + escaped + #"\s+(?:emoji|emoticon)\b"#
+            let prefixPattern = #"\b(?:emoji|emoticon)\s+"# + escaped + #"\b"#
+            for pattern in [suffixPattern, prefixPattern] {
+                if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) {
+                    rules.append((regex: regex, template: template))
+                }
+            }
+        }
+        return rules
+    }()
+
     static func convertSpokenEmoji(_ text: String) -> String {
         guard text.localizedCaseInsensitiveContains("emoji") || text.localizedCaseInsensitiveContains("emoticon") else {
             return text
         }
         var result = text
-        // Sort longer phrases first to avoid partial matches
-        let sorted = emojiDictionary.sorted { $0.phrase.count > $1.phrase.count }
-        for (phrase, glyph) in sorted {
-            let patterns = [
-                #"\b"# + NSRegularExpression.escapedPattern(for: phrase) + #"\s+(?:emoji|emoticon)\b"#,
-                #"\b(?:emoji|emoticon)\s+"# + NSRegularExpression.escapedPattern(for: phrase) + #"\b"#
-            ]
-            for pattern in patterns {
-                if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) {
-                    let range = NSRange(result.startIndex..<result.endIndex, in: result)
-                    result = regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: glyph)
-                }
-            }
+        for rule in compiledEmojiRules {
+            let range = NSRange(result.startIndex..<result.endIndex, in: result)
+            result = rule.regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: rule.template)
         }
         return result
     }
@@ -128,26 +136,42 @@ enum DictationTextFormatter {
         (#"\b(?:tilde)\b"#, "~")
     ]
 
+    private static let compiledPunctuationRules: [(regex: NSRegularExpression, template: String)] = {
+        punctuationCommands.compactMap { pattern, replacement in
+            guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
+            else { return nil }
+            return (regex: regex, template: NSRegularExpression.escapedTemplate(for: replacement))
+        }
+    }()
+
+    private static let spaceBeforePunctRegex = try? NSRegularExpression(
+        pattern: #"\s+([,.:;?!…\)])"#, options: []
+    )
+    private static let spaceAfterBracketRegex = try? NSRegularExpression(
+        pattern: #"([\(\[\{])\s+"#, options: []
+    )
+    private static let missingSpaceAfterSentenceRegex = try? NSRegularExpression(
+        pattern: #"(?<=[a-z0-9"'\)\]\}])[.?!](?=[A-Z\p{Lu}])"#, options: []
+    )
+
     static func convertSpokenPunctuation(_ text: String) -> String {
         var result = text
-        for (pattern, replacement) in punctuationCommands {
-            if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) {
-                let range = NSRange(result.startIndex..<result.endIndex, in: result)
-                result = regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: replacement)
-            }
+        for rule in compiledPunctuationRules {
+            let range = NSRange(result.startIndex..<result.endIndex, in: result)
+            result = rule.regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: rule.template)
         }
         // Cleanup whitespace before punctuation: e.g. "word ," -> "word,"
-        if let regex = try? NSRegularExpression(pattern: #"\s+([,.:;?!…\)])"#, options: []) {
+        if let regex = spaceBeforePunctRegex {
             let range = NSRange(result.startIndex..<result.endIndex, in: result)
             result = regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: "$1")
         }
         // Cleanup whitespace after opening brackets: e.g. "( word" -> "(word"
-        if let regex = try? NSRegularExpression(pattern: #"([\(\[\{])\s+"#, options: []) {
+        if let regex = spaceAfterBracketRegex {
             let range = NSRange(result.startIndex..<result.endIndex, in: result)
             result = regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: "$1")
         }
         // Ensure space after internal sentence punctuation if followed directly by an uppercase letter: e.g. "word.Next" -> "word. Next"
-        if let regex = try? NSRegularExpression(pattern: #"(?<=[a-z0-9"'\)\]\}])[.?!](?=[A-Z\p{Lu}])"#, options: []) {
+        if let regex = missingSpaceAfterSentenceRegex {
             let range = NSRange(result.startIndex..<result.endIndex, in: result)
             result = regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: "$0 ")
         }
@@ -173,15 +197,17 @@ enum DictationTextFormatter {
         #"(?i)^.+?[,\s]+(?:or\s+rather)[,\s]+(.+)$"#
     ]
 
+    private static let compiledBacktrackRegexes: [NSRegularExpression] = {
+        backtrackPatterns.compactMap { try? NSRegularExpression(pattern: $0, options: []) }
+    }()
+
     static func resolveBacktracks(_ text: String) -> String {
         guard !text.isEmpty else { return text }
         var result = text
-        for pattern in backtrackPatterns {
-            if let regex = try? NSRegularExpression(pattern: pattern, options: []) {
-                let range = NSRange(result.startIndex..<result.endIndex, in: result)
-                if regex.firstMatch(in: result, options: [], range: range) != nil {
-                    result = regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: "$1")
-                }
+        for regex in compiledBacktrackRegexes {
+            let range = NSRange(result.startIndex..<result.endIndex, in: result)
+            if regex.firstMatch(in: result, options: [], range: range) != nil {
+                result = regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: "$1")
             }
         }
         return result.trimmingCharacters(in: .whitespacesAndNewlines)

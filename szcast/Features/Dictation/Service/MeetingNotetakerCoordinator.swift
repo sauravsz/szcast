@@ -30,17 +30,20 @@ final class MeetingNotetakerCoordinator {
     private let groqPolish = GroqPolishService()
     private let settings: AppSettings
     private let store: TranscriptStore
+    private let dictionaryStore: DictationDictionaryStore
     private let showMessage: (String, DialogTone) -> Void
 
     init(
         settings: AppSettings,
         models: DictationModelStore,
         store: TranscriptStore? = nil,
+        dictionaryStore: DictationDictionaryStore? = nil,
         showMessage: @escaping (String, DialogTone) -> Void
     ) {
         self.settings = settings
         self.models = models
         self.store = store ?? TranscriptStore()
+        self.dictionaryStore = dictionaryStore ?? DictationDictionaryStore()
         self.showMessage = showMessage
         self.capture.onAutoStopSilence = { [weak self] in self?.stopRecording() }
         loadNotes()
@@ -169,7 +172,7 @@ final class MeetingNotetakerCoordinator {
 
             if hasMicSignal {
                 micTimed = try await transcribeSamples(micSamples, diarizeSpeakers: nil)
-                micTimed.segments = micTimed.segments.map { seg in
+                micTimed.segments = normalizeSegments(micTimed.segments).map { seg in
                     var next = seg
                     next.speaker = "Me"
                     return next
@@ -178,7 +181,7 @@ final class MeetingNotetakerCoordinator {
             systemTimed = try await transcribeSamples(
                 systemSamples, diarizeSpeakers: settings.dictationSpeakerCount
             )
-            systemTimed.segments = systemTimed.segments.map { seg in
+            systemTimed.segments = normalizeSegments(systemTimed.segments).map { seg in
                 var next = seg
                 if next.speaker.isEmpty || next.speaker == "Unattributed" {
                     next.speaker = "Others"
@@ -223,9 +226,11 @@ final class MeetingNotetakerCoordinator {
                 showMessage(String(localized: "No speech detected"), .neutral)
                 return
             }
+            let normalizedText = normalizeTranscript(timed.text)
+            let normalizedSegments = normalizeSegments(timed.segments)
             await generateMemoAndNote(
-                from: timed.text,
-                segments: timed.segments,
+                from: normalizedText,
+                segments: normalizedSegments,
                 samples: samples,
                 duration: duration,
                 titlePrefix: titlePrefix,
@@ -234,6 +239,21 @@ final class MeetingNotetakerCoordinator {
         } catch {
             phase = .failed(error.localizedDescription)
             showMessage(error.localizedDescription, .danger)
+        }
+    }
+
+    private func normalizeTranscript(_ text: String) -> String {
+        var cleaned = DictationTextFormatter.collapseRepetitions(text)
+        cleaned = dictionaryStore.applyDictionaryAndPacks(cleaned)
+        cleaned = dictionaryStore.applySnippets(cleaned)
+        return cleaned
+    }
+
+    private func normalizeSegments(_ segments: [TranscriptSegment]) -> [TranscriptSegment] {
+        segments.map { seg in
+            var next = seg
+            next.text = normalizeTranscript(seg.text)
+            return next
         }
     }
 
