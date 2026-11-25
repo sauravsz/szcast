@@ -56,6 +56,20 @@ struct CalendarMenuBarMenu: View {
                             coordinator.join(meeting)
                         }
                     }
+                    if AppCore.shared.settings.dictationEnabled {
+                        Button(
+                            AppCore.shared.meetingNotetaker.isRecording
+                                ? "Stop Meeting Recording"
+                                : "Record \(meeting.title)",
+                            systemImage: "waveform"
+                        ) {
+                            if AppCore.shared.meetingNotetaker.isRecording {
+                                AppCore.shared.meetingNotetaker.stopRecording()
+                            } else {
+                                AppCore.shared.meetingNotetaker.startRecording(title: meeting.title)
+                            }
+                        }
+                    }
                     Button("Open in Calendar", systemImage: "calendar") {
                         coordinator.openInCalendar(meeting)
                     }

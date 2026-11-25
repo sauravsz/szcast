@@ -9,6 +9,7 @@ struct StatsSnapshot: Sendable {
     let network: NetworkStats
     let topProcessesByCPU: [SystemProcessInfo]
     let topProcessesByRAM: [SystemProcessInfo]
+    let topProcessesByNetwork: [NetworkProcessInfo]
 
     static let empty = StatsSnapshot(
         timestamp: Date(),
@@ -18,6 +19,7 @@ struct StatsSnapshot: Sendable {
         battery: .empty,
         network: .empty,
         topProcessesByCPU: [],
-        topProcessesByRAM: []
+        topProcessesByRAM: [],
+        topProcessesByNetwork: []
     )
 }

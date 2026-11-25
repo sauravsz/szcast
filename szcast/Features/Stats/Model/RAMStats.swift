@@ -1,8 +1,23 @@
 import Foundation
 
+enum MemoryPressureLevel: Int, Sendable {
+    case normal = 1
+    case warning = 2
+    case critical = 4
+
+    var label: String {
+        switch self {
+        case .normal: return "Normal"
+        case .warning: return "Warning"
+        case .critical: return "Critical"
+        }
+    }
+}
+
 struct RAMStats: Sendable {
     let usedBytes: UInt64
     let freeBytes: UInt64
+    let appBytes: UInt64
     let activeBytes: UInt64
     let inactiveBytes: UInt64
     let wiredBytes: UInt64
@@ -10,6 +25,8 @@ struct RAMStats: Sendable {
     let totalBytes: UInt64
     let swapUsedBytes: UInt64
     let swapTotalBytes: UInt64
+    let pressurePercentage: Int
+    let pressureLevel: MemoryPressureLevel
 
     var usagePercentage: Double {
         guard totalBytes > 0 else { return 0 }
@@ -23,12 +40,15 @@ struct RAMStats: Sendable {
     static let empty = RAMStats(
         usedBytes: 0,
         freeBytes: 0,
+        appBytes: 0,
         activeBytes: 0,
         inactiveBytes: 0,
         wiredBytes: 0,
         compressedBytes: 0,
         totalBytes: 17_179_869_184,
         swapUsedBytes: 0,
-        swapTotalBytes: 0
+        swapTotalBytes: 0,
+        pressurePercentage: 0,
+        pressureLevel: .normal
     )
 }

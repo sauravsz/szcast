@@ -20,6 +20,7 @@ final class CalendarCoordinator {
     @ObservationIgnored private var armedAt = Date.distantFuture
     /// Auto joined this launch, so a meeting opens itself at most once.
     @ObservationIgnored private var autoJoined: Set<MeetingEvent.ID> = []
+    @ObservationIgnored private var promptedRecordingMeetings: Set<MeetingEvent.ID> = []
 
     /// Written only on a flip: the menu-bar scene reads it, and must not re-run per tick.
     private(set) var hasMenuBarEvent = false
@@ -381,6 +382,24 @@ final class CalendarCoordinator {
             else { return }
         }
         if await MeetingLauncher.join(link, browserBundleID: settings.meetingBrowserBundleID) {
+            if settings.calendarSuggestsMeetingRecording,
+                settings.dictationEnabled,
+                !core.meetingNotetaker.isRecording,
+                promptedRecordingMeetings.insert(meeting.id).inserted
+            {
+                let shouldRecord = await core.confirm(
+                    title: String(localized: "Record \(meeting.title)?"),
+                    message: String(localized: "Transcribe system audio and microphone on your Mac."),
+                    symbol: "waveform",
+                    confirmTitle: String(localized: "Record Meeting"),
+                    tone: .neutral,
+                    confirmRole: .standard,
+                    dismissTitle: String(localized: "Not Now")
+                )
+                if shouldRecord {
+                    core.meetingNotetaker.startRecording(title: meeting.title)
+                }
+            }
             return
         }
         _ = await core.reportFailure(

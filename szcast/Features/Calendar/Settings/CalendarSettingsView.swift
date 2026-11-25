@@ -77,6 +77,10 @@ struct CalendarSettingsView: View {
                     SettingsRowTitle(.calendarJoining, "Camera Preview")
                     Text("Before joining a meeting.")
                 }
+                Toggle(isOn: $settings.calendarSuggestsMeetingRecording) {
+                    SettingsRowTitle(.calendarJoining, "Suggest meeting recording")
+                    Text("Offer to start Meeting Notetaker after joining a scheduled call.")
+                }
                 MeetingBrowserPicker(selection: $settings.meetingBrowserBundleID)
             } header: {
                 SettingsSectionHeader(.calendarJoining)

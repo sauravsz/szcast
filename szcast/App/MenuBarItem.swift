@@ -29,17 +29,28 @@ struct MenuBarMenu: View {
             }
         }
         if AppCore.shared.settings.dictationEnabled {
+            Button("Transcript Studio…") {
+                AppCore.shared.transcriptStudio.showWindow()
+            }
             Button("Dictation Insights…") {
                 AppCore.shared.settingsCoordinator.showSettings(tab: .dictation)
             }
             Button("Transcribe Audio/Video File…") {
                 AppCore.shared.dictationCoordinator.transcribeFile()
             }
+            Button("Transcribe URL / Podcast…") {
+                AppCore.shared.transcriptStudio.showWindow(openURLSheet: true)
+            }
             Button(AppCore.shared.meetingNotetaker.isRecording ? "Stop Meeting Recording" : "Record Meeting (Notetaker)…") {
                 if AppCore.shared.meetingNotetaker.isRecording {
                     AppCore.shared.meetingNotetaker.stopRecording()
                 } else {
                     AppCore.shared.meetingNotetaker.startRecording()
+                }
+            }
+            if AppCore.shared.meetingNotetaker.isRecording {
+                Button(AppCore.shared.meetingNotetaker.isMuted ? "Unmute Meeting Mic" : "Mute Meeting Mic") {
+                    AppCore.shared.meetingNotetaker.toggleMute()
                 }
             }
             Button("Import Meeting Transcript (Otter/Granola)…") {

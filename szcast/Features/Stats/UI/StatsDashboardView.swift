@@ -152,10 +152,10 @@ private struct RAMMetricCard: View {
                     .foregroundStyle(Theme.Colors.textPrimary)
             }
 
-            // Multi-segmented bar (Active, Wired, Compressed)
+            // Multi-segmented bar (App, Wired, Compressed)
             GeometryReader { geo in
                 let w = geo.size.width
-                let activeW = w * CGFloat(Double(ram.activeBytes) / Double(ram.totalBytes))
+                let appW = w * CGFloat(Double(ram.appBytes) / Double(ram.totalBytes))
                 let wiredW = w * CGFloat(Double(ram.wiredBytes) / Double(ram.totalBytes))
                 let compW = w * CGFloat(Double(ram.compressedBytes) / Double(ram.totalBytes))
 
@@ -165,7 +165,7 @@ private struct RAMMetricCard: View {
                         .frame(height: 6)
 
                     HStack(spacing: 0) {
-                        Rectangle().fill(Color.blue).frame(width: max(0, activeW))
+                        Rectangle().fill(Color.blue).frame(width: max(0, appW))
                         Rectangle().fill(Color.orange).frame(width: max(0, wiredW))
                         Rectangle().fill(Color.purple).frame(width: max(0, compW))
                     }
@@ -181,13 +181,13 @@ private struct RAMMetricCard: View {
 
             // Legend / breakdown
             HStack(spacing: Theme.Spacing.sm) {
-                Text("Active: \(String(format: "%.1f", Double(ram.activeBytes)/1e9))G")
+                Text("App: \(String(format: "%.1f", Double(ram.appBytes) / 1_073_741_824.0))G")
                     .font(Theme.Typography.metaLabel)
                     .foregroundStyle(.blue)
-                Text("Wired: \(String(format: "%.1f", Double(ram.wiredBytes)/1e9))G")
+                Text("Wired: \(String(format: "%.1f", Double(ram.wiredBytes) / 1_073_741_824.0))G")
                     .font(Theme.Typography.metaLabel)
                     .foregroundStyle(.orange)
-                Text("Comp: \(String(format: "%.1f", Double(ram.compressedBytes)/1e9))G")
+                Text("Comp: \(String(format: "%.1f", Double(ram.compressedBytes) / 1_073_741_824.0))G")
                     .font(Theme.Typography.metaLabel)
                     .foregroundStyle(.purple)
                 Spacer()
