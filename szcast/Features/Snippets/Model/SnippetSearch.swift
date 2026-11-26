@@ -33,12 +33,20 @@ enum SnippetSearch {
     /// Ranks a collection of stored snippets against a search query.
     /// Pinned items remain in the pinned section, sorted by relevance within pinned;
     /// unpinned items are sorted by relevance within unpinned.
-    static func rank(_ records: [StoredSnippet], for rawQuery: String) -> [StoredSnippet] {
+    static func rank(
+        _ records: [StoredSnippet],
+        foldersByPath: [String: SnippetFolder] = [:],
+        for rawQuery: String
+    ) -> [StoredSnippet] {
         let query = Query(rawQuery)
         guard !query.isEmpty else { return records }
 
         let scored: [MatchResult] = records.compactMap { record in
-            guard let score = scoreSnippet(record.snippet, for: query) else { return nil }
+            let effectiveKeyword = SnippetFolderPolicy.effectiveKeyword(
+                for: record.snippet, foldersByPath: foldersByPath)
+            guard let score = scoreSnippet(
+                record.snippet, effectiveKeyword: effectiveKeyword, for: query)
+            else { return nil }
             return MatchResult(record: record, score: score)
         }
 
@@ -60,7 +68,11 @@ enum SnippetSearch {
     /// Computes a relevance score for a snippet against a query without fuzzy matching.
     /// Matches strictly via exact substring, prefix, word boundary, or full phrase matches.
     /// Non-contiguous fuzzy subsequence matching is strictly rejected.
-    static func scoreSnippet(_ snippet: Snippet, for query: Query) -> Int? {
+    static func scoreSnippet(
+        _ snippet: Snippet,
+        effectiveKeyword: String? = nil,
+        for query: Query
+    ) -> Int? {
         guard !query.isEmpty else { return 0 }
 
         // 1. Direct match against snippet name (exact, prefix, wordStart, substring - no fuzzy subsequence)
@@ -68,7 +80,11 @@ enum SnippetSearch {
             return 2_000_000 + nameMatch
         }
 
-        // 2. Direct match against snippet keyword
+        // 2. Direct match against snippet keyword (effective prefixed keyword or raw keyword)
+        if let effectiveKeyword, !effectiveKeyword.isEmpty,
+           let kwMatch = matchSubstring(query: query.raw, in: effectiveKeyword) {
+            return 1_900_000 + kwMatch
+        }
         if let keyword = snippet.keyword, !keyword.isEmpty,
            let kwMatch = matchSubstring(query: query.raw, in: keyword) {
             return 1_900_000 + kwMatch
@@ -87,7 +103,9 @@ enum SnippetSearch {
 
         // 5. Multi-term matching: all terms must match as substrings somewhere in the snippet
         if !query.isSingleTerm {
-            if let multiScore = scoreMultiTerm(snippet, terms: query.terms) {
+            if let multiScore = scoreMultiTerm(
+                snippet, effectiveKeyword: effectiveKeyword, terms: query.terms)
+            {
                 return multiScore
             }
         }
@@ -126,7 +144,11 @@ enum SnippetSearch {
     }
 
     /// Evaluates multi-term queries where every term must match as an exact substring somewhere in the snippet.
-    private static func scoreMultiTerm(_ snippet: Snippet, terms: [String]) -> Int? {
+    private static func scoreMultiTerm(
+        _ snippet: Snippet,
+        effectiveKeyword: String?,
+        terms: [String]
+    ) -> Int? {
         var totalScore = 0
         var nameHits = 0
         var keywordHits = 0
@@ -144,8 +166,13 @@ enum SnippetSearch {
                 bestTermScore = max(bestTermScore, nameScore + 50_000)
             }
 
-            // Try keyword
-            if let keyword = snippet.keyword, !keyword.isEmpty,
+            // Try keyword (effective or raw)
+            if let effectiveKeyword, !effectiveKeyword.isEmpty,
+               let kwScore = matchSubstring(query: term, in: effectiveKeyword) {
+                matchedTerm = true
+                keywordHits += 1
+                bestTermScore = max(bestTermScore, kwScore + 40_000)
+            } else if let keyword = snippet.keyword, !keyword.isEmpty,
                let kwScore = matchSubstring(query: term, in: keyword) {
                 matchedTerm = true
                 keywordHits += 1

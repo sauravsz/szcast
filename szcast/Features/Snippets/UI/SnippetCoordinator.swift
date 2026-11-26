@@ -100,7 +100,14 @@ final class SnippetCoordinator {
         let commands: Set<CommandID> = [.searchSnippets, .createSnippet]
         appIndex.setCommandsVisible(commands, settings.snippetsEnabled)
         appIndex.setCommandsListed(commands, settings.snippetsShowInLauncher)
-        appIndex.updateSnippets(visible ? store.snippets : [])
+        let enabled = visible ? store.snippets.filter(store.isSnippetEffectivelyEnabled) : []
+        var effectiveKeywords: [String: String] = [:]
+        for record in enabled {
+            if let keyword = store.effectiveKeyword(for: record) {
+                effectiveKeywords[record.entryID] = keyword
+            }
+        }
+        appIndex.updateSnippets(enabled, effectiveKeywords: effectiveKeywords)
     }
 
     /// Reconciles everything the switch owns; off tears down in dependency order.
@@ -127,9 +134,13 @@ final class SnippetCoordinator {
         paletteCoordinator.togglePalette(mode: .snippets, seeding: query.isEmpty ? nil : query)
     }
 
-    func editSnippet(_ record: StoredSnippet?) {
+    func editSnippet(_ record: StoredSnippet?, initialFolder: String? = nil) {
         guard settings.snippetsEnabled else { return }
-        editor = SnippetEditorSession(record: record)
+        let session = SnippetEditorSession(record: record)
+        if record == nil, let initialFolder {
+            session.folder = initialFolder
+        }
+        editor = session
         paletteCoordinator.showPalette(mode: .snippetEditor)
     }
 
@@ -140,6 +151,7 @@ final class SnippetCoordinator {
         editor.text = record.snippet.text
         editor.folder = record.snippet.folder ?? ""
         editor.keyword = ""
+        editor.icon = record.snippet.icon ?? ""
         editor.isEnabled = record.snippet.isEnabled
         editor.showsConfirmation = record.snippet.showsConfirmation
         self.editor = editor
@@ -247,9 +259,14 @@ final class SnippetCoordinator {
             return
         }
         guard palette.mode == .snippets,
-            let index = store.browserRows(matching: palette.query).firstIndex(where: { $0.id == id })
+            let index = store.browserRows(
+                matching: palette.query, in: palette.snippetFolderPath
+            ).firstIndex(where: { $0.id == id })
         else { return }
-        palette.selection = index
+        let folderOffset = palette.query.trimmingCharacters(in: .whitespaces).isEmpty
+            ? store.childFolders(in: palette.snippetFolderPath, includeDisabled: false).count
+            : 0
+        palette.selection = folderOffset + index
     }
 
     func deleteSnippet(id: StoredSnippet.ID) async {
@@ -267,6 +284,173 @@ final class SnippetCoordinator {
             await core.showNotice(
                 title: String(localized: "Couldn’t Delete “\(record.snippet.name)”"),
                 message: error.localizedDescription, symbol: "doc.text", tone: .danger)
+        }
+    }
+
+    // MARK: - Folders
+
+    func showFolderInFinder(at path: String) {
+        paletteCoordinator.hidePalette(restoreFocus: false)
+        NSWorkspace.shared.open(store.folderURL(for: path))
+    }
+
+    @discardableResult
+    func createFolder(parentPath: String?) async -> SnippetFolder? {
+        guard settings.snippetsEnabled else { return nil }
+        let currentDepth = parentPath.map(SnippetFolderPath.depth) ?? 0
+        guard currentDepth < SnippetFolderPath.maxDepth else {
+            await core.showNotice(
+                title: String(localized: "Folder Depth Limit Reached"),
+                message: String(localized: "Snippet folders can be nested up to 3 levels deep."),
+                symbol: "folder", tone: .neutral)
+            return nil
+        }
+        guard let result = await core.configureSnippetFolder(
+            isCreating: true, parentPath: parentPath, folder: nil)
+        else { return nil }
+        guard let targetPath = SnippetFolderPath.childPath(parent: parentPath, name: result.name) else {
+            await core.showNotice(
+                title: String(localized: "Invalid Folder Name"),
+                message: String(localized: "Folder names cannot contain slashes or start with a dot."),
+                symbol: "folder", tone: .danger)
+            return nil
+        }
+        do {
+            return try await store.createFolder(path: targetPath, metadata: result.metadata)
+        } catch {
+            await core.showNotice(
+                title: String(localized: "Couldn’t Create Folder"),
+                message: error.localizedDescription, symbol: "folder", tone: .danger)
+            return nil
+        }
+    }
+
+    func configureFolder(at path: String) {
+        guard settings.snippetsEnabled, let existing = store.folder(at: path) else { return }
+        Task {
+            guard let result = await core.configureSnippetFolder(
+                isCreating: false, parentPath: existing.parentPath, folder: existing)
+            else { return }
+            guard let newPath = SnippetFolderPath.childPath(
+                parent: existing.parentPath, name: result.name)
+            else {
+                await core.showNotice(
+                    title: String(localized: "Invalid Folder Name"),
+                    message: String(localized: "Folder names cannot contain slashes or start with a dot."),
+                    symbol: "folder", tone: .danger)
+                return
+            }
+            do {
+                var finalPath = path
+                if newPath != path {
+                    let renamed = try await store.renameFolder(from: path, to: newPath)
+                    finalPath = renamed.path
+                    if let current = palette.snippetFolderPath {
+                        if current == path {
+                            palette.snippetFolderPath = finalPath
+                        } else if current.hasPrefix(path + "/") {
+                            palette.snippetFolderPath =
+                                finalPath + String(current.dropFirst(path.count))
+                        }
+                    }
+                }
+                if result.metadata != existing.metadata {
+                    _ = try await store.updateFolderMetadata(result.metadata, at: finalPath)
+                }
+            } catch {
+                await core.showNotice(
+                    title: String(localized: "Couldn’t Update Folder"),
+                    message: error.localizedDescription, symbol: "folder", tone: .danger)
+            }
+        }
+    }
+
+    func setFolderEnabled(_ enabled: Bool, at path: String) async {
+        guard settings.snippetsEnabled, let folder = store.folder(at: path) else { return }
+        var metadata = folder.metadata
+        metadata.isEnabled = enabled
+        do {
+            _ = try await store.updateFolderMetadata(metadata, at: path)
+            if !enabled, let current = palette.snippetFolderPath,
+                current == path || current.hasPrefix(path + "/")
+            {
+                palette.snippetFolderPath = SnippetFolderPath.parent(of: path)
+            }
+        } catch {
+            await core.showNotice(
+                title: String(localized: "Couldn’t Update Folder"),
+                message: error.localizedDescription, symbol: "folder", tone: .danger)
+        }
+    }
+
+    func deleteFolder(at path: String) async {
+        guard settings.snippetsEnabled, let folder = store.folder(at: path) else { return }
+        let snippetTotal = store.snippetCount(in: path, includeDisabled: true)
+        let subfolderTotal = store.subfolderCount(in: path, includeDisabled: true)
+        let message: String
+        if snippetTotal == 0 && subfolderTotal == 0 {
+            message = String(localized: "This removes the empty folder from your snippets directory.")
+        } else {
+            message = String(
+                localized: """
+                    This permanently deletes “\(folder.name)” and all \(snippetTotal) snippets inside it.
+                    """)
+        }
+        guard
+            await core.confirm(
+                title: String(localized: "Delete Folder “\(folder.name)”?" ),
+                message: message,
+                symbol: "folder.fill", confirmTitle: String(localized: "Delete Folder"))
+        else { return }
+        do {
+            try await store.deleteFolder(at: path)
+            if let current = palette.snippetFolderPath,
+                current == path || current.hasPrefix(path + "/")
+            {
+                palette.snippetFolderPath = SnippetFolderPath.parent(of: path)
+            }
+        } catch {
+            await core.showNotice(
+                title: String(localized: "Couldn’t Delete “\(folder.name)”"),
+                message: error.localizedDescription, symbol: "folder", tone: .danger)
+        }
+    }
+
+    func moveSnippetToFolderPrompt(_ record: StoredSnippet) async {
+        guard settings.snippetsEnabled else { return }
+        let folderPaths = store.folders.map(\.path)
+        var options: [DialogAction] = [
+            DialogAction(title: String(localized: "None (Root)"), role: .standard)
+        ]
+        options.append(contentsOf: folderPaths.map { path in
+            DialogAction(
+                title: path.split(separator: "/").joined(separator: " / "),
+                role: .standard)
+        })
+        options.append(DialogAction(title: String(localized: "Cancel"), role: .cancel))
+
+        let choice = await core.choose(
+            title: String(localized: "Move “\(record.snippet.name)”"),
+            message: String(localized: "Choose a destination folder."),
+            symbol: "folder",
+            options: options,
+            defaultIndex: 0)
+        guard choice < options.count - 1 else { return }
+        let targetFolder: String? = choice == 0 ? nil : folderPaths[choice - 1]
+        guard targetFolder != record.snippet.folder else { return }
+        var updated = record
+        updated.snippet.folder = targetFolder
+        do {
+            try await store.save(updated)
+            showMessage(
+                targetFolder.map {
+                    String(localized: "Moved to \($0)")
+                } ?? String(localized: "Moved to Snippets root"),
+                .success)
+        } catch {
+            await core.showNotice(
+                title: String(localized: "Couldn’t Move Snippet"),
+                message: error.localizedDescription, symbol: "folder", tone: .danger)
         }
     }
 
@@ -319,7 +503,10 @@ final class SnippetCoordinator {
 
     /// A shortcut lands where the caret is; over the palette, that's what the palette covered.
     func expandSnippetFromHotKey(id: StoredSnippet.ID) {
-        guard settings.snippetsEnabled, store.record(id: id)?.snippet.isEnabled == true else {
+        guard settings.snippetsEnabled,
+            let record = store.record(id: id),
+            store.isSnippetEffectivelyEnabled(record)
+        else {
             return
         }
         if windowController.isVisible {

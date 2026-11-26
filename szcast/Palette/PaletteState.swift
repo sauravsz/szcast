@@ -5,6 +5,7 @@ struct PaletteFrame: Equatable {
     let mode: PaletteMode
     let query: String
     let selection: Int
+    var snippetFolderPath: String?
 }
 
 @MainActor
@@ -27,8 +28,8 @@ final class PaletteState {
     var fileSearchFilter: FileSearchFilter = .all
     var emojiCategoryFilter: EmojiCategoryFilter = .all
     var emojiShowingAIResults = false
-    var snippetFolderFilter: String? = nil {
-        didSet { if oldValue != snippetFolderFilter { selection = 0; restoredSelection = nil } }
+    var snippetFolderPath: String? {
+        didSet { if oldValue != snippetFolderPath { selection = 0; restoredSelection = nil } }
     }
     /// Nil means the configured default; zoom only overrides it for this picker session.
     var emojiGridColumnsOverride: EmojiGridColumns?
@@ -106,7 +107,10 @@ final class PaletteState {
 
     func push(mode: PaletteMode) {
         if !self.mode.isNativeEditor {
-            backStack.append(PaletteFrame(mode: self.mode, query: query, selection: selection))
+            backStack.append(
+                PaletteFrame(
+                    mode: self.mode, query: query, selection: selection,
+                    snippetFolderPath: snippetFolderPath))
         }
         replace(mode: mode)
     }
@@ -115,6 +119,7 @@ final class PaletteState {
         guard let frame = backStack.popLast() else { return false }
         openScreen(frame.mode)
         query = frame.query
+        snippetFolderPath = frame.snippetFolderPath
         selection = frame.selection
         restoredSelection = preservingSelection ? frame.selection : nil
         // Not `resetToken`: landing the list again would throw away the selection restored here.
@@ -124,8 +129,19 @@ final class PaletteState {
 
     /// Tab's step deeper into the ring: the screen crossed from is the step back, query and all.
     func pushCarryingQuery(mode: PaletteMode) {
-        backStack.append(PaletteFrame(mode: self.mode, query: query, selection: selection))
+        backStack.append(
+            PaletteFrame(
+                mode: self.mode, query: query, selection: selection,
+                snippetFolderPath: snippetFolderPath))
         self.mode = mode
+    }
+
+    @discardableResult
+    func popSnippetFolder() -> Bool {
+        guard let current = snippetFolderPath else { return false }
+        let parts = current.split(separator: "/")
+        snippetFolderPath = parts.count > 1 ? parts.dropLast().joined(separator: "/") : nil
+        return true
     }
 
     /// The search field is one line, so pasted line breaks become spaces; true when it rewrote.
@@ -155,7 +171,7 @@ final class PaletteState {
         fileSearchFilter = .all
         emojiCategoryFilter = .all
         emojiShowingAIResults = false
-        snippetFolderFilter = nil
+        snippetFolderPath = nil
         emojiGridColumnsOverride = nil
         forceExpanded = false
         dropHoverHighlight()

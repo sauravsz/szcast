@@ -44,9 +44,15 @@ root and bundle identifier are injectable in the standalone harness so tests can
 library.
 
 A stored snippet's identity is the standardized path of its Markdown file. Changing `name` or other
-frontmatter keeps the same identity. Renaming a file outside szcast appears as deletion of the old
-record plus creation of a new one. Saving always updates the existing path; creating snippets with
-the same name uses distinct filename suffixes.
+frontmatter keeps the same identity, while moving a snippet between folders or renaming a folder
+changes its file path and migrates any bound `.snippet(id:)` hotkey to the new path. Snippets can be
+organized into real subdirectories under `Snippets/` up to **three levels** deep
+(`Snippets/<Folder>/<Subfolder>/<Subfolder>/<snippet>.md`). Subdirectories may carry an optional
+hidden `.szcast-folder.json` file for Alfred-style collection settings (`isEnabled`, `keywordPrefix`,
+and custom `icon`); disabling a folder disables its subfolders and snippets, and ancestor keyword
+prefixes compose top-down ahead of each snippet's keyword. Changing `name` or other frontmatter keeps
+the file identity, and creating snippets with the same name inside a directory uses distinct filename
+suffixes.
 
 The first load creates the folder and nothing else: a new channel starts with an empty library, and
 snippets only ever arrive from the editor or a Raycast import. Malformed Markdown is reported per file
@@ -225,14 +231,18 @@ global shortcut recorded in **Settings → Snippets**. Like Search Quicklinks it
 cycle and exits with Escape or a bare backspace, and like the clipboard it splits into a list and a
 preview.
 
-The list is every **enabled** snippet — a disabled one is absent here exactly as it is absent from the
-launcher — filtered by name *or* keyword. Substring matching, not the launcher's fuzzy scorer: this is
-a library being browsed rather than a query racing apps and commands for a rank.
+When the search field is empty at the root, the browser lists top-level folders first followed by
+root-level uncategorized snippets; `↵` or `→` drills into a folder, and `Esc`, `←`, or bare
+backspace steps back up a level. Typing a query at the root immediately searches **all** enabled
+snippets across every folder by name, effective or raw keyword, body text, or folder path; typing
+while drilled into a folder scopes search to that folder subtree. Disabled folders and snippets are
+absent from the browser and launcher, and remain manageable in **Settings → Snippets**.
 
-The preview shows the **raw template**, never an expansion. Expanding per selection would capture the
+The preview shows the **raw template**, never an expansion (or a folder summary when a folder row is
+selected). Expanding per selection would capture the
 clipboard, read the target's selected text and burn a `{uuid}` on every arrow key, and a snippet
-carrying `{argument}` would raise its prompt just to draw a pane. Beside it sits the name, keyword,
-shortcut, file name and character count.
+carrying `{argument}` would raise its prompt just to draw a pane. Beside it sits the name, folder,
+effective keyword, shortcut, file name and character count.
 
 ↵ and the ⌘K menu's **Paste Snippet** both go through `SnippetCoordinator.expandSnippetFromPalette`,
 which reads `previousApp` before hiding the panel and then calls the same `expandSnippet` funnel a

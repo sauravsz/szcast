@@ -186,6 +186,17 @@ final class HotKeyManager {
         }
     }
 
+    func migrateSnippetBindings(_ moves: [(oldID: StoredSnippet.ID, newID: StoredSnippet.ID)]) {
+        for move in moves where move.oldID != move.newID {
+            let oldAction = HotKeyAction.snippet(id: move.oldID)
+            let newAction = HotKeyAction.snippet(id: move.newID)
+            guard let binding = bindings[oldAction] else { continue }
+            if recordingAction == oldAction { recordingAction = nil }
+            setBinding(nil, for: oldAction)
+            setBinding(binding, for: newAction)
+        }
+    }
+
     func binding(for action: HotKeyAction) -> HotKeyBinding? { bindings[action] }
 
     /// One-time seed, so a fresh install ships with working chords instead of an empty recorder.

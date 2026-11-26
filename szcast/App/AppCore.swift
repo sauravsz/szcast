@@ -566,10 +566,13 @@ final class AppCore {
             dictationKey.onProblem = { [weak self] in self?.showMessage($0, tone: .danger) }
             dictationKey.start()
 
+            snippetsStore.onSnippetIDsMoved = { [weak self] moves in
+                self?.hotKeys.migrateSnippetBindings(moves)
+            }
             snippetsStore.onSnapshot = { [weak self] snapshot in
                 guard let self else { return }
                 self.snippetCoordinator.applySnippetsLauncherPresence()
-                self.snippetListener.update(snapshot.records)
+                self.snippetListener.update(snapshot.records, folders: snapshot.folders)
                 self.hotKeys.removeSnippetBindings(keeping: snapshot.fileIDs)
                 self.hotKeys.applyAllowance()
             }
@@ -667,7 +670,7 @@ final class AppCore {
             return settings.customCommandsEnabled && customCommands.command(id: id)?.isEnabled == true
         // Snippets load after `start()`; observing `snippets` re-registers them once they arrive.
         case .snippet(let id):
-            return settings.snippetsEnabled && snippetsStore.record(id: id)?.snippet.isEnabled == true
+            return settings.snippetsEnabled && snippetsStore.isSnippetEffectivelyEnabled(id: id)
         case .quickAction: return settings.quickActionsEnabled
         case .quicklink(let id):
             return settings.quicklinksEnabled && quicklinks.quicklink(id: id)?.isEnabled == true
@@ -1258,5 +1261,14 @@ final class AppCore {
 
     func recordHotKey(entry: AppEntry, action: HotKeyAction) async {
         await dialogs.recordHotKey(entry: entry, action: action, hotKeys: hotKeys)
+    }
+
+    func configureSnippetFolder(
+        isCreating: Bool,
+        parentPath: String? = nil,
+        folder: SnippetFolder? = nil
+    ) async -> (name: String, metadata: SnippetFolderMetadata)? {
+        await dialogs.configureSnippetFolder(
+            isCreating: isCreating, parentPath: parentPath, folder: folder)
     }
 }

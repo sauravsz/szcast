@@ -5,6 +5,7 @@ struct SnippetsSettingsView: View {
     @Environment(SnippetCoordinator.self) private var coordinator
     @Environment(SnippetsStore.self) private var snippetsStore
     @Environment(AppSettings.self) private var settings
+    @State private var expandedFolders: Set<String> = []
 
     var body: some View {
         @Bindable var settings = settings
@@ -67,19 +68,29 @@ struct SnippetsSettingsView: View {
 
     private var library: some View {
         Section {
-            if sortedSnippets.isEmpty {
+            if topLevelFolders.isEmpty && rootSnippets.isEmpty {
                 Text(snippetsStore.state == .loading ? "Loading snippets…" : "No snippets yet.")
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(sortedSnippets) { record in
+                ForEach(topLevelFolders) { folder in
+                    SnippetFolderSettingsNode(
+                        folder: folder,
+                        expandedFolders: $expandedFolders
+                    )
+                }
+                ForEach(rootSnippets) { record in
                     SnippetSettingsRow(
                         record: record,
+                        effectiveKeyword: snippetsStore.effectiveKeyword(for: record),
                         onEdit: { coordinator.editSnippet(record) },
                         onDelete: { Task { await coordinator.deleteSnippet(id: record.id) } })
                 }
             }
 
             LabeledContent {
+                Button("New Folder…") {
+                    Task { await coordinator.createFolder(parentPath: nil) }
+                }
                 Button("Add…") { coordinator.editSnippet(nil) }
             } label: {
                 SettingsRowTitle(.snippetsLibrary, "New Snippet")
@@ -142,10 +153,20 @@ struct SnippetsSettingsView: View {
         .accessibilityElement(children: .contain)
     }
 
-    private var sortedSnippets: [StoredSnippet] {
-        snippetsStore.snippets.sorted {
-            $0.snippet.name.localizedCaseInsensitiveCompare($1.snippet.name) == .orderedAscending
-        }
+    private var topLevelFolders: [SnippetFolder] {
+        snippetsStore.childFolders(in: nil, includeDisabled: true)
+    }
+
+    private var rootSnippets: [StoredSnippet] {
+        let knownFolders = Set(snippetsStore.folders.map(\.path))
+        return snippetsStore.snippets
+            .filter { record in
+                guard let folder = record.snippet.folder else { return true }
+                return !knownFolders.contains(folder)
+            }
+            .sorted {
+                $0.snippet.name.localizedCaseInsensitiveCompare($1.snippet.name) == .orderedAscending
+            }
     }
 
     private var snippetIssueTitle: String {
@@ -163,8 +184,125 @@ struct SnippetsSettingsView: View {
     }
 }
 
+private struct SnippetFolderSettingsNode: View {
+    @Environment(SnippetCoordinator.self) private var coordinator
+    @Environment(SnippetsStore.self) private var snippetsStore
+    let folder: SnippetFolder
+    @Binding var expandedFolders: Set<String>
+
+    private var childFolders: [SnippetFolder] {
+        snippetsStore.childFolders(in: folder.path, includeDisabled: true)
+    }
+
+    private var directSnippets: [StoredSnippet] {
+        snippetsStore.directSnippets(in: folder.path, includeDisabled: true)
+    }
+
+    private var totalCount: Int {
+        snippetsStore.snippetCount(in: folder.path, includeDisabled: true)
+    }
+
+    private var isExpanded: Binding<Bool> {
+        Binding(
+            get: { expandedFolders.contains(folder.path) },
+            set: { expanded in
+                if expanded {
+                    expandedFolders.insert(folder.path)
+                } else {
+                    expandedFolders.remove(folder.path)
+                }
+            })
+    }
+
+    private var metadataSubtitle: String {
+        var parts = [String(localized: "\(totalCount) snippets")]
+        let effectivePrefix = snippetsStore.effectivePrefix(for: folder.path)
+        if !effectivePrefix.isEmpty {
+            parts.append(String(localized: "prefix \(effectivePrefix)"))
+        }
+        if !snippetsStore.isFolderEffectivelyEnabled(folder.path) {
+            parts.append(String(localized: "Disabled"))
+        }
+        return parts.joined(separator: " · ")
+    }
+
+    var body: some View {
+        DisclosureGroup(isExpanded: isExpanded) {
+            ForEach(childFolders) { child in
+                SnippetFolderSettingsNode(
+                    folder: child,
+                    expandedFolders: $expandedFolders)
+            }
+            ForEach(directSnippets) { record in
+                SnippetSettingsRow(
+                    record: record,
+                    effectiveKeyword: snippetsStore.effectiveKeyword(for: record),
+                    onEdit: { coordinator.editSnippet(record) },
+                    onDelete: { Task { await coordinator.deleteSnippet(id: record.id) } })
+            }
+        } label: {
+            SettingsRow(title: folder.name, subtitle: metadataSubtitle) {
+                SnippetFolderIconView(icon: folder.icon, size: SettingsListMetrics.iconSize)
+            } trailing: {
+                Toggle(
+                    "",
+                    isOn: Binding(
+                        get: { folder.isEnabled },
+                        set: { enabled in
+                            Task { await coordinator.setFolderEnabled(enabled, at: folder.path) }
+                        })
+                )
+                .labelsHidden()
+                .toggleStyle(.switch)
+                .controlSize(.mini)
+                .help(folder.isEnabled ? "Disable Folder" : "Enable Folder")
+
+                Button {
+                    coordinator.editSnippet(nil, initialFolder: folder.path)
+                } label: {
+                    Image(systemName: "plus")
+                }
+                .buttonStyle(.plain)
+                .help("New Snippet in Folder")
+                .accessibilityLabel("New Snippet in \(folder.name)")
+
+                if folder.depth < SnippetFolderPath.maxDepth {
+                    Button {
+                        Task { await coordinator.createFolder(parentPath: folder.path) }
+                    } label: {
+                        Image(systemName: "folder.badge.plus")
+                    }
+                    .buttonStyle(.plain)
+                    .help("New Subfolder")
+                    .accessibilityLabel("New Subfolder in \(folder.name)")
+                }
+
+                Button {
+                    coordinator.configureFolder(at: folder.path)
+                } label: {
+                    Image(systemName: "slider.horizontal.3")
+                }
+                .buttonStyle(.plain)
+                .help("Configure Folder")
+                .accessibilityLabel("Configure \(folder.name)")
+
+                Button {
+                    Task { await coordinator.deleteFolder(at: folder.path) }
+                } label: {
+                    Image(systemName: "trash")
+                        .foregroundStyle(.red)
+                }
+                .buttonStyle(.plain)
+                .help("Delete Folder")
+                .accessibilityLabel("Delete \(folder.name)")
+            }
+        }
+    }
+}
+
 private struct SnippetSettingsRow: View {
     let record: StoredSnippet
+    let effectiveKeyword: String?
     let onEdit: () -> Void
     let onDelete: () -> Void
 
@@ -196,7 +334,7 @@ private struct SnippetSettingsRow: View {
 
     private var metadata: String {
         let filename = record.fileURL.lastPathComponent
-        guard let keyword = record.snippet.keyword?.trimmingCharacters(in: .whitespacesAndNewlines),
+        guard let keyword = effectiveKeyword ?? record.snippet.keyword?.trimmingCharacters(in: .whitespacesAndNewlines),
             !keyword.isEmpty
         else { return filename }
         return "\(keyword) · \(filename)"

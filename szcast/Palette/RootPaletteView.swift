@@ -653,7 +653,7 @@ struct RootPaletteView: View {
                 switch PaletteEscapeAction.resolve(
                     menuOpen: menuOpen, menuQuery: vm.menuQuery,
                     argumentFocused: argumentFocused != nil, query: vm.query, mode: vm.mode,
-                    canGoBack: vm.canGoBack,
+                    canGoBack: vm.canGoBack || (vm.mode == .snippets && vm.snippetFolderPath != nil),
                     behavior: settings.escapeKeyBehavior,
                     compactRootExpanded: settings.compactMode && vm.mode == .launcher && !isCollapsed)
                 {
@@ -883,6 +883,12 @@ struct RootPaletteView: View {
             if tabOpensChat {
                 headerGutter(width: metrics.spacing.md)
                 quickAITabHint
+            }
+            if !isCollapsed, vm.mode == .snippets, let folderPath = vm.snippetFolderPath {
+                headerGutter(width: metrics.spacing.md)
+                SnippetFolderBreadcrumbButton(path: folderPath) {
+                    vm.snippetFolderPath = nil
+                }
             }
             if !isCollapsed, vm.mode == .clipboard {
                 headerGutter(width: metrics.spacing.md)
@@ -1708,7 +1714,9 @@ struct RootPaletteView: View {
 
     /// An extension keeps its own stack, so it can have a step back the palette cannot see.
     private var hasBackStep: Bool {
-        vm.canGoBack || (vm.mode == .extensionCommand && extensions.navigationDepth > 1)
+        vm.canGoBack
+            || (vm.mode == .snippets && vm.snippetFolderPath != nil)
+            || (vm.mode == .extensionCommand && extensions.navigationDepth > 1)
     }
 
     /// Never promises a step the click does not take: a root screen closes rather than backs.
@@ -1719,6 +1727,9 @@ struct RootPaletteView: View {
     }
 
     private func goBack() {
+        if vm.mode == .snippets, vm.popSnippetFolder() {
+            return
+        }
         if vm.mode == .customCommandEditor {
             core.customCommandCoordinator.cancelCustomCommandEditing()
             return
@@ -1844,4 +1855,41 @@ private struct ContextualShortcut: Identifiable, Equatable {
     let id: String
     let keys: [String]
     let label: String
+}
+
+private struct SnippetFolderBreadcrumbButton: View {
+    let path: String
+    let action: () -> Void
+    @State private var hovered = false
+    @Environment(\.metrics) private var metrics
+
+    private var displayPath: String {
+        path.split(separator: "/").joined(separator: " / ")
+    }
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: metrics.spacing.xs) {
+                Image(systemName: "folder.fill")
+                    .font(metrics.typography.bar)
+                Text(displayPath)
+                    .font(metrics.typography.bar)
+                    .lineLimit(1)
+                    .truncationMode(.head)
+                Image(systemName: "xmark")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(Theme.Colors.textTertiary)
+            }
+            .foregroundStyle(hovered ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
+            .padding(.horizontal, metrics.spacing.sm)
+            .padding(.vertical, metrics.spacing.xs)
+            .background(
+                Capsule()
+                    .fill(hovered ? Theme.Colors.rowHover : Theme.Colors.controlSurface)
+            )
+        }
+        .buttonStyle(.plain)
+        .onHover { hovered = $0 }
+        .help(String(localized: "Return to all snippets"))
+    }
 }

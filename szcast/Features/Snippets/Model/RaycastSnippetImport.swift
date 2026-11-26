@@ -12,14 +12,14 @@ enum RaycastSnippetImport {
             let rawKeyword = entry["keyword"] as? String
             let keyword = rawKeyword?.trimmingCharacters(in: .whitespacesAndNewlines)
             let rawFolder = (entry["group"] as? String) ?? (entry["folder"] as? String)
-            let folder = rawFolder?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let folder = SnippetFolderPath.sanitized(rawFolder)
             let rawIcon = (entry["icon"] as? String) ?? (entry["favicon"] as? String)
             let icon = rawIcon?.trimmingCharacters(in: .whitespacesAndNewlines)
             return Snippet(
                 name: name,
                 text: text,
                 keyword: keyword?.isEmpty == false ? keyword : nil,
-                folder: folder?.isEmpty == false ? folder : nil,
+                folder: folder,
                 icon: icon?.isEmpty == false ? icon : nil)
         }
     }

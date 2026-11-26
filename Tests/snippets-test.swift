@@ -30,6 +30,7 @@ struct SnippetsTests {
         await testKeywordListenerLifecycle()
         testOwnEditorInjection()
         testSnippetSearchContentAndFuzzy()
+        try await testNestedFoldersMetadataAndMove()
 
         print(failures == 0 ? "\nALL PASSED" : "\n\(failures) FAILED")
         exit(failures == 0 ? 0 : 1)
@@ -2297,6 +2298,110 @@ struct SnippetsTests {
         check("excerpt captures first non-empty line trimmed", excerptSingle == "Hello World")
         let excerptMulti = SnippetSearch.excerpt(for: "\n\n   curl -X POST   https://api.com  \nLine 2")
         check("excerpt collapses consecutive spaces", excerptMulti == "curl -X POST https://api.com")
+    }
+
+    private static func testNestedFoldersMetadataAndMove() async throws {
+        // 1. Path normalization & 3-level depth limit
+        check("validated allows 3 folder levels", SnippetFolderPath.validated("Work/Clients/Q4") == "Work/Clients/Q4")
+        check("validated rejects 4 folder levels", SnippetFolderPath.validated("A/B/C/D") == nil)
+        check("validated rejects dot components", SnippetFolderPath.validated("Work/.hidden") == nil)
+        check("validated rejects traversal", SnippetFolderPath.validated("Work/../Etc") == nil)
+        check("sanitized caps imported groups to 3 levels", SnippetFolderPath.sanitized("A/B/C/D") == "A/B/C")
+
+        let fm = FileManager.default
+        let root = fm.temporaryDirectory.appendingPathComponent(
+            "szcast-snippet-folders-\(UUID().uuidString)",
+            isDirectory: true)
+        try fm.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? fm.removeItem(at: root) }
+
+        let repo = SnippetRepository(
+            bundleIdentifier: "com.example.folders",
+            applicationSupportRoot: root)
+
+        // 2. Create 3-level nested folders & metadata
+        let work = try repo.createFolder(
+            path: "Work",
+            metadata: SnippetFolderMetadata(isEnabled: true, keywordPrefix: "!", icon: "briefcase"))
+        let dev = try repo.createFolder(
+            path: "Work/Dev",
+            metadata: SnippetFolderMetadata(isEnabled: true, keywordPrefix: "g", icon: "terminal"))
+        let git = try repo.createFolder(
+            path: "Work/Dev/Git",
+            metadata: SnippetFolderMetadata(isEnabled: true, keywordPrefix: nil, icon: nil))
+        check("created 3-level folder paths match", work.depth == 1 && dev.depth == 2 && git.depth == 3)
+
+        do {
+            _ = try repo.createFolder(path: "Work/Dev/Git/TooDeep")
+            check("creating level 4 folder is rejected", false)
+        } catch SnippetRepository.RepositoryError.invalidFolderPath {
+            check("creating level 4 folder is rejected", true)
+        }
+
+        // 3. Create snippet inside level-3 folder & verify directory-first storage
+        let commit = try repo.create(
+            Snippet(name: "Git Commit", text: "git commit -m \"{argument name=Message}\"", keyword: "co", folder: "Work/Dev/Git"))
+        check(
+            "snippet file lands inside nested level-3 directory",
+            commit.fileURL.path.hasSuffix("/Work/Dev/Git/git-commit.md"))
+
+        let snapshot1 = try repo.load()
+        check("load discovers all 3 folders and nested snippet", snapshot1.folders.count == 3 && snapshot1.records.count == 1)
+        let foldersByPath = SnippetFolderPolicy.foldersByPath(from: snapshot1.folders)
+        check(
+            "ancestor keyword prefixes compose top-down",
+            SnippetFolderPolicy.effectiveKeyword(for: commit.snippet, foldersByPath: foldersByPath) == "!gco")
+
+        // 4. Search matches effective prefixed keyword & raw keyword
+        let prefixHits = SnippetSearch.rank(snapshot1.records, foldersByPath: foldersByPath, for: "!gco")
+        check("search matches composed folder prefix + keyword", prefixHits.map(\.id) == [commit.id])
+
+        // 5. Moving snippet to another folder migrates path and removes old file
+        var movedSnippet = commit.snippet
+        movedSnippet.folder = "Work"
+        let moved = try repo.save(
+            movedSnippet,
+            fileURL: commit.fileURL,
+            expectedRevision: commit.sourceRevision)
+        check(
+            "saving with a new folder moves the file on disk",
+            moved.id != commit.id && moved.fileURL.path.hasSuffix("/Work/git-commit.md")
+                && !fm.fileExists(atPath: commit.fileURL.path))
+
+        // 6. Store tracks moved IDs, effective disablement, rename, and folder deletion
+        let store = SnippetsStore(repository: repo)
+        var recordedMoves: [(oldID: StoredSnippet.ID, newID: StoredSnippet.ID)] = []
+        store.onSnippetIDsMoved = { moves in recordedMoves.append(contentsOf: moves) }
+        await store.start()
+        defer { store.stop() }
+
+        check("store loads 3 folders", store.folders.count == 3)
+        check("store reports 1 enabled snippet in Work subtree", store.snippetCount(in: "Work") == 1)
+        check("store reports 2 subfolders under Work", store.subfolderCount(in: "Work") == 2)
+
+        _ = try await store.updateFolderMetadata(
+            SnippetFolderMetadata(isEnabled: false, keywordPrefix: "!", icon: "briefcase"),
+            at: "Work")
+        check(
+            "disabling parent folder disables child folders and snippets",
+            !store.isFolderEffectivelyEnabled("Work/Dev/Git")
+                && !store.isSnippetEffectivelyEnabled(moved))
+        check("disabled folder snippets vanish from browser search", store.browserRows(matching: "Git").isEmpty)
+
+        _ = try await store.updateFolderMetadata(
+            SnippetFolderMetadata(isEnabled: true, keywordPrefix: "!", icon: "briefcase"),
+            at: "Work")
+        check("re-enabling parent folder restores browser visibility", store.browserRows(matching: "Git").count == 1)
+
+        _ = try await store.renameFolder(from: "Work", to: "Company")
+        check(
+            "renaming folder migrates snippet IDs",
+            recordedMoves.count == 1 && recordedMoves[0].oldID == moved.id
+                && recordedMoves[0].newID.hasSuffix("/Company/git-commit.md"))
+        check("renamed folder preserves child folders", store.folder(at: "Company/Dev/Git") != nil)
+
+        try await store.deleteFolder(at: "Company")
+        check("deleting folder removes folder and all nested snippets", store.folders.isEmpty && store.snippets.isEmpty)
     }
 
     private static func check(_ description: String, _ condition: @autoclosure () -> Bool) {

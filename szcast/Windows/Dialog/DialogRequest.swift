@@ -42,6 +42,7 @@ enum DialogAccessory {
     case aliasInput(AliasInputState)
     case hotKeyRecord(HotKeyRecordState)
     case emojiKeywords(EmojiKeywordInputState)
+    case snippetFolderConfig(SnippetFolderConfigState)
 
     /// Whether ←/→/↑/↓ belong to the control rather than to whatever has focus inside it.
     var claimsArrowKeys: Bool {

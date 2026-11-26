@@ -126,6 +126,48 @@ final class DialogController: NSObject, NSWindowDelegate {
             .filter { !$0.isEmpty }
     }
 
+    func configureSnippetFolder(
+        isCreating: Bool,
+        parentPath: String? = nil,
+        folder: SnippetFolder? = nil
+    ) async -> (name: String, metadata: SnippetFolderMetadata)? {
+        let state = SnippetFolderConfigState(
+            isCreating: isCreating,
+            parentPath: parentPath,
+            name: folder?.name ?? "",
+            keywordPrefix: folder?.keywordPrefix ?? "",
+            icon: folder?.icon ?? "",
+            isEnabled: folder?.isEnabled ?? true)
+        let title = isCreating
+            ? String(localized: "New Snippet Folder")
+            : String(localized: "Configure Folder")
+        let message: String? = if let parentPath, !parentPath.isEmpty {
+            String(localized: "Inside \(parentPath.split(separator: "/").joined(separator: " / ")).")
+        } else {
+            nil
+        }
+        let request = DialogRequest(
+            title: title,
+            message: message,
+            symbol: "folder.fill",
+            tone: .neutral,
+            actions: [
+                DialogAction(title: isCreating ? String(localized: "Create") : String(localized: "Save")),
+                DialogAction(title: String(localized: "Cancel"), role: .cancel)
+            ],
+            defaultIndex: 0,
+            cancelIndex: 1,
+            accessory: .snippetFolderConfig(state))
+        guard await present(request) == 0 else { return nil }
+        let trimmedName = state.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else { return nil }
+        let metadata = SnippetFolderMetadata(
+            isEnabled: state.isEnabled,
+            keywordPrefix: state.keywordPrefix,
+            icon: state.icon)
+        return (trimmedName, metadata)
+    }
+
     func promptAlias(entry: AppEntry, currentAlias: String?) async -> (saved: Bool, alias: String?) {
         let suggested = suggestedAlias(for: entry)
         let placeholder = suggested.isEmpty ? "e.g. \(entry.name.prefix(1).lowercased())" : "e.g. \(suggested)"
@@ -213,7 +255,8 @@ final class DialogController: NSObject, NSWindowDelegate {
                 case .snippetArguments(let arguments) where arguments.asksOnlyForChoices:
                     metrics.size.dialogCompactWidth
                 case .snippetArguments, .clipboardText: metrics.size.dialogWidth
-                case .aliasInput, .hotKeyRecord, .emojiKeywords: max(metrics.size.dialogCompactWidth, 340)
+                case .aliasInput, .hotKeyRecord, .emojiKeywords, .snippetFolderConfig:
+                    max(metrics.size.dialogCompactWidth, 340)
                 }
             let content = hostingView(
                 DialogView(

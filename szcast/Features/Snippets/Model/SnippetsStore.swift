@@ -12,15 +12,17 @@ final class SnippetsStore {
     }
 
     private(set) var snippets: [StoredSnippet] = []
+    private(set) var folders: [SnippetFolder] = []
     private(set) var state: State = .idle
     private(set) var issues: [SnippetRepository.Issue] = []
     private(set) var operationError: String?
 
     private(set) var snippetsDirectory: URL
     var onSnapshot: ((SnippetRepository.Snapshot) -> Void)?
+    var onSnippetIDsMoved: (([(oldID: StoredSnippet.ID, newID: StoredSnippet.ID)]) -> Void)?
 
     private var repository: SnippetRepository
-    @ObservationIgnored private var directoryWatcher: DispatchSourceFileSystemObject?
+    @ObservationIgnored private var directoryWatchers: [String: DispatchSourceFileSystemObject] = [:]
     @ObservationIgnored private var fileWatchers: [String: DispatchSourceFileSystemObject] = [:]
     @ObservationIgnored private var reloadTask: Task<Void, Never>?
     @ObservationIgnored private var watcherRetryTask: Task<Void, Never>?
@@ -36,7 +38,7 @@ final class SnippetsStore {
     isolated deinit {
         reloadTask?.cancel()
         watcherRetryTask?.cancel()
-        directoryWatcher?.cancel()
+        for source in directoryWatchers.values { source.cancel() }
         for source in fileWatchers.values { source.cancel() }
     }
 
@@ -63,10 +65,11 @@ final class SnippetsStore {
         self.repository = repository
         snippetsDirectory = repository.snippetsDirectory
         // Emptied first, so a folder that fails to load leaves no old snippet expanding.
-        if !snippets.isEmpty || !issues.isEmpty {
+        if !snippets.isEmpty || !folders.isEmpty || !issues.isEmpty {
             snippets = []
+            folders = []
             issues = []
-            onSnapshot?(SnippetRepository.Snapshot(records: [], issues: []))
+            onSnapshot?(SnippetRepository.Snapshot(records: [], folders: [], issues: []))
         }
         guard wasStarted else { return }
         await start()
@@ -83,7 +86,8 @@ final class SnippetsStore {
         guard isStarted else { return record }
         var records = snippets.filter { $0.id != record.id }
         records.append(record)
-        publishLocal(records: records)
+        let updatedFolders = mergingAncestorFolders(for: record.snippet.folder, into: folders)
+        publishLocal(records: records, folders: updatedFolders)
         scheduleReload(after: .zero)
         return record
     }
@@ -94,23 +98,32 @@ final class SnippetsStore {
         let created = try await performMutation { try $0.create(imported) }
         guard isStarted else { return created }
         let createdIDs = Set(created.map(\.id))
-        publishLocal(records: snippets.filter { !createdIDs.contains($0.id) } + created)
+        var updatedFolders = folders
+        for record in created {
+            updatedFolders = mergingAncestorFolders(for: record.snippet.folder, into: updatedFolders)
+        }
+        publishLocal(records: snippets.filter { !createdIDs.contains($0.id) } + created, folders: updatedFolders)
         scheduleReload(after: .zero)
         return created
     }
 
     @discardableResult
     func save(_ record: StoredSnippet) async throws -> StoredSnippet {
+        let oldID = record.id
         let saved = try await performMutation {
             try $0.save(
                 record.snippet,
                 fileURL: record.fileURL,
                 expectedRevision: record.sourceRevision)
         }
+        if saved.id != oldID {
+            onSnippetIDsMoved?([(oldID: oldID, newID: saved.id)])
+        }
         guard isStarted else { return saved }
-        var records = snippets.filter { $0.id != saved.id }
+        var records = snippets.filter { $0.id != oldID && $0.id != saved.id }
         records.append(saved)
-        publishLocal(records: records)
+        let updatedFolders = mergingAncestorFolders(for: saved.snippet.folder, into: folders)
+        publishLocal(records: records, folders: updatedFolders)
         scheduleReload(after: .zero)
         return saved
     }
@@ -125,7 +138,63 @@ final class SnippetsStore {
                 expectedRevision: record.sourceRevision)
         }
         guard isStarted else { return }
-        publishLocal(records: snippets.filter { $0.id != id })
+        publishLocal(records: snippets.filter { $0.id != id }, folders: folders)
+        scheduleReload(after: .zero)
+    }
+
+    @discardableResult
+    func createFolder(
+        path: String,
+        metadata: SnippetFolderMetadata = SnippetFolderMetadata()
+    ) async throws -> SnippetFolder {
+        let created = try await performMutation { try $0.createFolder(path: path, metadata: metadata) }
+        guard isStarted else { return created }
+        var updatedFolders = mergingAncestorFolders(for: created.path, into: folders)
+        updatedFolders = updatedFolders.filter { $0.path != created.path } + [created]
+        publishLocal(records: snippets, folders: updatedFolders)
+        scheduleReload(after: .zero)
+        return created
+    }
+
+    @discardableResult
+    func updateFolderMetadata(
+        _ metadata: SnippetFolderMetadata,
+        at path: String
+    ) async throws -> SnippetFolder {
+        let updated = try await performMutation { try $0.updateFolderMetadata(metadata, at: path) }
+        guard isStarted else { return updated }
+        let updatedFolders = folders.filter { $0.path != updated.path } + [updated]
+        publishLocal(records: snippets, folders: updatedFolders)
+        scheduleReload(after: .zero)
+        return updated
+    }
+
+    @discardableResult
+    func renameFolder(from oldPath: String, to newPath: String) async throws -> SnippetFolder {
+        let result = try await performMutation { try $0.renameFolder(from: oldPath, to: newPath) }
+        if !result.movedIDs.isEmpty {
+            onSnippetIDsMoved?(result.movedIDs)
+        }
+        guard isStarted else { return result.folder }
+        let snapshot = try? await performMutation { try $0.load() }
+        if let snapshot {
+            apply(snapshot)
+        } else {
+            scheduleReload(after: .zero)
+        }
+        return result.folder
+    }
+
+    func deleteFolder(at path: String) async throws {
+        _ = try await performMutation { try $0.deleteFolder(at: path) }
+        guard isStarted else { return }
+        let remainingSnippets = snippets.filter {
+            !SnippetFolderPolicy.contains($0.snippet.folder, in: path)
+        }
+        let remainingFolders = folders.filter {
+            $0.path != path && !$0.path.hasPrefix(path + "/")
+        }
+        publishLocal(records: remainingSnippets, folders: remainingFolders)
         scheduleReload(after: .zero)
     }
 
@@ -133,16 +202,104 @@ final class SnippetsStore {
         snippets.first(where: { $0.id == id })
     }
 
-    /// A disabled snippet is off everywhere, so the browser lists exactly what the launcher does.
-    func browserRows(matching query: String) -> [StoredSnippet] {
-        let query = query.trimmingCharacters(in: .whitespaces)
-        let matches = snippets.filter { record in
-            record.snippet.isEnabled
-                && (query.isEmpty
-                    || record.snippet.name.localizedCaseInsensitiveContains(query)
-                    || record.snippet.keyword?.localizedCaseInsensitiveContains(query) == true)
+    var foldersByPath: [String: SnippetFolder] {
+        SnippetFolderPolicy.foldersByPath(from: folders)
+    }
+
+    func folder(at path: String) -> SnippetFolder? {
+        folders.first(where: { $0.path == path })
+    }
+
+    func folderURL(for path: String) -> URL {
+        var url = snippetsDirectory
+        for component in SnippetFolderPath.components(of: path) {
+            url.appendPathComponent(component, isDirectory: true)
         }
-        return matches.filter(\.snippet.isPinned) + matches.filter { !$0.snippet.isPinned }
+        return url
+    }
+
+    func isFolderEffectivelyEnabled(_ path: String) -> Bool {
+        SnippetFolderPolicy.isFolderEffectivelyEnabled(path, foldersByPath: foldersByPath)
+    }
+
+    func isSnippetEffectivelyEnabled(_ record: StoredSnippet) -> Bool {
+        SnippetFolderPolicy.isSnippetEffectivelyEnabled(record.snippet, foldersByPath: foldersByPath)
+    }
+
+    func isSnippetEffectivelyEnabled(id: StoredSnippet.ID) -> Bool {
+        guard let record = record(id: id) else { return false }
+        return isSnippetEffectivelyEnabled(record)
+    }
+
+    func effectivePrefix(for folderPath: String?) -> String {
+        SnippetFolderPolicy.effectivePrefix(for: folderPath, foldersByPath: foldersByPath)
+    }
+
+    func effectiveKeyword(for record: StoredSnippet) -> String? {
+        SnippetFolderPolicy.effectiveKeyword(for: record.snippet, foldersByPath: foldersByPath)
+    }
+
+    func childFolders(in parentPath: String?, includeDisabled: Bool = false) -> [SnippetFolder] {
+        let map = foldersByPath
+        return folders.filter { folder in
+            guard folder.parentPath == parentPath else { return false }
+            if !includeDisabled {
+                return SnippetFolderPolicy.isFolderEffectivelyEnabled(folder.path, foldersByPath: map)
+            }
+            return true
+        }
+    }
+
+    func directSnippets(in folderPath: String?, includeDisabled: Bool = false) -> [StoredSnippet] {
+        let map = foldersByPath
+        return snippets.filter { record in
+            guard record.snippet.folder == folderPath else { return false }
+            if !includeDisabled {
+                return SnippetFolderPolicy.isSnippetEffectivelyEnabled(record.snippet, foldersByPath: map)
+            }
+            return true
+        }
+    }
+
+    func snippetCount(in folderPath: String, includeDisabled: Bool = false) -> Int {
+        let map = foldersByPath
+        return snippets.count { record in
+            guard SnippetFolderPolicy.contains(record.snippet.folder, in: folderPath) else { return false }
+            if !includeDisabled {
+                return SnippetFolderPolicy.isSnippetEffectivelyEnabled(record.snippet, foldersByPath: map)
+            }
+            return true
+        }
+    }
+
+    func subfolderCount(in folderPath: String, includeDisabled: Bool = false) -> Int {
+        let map = foldersByPath
+        return folders.count { folder in
+            guard folder.path.hasPrefix(folderPath + "/") else { return false }
+            if !includeDisabled {
+                return SnippetFolderPolicy.isFolderEffectivelyEnabled(folder.path, foldersByPath: map)
+            }
+            return true
+        }
+    }
+
+    /// A disabled snippet is off everywhere, so the browser lists exactly what the launcher does.
+    func browserRows(matching query: String, in folderPath: String? = nil) -> [StoredSnippet] {
+        let map = foldersByPath
+        let enabled = snippets.filter { record in
+            guard SnippetFolderPolicy.isSnippetEffectivelyEnabled(record.snippet, foldersByPath: map) else {
+                return false
+            }
+            if let folderPath {
+                return SnippetFolderPolicy.contains(record.snippet.folder, in: folderPath)
+            }
+            return true
+        }
+        let trimmed = query.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else {
+            return enabled.filter(\.snippet.isPinned) + enabled.filter { !$0.snippet.isPinned }
+        }
+        return SnippetSearch.rank(enabled, foldersByPath: map, for: trimmed)
     }
 
     private enum RepositoryResult<Value: Sendable>: Sendable {
@@ -211,11 +368,29 @@ final class SnippetsStore {
         }
     }
 
-    private func publishLocal(records: [StoredSnippet]) {
+    private func publishLocal(records: [StoredSnippet], folders: [SnippetFolder]) {
+        let sortedFolders = folders.sorted {
+            $0.path.localizedCaseInsensitiveCompare($1.path) == .orderedAscending
+        }
         apply(
             SnippetRepository.Snapshot(
                 records: records.sorted(by: recordOrder),
+                folders: sortedFolders,
                 issues: issues))
+    }
+
+    private func mergingAncestorFolders(
+        for folderPath: String?,
+        into existing: [SnippetFolder]
+    ) -> [SnippetFolder] {
+        guard let folderPath, let normalized = SnippetFolderPath.validated(folderPath) else {
+            return existing
+        }
+        var map = SnippetFolderPolicy.foldersByPath(from: existing)
+        for ancestor in SnippetFolderPath.ancestorPaths(of: normalized) where map[ancestor] == nil {
+            map[ancestor] = SnippetFolder(path: ancestor)
+        }
+        return Array(map.values)
     }
 
     private func apply(_ snapshot: SnippetRepository.Snapshot) {
@@ -223,9 +398,11 @@ final class SnippetsStore {
         let isUnchanged =
             state == .ready
             && snippets == snapshot.records
+            && folders == snapshot.folders
             && issues == snapshot.issues
         if !isUnchanged {
             snippets = snapshot.records
+            folders = snapshot.folders
             issues = snapshot.issues
             state = .ready
             onSnapshot?(snapshot)
@@ -257,8 +434,15 @@ final class SnippetsStore {
         watcherRetryTask = nil
 
         var changed = false
-        if directoryWatcher == nil {
-            changed = armDirectoryWatcher() || changed
+        let desiredDirectories = Set(
+            [snippetsDirectory.standardizedFileURL.path]
+                + snapshot.folders.map { folderURL(for: $0.path).standardizedFileURL.path })
+        for path in Array(directoryWatchers.keys) where !desiredDirectories.contains(path) {
+            directoryWatchers.removeValue(forKey: path)?.cancel()
+            changed = true
+        }
+        for path in desiredDirectories where directoryWatchers[path] == nil {
+            changed = armDirectoryWatcher(path: path) || changed
         }
 
         let desiredPaths = Set(
@@ -273,18 +457,22 @@ final class SnippetsStore {
         }
 
         // Retry while anything is unwatched; a failed file watcher blinds us like a missing one.
-        if directoryWatcher == nil || desiredPaths.contains(where: { fileWatchers[$0] == nil }) {
+        if desiredDirectories.contains(where: { directoryWatchers[$0] == nil })
+            || desiredPaths.contains(where: { fileWatchers[$0] == nil })
+        {
             scheduleWatcherRetry()
         }
         return changed
     }
 
     @discardableResult
-    private func armDirectoryWatcher() -> Bool {
-        let descriptor = Darwin.open(snippetsDirectory.path, O_EVTONLY)
+    private func armDirectoryWatcher(path: String) -> Bool {
+        let descriptor = Darwin.open(path, O_EVTONLY)
         guard descriptor >= 0 else { return false }
 
-        watcherGeneration &+= 1
+        if path == snippetsDirectory.standardizedFileURL.path {
+            watcherGeneration &+= 1
+        }
         let installedGeneration = watcherGeneration
         let source = DispatchSource.makeFileSystemObjectSource(
             fileDescriptor: descriptor,
@@ -292,11 +480,11 @@ final class SnippetsStore {
             queue: .main)
         source.setEventHandler { [weak self] in
             MainActor.assumeIsolated {
-                self?.handleDirectoryEvent(generation: installedGeneration)
+                self?.handleDirectoryEvent(path: path, generation: installedGeneration)
             }
         }
         source.setCancelHandler { Darwin.close(descriptor) }
-        directoryWatcher = source
+        directoryWatchers[path] = source
         source.resume()
         return true
     }
@@ -322,13 +510,17 @@ final class SnippetsStore {
         return true
     }
 
-    private func handleDirectoryEvent(generation installedGeneration: Int) {
+    private func handleDirectoryEvent(path: String, generation installedGeneration: Int) {
         guard isStarted, installedGeneration == watcherGeneration,
-            let events = directoryWatcher?.data
+            let events = directoryWatchers[path]?.data
         else { return }
 
         if !events.isDisjoint(with: [.delete, .rename, .revoke]) {
-            stopWatchers()
+            if path == snippetsDirectory.standardizedFileURL.path {
+                stopWatchers()
+            } else {
+                directoryWatchers.removeValue(forKey: path)?.cancel()
+            }
         }
         noteFilesystemChange()
     }
@@ -351,8 +543,8 @@ final class SnippetsStore {
 
     private func stopWatchers() {
         watcherGeneration &+= 1
-        directoryWatcher?.cancel()
-        directoryWatcher = nil
+        for source in directoryWatchers.values { source.cancel() }
+        directoryWatchers.removeAll()
         for source in fileWatchers.values { source.cancel() }
         fileWatchers.removeAll()
     }

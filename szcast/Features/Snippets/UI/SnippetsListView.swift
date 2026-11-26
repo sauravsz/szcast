@@ -1,22 +1,36 @@
 import SwiftUI
 
+enum SnippetBrowserRow: Identifiable, Hashable {
+    case folder(SnippetFolder, snippetCount: Int, subfolderCount: Int)
+    case snippet(StoredSnippet)
+
+    var id: String {
+        switch self {
+        case .folder(let folder, _, _): return "folder:" + folder.path
+        case .snippet(let record): return "snippet:" + record.id
+        }
+    }
+}
+
 struct SnippetsList: View {
-
     @Environment(\.metrics) private var metrics
-    let results: [StoredSnippet]
-    let selectedID: StoredSnippet.ID?
+    let results: [SnippetBrowserRow]
+    let showFolderLabel: Bool
+    let showPinnedHeader: Bool
+    let effectiveKeyword: (StoredSnippet) -> String?
+    let selectedID: SnippetBrowserRow.ID?
     let scroll: ScrollIntent
-    let onSelect: (StoredSnippet) -> Void
+    let onSelect: (SnippetBrowserRow) -> Void
     let onActivate: () -> Void
-    let onActions: (StoredSnippet) -> Void
+    let onActions: (SnippetBrowserRow) -> Void
 
-    private enum Row: Identifiable {
+    private enum DisplayRow: Identifiable {
         case header(String)
-        case item(StoredSnippet)
+        case item(SnippetBrowserRow)
         var id: String {
             switch self {
             case .header(let title): return "header-" + title
-            case .item(let record): return record.id
+            case .item(let row): return row.id
             }
         }
     }
@@ -25,19 +39,28 @@ struct SnippetsList: View {
         selectedID != nil && selectedID == results.first?.id
     }
 
-    /// The store lists pinned first, so this emits a header on the one boundary.
-    private var rows: [Row] {
-        var rows: [Row] = []
+    private var rows: [DisplayRow] {
+        var displayRows: [DisplayRow] = []
         var currentTitle: String?
-        for record in results {
-            let title = record.snippet.isPinned ? String(localized: "Pinned") : String(localized: "Snippets")
+        for item in results {
+            let title: String
+            switch item {
+            case .folder:
+                title = String(localized: "Folders")
+            case .snippet(let record):
+                if showPinnedHeader && record.snippet.isPinned {
+                    title = String(localized: "Pinned")
+                } else {
+                    title = String(localized: "Snippets")
+                }
+            }
             if title != currentTitle {
-                rows.append(.header(title))
+                displayRows.append(.header(title))
                 currentTitle = title
             }
-            rows.append(.item(record))
+            displayRows.append(.item(item))
         }
-        return rows
+        return displayRows
     }
 
     var body: some View {
@@ -49,18 +72,18 @@ struct SnippetsList: View {
                         switch row {
                         case .header(let title):
                             SectionHeader(title: title, isFirst: row.id == rows.first?.id)
-                        case .item(let record):
-                            SnippetRow(record: record, selected: record.id == selectedID)
-                                .selectionFrame(record.id == selectedID)
+                        case .item(let item):
+                            rowView(for: item, selected: item.id == selectedID)
+                                .selectionFrame(item.id == selectedID)
                                 .contentShape(Rectangle())
-                                .onTapGesture { onSelect(record) }
+                                .onTapGesture { onSelect(item) }
                                 .simultaneousGesture(
                                     TapGesture(count: 2).onEnded {
-                                        onSelect(record)
+                                        onSelect(item)
                                         onActivate()
                                     }
                                 )
-                                .onRightClick { onActions(record) }
+                                .onRightClick { onActions(item) }
                         }
                     }
                 }
@@ -76,13 +99,85 @@ struct SnippetsList: View {
                 scroll, row: selectedID, atOrigin: firstRowSelected, proxy: proxy)
         }
     }
+
+    @ViewBuilder
+    private func rowView(for item: SnippetBrowserRow, selected: Bool) -> some View {
+        switch item {
+        case .folder(let folder, let snippetCount, let subfolderCount):
+            SnippetFolderRow(
+                folder: folder,
+                snippetCount: snippetCount,
+                subfolderCount: subfolderCount,
+                selected: selected
+            )
+        case .snippet(let record):
+            SnippetRow(
+                record: record,
+                showFolderLabel: showFolderLabel,
+                effectiveKeyword: effectiveKeyword(record),
+                selected: selected
+            )
+        }
+    }
+}
+
+private struct SnippetFolderRow: View {
+    @Environment(\.metrics) private var metrics
+    let folder: SnippetFolder
+    let snippetCount: Int
+    let subfolderCount: Int
+    let selected: Bool
+    @State private var hovered = false
+
+    private var fill: Color {
+        if selected { return Theme.Colors.selection }
+        if hovered { return Theme.Colors.rowHover }
+        return .clear
+    }
+
+    private var countLabel: String {
+        if snippetCount == 0 && subfolderCount > 0 {
+            return "\(subfolderCount)"
+        }
+        return "\(snippetCount)"
+    }
+
+    var body: some View {
+        IconCache.observeStyle()
+        return HStack(spacing: metrics.spacing.lg) {
+            SnippetFolderIconView(icon: folder.icon, size: metrics.size.resultRowIcon)
+            Text(folder.name)
+                .font(metrics.typography.rowTitle)
+                .lineLimit(1)
+            Spacer(minLength: metrics.spacing.lg)
+            if let prefix = folder.keywordPrefix, !prefix.isEmpty {
+                Text(prefix)
+                    .font(metrics.typography.keyCap)
+                    .foregroundStyle(Theme.Colors.textTertiary)
+                    .lineLimit(1)
+            }
+            Text(countLabel)
+                .font(metrics.typography.keyCap)
+                .foregroundStyle(Theme.Colors.textTertiary)
+            Image(systemName: "chevron.right")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Theme.Colors.textTertiary)
+        }
+        .padding(.horizontal, metrics.spacing.md)
+        .padding(.vertical, metrics.spacing.sm)
+        .background(
+            RoundedRectangle(cornerRadius: metrics.radius.row, style: .continuous).fill(fill)
+        )
+        .armedHover($hovered)
+    }
 }
 
 private struct SnippetRow: View {
-
     @Environment(\.metrics) private var metrics
     @Environment(HotKeyManager.self) private var hotKeys
     let record: StoredSnippet
+    let showFolderLabel: Bool
+    let effectiveKeyword: String?
     let selected: Bool
     @State private var hovered = false
 
@@ -109,18 +204,17 @@ private struct SnippetRow: View {
                     .truncationMode(.tail)
             }
             Spacer(minLength: metrics.spacing.lg)
-            if let folder = record.snippet.folder, !folder.isEmpty {
-                Text(folder)
-                    .font(metrics.typography.keyCap)
-                    .foregroundStyle(Theme.Colors.textSecondary)
-                    .padding(.horizontal, metrics.spacing.xs)
-                    .padding(.vertical, 2)
-                    .background(
-                        RoundedRectangle(cornerRadius: metrics.radius.attachmentChip, style: .continuous)
-                            .fill(Theme.Colors.rowHover)
-                    )
+            if showFolderLabel, let folder = record.snippet.folder, !folder.isEmpty {
+                HStack(spacing: metrics.spacing.xxs) {
+                    Image(systemName: "folder")
+                    Text(folder.split(separator: "/").joined(separator: " / "))
+                }
+                .font(metrics.typography.keyCap)
+                .foregroundStyle(Theme.Colors.textTertiary)
+                .lineLimit(1)
+                .truncationMode(.head)
             }
-            if let keyword = record.snippet.keyword, !keyword.isEmpty {
+            if let keyword = effectiveKeyword ?? record.snippet.keyword, !keyword.isEmpty {
                 Text(keyword)
                     .font(metrics.typography.keyCap)
                     .foregroundStyle(Theme.Colors.textTertiary)
@@ -144,10 +238,12 @@ private struct SnippetRow: View {
 }
 
 struct SnippetPreview: View {
-    let record: StoredSnippet?
+    let row: SnippetBrowserRow?
+    let store: SnippetsStore
 
     var body: some View {
-        if let record {
+        switch row {
+        case .snippet(let record):
             VStack(alignment: .leading, spacing: 0) {
                 // The raw template: expanding here would read the clipboard on every arrow key.
                 ScrollView {
@@ -157,12 +253,160 @@ struct SnippetPreview: View {
                         .frame(maxWidth: .infinity, alignment: .topLeading)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                SnippetInfoSection(record: record)
+                SnippetInfoSection(record: record, effectiveKeyword: store.effectiveKeyword(for: record))
             }
             .padding(.horizontal, 12)
-        } else {
+        case .folder(let folder, let snippetCount, let subfolderCount):
+            SnippetFolderPreview(
+                folder: folder,
+                snippetCount: snippetCount,
+                subfolderCount: subfolderCount,
+                store: store
+            )
+            .padding(.horizontal, 12)
+        case nil:
             Color.clear
         }
+    }
+}
+
+private struct SnippetFolderPreview: View {
+    @Environment(\.metrics) private var metrics
+    let folder: SnippetFolder
+    let snippetCount: Int
+    let subfolderCount: Int
+    let store: SnippetsStore
+
+    private var directSnippets: [StoredSnippet] {
+        store.directSnippets(in: folder.path, includeDisabled: false)
+    }
+
+    private var childFolders: [SnippetFolder] {
+        store.childFolders(in: folder.path, includeDisabled: false)
+    }
+
+    private var effectivePrefix: String {
+        store.effectivePrefix(for: folder.path)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: metrics.spacing.md) {
+                    HStack(spacing: metrics.spacing.md) {
+                        SnippetFolderIconView(icon: folder.icon, size: 28)
+                        VStack(alignment: .leading, spacing: metrics.spacing.xxs) {
+                            Text(folder.name)
+                                .font(metrics.typography.panelTitle)
+                            Text(folder.path.split(separator: "/").joined(separator: " / "))
+                                .font(metrics.typography.keyCap)
+                                .foregroundStyle(Theme.Colors.textSecondary)
+                        }
+                    }
+                    .padding(.top, metrics.spacing.xs)
+
+                    if childFolders.isEmpty && directSnippets.isEmpty {
+                        Text("Empty folder. Press ↵ to open or ⌘N to add a snippet.")
+                            .font(metrics.typography.rowTrailing)
+                            .foregroundStyle(Theme.Colors.textTertiary)
+                            .padding(.top, metrics.spacing.sm)
+                    } else {
+                        VStack(alignment: .leading, spacing: metrics.spacing.xs) {
+                            ForEach(childFolders.prefix(6)) { child in
+                                HStack(spacing: metrics.spacing.sm) {
+                                    SnippetFolderIconView(icon: child.icon, size: 16)
+                                    Text(child.name)
+                                        .font(metrics.typography.rowTitle)
+                                        .lineLimit(1)
+                                    Spacer()
+                                    Text("\(store.snippetCount(in: child.path))")
+                                        .font(metrics.typography.keyCap)
+                                        .foregroundStyle(Theme.Colors.textTertiary)
+                                }
+                            }
+                            ForEach(directSnippets.prefix(12)) { record in
+                                HStack(spacing: metrics.spacing.sm) {
+                                    EntryIconView(source: SnippetFaviconService.resolveIcon(for: record.snippet))
+                                        .frame(width: 16, height: 16)
+                                    Text(record.snippet.name)
+                                        .font(metrics.typography.rowTitle)
+                                        .lineLimit(1)
+                                    Spacer()
+                                    if let kw = store.effectiveKeyword(for: record) {
+                                        Text(kw)
+                                            .font(metrics.typography.keyCap)
+                                            .foregroundStyle(Theme.Colors.textTertiary)
+                                            .lineLimit(1)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+
+            SnippetFolderInfoSection(
+                folder: folder,
+                snippetCount: snippetCount,
+                subfolderCount: subfolderCount,
+                effectivePrefix: effectivePrefix
+            )
+        }
+    }
+}
+
+private struct SnippetFolderInfoSection: View {
+    @Environment(\.metrics) private var metrics
+    let folder: SnippetFolder
+    let snippetCount: Int
+    let subfolderCount: Int
+    let effectivePrefix: String
+
+    private struct InfoRow: Identifiable {
+        let label: String
+        let value: String
+        var id: String { label }
+    }
+
+    private var rows: [InfoRow] {
+        var rows = [
+            InfoRow(
+                label: String(localized: "Folder"),
+                value: folder.path.split(separator: "/").joined(separator: " / ")),
+            InfoRow(label: String(localized: "Snippets"), value: snippetCount.formatted())
+        ]
+        if subfolderCount > 0 {
+            rows.append(
+                InfoRow(label: String(localized: "Subfolders"), value: subfolderCount.formatted()))
+        }
+        if !effectivePrefix.isEmpty {
+            rows.append(InfoRow(label: String(localized: "Keyword Prefix"), value: effectivePrefix))
+        }
+        return rows
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: metrics.spacing.sm) {
+            Text("Information")
+                .font(metrics.typography.sectionHeader)
+                .foregroundStyle(.secondary)
+            VStack(spacing: 0) {
+                let rows = self.rows
+                ForEach(rows) { row in
+                    if row.id != rows.first?.id { Divider() }
+                    HStack(spacing: metrics.spacing.sm) {
+                        Text(row.label).foregroundStyle(.secondary)
+                        Spacer(minLength: metrics.spacing.lg)
+                        Text(row.value).lineLimit(1).truncationMode(.middle)
+                    }
+                    .font(metrics.typography.keyCap)
+                    .padding(.vertical, metrics.spacing.xs)
+                }
+            }
+        }
+        .padding(.vertical, metrics.spacing.md)
     }
 }
 
@@ -171,6 +415,7 @@ private struct SnippetInfoSection: View {
     @Environment(\.metrics) private var metrics
     @Environment(HotKeyManager.self) private var hotKeys
     let record: StoredSnippet
+    let effectiveKeyword: String?
 
     private struct InfoRow: Identifiable {
         let label: String
@@ -191,10 +436,13 @@ private struct SnippetInfoSection: View {
     private var rows: [InfoRow] {
         var rows = [InfoRow(label: String(localized: "Name"), value: record.snippet.name)]
         if let folder = record.snippet.folder, !folder.isEmpty {
-            rows.append(InfoRow(label: String(localized: "Folder"), value: folder))
+            rows.append(
+                InfoRow(
+                    label: String(localized: "Folder"),
+                    value: folder.split(separator: "/").joined(separator: " / ")))
         }
-        if let keyword = record.snippet.keyword, !keyword.isEmpty {
-            rows.append(InfoRow(label: String(localized: "Keyword"), value: keyword))
+        if let effectiveKeyword, !effectiveKeyword.isEmpty {
+            rows.append(InfoRow(label: String(localized: "Keyword"), value: effectiveKeyword))
         }
         if let keycaps = hotKeys.binding(for: .snippet(id: record.id))?.keycaps {
             rows.append(InfoRow(label: String(localized: "Shortcut"), keycaps: keycaps))

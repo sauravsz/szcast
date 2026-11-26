@@ -51,6 +51,7 @@ struct DialogView: View {
                         state: arguments, onSubmit: { onChoose(request.defaultIndex) })
                 case .clipboardText(let state): ClipboardEditField(state: state)
                 case .emojiKeywords(let state): EmojiKeywordEditField(state: state)
+                case .snippetFolderConfig(let state): SnippetFolderConfigField(state: state)
                 case .aliasInput, .hotKeyRecord, nil: EmptyView()
                 }
             }

@@ -534,18 +534,30 @@ final class AppIndex {
         publishEntries()
     }
 
-    func updateSnippets(_ records: [StoredSnippet]) {
+    func updateSnippets(
+        _ records: [StoredSnippet],
+        effectiveKeywords: [String: String] = [:]
+    ) {
         let entries =
             records
             .filter { $0.snippet.isEnabled }
             .map { record in
+                let effectiveKeyword = effectiveKeywords[record.entryID] ?? record.snippet.keyword
+                var alternates: [String] = []
+                if let effectiveKeyword, !effectiveKeyword.isEmpty {
+                    alternates.append(effectiveKeyword)
+                }
+                if let rawKeyword = record.snippet.keyword, !rawKeyword.isEmpty,
+                   rawKeyword != effectiveKeyword {
+                    alternates.append(rawKeyword)
+                }
                 var entry = AppEntry(
                     id: record.entryID,
                     name: record.snippet.name,
                     url: record.fileURL,
                     bundleID: nil,
                     kind: .snippet,
-                    alternateTitles: [record.snippet.keyword].compactMap { $0 },
+                    alternateTitles: alternates,
                     iconOverride: SnippetFaviconService.resolveIcon(for: record.snippet))
                 entry.subtitle = record.snippet.folder
                 entry.keywords = Self.snippetKeywords(folder: record.snippet.folder, text: record.snippet.text)

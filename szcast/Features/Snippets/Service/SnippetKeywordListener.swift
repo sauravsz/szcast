@@ -158,10 +158,15 @@ final class SnippetKeywordListener: HealthCheckable {
         self.logsTapFailures = logsTapFailures
     }
 
-    func update(_ records: [StoredSnippet]) {
+    func update(_ records: [StoredSnippet], folders: [SnippetFolder] = []) {
+        let foldersByPath = SnippetFolderPolicy.foldersByPath(from: folders)
         policy.update(
             records.compactMap { record in
-                guard record.snippet.isEnabled, let keyword = record.snippet.keyword else { return nil }
+                guard SnippetFolderPolicy.isSnippetEffectivelyEnabled(
+                    record.snippet, foldersByPath: foldersByPath),
+                    let keyword = SnippetFolderPolicy.effectiveKeyword(
+                        for: record.snippet, foldersByPath: foldersByPath)
+                else { return nil }
                 return SnippetKeywordPolicy.Keyword(snippetID: record.id, value: keyword)
             })
     }

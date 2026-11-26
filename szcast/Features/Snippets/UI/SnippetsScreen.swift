@@ -7,43 +7,39 @@ struct SnippetsScreen: PaletteScreen {
 
     private var metrics: InterfaceMetrics { core.settings.interfaceSize.metrics }
     let openActions: () -> Void
+    let actsWithoutRows = true
 
-    /// A disabled snippet is off everywhere, so the browser lists exactly what the launcher does.
-    var availableFolders: [String] {
-        let folders = Set(
-            store.snippets.compactMap {
-                $0.snippet.folder?.trimmingCharacters(in: .whitespacesAndNewlines)
-            }
-            .filter { !$0.isEmpty })
-        return folders.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
-    }
-
-    var folderCounts: [String: Int] {
-        var counts: [String: Int] = [:]
-        for record in store.snippets where record.snippet.isEnabled {
-            if let folder = record.snippet.folder?.trimmingCharacters(in: .whitespacesAndNewlines), !folder.isEmpty {
-                counts[folder, default: 0] += 1
-            }
-        }
-        return counts
-    }
-
-    var rows: [StoredSnippet] {
-        let enabled = store.snippets.filter { $0.snippet.isEnabled }
-        let filtered: [StoredSnippet]
-        if let folder = vm.snippetFolderFilter, !folder.isEmpty {
-            filtered = enabled.filter { $0.snippet.folder == folder }
-        } else {
-            filtered = enabled
-        }
+    var rows: [SnippetBrowserRow] {
         let query = vm.query.trimmingCharacters(in: .whitespaces)
-        guard !query.isEmpty else {
-            return filtered.filter(\.snippet.isPinned) + filtered.filter { !$0.snippet.isPinned }
+        if !query.isEmpty {
+            return store.browserRows(matching: query, in: vm.snippetFolderPath).map { .snippet($0) }
         }
-        return SnippetSearch.rank(filtered, for: query)
+        let currentFolder = vm.snippetFolderPath
+        let folders = store.childFolders(in: currentFolder, includeDisabled: false).map { folder in
+            SnippetBrowserRow.folder(
+                folder,
+                snippetCount: store.snippetCount(in: folder.path, includeDisabled: false),
+                subfolderCount: store.subfolderCount(in: folder.path, includeDisabled: false))
+        }
+        let direct = store.directSnippets(in: currentFolder, includeDisabled: false)
+        let orderedSnippets: [StoredSnippet]
+        if currentFolder == nil {
+            orderedSnippets = direct
+        } else {
+            orderedSnippets = direct.filter(\.snippet.isPinned) + direct.filter { !$0.snippet.isPinned }
+        }
+        return folders + orderedSnippets.map { .snippet($0) }
+    }
+
+    private var clampedSelection: Int {
+        let count = rows.count
+        return count == 0 ? 0 : min(max(vm.selection, 0), count - 1)
     }
 
     var primaryActionTitle: String {
+        if case .folder = row(at: clampedSelection) {
+            return String(localized: "Open Folder")
+        }
         switch core.settings.snippetsDefaultAction {
         case .paste: return String(localized: "Paste Snippet")
         case .copy: return String(localized: "Copy Snippet")
@@ -51,47 +47,93 @@ struct SnippetsScreen: PaletteScreen {
         }
     }
 
-    private func record(at selection: Int) -> StoredSnippet? {
+    private func row(at selection: Int) -> SnippetBrowserRow? {
         let rows = rows
         return rows.indices.contains(selection) ? rows[selection] : nil
     }
 
     func actions(at selection: Int) -> PopoverMenuContent? {
-        guard let record = record(at: selection) else { return nil }
-        return SnippetActionsMenu.content(record: record, core: core)
+        switch row(at: selection) {
+        case .folder(let folder, _, _):
+            return SnippetFolderActionsMenu.content(folder: folder, core: core)
+        case .snippet(let record):
+            return SnippetActionsMenu.content(
+                record: record, currentFolder: vm.snippetFolderPath, core: core)
+        case nil:
+            return SnippetEmptyActionsMenu.content(currentFolder: vm.snippetFolderPath, core: core)
+        }
     }
 
     func activate(at selection: Int) {
-        guard let record = record(at: selection) else { return }
-        core.snippetCoordinator.expandSnippetFromPalette(id: record.id)
+        switch row(at: selection) {
+        case .folder(let folder, _, _):
+            vm.snippetFolderPath = folder.path
+            vm.query = ""
+        case .snippet(let record):
+            core.snippetCoordinator.expandSnippetFromPalette(id: record.id)
+        case nil:
+            break
+        }
     }
 
     func secondary(at selection: Int) -> Bool {
-        guard let record = record(at: selection) else { return false }
-        core.snippetCoordinator.performFromPalette(core.settings.snippetsDefaultAction.alternate, id: record.id)
+        guard case .snippet(let record) = row(at: selection) else { return false }
+        core.snippetCoordinator.performFromPalette(
+            core.settings.snippetsDefaultAction.alternate, id: record.id)
         return true
+    }
+
+    func move(_ delta: Int, axis: PaletteAxis, from selection: Int) -> Int? {
+        guard axis == .horizontal, vm.query.trimmingCharacters(in: .whitespaces).isEmpty else {
+            return nil
+        }
+        if delta > 0, case .folder(let folder, _, _) = row(at: selection) {
+            vm.snippetFolderPath = folder.path
+            return 0
+        }
+        if delta < 0, vm.popSnippetFolder() {
+            return 0
+        }
+        return nil
     }
 
     func perform(_ shortcut: PaletteShortcut, at selection: Int) -> Bool {
         if shortcut == .newItem {
-            core.snippetCoordinator.editSnippet(nil)
+            core.snippetCoordinator.editSnippet(nil, initialFolder: vm.snippetFolderPath)
             return true
         }
-        guard let record = record(at: selection) else { return false }
-        switch shortcut {
-        case .duplicate:
-            core.snippetCoordinator.duplicateSnippet(record)
-        case .edit:
-            core.snippetCoordinator.editSnippet(record)
-        case .pin:
-            Task { await core.snippetCoordinator.toggleSnippetPinned(id: record.id) }
-        case .showInFinder:
-            core.snippetCoordinator.showSnippetInFinder(record)
-        case .delete:
-            Task { await core.snippetCoordinator.deleteSnippet(id: record.id) }
-        default: return false
+        switch row(at: selection) {
+        case .folder(let folder, _, _):
+            switch shortcut {
+            case .edit:
+                core.snippetCoordinator.configureFolder(at: folder.path)
+            case .showInFinder:
+                core.snippetCoordinator.showFolderInFinder(at: folder.path)
+            case .delete:
+                Task { await core.snippetCoordinator.deleteFolder(at: folder.path) }
+            default:
+                return false
+            }
+            return true
+        case .snippet(let record):
+            switch shortcut {
+            case .duplicate:
+                core.snippetCoordinator.duplicateSnippet(record)
+            case .edit:
+                core.snippetCoordinator.editSnippet(record)
+            case .pin:
+                Task { await core.snippetCoordinator.toggleSnippetPinned(id: record.id) }
+            case .showInFinder:
+                core.snippetCoordinator.showSnippetInFinder(record)
+            case .delete:
+                Task { await core.snippetCoordinator.deleteSnippet(id: record.id) }
+            default:
+                return false
+            }
+            return true
+        case nil:
+            return false
         }
-        return true
     }
 
     func body(selection: Int, scroll: ScrollIntent) -> AnyView {
@@ -101,45 +143,31 @@ struct SnippetsScreen: PaletteScreen {
     @ViewBuilder
     private func content(selection: Int, scroll: ScrollIntent) -> some View {
         let rows = rows
-        let folders = availableFolders
-        if rows.isEmpty && folders.isEmpty {
+        let query = vm.query.trimmingCharacters(in: .whitespaces)
+        if rows.isEmpty {
             EmptyResults(text: emptyMessage)
         } else {
-            let selected = record(at: selection)
+            let selected = rows.indices.contains(selection) ? rows[selection] : nil
             HStack(spacing: 0) {
-                VStack(spacing: 0) {
-                    if !folders.isEmpty {
-                        SnippetFolderChips(
-                            folders: folders,
-                            counts: folderCounts,
-                            totalCount: store.snippets.count { $0.snippet.isEnabled },
-                            selectedFolder: vm.snippetFolderFilter,
-                            onSelect: { folder in
-                                vm.snippetFolderFilter = folder
-                            }
-                        )
-                        Rectangle().fill(Theme.Colors.separator).frame(height: Theme.Size.hairline)
+                SnippetsList(
+                    results: rows,
+                    showFolderLabel: !query.isEmpty,
+                    showPinnedHeader: vm.snippetFolderPath != nil || !query.isEmpty,
+                    effectiveKeyword: { store.effectiveKeyword(for: $0) },
+                    selectedID: selected?.id,
+                    scroll: scroll,
+                    onSelect: { item in
+                        vm.selection = rows.firstIndex(of: item) ?? 0
+                    },
+                    onActivate: { activate(at: vm.selection) },
+                    onActions: { item in
+                        if let index = rows.firstIndex(of: item) { vm.selection = index }
+                        openActions()
                     }
-                    if rows.isEmpty {
-                        EmptyResults(text: emptyMessage)
-                            .frame(maxHeight: .infinity)
-                    } else {
-                        SnippetsList(
-                            results: rows, selectedID: selected?.id, scroll: scroll,
-                            onSelect: { record in
-                                vm.selection = rows.firstIndex(of: record) ?? 0
-                            },
-                            onActivate: { activate(at: vm.selection) },
-                            onActions: { record in
-                                if let index = rows.firstIndex(of: record) { vm.selection = index }
-                                openActions()
-                            }
-                        )
-                    }
-                }
+                )
                 .frame(width: metrics.size.clipboardListWidth)
                 Rectangle().fill(Theme.Colors.separator).frame(width: Theme.Size.hairline)
-                SnippetPreview(record: selected)
+                SnippetPreview(row: selected, store: store)
             }
         }
     }
@@ -147,14 +175,102 @@ struct SnippetsScreen: PaletteScreen {
     /// An empty library and an over-narrow filter are different problems with different answers.
     private var emptyMessage: String {
         if store.state == .loading { return String(localized: "Loading snippets…") }
-        return store.snippets.contains(where: { $0.snippet.isEnabled })
+        if !vm.query.trimmingCharacters(in: .whitespaces).isEmpty {
+            return String(localized: "No matching snippets")
+        }
+        if vm.snippetFolderPath != nil {
+            return String(localized: "Folder is empty")
+        }
+        return store.snippets.contains(where: { store.isSnippetEffectivelyEnabled($0) })
             ? String(localized: "No matching snippets") : String(localized: "No snippets yet")
     }
 }
 
 @MainActor
+private enum SnippetEmptyActionsMenu {
+    static func content(currentFolder: String?, core: AppCore) -> PopoverMenuContent {
+        var items: [PopoverMenuItem] = [
+            PopoverMenuItem(
+                title: String(localized: "Create Snippet"), systemImage: "plus", shortcut: "⌘N"
+            ) {
+                core.snippetCoordinator.editSnippet(nil, initialFolder: currentFolder)
+            }
+        ]
+        if (currentFolder.map(SnippetFolderPath.depth) ?? 0) < SnippetFolderPath.maxDepth {
+            items.append(
+                PopoverMenuItem(
+                    title: String(localized: "New Folder…"), systemImage: "folder.badge.plus"
+                ) {
+                    Task { await core.snippetCoordinator.createFolder(parentPath: currentFolder) }
+                })
+        }
+        return PopoverMenuContent(
+            header: currentFolder ?? String(localized: "Snippets"),
+            items: items)
+    }
+}
+
+@MainActor
+private enum SnippetFolderActionsMenu {
+    static func content(folder: SnippetFolder, core: AppCore) -> PopoverMenuContent {
+        var items: [PopoverMenuItem] = [
+            PopoverMenuItem(
+                title: String(localized: "Open Folder"), systemImage: "folder", shortcut: "↵"
+            ) {
+                core.palette.snippetFolderPath = folder.path
+                core.palette.query = ""
+            },
+            PopoverMenuItem(
+                title: String(localized: "Create Snippet in Folder"), systemImage: "plus",
+                startsSection: true, shortcut: "⌘N"
+            ) {
+                core.snippetCoordinator.editSnippet(nil, initialFolder: folder.path)
+            }
+        ]
+        if folder.depth < SnippetFolderPath.maxDepth {
+            items.append(
+                PopoverMenuItem(
+                    title: String(localized: "New Subfolder…"), systemImage: "folder.badge.plus"
+                ) {
+                    Task { await core.snippetCoordinator.createFolder(parentPath: folder.path) }
+                })
+        }
+        items.append(contentsOf: [
+            PopoverMenuItem(
+                title: String(localized: "Configure Folder…"), systemImage: "slider.horizontal.3",
+                startsSection: true, shortcut: "⌘E"
+            ) {
+                core.snippetCoordinator.configureFolder(at: folder.path)
+            },
+            PopoverMenuItem(
+                title: String(localized: "Disable Folder"), systemImage: "eye.slash"
+            ) {
+                Task { await core.snippetCoordinator.setFolderEnabled(false, at: folder.path) }
+            },
+            PopoverMenuItem(
+                title: String(localized: "Show in Finder"), systemImage: "folder",
+                startsSection: true, shortcut: "⌘F"
+            ) {
+                core.snippetCoordinator.showFolderInFinder(at: folder.path)
+            },
+            PopoverMenuItem(
+                title: String(localized: "Delete Folder"), systemImage: "trash",
+                startsSection: true, shortcut: "⌃X", isDestructive: true
+            ) {
+                Task { await core.snippetCoordinator.deleteFolder(at: folder.path) }
+            }
+        ])
+        return PopoverMenuContent(header: folder.name, items: items)
+    }
+}
+
+@MainActor
 enum SnippetActionsMenu {
-    static func content(record: StoredSnippet, core: AppCore) -> PopoverMenuContent {
+    static func content(
+        record: StoredSnippet,
+        currentFolder: String? = nil,
+        core: AppCore
+    ) -> PopoverMenuContent {
         let defaultAction = core.settings.snippetsDefaultAction
         var items: [PopoverMenuItem] = []
 
@@ -234,10 +350,27 @@ enum SnippetActionsMenu {
                 core.snippetCoordinator.duplicateSnippet(record)
             },
             PopoverMenuItem(
+                title: String(localized: "Move to Folder…"), systemImage: "folder.badge.gearshape"
+            ) {
+                Task { await core.snippetCoordinator.moveSnippetToFolderPrompt(record) }
+            },
+            PopoverMenuItem(
                 title: String(localized: "Create Snippet"), systemImage: "plus", shortcut: "⌘N"
             ) {
-                core.snippetCoordinator.editSnippet(nil)
-            },
+                core.snippetCoordinator.editSnippet(nil, initialFolder: currentFolder ?? record.snippet.folder)
+            }
+        ])
+
+        if (currentFolder.map(SnippetFolderPath.depth) ?? 0) < SnippetFolderPath.maxDepth {
+            items.append(
+                PopoverMenuItem(
+                    title: String(localized: "New Folder…"), systemImage: "folder.badge.plus"
+                ) {
+                    Task { await core.snippetCoordinator.createFolder(parentPath: currentFolder) }
+                })
+        }
+
+        items.append(contentsOf: [
             PopoverMenuItem(
                 title: record.snippet.isPinned ? String(localized: "Unpin Snippet") : String(localized: "Pin Snippet"),
                 systemImage: record.snippet.isPinned ? "pin.slash" : "pin", shortcut: "⌘."
@@ -259,50 +392,5 @@ enum SnippetActionsMenu {
         ])
 
         return PopoverMenuContent(header: record.snippet.name, items: items)
-    }
-}
-
-private struct SnippetFolderChips: View {
-    @Environment(\.metrics) private var metrics
-    let folders: [String]
-    let counts: [String: Int]
-    let totalCount: Int
-    let selectedFolder: String?
-    let onSelect: (String?) -> Void
-
-    var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: metrics.spacing.xs) {
-                chip(title: String(localized: "All"), count: totalCount, isSelected: selectedFolder == nil) {
-                    onSelect(nil)
-                }
-                ForEach(folders, id: \.self) { folder in
-                    chip(title: folder, count: counts[folder] ?? 0, isSelected: selectedFolder == folder) {
-                        onSelect(folder)
-                    }
-                }
-            }
-            .padding(.horizontal, metrics.spacing.md)
-            .padding(.vertical, metrics.spacing.xs)
-        }
-    }
-
-    private func chip(title: String, count: Int, isSelected: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: metrics.spacing.xs) {
-                Text(title)
-                Text("\(count)")
-                    .foregroundStyle(isSelected ? Theme.Colors.textPrimary : Theme.Colors.textTertiary)
-            }
-            .font(metrics.typography.keyCap)
-            .padding(.horizontal, metrics.spacing.sm)
-            .padding(.vertical, 4)
-            .background(
-                RoundedRectangle(cornerRadius: metrics.radius.attachmentChip, style: .continuous)
-                    .fill(isSelected ? Theme.Colors.selection : Theme.Colors.rowHover)
-            )
-            .foregroundStyle(isSelected ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
-        }
-        .buttonStyle(.plain)
     }
 }

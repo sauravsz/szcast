@@ -175,6 +175,9 @@
 		16F81066F7B59AD44CE09261 /* ActivationPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2575583134BE03EA9FA719CD /* ActivationPolicy.swift */; };
 		170C8ABCDB7848A9DA0A0524 /* PinnedEmojiStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114F2E3148CA76595B795B37 /* PinnedEmojiStore.swift */; };
 		175DAAED3859A54861D8CEBC /* SnippetRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BFFB1471D30C915BBC5DCBA /* SnippetRepository.swift */; };
+		A1B2C3D4E5F6010100000002 /* SnippetFolder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6010100000001 /* SnippetFolder.swift */; };
+		A1B2C3D4E5F6010100000004 /* SnippetFolderIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6010100000003 /* SnippetFolderIconView.swift */; };
+		A1B2C3D4E5F6010100000006 /* SnippetFolderConfigField.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6010100000005 /* SnippetFolderConfigField.swift */; };
 		17748A7F594357F70BB5F129 /* RegionNumberFormatMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = B469959F9681E35617041FF2 /* RegionNumberFormatMonitor.swift */; };
 		179E0788DCA9995D5B858366 /* FilePreviewStage.swift in Sources */ = {isa = PBXBuildFile; fileRef = E03A52EBF08AD5C44953DBDC /* FilePreviewStage.swift */; };
 		17F61DEF6389FBCFCCFB467C /* CurrencyRateStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FEAC591704D983A2C31188F /* CurrencyRateStore.swift */; };
@@ -1672,6 +1675,9 @@
 		7B711492A6DA473E6DC9646C /* RaycastImportSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaycastImportSelection.swift; sourceTree = "<group>"; };
 		7BE4F92DF5798CD83F1639E6 /* CalcMixedUnits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalcMixedUnits.swift; sourceTree = "<group>"; };
 		7BFFB1471D30C915BBC5DCBA /* SnippetRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnippetRepository.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6010100000001 /* SnippetFolder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnippetFolder.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6010100000003 /* SnippetFolderIconView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnippetFolderIconView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6010100000005 /* SnippetFolderConfigField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnippetFolderConfigField.swift; sourceTree = "<group>"; };
 		7C0D8112DC5513C8331D7DAF /* ParakeetRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParakeetRecognizer.swift; sourceTree = "<group>"; };
 		7C0FB3A9CA762A7A8DB99BA6 /* ExtensionPaletteModifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionPaletteModifiers.swift; sourceTree = "<group>"; };
 		7CEAC6A9B7AF400E10A2FB3B /* CustomCommandEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCommandEditorView.swift; sourceTree = "<group>"; };
@@ -2279,6 +2285,8 @@
 				F590D5052075C9E121306FEE /* SnippetEditorScreen.swift */,
 				B749BA5E790DCB1B8C9A7E99 /* SnippetEditorSession.swift */,
 				5C2E13EA78A8A8C9648E8C54 /* SnippetEditorView.swift */,
+				A1B2C3D4E5F6010100000005 /* SnippetFolderConfigField.swift */,
+				A1B2C3D4E5F6010100000003 /* SnippetFolderIconView.swift */,
 				41E419A4DA5AB5B3A87B80F2 /* SnippetsListView.swift */,
 				6E06AA30E7BA44BC211B667F /* SnippetsScreen.swift */,
 			);
@@ -4270,6 +4278,7 @@
 			children = (
 				C80806A442BADAC390ECD993 /* RaycastSnippetImport.swift */,
 				C7B3FC48B58E1005453E7E18 /* Snippet.swift */,
+				A1B2C3D4E5F6010100000001 /* SnippetFolder.swift */,
 				C7B3FC48B58E1005453E7E99 /* SnippetSearch.swift */,
 				37B00EC4FD8D4D0CD2FE596A /* SnippetKeywordPolicy.swift */,
 				BE3331A5E8F892CC257AD31B /* SnippetMarkdownSerializer.swift */,
@@ -6038,6 +6047,9 @@ C5F60D8681235B95DAA3314F /* GeneralSettingsView.swift in Sources */,
 				7B25CD1684D24C164346AA68 /* SnippetEditorScreen.swift in Sources */,
 				13D418FB2F8A1AE896234CAD /* SnippetEditorSession.swift in Sources */,
 				7CD7AB9648B2222FB71C1989 /* SnippetEditorView.swift in Sources */,
+				A1B2C3D4E5F6010100000002 /* SnippetFolder.swift in Sources */,
+				A1B2C3D4E5F6010100000004 /* SnippetFolderIconView.swift in Sources */,
+				A1B2C3D4E5F6010100000006 /* SnippetFolderConfigField.swift in Sources */,
 				F8EC987B884BD2ED6A6690A9 /* SnippetKeywordListener.swift in Sources */,
 				F8EC987B884BD2ED6A6690AA /* SnippetFaviconService.swift in Sources */,
 				2F38A89B3481A4C9A13F13A8 /* SnippetKeywordPolicy.swift in Sources */,

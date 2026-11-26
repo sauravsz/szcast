@@ -6,11 +6,13 @@ struct SnippetEditorView: View {
     let openInputMenu: (PopoverMenuContent, MenuPanelCorner, Int) -> Void
 
     @Environment(SnippetCoordinator.self) private var coordinator
+    @Environment(SnippetsStore.self) private var store
     @Environment(PaletteState.self) private var palette
     @Environment(\.metrics) private var metrics
     @State private var focusedField: SnippetEditorSession.Field?
     @FocusState private var focusedControl: SnippetEditorSession.Field?
     @State private var placeholderMenuFrame: CGRect = .zero
+    @State private var folderMenuFrame: CGRect = .zero
 
     var body: some View {
         ScrollView {
@@ -37,7 +39,8 @@ struct SnippetEditorView: View {
         .onChange(of: editor.focusedField) { _, field in focusedField = field }
         .onChange(of: focusedField) { _, field in
             if let field { editor.focusedField = field }
-            focusedControl = field == .enabled || field == .confirmation ? field : nil
+            focusedControl = (field == .folder || field == .enabled || field == .confirmation)
+                ? field : nil
         }
         .onChange(of: focusedControl) { _, field in
             if let field { focusedField = field }
@@ -112,6 +115,59 @@ struct SnippetEditorView: View {
         openInputMenu(PopoverMenuContent(items: items), placeholderMenuCorner, 0)
     }
 
+    private var folderMenuCorner: MenuPanelCorner {
+        .belowControl(folderMenuFrame, trailing: false)
+    }
+
+    private var effectiveKeywordPreview: String? {
+        let trimmedFolder = editor.folder.trimmingCharacters(in: .whitespacesAndNewlines)
+        let prefix = store.effectivePrefix(for: trimmedFolder.isEmpty ? nil : trimmedFolder)
+        guard !prefix.isEmpty else { return nil }
+        let trimmedKeyword = editor.keyword.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmedKeyword.isEmpty ? prefix : prefix + trimmedKeyword
+    }
+
+    private func showFolderMenu() {
+        let isRootSelected = editor.folder.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        var items: [PopoverMenuItem] = [
+            PopoverMenuItem(
+                title: String(localized: "None (Root)"),
+                systemImage: isRootSelected ? "checkmark" : "tray"
+            ) {
+                editor.folder = ""
+                focusedField = .folder
+            }
+        ]
+        for folder in store.folders {
+            let displayTitle = folder.path.split(separator: "/").joined(separator: " / ")
+            items.append(
+                PopoverMenuItem(
+                    title: displayTitle,
+                    systemImage: editor.folder == folder.path ? "checkmark" : "folder"
+                ) {
+                    editor.folder = folder.path
+                    focusedField = .folder
+                })
+        }
+        items.append(
+            PopoverMenuItem(
+                title: String(localized: "New Folder…"),
+                systemImage: "folder.badge.plus",
+                startsSection: true
+            ) {
+                let parent = editor.folder.trimmingCharacters(in: .whitespacesAndNewlines)
+                Task {
+                    if let created = await coordinator.createFolder(
+                        parentPath: parent.isEmpty ? nil : parent)
+                    {
+                        editor.folder = created.path
+                    }
+                    focusedField = .folder
+                }
+            })
+        openInputMenu(PopoverMenuContent(items: items), folderMenuCorner, 0)
+    }
+
     private var properties: some View {
         VStack(alignment: .leading, spacing: metrics.spacing.xxl) {
             field(
@@ -119,16 +175,59 @@ struct SnippetEditorView: View {
                 label: String(localized: "Snippet name"), text: $editor.name,
                 focus: .name,
                 hint: String(localized: "Required. Shown in the library and launcher."))
-            field(
-                String(localized: "Folder"), placeholder: String(localized: "Optional folder or tag (e.g. Work, Code)"),
-                label: String(localized: "Snippet folder"), text: $editor.folder,
-                focus: .folder, hint: String(localized: "Optional. Group snippets by folder or tag.")
-            )
-            field(
-                String(localized: "Keyword"), placeholder: String(localized: "Optional, for example !notes"),
-                label: String(localized: "Snippet keyword"), text: $editor.keyword,
-                focus: .keyword, hint: String(localized: "Optional. Type this to expand the snippet.")
-            )
+            VStack(alignment: .leading, spacing: metrics.spacing.md) {
+                fieldTitle(String(localized: "Folder"))
+                Button(action: showFolderMenu) {
+                    HStack(spacing: metrics.spacing.sm) {
+                        Image(systemName: editor.folder.isEmpty ? "tray" : "folder.fill")
+                            .foregroundStyle(Theme.Colors.textSecondary)
+                        Text(
+                            editor.folder.isEmpty
+                                ? String(localized: "None (Root)")
+                                : editor.folder.split(separator: "/").joined(separator: " / ")
+                        )
+                        .foregroundStyle(
+                            editor.folder.isEmpty ? Theme.Colors.textSecondary : Theme.Colors.textPrimary)
+                        .lineLimit(1)
+                        .truncationMode(.head)
+                        Spacer()
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Theme.Colors.textTertiary)
+                    }
+                    .padding(.horizontal, metrics.spacing.md)
+                    .frame(height: metrics.size.dialogButtonHeight)
+                    .formFieldChrome(focused: focusedField == .folder)
+                }
+                .buttonStyle(.plain)
+                .focusable()
+                .focused($focusedControl, equals: .folder)
+                .onKeyPress(.space) {
+                    showFolderMenu()
+                    return .handled
+                }
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: {
+                    folderMenuFrame = $0
+                }
+                .accessibilityLabel(String(localized: "Snippet folder"))
+                .accessibilityHint(String(localized: "Optional. Organize snippets inside folders."))
+            }
+            VStack(alignment: .leading, spacing: metrics.spacing.md) {
+                field(
+                    String(localized: "Keyword"), placeholder: String(localized: "Optional, for example !notes"),
+                    label: String(localized: "Snippet keyword"), text: $editor.keyword,
+                    focus: .keyword, hint: String(localized: "Optional. Type this to expand the snippet.")
+                )
+                if let preview = effectiveKeywordPreview {
+                    Text(
+                        editor.keyword.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                            ? String(localized: "Folder prefix “\(preview)” will be prepended.")
+                            : String(localized: "Expands on “\(preview)”")
+                    )
+                    .font(metrics.typography.rowTrailing)
+                    .foregroundStyle(Theme.Colors.textSecondary)
+                }
+            }
             VStack(alignment: .leading, spacing: metrics.spacing.md) {
                 fieldTitle(String(localized: "Icon / Favicon"))
                 HStack(spacing: metrics.spacing.md) {

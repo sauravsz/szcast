@@ -139,6 +139,37 @@ enum SnippetFaviconService {
         return .symbol("curlybraces")
     }
 
+    /// Returns nil when `icon` is a literal emoji/glyph rather than an SF Symbol, URL, or file path.
+    static func resolveFolderIcon(_ icon: String?) -> EntryIcon? {
+        guard let custom = icon?.trimmingCharacters(in: .whitespacesAndNewlines), !custom.isEmpty else {
+            return .symbol("folder.fill")
+        }
+        let lower = custom.lowercased()
+        if lower == "chatgpt" || lower == "openai" || lower.contains("chatgpt.com") || lower == "gpt" {
+            return ensureChatGPTArtworkIcon()
+        }
+        if let host = extractHost(from: custom) {
+            if host.contains("chatgpt") || host.contains("openai") {
+                return ensureChatGPTArtworkIcon()
+            }
+            let path = iconPath(for: host)
+            if FileManager.default.fileExists(atPath: path) {
+                return .artwork(path: path, extent: 24)
+            }
+            Task {
+                _ = await fetchFavicon(forHost: host)
+            }
+            return .symbol("globe")
+        }
+        if FileManager.default.fileExists(atPath: custom) {
+            return .artwork(path: custom, extent: 24)
+        }
+        if NSImage(systemSymbolName: custom, accessibilityDescription: nil) != nil {
+            return .symbol(custom)
+        }
+        return nil
+    }
+
     /// Downloads and persists a favicon for the host, returning the local file path on success.
     @discardableResult
     static func fetchFavicon(forHost host: String) async -> String? {
