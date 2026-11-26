@@ -9,15 +9,17 @@ enum StatsMenuBarContent: Equatable {
 @MainActor
 enum StatsMenuBarRenderer {
     static let defaultHorizontalPadding: CGFloat = 4
-    private static let stackedMinContentWidth: CGFloat = 25
-    private static let networkMinContentWidth: CGFloat = 29
-    private static let batteryBodySize = NSSize(width: 21, height: 11.5)
+    private static let verticalMargin: CGFloat = 2
+    private static let stackedMinContentWidth: CGFloat = 31
+    private static let networkMinContentWidth: CGFloat = 48
+    private static let batteryBodySize = NSSize(width: 22, height: 12)
     private static let batteryNubGap: CGFloat = 1
-    private static let batteryNubSize = NSSize(width: 1.75, height: 4.5)
+    private static let batteryNubSize = NSSize(width: 2, height: 4)
 
-    private static let labelFont = NSFont.systemFont(ofSize: 7.0, weight: .regular)
-    private static let valueFont = NSFont.monospacedDigitSystemFont(ofSize: 12.0, weight: .medium)
-    private static let networkFont = NSFont.monospacedDigitSystemFont(ofSize: 9.0, weight: .regular)
+    // Matches exelban/stats Kit/Widgets (Mini.swift, Speed.swift).
+    private static let labelFont = NSFont.systemFont(ofSize: 7.0, weight: .light)
+    private static let valueFont = NSFont.systemFont(ofSize: 12.0, weight: .regular)
+    private static let networkFont = NSFont.systemFont(ofSize: 9.0, weight: .light)
 
     static func apply(
         content: StatsMenuBarContent,
@@ -58,11 +60,11 @@ enum StatsMenuBarRenderer {
             let botW = NSAttributedString(string: value, attributes: [.font: valueFont]).size().width
             return max(stackedMinContentWidth, ceil(max(topW, botW)))
         case let .networkSpeed(download, upload):
-            let topW = NSAttributedString(string: download, attributes: [.font: networkFont]).size().width
-            let botW = NSAttributedString(string: upload, attributes: [.font: networkFont]).size().width
-            return max(networkMinContentWidth, ceil(max(topW, botW)))
+            let topW = NSAttributedString(string: download, attributes: [.font: networkFont]).size().width.rounded(.up)
+            let botW = NSAttributedString(string: upload, attributes: [.font: networkFont]).size().width.rounded(.up)
+            return max(networkMinContentWidth, max(topW, botW))
         case .battery:
-            return ceil(batteryBodySize.width + batteryNubGap + batteryNubSize.width)
+            return ceil(batteryBodySize.width + 2 + batteryNubSize.width)
         }
     }
 
@@ -72,36 +74,40 @@ enum StatsMenuBarRenderer {
         in bounds: NSRect
     ) {
         let ink = NSColor.textColor
-        let stackSpan: CGFloat = 16.0
-        let topCapY = round(bounds.midY - stackSpan / 2.0)
+        let contentHeight = max(14, bounds.height - verticalMargin * 2)
+        let baseY = verticalMargin
+        let contentWidth = max(1, bounds.width - horizontalPadding * 2)
 
         switch content {
         case let .stackedMetric(label, value):
+            let style = NSMutableParagraphStyle()
+            style.alignment = .left
             let topStr = NSAttributedString(
                 string: label,
-                attributes: [.font: labelFont, .foregroundColor: ink]
+                attributes: [.font: labelFont, .foregroundColor: ink, .paragraphStyle: style]
             )
             let botStr = NSAttributedString(
                 string: value,
-                attributes: [.font: valueFont, .foregroundColor: ink]
+                attributes: [.font: valueFont, .foregroundColor: ink, .paragraphStyle: style]
             )
-            let x = horizontalPadding
-            let topY = topCapY - (labelFont.ascender - labelFont.capHeight)
-            let botCapY = topCapY + stackSpan - valueFont.capHeight
-            let botY = botCapY - (valueFont.ascender - valueFont.capHeight)
-            topStr.draw(at: NSPoint(x: x, y: topY))
-            botStr.draw(at: NSPoint(x: x, y: botY))
+            let labelRect = NSRect(x: horizontalPadding, y: baseY + 12, width: contentWidth, height: 7)
+            let valueRect = NSRect(x: horizontalPadding, y: baseY + 1, width: contentWidth, height: 13)
+            topStr.draw(with: labelRect)
+            botStr.draw(with: valueRect)
 
         case let .networkSpeed(download, upload):
-            let attrs: [NSAttributedString.Key: Any] = [.font: networkFont, .foregroundColor: ink]
+            let style = NSMutableParagraphStyle()
+            style.alignment = .right
+            let attrs: [NSAttributedString.Key: Any] = [
+                .font: networkFont,
+                .foregroundColor: ink,
+                .paragraphStyle: style
+            ]
+            let rowHeight = contentHeight / 2.0
             let topStr = NSAttributedString(string: download, attributes: attrs)
             let botStr = NSAttributedString(string: upload, attributes: attrs)
-            let rightEdge = bounds.width - horizontalPadding
-            let topY = topCapY - (networkFont.ascender - networkFont.capHeight)
-            let botCapY = topCapY + stackSpan - networkFont.capHeight
-            let botY = botCapY - (networkFont.ascender - networkFont.capHeight)
-            topStr.draw(at: NSPoint(x: floor(rightEdge - topStr.size().width), y: topY))
-            botStr.draw(at: NSPoint(x: floor(rightEdge - botStr.size().width), y: botY))
+            topStr.draw(with: NSRect(x: horizontalPadding, y: baseY + rowHeight + 1, width: contentWidth, height: rowHeight))
+            botStr.draw(with: NSRect(x: horizontalPadding, y: baseY + 1, width: contentWidth, height: rowHeight))
 
         case let .battery(percentage, isCharging, isACConnected, hasBattery):
             drawBattery(
@@ -127,38 +133,50 @@ enum StatsMenuBarRenderer {
     ) {
         guard let ctx = NSGraphicsContext.current?.cgContext else { return }
 
-        let bodyTop = round(bounds.midY - batteryBodySize.height / 2.0)
-        let bodyRect = NSRect(x: horizontalPadding, y: bodyTop, width: batteryBodySize.width, height: batteryBodySize.height)
-        let frameColor = ink.withAlphaComponent(0.55)
+        let borderWidth: CGFloat = 1.0
+        let halfStroke: CGFloat = 0.5
+        let bodyRect = NSRect(
+            x: horizontalPadding + borderWidth + halfStroke,
+            y: round((bounds.height - batteryBodySize.height) / 2.0) + halfStroke,
+            width: batteryBodySize.width - borderWidth,
+            height: batteryBodySize.height - borderWidth
+        )
+        let frameColor = ink.withAlphaComponent(0.5)
 
         // Isolate `.clear` cutouts inside a transparency layer so the menu bar backdrop stays intact.
         ctx.beginTransparencyLayer(auxiliaryInfo: nil)
         defer { ctx.endTransparencyLayer() }
 
-        let strokeRect = bodyRect.insetBy(dx: 0.625, dy: 0.625)
-        let bodyPath = NSBezierPath(roundedRect: strokeRect, xRadius: 2.3, yRadius: 2.3)
-        bodyPath.lineWidth = 1.25
+        let bodyPath = NSBezierPath(roundedRect: bodyRect, xRadius: 2.0, yRadius: 2.0)
+        bodyPath.lineWidth = borderWidth
         frameColor.setStroke()
         bodyPath.stroke()
 
         let nubRect = NSRect(
             x: bodyRect.maxX + batteryNubGap,
-            y: bounds.midY - batteryNubSize.height / 2.0,
+            y: bodyRect.midY - batteryNubSize.height / 2.0,
             width: batteryNubSize.width,
             height: batteryNubSize.height
         )
-        let nubPath = NSBezierPath(roundedRect: nubRect, xRadius: 0.85, yRadius: 0.85)
+        let nubPath = NSBezierPath(roundedRect: nubRect, xRadius: 1.0, yRadius: 1.0)
         frameColor.setFill()
         nubPath.fill()
 
         if hasBattery {
             let clamped = max(0, min(100, percentage))
-            let maxFillRect = bodyRect.insetBy(dx: 2.0, dy: 2.0)
+            let inset = borderWidth + 1.0 - halfStroke
+            let maxWidth = batteryBodySize.width - halfStroke * 2 - borderWidth * 2 - 1.0
+            let maxHeight = batteryBodySize.height - halfStroke * 2 - borderWidth * 2 - 1.0
             if clamped > 0 {
-                let fillWidth = max(1.5, maxFillRect.width * CGFloat(clamped) / 100.0)
-                let fillRect = NSRect(x: maxFillRect.minX, y: maxFillRect.minY, width: fillWidth, height: maxFillRect.height)
+                let fillWidth = max(1.0, maxWidth * CGFloat(clamped) / 100.0)
+                let fillRect = NSRect(
+                    x: bodyRect.minX + inset,
+                    y: bodyRect.minY + inset,
+                    width: fillWidth,
+                    height: maxHeight
+                )
                 ink.setFill()
-                NSBezierPath(roundedRect: fillRect, xRadius: 1.2, yRadius: 1.2).fill()
+                NSBezierPath(roundedRect: fillRect, xRadius: 1.0, yRadius: 1.0).fill()
             }
         }
 
@@ -172,7 +190,7 @@ enum StatsMenuBarRenderer {
     private static func drawCutoutOverlay(_ path: NSBezierPath, ink: NSColor, in ctx: CGContext) {
         ctx.saveGState()
         ctx.setBlendMode(.clear)
-        path.lineWidth = 2.0
+        path.lineWidth = 1.5
         path.lineJoinStyle = .round
         path.lineCapStyle = .round
         NSColor.black.setFill()
@@ -187,28 +205,30 @@ enum StatsMenuBarRenderer {
 
     private static func acPlugPath(in bodyRect: NSRect) -> NSBezierPath {
         let cx = bodyRect.midX
-        let topY = bodyRect.minY - 0.5
-        let prongH: CGFloat = 2.5
-        let prongW: CGFloat = 1.2
-        let prongOffset: CGFloat = 1.55
-
+        let cy = bodyRect.midY
+        let minY = cy - 7.0
+        let maxY = cy + 7.0
+        let points: [NSPoint] = [
+            NSPoint(x: cx - 1.5, y: minY + 0.5),
+            NSPoint(x: cx + 1.5, y: minY + 0.5),
+            NSPoint(x: cx + 1.5, y: cy - 2.5),
+            NSPoint(x: cx + 4.0, y: cy + 0.5),
+            NSPoint(x: cx + 4.0, y: cy + 4.25),
+            NSPoint(x: cx + 2.75, y: cy + 4.25),
+            NSPoint(x: cx + 2.75, y: maxY - 0.25),
+            NSPoint(x: cx + 0.25, y: maxY - 0.25),
+            NSPoint(x: cx + 0.25, y: cy + 4.25),
+            NSPoint(x: cx - 0.25, y: cy + 4.25),
+            NSPoint(x: cx - 0.25, y: maxY - 0.25),
+            NSPoint(x: cx - 2.75, y: maxY - 0.25),
+            NSPoint(x: cx - 2.75, y: cy + 4.25),
+            NSPoint(x: cx - 4.0, y: cy + 4.25),
+            NSPoint(x: cx - 4.0, y: cy + 0.5),
+            NSPoint(x: cx - 1.5, y: cy - 2.5)
+        ]
         let path = NSBezierPath()
-        path.appendRect(NSRect(x: cx - prongOffset - prongW / 2, y: topY, width: prongW, height: prongH + 0.5))
-        path.appendRect(NSRect(x: cx + prongOffset - prongW / 2, y: topY, width: prongW, height: prongH + 0.5))
-
-        let shoulderY = topY + prongH
-        let taperY = shoulderY + 3.4
-        let neckY = taperY + 2.4
-        let stemBottom = bodyRect.maxY + 0.5
-
-        path.move(to: NSPoint(x: cx - 3.1, y: shoulderY))
-        path.line(to: NSPoint(x: cx + 3.1, y: shoulderY))
-        path.line(to: NSPoint(x: cx + 3.1, y: taperY))
-        path.line(to: NSPoint(x: cx + 1.0, y: neckY))
-        path.line(to: NSPoint(x: cx + 1.0, y: stemBottom))
-        path.line(to: NSPoint(x: cx - 1.0, y: stemBottom))
-        path.line(to: NSPoint(x: cx - 1.0, y: neckY))
-        path.line(to: NSPoint(x: cx - 3.1, y: taperY))
+        path.move(to: points[0])
+        for p in points.dropFirst() { path.line(to: p) }
         path.close()
         return path
     }
@@ -216,13 +236,15 @@ enum StatsMenuBarRenderer {
     private static func lightningBoltPath(in bodyRect: NSRect) -> NSBezierPath {
         let cx = bodyRect.midX
         let cy = bodyRect.midY
+        let halfW: CGFloat = 4.5
+        let halfH: CGFloat = 9.0
         let path = NSBezierPath()
-        path.move(to: NSPoint(x: cx + 0.9, y: bodyRect.minY - 0.5))
-        path.line(to: NSPoint(x: cx - 2.9, y: cy + 0.6))
-        path.line(to: NSPoint(x: cx - 0.1, y: cy + 0.6))
-        path.line(to: NSPoint(x: cx - 0.9, y: bodyRect.maxY + 0.5))
-        path.line(to: NSPoint(x: cx + 2.9, y: cy - 0.6))
-        path.line(to: NSPoint(x: cx + 0.1, y: cy - 0.6))
+        path.move(to: NSPoint(x: cx - 3.0, y: cy - halfH))
+        path.line(to: NSPoint(x: cx + halfW, y: cy + 1.5))
+        path.line(to: NSPoint(x: cx + 1.0, y: cy + 1.5))
+        path.line(to: NSPoint(x: cx + 3.0, y: cy + halfH))
+        path.line(to: NSPoint(x: cx - halfW, y: cy - 1.5))
+        path.line(to: NSPoint(x: cx - 1.0, y: cy - 1.5))
         path.close()
         return path
     }
@@ -245,7 +267,7 @@ private final class StatsMenuBarItemView: NSView {
         }
     }
 
-    override var isFlipped: Bool { true }
+    override var isFlipped: Bool { false }
 
     override func hitTest(_ point: NSPoint) -> NSView? {
         nil
