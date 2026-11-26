@@ -11,7 +11,7 @@ final class SystemTelemetryReader {
     static let shared = SystemTelemetryReader()
 
     private var prevCPUTicks: [processor_cpu_load_info] = []
-    private var prevNetworkBytes: (inBytes: UInt64, outBytes: UInt64, interface: String, time: Date)?
+    private var prevNetworkBytes: (inBytes: UInt64, outBytes: UInt64, interface: String, uptime: TimeInterval)?
     private var prevDiskBytes: (readBytes: UInt64, writeBytes: UInt64, time: Date)?
     private lazy var frequencyReader = AppleSiliconFrequencyReader()
     private lazy var locationManager = CLLocationManager()
@@ -522,22 +522,25 @@ final class SystemTelemetryReader {
             ?? interfaces.first(where: { $0.key.hasPrefix("en") && $0.value.isUp && $0.value.ipv4 != nil })?.key
             ?? interfaces.first(where: { $0.key.hasPrefix("en") && $0.value.isUp })?.key
             ?? "en0"
-        let chosen = interfaces[chosenName] ?? IfaceAccum()
+        var chosen = interfaces[chosenName] ?? IfaceAccum()
 
-        let now = Date()
+        // Prefer 64-bit NET_RT_IFLIST2 byte counters so transfers past 4 GiB never wrap.
+        let counters64 = Self.readInterfaceBytes64()
+        let sampleUptime = ProcessInfo.processInfo.systemUptime
+        if let c64 = counters64[chosenName] {
+            chosen.inBytes = c64.inBytes
+            chosen.outBytes = c64.outBytes
+        }
+
         var downRate: Double = 0
         var upRate: Double = 0
 
         if let prev = prevNetworkBytes, prev.interface == chosenName {
-            let deltaSeconds = max(0.1, now.timeIntervalSince(prev.time))
-            if chosen.inBytes >= prev.inBytes {
-                downRate = Double(chosen.inBytes - prev.inBytes) / deltaSeconds
-            }
-            if chosen.outBytes >= prev.outBytes {
-                upRate = Double(chosen.outBytes - prev.outBytes) / deltaSeconds
-            }
+            let deltaSeconds = max(0.1, sampleUptime - prev.uptime)
+            downRate = Double(Self.counterDelta(current: chosen.inBytes, previous: prev.inBytes)) / deltaSeconds
+            upRate = Double(Self.counterDelta(current: chosen.outBytes, previous: prev.outBytes)) / deltaSeconds
         }
-        prevNetworkBytes = (chosen.inBytes, chosen.outBytes, chosenName, now)
+        prevNetworkBytes = (chosen.inBytes, chosen.outBytes, chosenName, sampleUptime)
 
         let friendly = interfaceDisplayNames[chosenName]
         let displayName = friendly.map { "\($0) (\(chosenName))" } ?? chosenName
@@ -729,6 +732,51 @@ final class SystemTelemetryReader {
             return nil
         }
         return Date(timeIntervalSince1970: Double(boottime.tv_sec) + Double(boottime.tv_usec) / 1_000_000.0)
+    }
+
+    // macOS privacy-truncates third-party interface counters to 32-bit; handle rollover cleanly.
+    static func counterDelta(current: UInt64, previous: UInt64) -> UInt64 {
+        if current >= previous {
+            return current - previous
+        }
+        if previous <= UInt64(UInt32.max) {
+            return (UInt64(UInt32.max) + 1 - previous) + current
+        }
+        return 0
+    }
+
+    private static func readInterfaceBytes64() -> [String: (inBytes: UInt64, outBytes: UInt64)] {
+        var mib: [Int32] = [CTL_NET, PF_ROUTE, 0, 0, NET_RT_IFLIST2, 0]
+        var len = 0
+        guard sysctl(&mib, UInt32(mib.count), nil, &len, nil, 0) == 0, len > 0 else { return [:] }
+        var allocLen = len + 2048
+        var buf = [UInt8](repeating: 0, count: allocLen)
+        guard sysctl(&mib, UInt32(mib.count), &buf, &allocLen, nil, 0) == 0 else { return [:] }
+        len = allocLen
+
+        var result: [String: (inBytes: UInt64, outBytes: UInt64)] = [:]
+        let nlenOffset = MemoryLayout<sockaddr_dl>.offset(of: \sockaddr_dl.sdl_nlen) ?? 5
+        let nameOffsetInSDL = MemoryLayout<sockaddr_dl>.offset(of: \sockaddr_dl.sdl_data) ?? 8
+        buf.withUnsafeBytes { raw in
+            var off = 0
+            while off + MemoryLayout<if_msghdr>.stride <= len {
+                let hdr = raw.loadUnaligned(fromByteOffset: off, as: if_msghdr.self)
+                let msgLen = Int(hdr.ifm_msglen)
+                guard msgLen > 0, off + msgLen <= len else { break }
+                let sdlOff = off + MemoryLayout<if_msghdr2>.stride
+                if Int32(hdr.ifm_type) == RTM_IFINFO2, sdlOff + nameOffsetInSDL <= off + msgLen {
+                    let hdr2 = raw.loadUnaligned(fromByteOffset: off, as: if_msghdr2.self)
+                    let nlen = Int(raw[sdlOff + nlenOffset])
+                    let nameStart = sdlOff + nameOffsetInSDL
+                    if nlen > 0, nameStart + nlen <= off + msgLen,
+                       let name = String(bytes: raw[nameStart..<(nameStart + nlen)], encoding: .utf8) {
+                        result[name] = (UInt64(hdr2.ifm_data.ifi_ibytes), UInt64(hdr2.ifm_data.ifi_obytes))
+                    }
+                }
+                off += msgLen
+            }
+        }
+        return result
     }
 
     private static func readInterfaceDisplayNames() -> [String: String] {
