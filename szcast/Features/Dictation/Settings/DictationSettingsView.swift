@@ -6,7 +6,6 @@ import UniformTypeIdentifiers
 enum DictationSettingsSection: String, CaseIterable, Identifiable {
     case insights = "Insights"
     case general = "General"
-    case livePreview = "Preview"
     case formatting = "Format & AI"
     case dictionary = "Dictionary"
     case snippets = "Snippets"
@@ -23,7 +22,6 @@ struct DictationSettingsView: View {
     @Environment(HotKeyManager.self) private var hotKeys
     @State private var selectedSection: DictationSettingsSection = .insights
     @State private var microphones: [AVCaptureDevice] = []
-    @State private var modelSize: Int64?
     @State private var microphoneAccess = Permissions.microphoneAccess()
 
     // Dictionary sheet states
@@ -87,8 +85,6 @@ struct DictationSettingsView: View {
                         EmptyView()
                     case .general:
                         generalSection(settings: settings)
-                    case .livePreview:
-                        livePreviewSection(settings: settings)
                     case .formatting:
                         formattingSection(settings: settings)
                     case .dictionary:
@@ -106,28 +102,17 @@ struct DictationSettingsView: View {
         .onAppear {
             microphoneAccess = Permissions.microphoneAccess()
             if settings.dictationEnabled { microphones = DictationCapture.microphones }
-            Task {
-                await coordinator.s1Downloader.checkStatus()
-            }
         }
         .onChange(of: settings.dictationEnabled) { _, enabled in
             if enabled { microphones = DictationCapture.microphones }
         }
         .task {
-            await coordinator.s1Downloader.checkStatus()
             for await _ in NotificationCenter.default.notifications(
                 named: NSApplication.didBecomeActiveNotification)
             {
                 microphoneAccess = Permissions.microphoneAccess()
                 if settings.dictationEnabled { microphones = DictationCapture.microphones }
-                await coordinator.s1Downloader.checkStatus()
             }
-        }
-        .task(id: settings.dictationEnabled ? settings.dictationModel : nil) {
-            modelSize = nil
-            guard settings.dictationEnabled else { return }
-            coordinator.models.refreshInstalledModels()
-            await refreshModelSize(settings.dictationModel)
         }
         .sheet(isPresented: $showingAddWordSheet) {
             addWordSheet
@@ -388,95 +373,7 @@ struct DictationSettingsView: View {
                 Text("Dictation Shortcuts")
             }
 
-            Section {
-                Picker(selection: $bSettings.dictationTranscriptionProvider) {
-                    ForEach(DictationTranscriptionProvider.allCases) { provider in
-                        Text(provider.title).tag(provider)
-                    }
-                } label: {
-                    SettingsRowTitle(.dictationModel, "Transcription engine")
-                    Text("Choose between on-device Nvidia Parakeet (recommended) or Groq Cloud Whisper.")
-                }
-
-                if settings.dictationTranscriptionProvider == .parakeet {
-                    Picker(selection: familyBinding) {
-                        ForEach(DictationModel.Family.allCases) { family in
-                            Text(family.rawValue).tag(family)
-                        }
-                    } label: {
-                        SettingsRowTitle(.dictationModel, "Engine family")
-                        Text(settings.dictationModel.family.summary + " · " + settings.dictationModel.coverage)
-                    }
-                    Picker(selection: $bSettings.dictationModel) {
-                        ForEach(
-                            DictationModel.allCases.filter { $0.family == settings.dictationModel.family }
-                        ) { model in
-                            Text(model.variantTitle).tag(model)
-                        }
-                    } label: {
-                        SettingsRowTitle(.dictationModel, "Model")
-                        Text(settings.dictationModel.summary)
-                    }
-
-                    let installed = coordinator.models.isInstalled(settings.dictationModel)
-                    let downloading = coordinator.models.downloading == settings.dictationModel
-                    if downloading {
-                        DownloadProgressView(models: coordinator.models)
-                    } else if installed {
-                        let isHot = coordinator.models.loadedModel == settings.dictationModel && coordinator.models.isWorkerRunning
-                        let isPrewarming = coordinator.models.isPrewarming
-                        let memoryMB = settings.dictationModel.approximateInstalledMegabytes
-                        HStack(spacing: Theme.Spacing.sm) {
-                            Circle()
-                                .fill(isHot ? Color.green : (isPrewarming ? Color.orange : Color.secondary.opacity(0.5)))
-                                .frame(width: 8, height: 8)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Parakeet (Local)")
-                                    .font(.system(size: 12, weight: .medium))
-                                Text(isHot ? "Apple Neural Engine & Metal GPU (~\(memoryMB) MB RAM)" : (isPrewarming ? "Warming Apple Neural Engine & Metal GPU..." : "On-device CoreML (~\(memoryMB) MB)"))
-                                    .font(.system(size: 11))
-                                    .foregroundColor(.secondary)
-                                    .lineLimit(1)
-                                    .truncationMode(.middle)
-                            }
-                            Spacer()
-                            if !isHot && !isPrewarming {
-                                Button("Prewarm") {
-                                    coordinator.models.prewarm(settings.dictationModel)
-                                }
-                                .buttonStyle(.bordered)
-                                .controlSize(.small)
-                            }
-                            Button("Remove") {
-                                removeModel(settings.dictationModel)
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
-                            .disabled(coordinator.models.transcribing || coordinator.models.removing != nil)
-                        }
-                        .padding(.vertical, 2)
-                    } else {
-                        LabeledContent {
-                            Button("Download") { downloadModel(settings.dictationModel) }
-                                .disabled(coordinator.models.downloading != nil || coordinator.models.removing == settings.dictationModel)
-                        } label: {
-                            Text("Not installed")
-                            Text(modelDescription)
-                        }
-                    }
-                } else {
-                    Picker(selection: $bSettings.dictationGroqTranscriptionModel) {
-                        Text("whisper-large-v3-turbo (Free)").tag("whisper-large-v3-turbo")
-                    } label: {
-                        SettingsRowTitle(.dictationModel, "Groq STT model")
-                        Text("Cloud speech recognition powered by Groq LPU hardware (~250ms).")
-                    }
-                }
-            } header: {
-                SettingsSectionHeader(.dictationModel)
-            }
-
-            groqCloudSection(settings: settings)
+            livePreviewSection(settings: settings)
             audioIntelligenceAndCLISection(settings: settings)
         }
     }
@@ -486,28 +383,8 @@ struct DictationSettingsView: View {
         @Bindable var bSettings = settings
         Section {
             Toggle(isOn: $bSettings.dictationVADEnabled) {
-                SettingsRowTitle(.dictationModel, "Voice activity detection (VAD)")
+                SettingsRowTitle(.dictationOutput, "Voice activity detection (VAD)")
                 Text("Skips long silence via CoreML Silero VAD before ASR decoding.")
-            }
-
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(DictationSupportModel.sileroVAD.title)
-                    Text(
-                        coordinator.models.supportDirectoryIfInstalled(.sileroVAD) != nil
-                            ? "Installed on-device (~2 MB)"
-                            : "Not installed yet (uses RMS fallback until downloaded)"
-                    )
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                }
-                Spacer()
-                if coordinator.models.supportDirectoryIfInstalled(.sileroVAD) == nil {
-                    Button("Download VAD") {
-                        Task { _ = try? await coordinator.models.downloadSupportModel(.sileroVAD) }
-                    }
-                    .controlSize(.small)
-                }
             }
 
             Picker(selection: $bSettings.dictationSpeakerCount) {
@@ -516,28 +393,8 @@ struct DictationSettingsView: View {
                     Text("\(count) Speaker\(count == 1 ? "" : "s")").tag(count)
                 }
             } label: {
-                SettingsRowTitle(.dictationModel, "Speaker diarization")
+                SettingsRowTitle(.dictationOutput, "Speaker diarization")
                 Text("Segments multi-speaker files and remote meeting participants offline.")
-            }
-
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(DictationSupportModel.speakerDiarization.title)
-                    Text(
-                        coordinator.models.supportDirectoryIfInstalled(.speakerDiarization) != nil
-                            ? "Installed on-device (~28 MB)"
-                            : "Required for multi-speaker separation"
-                    )
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                }
-                Spacer()
-                if coordinator.models.supportDirectoryIfInstalled(.speakerDiarization) == nil {
-                    Button("Download Diarizer") {
-                        Task { _ = try? await coordinator.models.downloadSupportModel(.speakerDiarization) }
-                    }
-                    .controlSize(.small)
-                }
             }
 
             Toggle(isOn: $bSettings.dictationMeetingCapturesSystemAudio) {
@@ -788,28 +645,6 @@ struct DictationSettingsView: View {
             }
 
             if settings.dictationS1Enabled {
-                Picker(selection: $bSettings.dictationPolishProvider) {
-                    ForEach(DictationPolishProvider.allCases) { provider in
-                        Text(provider.title).tag(provider)
-                    }
-                } label: {
-                    SettingsRowTitle(.dictationOutput, "Normalization engine")
-                    Text("Select on-device S1-mini (default) or ultra-fast Groq Llama cloud.")
-                }
-
-                if settings.dictationPolishProvider == .localS1 {
-                    s1ModelStatusRow
-                } else {
-                    Picker(selection: $bSettings.dictationGroqPolishModel) {
-                        Text("openai/gpt-oss-120b (Free · Large)").tag("openai/gpt-oss-120b")
-                        Text("openai/gpt-oss-20b (Free · Fast)").tag("openai/gpt-oss-20b")
-                        Text("qwen/qwen3.8-27b (Free)").tag("qwen/qwen3.8-27b")
-                    } label: {
-                        SettingsRowTitle(.dictationOutput, "Groq polish model")
-                        Text("Speech cleanup and normalization via Groq cloud.")
-                    }
-                }
-
                 Picker(selection: $bSettings.dictationS1Tone) {
                     ForEach(S1Tone.allCases) { tone in
                         Text(tone.title).tag(tone)
@@ -857,178 +692,6 @@ struct DictationSettingsView: View {
             }
         } header: {
             Text("AI Polish (S1-mini)")
-        }
-    }
-
-    @ViewBuilder
-    private var s1ModelStatusRow: some View {
-        switch coordinator.s1Downloader.status {
-        case .idle, .checking:
-            HStack(spacing: Theme.Spacing.sm) {
-                ProgressView()
-                    .controlSize(.small)
-                Text("Checking S1-mini status...")
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
-                Spacer()
-            }
-            .padding(.vertical, 2)
-
-        case .installedDirect:
-            HStack(spacing: Theme.Spacing.sm) {
-                Circle()
-                    .fill(Color.green)
-                    .frame(width: 8, height: 8)
-                Text("S1-mini")
-                    .font(.system(size: 12, weight: .medium))
-                Spacer()
-            }
-            .padding(.vertical, 2)
-
-        case .notInstalled:
-            HStack(spacing: Theme.Spacing.sm) {
-                Image(systemName: "arrow.down.circle")
-                    .foregroundColor(.blue)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("S1-mini Model Not Downloaded")
-                        .font(.system(size: 12, weight: .medium))
-                    Text("Download standalone s1-mini-1.0.gguf (484 MB) for fast, offline speech normalization.")
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary)
-                }
-                Spacer()
-                HStack(spacing: Theme.Spacing.xs) {
-                    Button {
-                        coordinator.s1Downloader.downloadDirectGGUF()
-                    } label: {
-                        Label("Download", systemImage: "arrow.down.circle")
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.small)
-
-                    Button("Import…") {
-                        selectModelFileToImport()
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                }
-            }
-            .padding(.vertical, 2)
-
-        case .downloading(let progress, let statusText):
-            VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                HStack {
-                    Image(systemName: "arrow.down.circle.fill")
-                        .foregroundColor(.blue)
-                    Text("Downloading S1-mini: \(statusText)")
-                        .font(.system(size: 12, weight: .medium))
-                    Spacer()
-                    if progress > 0 {
-                        Text("\(Int(progress * 100))%")
-                            .font(.system(size: 11, design: .monospaced))
-                            .foregroundColor(.secondary)
-                    }
-                    Button("Cancel") {
-                        coordinator.s1Downloader.cancelDownload()
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.mini)
-                }
-                ProgressView(value: progress > 0 ? progress : nil)
-                    .progressViewStyle(.linear)
-            }
-            .padding(.vertical, 2)
-
-        case .error(let message):
-            HStack(spacing: Theme.Spacing.sm) {
-                Image(systemName: "xmark.octagon.fill")
-                    .foregroundColor(.red)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Download Failed")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.red)
-                    Text(message)
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary)
-                }
-                Spacer()
-                HStack(spacing: Theme.Spacing.xs) {
-                    Button("Retry") {
-                        coordinator.s1Downloader.downloadDirectGGUF()
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-
-                    Button("Import…") {
-                        selectModelFileToImport()
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                }
-            }
-            .padding(.vertical, 2)
-        }
-    }
-
-    private func selectModelFileToImport() {
-        let panel = NSOpenPanel()
-        panel.canChooseFiles = true
-        panel.canChooseDirectories = false
-        panel.allowsMultipleSelection = false
-        panel.message = "Select s1-mini-1.0.gguf"
-        if panel.runModal() == .OK, let url = panel.url {
-            Task {
-                try? await coordinator.s1Downloader.importModelFile(from: url)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func groqCloudSection(settings: AppSettings) -> some View {
-        @Bindable var bSettings = settings
-        if settings.dictationTranscriptionProvider == .groq || (settings.dictationS1Enabled && settings.dictationPolishProvider == .groq) {
-            Section {
-                HStack {
-                    SecureField("Groq API Key (gsk_...)", text: $bSettings.groqAPIKey)
-                        .textFieldStyle(.roundedBorder)
-
-                    Button {
-                        if let url = URL(string: "https://console.groq.com/keys") {
-                            NSWorkspace.shared.open(url)
-                        }
-                    } label: {
-                        Label("Get Groq Key", systemImage: "arrow.up.right.square")
-                    }
-                    .buttonStyle(.bordered)
-                }
-
-                HStack(spacing: Theme.Spacing.sm) {
-                    let key = settings.groqAPIKey.trimmingCharacters(in: .whitespacesAndNewlines)
-                    if key.hasPrefix("gsk_") {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                        Text("Valid Groq API key configured in Keychain.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    } else if key.isEmpty {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.orange)
-                        Text("An API key is required to use Groq cloud dictation.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Image(systemName: "info.circle")
-                            .foregroundStyle(.secondary)
-                        Text("Keys typically start with 'gsk_'. Stored securely in macOS Keychain.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            } header: {
-                Text("Groq Cloud Configuration")
-            } footer: {
-                Text("Groq provides free Whisper STT (2,000 req/day) and Llama 3.1 cleanup (14,400 req/day) with sub-second turnaround.")
-            }
         }
     }
 
@@ -1420,120 +1083,5 @@ struct DictationSettingsView: View {
         Binding(
             get: { settings.dictationMicrophone ?? "" },
             set: { settings.dictationMicrophone = $0.isEmpty ? nil : $0 })
-    }
-
-    private var familyBinding: Binding<DictationModel.Family> {
-        Binding(
-            get: { settings.dictationModel.family },
-            set: { family in
-                switch family {
-                case .parakeet: settings.dictationModel = .ultra
-                case .nemotron: settings.dictationModel = .nemotron
-                case .qwen: settings.dictationModel = .qwenSmall
-                case .sravaani: settings.dictationModel = .sravaani
-                case .specialized: settings.dictationModel = .whisperApex
-                }
-            })
-    }
-
-    private var modelDescription: String {
-        let bytes = modelSize
-        let size = bytes.map {
-            ByteCountFormatter.string(fromByteCount: $0, countStyle: .file)
-        }
-        return size.map { "\($0)" } ?? "\(settings.dictationModel.approximateInstalledMegabytes) MB"
-    }
-
-    private func downloadModel(_ model: DictationModel) {
-        Task { await coordinator.downloadModel(model) }
-    }
-
-    private func removeModel(_ model: DictationModel) {
-        Task {
-            await coordinator.removeModel(model)
-            coordinator.models.refreshInstalledModels()
-            await refreshModelSize(model)
-        }
-    }
-
-    private func refreshModelSize(_ model: DictationModel) async {
-        modelSize = await coordinator.models.installedSize(model)
-    }
-
-    private struct DownloadProgressView: View {
-        let models: DictationModelStore
-
-        var body: some View {
-            let progress = models.downloadProgress
-            VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
-                LabeledContent {
-                    Button("Cancel") { models.cancelDownload() }
-                } label: {
-                    Text(title)
-                }
-                if let progress, progress.total > 0 {
-                    ProgressView(value: Double(progress.received), total: Double(progress.total))
-                        .tint(.accentColor)
-                        .accessibilityLabel("Model download progress")
-                    HStack {
-                        let received = progress.received.formatted(.byteCount(style: .file))
-                        let total = progress.total.formatted(.byteCount(style: .file))
-                        Text("\(received) of \(total)")
-                        Spacer()
-                        Text(
-                            Double(progress.received) / Double(progress.total),
-                            format: .percent.precision(.fractionLength(0)))
-                    }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
-                } else {
-                    ProgressView()
-                        .progressViewStyle(.linear)
-                        .accessibilityLabel("Preparing model download")
-                }
-            }
-        }
-
-        private var title: LocalizedStringResource {
-            switch models.downloading {
-            case .qwenSmall, .qwenLarge:
-                LocalizedStringResource(
-                    "downloading-dictation-model-qwen",
-                    defaultValue: "Downloading Qwen3-Audio…")
-            case .redux:
-                LocalizedStringResource(
-                    "downloading-dictation-model-parakeet",
-                    defaultValue: "Downloading Parakeet TDT…")
-            case .ultra:
-                LocalizedStringResource(
-                    "downloading-dictation-model-parakeet-ultra",
-                    defaultValue: "Downloading Parakeet Ultra…")
-            case .nemotron:
-                LocalizedStringResource(
-                    "downloading-dictation-model-nemotron",
-                    defaultValue: "Downloading Nemotron Streaming…")
-            case .sravaani:
-                LocalizedStringResource(
-                    "downloading-dictation-model-sravaani",
-                    defaultValue: "Downloading SraVaani 1.0…")
-            case .sravaaniLive:
-                LocalizedStringResource(
-                    "downloading-dictation-model-sravaani-live",
-                    defaultValue: "Downloading SraVaani 0.5 Live…")
-            case .whisperApex:
-                LocalizedStringResource(
-                    "downloading-dictation-model-whisper-apex",
-                    defaultValue: "Downloading Whisper-Apex Hinglish…")
-            case .indicFlex:
-                LocalizedStringResource(
-                    "downloading-dictation-model-indic-flex",
-                    defaultValue: "Downloading Indic-Transcribe Flex…")
-            case nil:
-                LocalizedStringResource(
-                    "downloading-dictation-model-general",
-                    defaultValue: "Downloading…")
-            }
-        }
     }
 }

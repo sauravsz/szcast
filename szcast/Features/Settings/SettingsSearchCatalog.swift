@@ -111,7 +111,7 @@ enum SettingsSearchCatalog {
 
     static let entries: [SettingsSearchEntry] =
         general + applications + systemSettings + systemActions + commands + quicklinks
-        + appleShortcuts + fallbacks + clipboard + snippets + fileSearch + windowManagement
+        + appleShortcuts + fallbacks + clipboard + snippets + fileSearch + modelLibrary + windowManagement
         + cleanKeyboard + navigation + notes + calendar + emoji + ai + quickActions + dictation + extensions + permissions
         + backup + displayTweaks + enteAuth + duckDuckGoEmail + keepassxc + textTransformer + stats + extendedFeatures + changelog + about
 
@@ -301,17 +301,8 @@ enum SettingsSearchCatalog {
 
     private static let ai: [SettingsSearchEntry] = [
         .init(
-            pane: .ai, keywords: ["chat", "quick ai", "llm", "model", "openai", "anthropic"]),
+            pane: .ai, keywords: ["chat", "quick ai", "llm", "mcp", "presets"]),
         .init(.aiAI, "Enable AI", keywords: ["chat", "llm"]),
-        .init(
-            .aiProviders, "Providers",
-            keywords: [
-                "sign in", "connect", "codex", "claude", "grok", "xai", "opencode", "cursor", "agent",
-                "api key", "connection", "base url", "openai", "anthropic", "ollama", "models",
-                "hide models"
-            ]),
-        .init(.aiDefault, "Default model", keywords: ["llm", "gpt", "claude", "grok"]),
-        .init(.aiDefault, "Reasoning effort", keywords: ["thinking", "effort", "deepseek"]),
         .init(.aiChat, "Web search", keywords: ["browse", "internet"]),
         .init(.aiChat, "Suggested replies", keywords: ["choices", "chips", "follow-up", "buttons"]),
         .init(.aiChat, "Expand thinking", keywords: ["reasoning", "thoughts", "collapse", "fold", "unfold"]),
@@ -359,11 +350,34 @@ enum SettingsSearchCatalog {
             .quickActionsActions, "Add Quick Action",
             keywords: ["new", "custom", "prompt", "instructions", "alias"]),
         .init(
-            .quickActionsModel, "Model",
-            keywords: ["llm", "ai", "default"]),
-        .init(
             .quickActionsTranslate, "Translate to",
             keywords: ["language", "locale"])
+    ]
+
+    private static let modelLibrary: [SettingsSearchEntry] = [
+        .init(
+            pane: .modelLibrary,
+            keywords: [
+                "models", "download", "sravaani", "parakeet", "whisper", "indic",
+                "banglish", "hinglish", "s1-mini", "groq", "providers", "llm", "vad", "diarization"
+            ]),
+        .init(.modelLibrarySpeech, "Transcription engine", keywords: ["parakeet", "groq", "engine", "asr"]),
+        .init(.modelLibrarySpeech, "Speech model", keywords: ["parakeet", "sravaani", "whisper", "nemotron", "qwen", "download"]),
+        .init(.modelLibraryPolish, "Normalization engine", keywords: ["s1", "polish", "groq", "llama"]),
+        .init(
+            .modelLibraryPolish, "Local text models",
+            keywords: ["s1-mini", "smollm2", "qwen", "llama", "gemma", "gguf", "download", "import"]),
+        .init(.modelLibraryAudioTools, "Silero VAD v6", keywords: ["silero", "vad", "download"]),
+        .init(.modelLibraryAudioTools, "Speaker Diarization", keywords: ["diarizer", "speakers", "download"]),
+        .init(
+            .modelLibraryAIModels, "Providers",
+            keywords: [
+                "sign in", "connect", "codex", "claude", "grok", "xai", "opencode", "cursor",
+                "api key", "connection", "base url", "openai", "anthropic", "ollama"
+            ]),
+        .init(.modelLibraryAIModels, "Default model", keywords: ["llm", "gpt", "claude", "grok", "ai"]),
+        .init(.modelLibraryAIModels, "Reasoning effort", keywords: ["thinking", "effort", "deepseek"]),
+        .init(.modelLibraryAIModels, "Quick Actions model", keywords: ["quick actions", "llm", "override"])
     ]
 
     private static let dictation: [SettingsSearchEntry] = [
@@ -372,17 +386,14 @@ enum SettingsSearchCatalog {
         .init(.dictationCommands, "Recording mode"),
         .init(.dictationCommands, "Shortcut"),
         .init(.dictationCommands, "Play sounds", keywords: ["sound", "chime", "beep", "audio", "feedback"]),
-        .init(.dictationModel, "Model"),
-        .init(.dictationModel, "Transcription engine", keywords: ["parakeet", "groq", "engine"]),
-        .init(.dictationModel, "Engine family", keywords: ["parakeet", "whisper", "sravaani"]),
         .init(.dictationOutput, "Input device", keywords: ["microphone", "audio", "input"]),
         .init(.dictationOutput, "When finished"),
         .init(.dictationOutput, "Pasting method", keywords: ["paste", "typewriter", "instant"]),
         .init(.dictationOutput, "Enable AI Polish (S1-mini)", keywords: ["s1", "polish", "clean", "normalize"]),
         .init(.dictationCommands, "Secondary dictation (Raw mode)", keywords: ["shortcut", "raw", "verbatim", "hotkey"]),
         .init(.dictationCommands, "Retain cancelled dictations", keywords: ["escape", "cancel", "history", "save"]),
-        .init(.dictationModel, "Voice activity detection (VAD)", keywords: ["silero", "vad", "silence", "chunking"]),
-        .init(.dictationModel, "Speaker diarization", keywords: ["speakers", "diarize", "meeting", "labels"]),
+        .init(.dictationOutput, "Voice activity detection (VAD)", keywords: ["silero", "vad", "silence", "chunking"]),
+        .init(.dictationOutput, "Speaker diarization", keywords: ["speakers", "diarize", "meeting", "labels"]),
         .init(.dictationOutput, "Capture system audio in meetings", keywords: ["process tap", "others", "dual track"]),
         .init(.dictationOutput, "Start meetings muted", keywords: ["mute", "mic", "meeting"]),
         .init(.dictationOutput, "Auto-stop on prolonged silence", keywords: ["timeout", "idle", "stop"]),
@@ -785,6 +796,9 @@ enum SettingsSearchCatalog {
         .init(
             .statsMenuBar, "Show Network in Menu Bar",
             keywords: ["network", "speed", "bandwidth", "status bar", "menu bar"]),
+        .init(
+            .statsMenuBar, "Menu bar spacing",
+            keywords: ["gap", "padding", "spacing", "points", "pt"]),
         .init(
             .statsPerformance, "Refresh Cadence",
             keywords: ["interval", "frequency", "performance"])

@@ -66,8 +66,6 @@ struct StatsPopoverContainerView: View {
                 downloadHistory: monitor.networkDownloadHistory,
                 uploadHistory: monitor.networkUploadHistory,
                 topProcesses: snap.topProcessesByNetwork,
-                onRefreshInterface: { monitor.refreshNetworkInterface() },
-                onRefreshAddress: { monitor.refreshNetworkAddress() },
                 onOpenMonitor: onOpenMonitor,
                 onOpenSettings: onOpenSettings
             )

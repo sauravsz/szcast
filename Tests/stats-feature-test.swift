@@ -88,11 +88,36 @@ struct StatsFeatureTests {
         expect(wrapDelta == 2048, "32-bit interface counter rollover delta")
         expect(SystemTelemetryReader.counterDelta(current: 500, previous: UInt64(UInt32.max) + 500) == 0, "Counter reset returns zero")
 
-        // 8. Full Snapshot capture
+        // 8. Full Snapshot capture & hardware sanity checks
         let snapshot = reader.captureSnapshot(processLimit: 5)
         expect(snapshot.cpu.logicalCores >= 1, "Snapshot carries valid CPU stats")
         expect(snapshot.ram.totalBytes > 0, "Snapshot carries valid RAM stats")
         expect(!snapshot.disk.volumes.isEmpty, "Snapshot carries disk volumes")
+        expect(
+            snapshot.disk.volumes.allSatisfy { $0.totalBytes > 0 && $0.freeBytes > 0 && $0.usedBytes <= $0.totalBytes },
+            "All mounted disk volumes report valid non-zero free space"
+        )
+        if snapshot.battery.hasBattery {
+            expect((snapshot.battery.designCapacityMAh ?? 0) > 0, "Battery design capacity populated")
+            expect((snapshot.battery.maxCapacityMAh ?? 0) > 0, "Battery max capacity populated")
+            expect((1...100).contains(snapshot.battery.healthPercentage ?? 0), "Battery health percentage in 1..100")
+            expect((snapshot.battery.voltageMillivolts ?? 0) > 0, "Battery voltage populated")
+            if let temp = snapshot.battery.temperature {
+                expect(temp > 0 && temp < 120, "Battery temperature in realistic Celsius range (got \(temp))")
+            }
+        }
+        print(
+            "Live Battery: cur=\(snapshot.battery.currentCapacityMAh ?? 0) max=\(snapshot.battery.maxCapacityMAh ?? 0) "
+                + "design=\(snapshot.battery.designCapacityMAh ?? 0) temp=\(snapshot.battery.temperature ?? -1) "
+                + "power=\(snapshot.battery.powerWatts ?? -1)"
+        )
+        print(
+            "Live Network (\(snapshot.network.interfaceName)): downTotal=\(snapshot.network.totalDownloadBytes) "
+                + "upTotal=\(snapshot.network.totalUploadBytes)"
+        )
+        for v in snapshot.disk.volumes {
+            print("Live Disk (\(v.name)): freeGB=\(String(format: "%.2f", v.freeGB)) / totalGB=\(String(format: "%.2f", v.totalGB))")
+        }
 
         if failures > 0 {
             print("FAILED: \(failures) failures in stats feature test")

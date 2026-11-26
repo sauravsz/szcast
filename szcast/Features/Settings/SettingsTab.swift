@@ -1,6 +1,6 @@
 enum SettingsTab: CaseIterable, Identifiable {
     case general, applications, systemSettings, systemActions, commands, quicklinks, appleShortcuts,
-        fallbacks, clipboard, snippets, fileSearch, windowManagement, displayTweaks, cleanKeyboard, navigation, notes, calendar, emoji,
+        fallbacks, clipboard, snippets, fileSearch, modelLibrary, windowManagement, displayTweaks, cleanKeyboard, navigation, notes, calendar, emoji,
         dictation, ai, quickActions, extensions, permissions, backup, changelog, about, enteAuth, duckDuckGoEmail, keepassxc, textTransformer, stats, extendedFeatures
     /// The case, never an index: a selectable `List` flattens section and row IDs together.
     var id: Self { self }
@@ -27,6 +27,7 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .windowManagement: "window-management"
         case .displayTweaks: "display-tweaks"
         case .navigation: "navigation"
+        case .modelLibrary: "model-library"
         case .notes: "notes"
         case .calendar: "calendar"
         case .emoji: "emoji"
@@ -62,6 +63,7 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .quickActions: return String(localized: "Quick Actions")
         case .dictation: return String(localized: "Dictation")
         case .fileSearch: return String(localized: "File Search")
+        case .modelLibrary: return String(localized: "Model Library")
         case .notes: return String(localized: "Notes")
         case .snippets: return String(localized: "Snippets")
         case .navigation: return String(localized: "Navigation")
@@ -99,6 +101,7 @@ enum SettingsTab: CaseIterable, Identifiable {
         case .quickActions: return "wand.and.sparkles"
         case .dictation: return "waveform"
         case .fileSearch: return "doc.text.magnifyingglass"
+        case .modelLibrary: return "cpu"
         case .notes: return "text.page"
         case .snippets: return "curlybraces"
         case .navigation: return "arrow.left.arrow.right"
@@ -152,6 +155,7 @@ enum SettingsSection: CaseIterable, Identifiable {
                 .emoji,
                 .fallbacks,
                 .fileSearch,
+                .modelLibrary,
                 .notes,
                 .quickActions,
                 .quicklinks,

@@ -47,8 +47,6 @@ extension SettingsAnchor {
     static let fallbacksFallbacks = Self(tab: .fallbacks, title: "Fallbacks")
 
     static let aiAI = Self(tab: .ai, title: "AI")
-    static let aiProviders = Self(tab: .ai, title: "Providers")
-    static let aiDefault = Self(tab: .ai, title: "Default")
     static let aiChat = Self(tab: .ai, title: "Chat")
     static let aiConversations = Self(tab: .ai, title: "Conversations")
     static let aiSystemPrompt = Self(tab: .ai, title: "System prompt")
@@ -58,13 +56,16 @@ extension SettingsAnchor {
 
     static let quickActionsQuickActions = Self(tab: .quickActions, title: "Quick Actions")
     static let quickActionsActions = Self(tab: .quickActions, title: "Actions")
-    static let quickActionsModel = Self(tab: .quickActions, title: "Model")
     static let quickActionsTranslate = Self(tab: .quickActions, title: "Translate")
 
     static let dictationDictation = Self(tab: .dictation, title: "Dictation")
     static let dictationCommands = Self(tab: .dictation, title: "Commands")
-    static let dictationModel = Self(tab: .dictation, title: "Model")
     static let dictationOutput = Self(tab: .dictation, title: "Output")
+
+    static let modelLibrarySpeech = Self(tab: .modelLibrary, title: "Speech Recognition")
+    static let modelLibraryPolish = Self(tab: .modelLibrary, title: "Voice Polish")
+    static let modelLibraryAudioTools = Self(tab: .modelLibrary, title: "Audio Intelligence")
+    static let modelLibraryAIModels = Self(tab: .modelLibrary, title: "AI & Quick Actions")
 
     static let fileSearchFileSearch = Self(tab: .fileSearch, title: "File Search")
     static let fileSearchFullDiskAccess = Self(tab: .fileSearch, title: "Full Disk Access")

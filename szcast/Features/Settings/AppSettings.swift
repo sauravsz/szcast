@@ -288,6 +288,16 @@ final class AppSettings {
     var statsNetworkMenuBar: Bool {
         didSet { defaults.set(statsNetworkMenuBar, forKey: Key.statsNetworkMenuBar.rawValue) }
     }
+    var statsMenuBarSpacing: Double {
+        didSet {
+            let clamped = min(max(statsMenuBarSpacing.rounded(), 0), 12)
+            if statsMenuBarSpacing != clamped {
+                statsMenuBarSpacing = clamped
+                return
+            }
+            defaults.set(statsMenuBarSpacing, forKey: Key.statsMenuBarSpacing.rawValue)
+        }
+    }
     var statsRefreshInterval: Double {
         didSet { defaults.set(statsRefreshInterval, forKey: Key.statsRefreshInterval.rawValue) }
     }
@@ -570,6 +580,15 @@ final class AppSettings {
 
     var dictationPolishProvider: DictationPolishProvider {
         didSet { defaults.set(dictationPolishProvider.rawValue, forKey: Key.dictationPolishProvider.rawValue) }
+    }
+
+    var dictationLocalTextModel: DictationTextModel {
+        didSet {
+            defaults.set(dictationLocalTextModel.rawValue, forKey: Key.dictationLocalTextModel.rawValue)
+            if oldValue != dictationLocalTextModel {
+                DictationLlamaServerManager.shared.stop()
+            }
+        }
     }
 
     var dictationGroqTranscriptionModel: String {
@@ -1106,6 +1125,11 @@ final class AppSettings {
         statsDiskMenuBar = defaults.bool(forKey: Key.statsDiskMenuBar.rawValue)
         statsBatteryMenuBar = defaults.bool(forKey: Key.statsBatteryMenuBar.rawValue)
         statsNetworkMenuBar = defaults.object(forKey: Key.statsNetworkMenuBar.rawValue) == nil || defaults.bool(forKey: Key.statsNetworkMenuBar.rawValue)
+        if defaults.object(forKey: Key.statsMenuBarSpacing.rawValue) != nil {
+            statsMenuBarSpacing = min(max(defaults.double(forKey: Key.statsMenuBarSpacing.rawValue).rounded(), 0), 12)
+        } else {
+            statsMenuBarSpacing = 4
+        }
         statsRefreshInterval = defaults.double(forKey: Key.statsRefreshInterval.rawValue) > 0 ? defaults.double(forKey: Key.statsRefreshInterval.rawValue) : 1.0
 
         // Every feature switch defaults on, so absence has to outrank a stored `false`.
@@ -1240,9 +1264,13 @@ final class AppSettings {
         dictationMode =
             defaults.string(forKey: Key.dictationMode.rawValue)
             .flatMap(DictationMode.init) ?? .toggle
-        dictationModel =
-            defaults.string(forKey: Key.dictationModel.rawValue)
-            .flatMap(DictationModel.init) ?? .redux
+        let rawModel = defaults.string(forKey: Key.dictationModel.rawValue)
+        if rawModel == "sravaani-0.5-live" {
+            dictationModel = .sravaani
+            defaults.set(DictationModel.sravaani.rawValue, forKey: Key.dictationModel.rawValue)
+        } else {
+            dictationModel = rawModel.flatMap(DictationModel.init) ?? .redux
+        }
         dictationMicrophone = defaults.string(forKey: Key.dictationMicrophone.rawValue)
         dictationDestination =
             defaults.string(forKey: Key.dictationDestination.rawValue)
@@ -1304,6 +1332,9 @@ final class AppSettings {
         dictationPolishProvider =
             defaults.string(forKey: Key.dictationPolishProvider.rawValue)
             .flatMap(DictationPolishProvider.init(rawValue:)) ?? .localS1
+        dictationLocalTextModel =
+            defaults.string(forKey: Key.dictationLocalTextModel.rawValue)
+            .flatMap(DictationTextModel.init(rawValue:)) ?? .s1Mini
         let savedStt = defaults.string(forKey: Key.dictationGroqTranscriptionModel.rawValue)
         dictationGroqTranscriptionModel = (savedStt == "whisper-large-v3" || savedStt == nil) ? "whisper-large-v3-turbo" : savedStt!
 

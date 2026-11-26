@@ -222,15 +222,22 @@ struct DictationTest {
                 fatalError("Model installation metadata is incomplete")
             }
             if let configuration = model.parakeetConfiguration {
-                guard (model.family == .parakeet || model.family == .sravaani), configuration.blankToken == 8192,
-                    configuration.encoderUsesGPU == (model == .redux || model == .sravaani),
+                let expectedBlank = model == .v2 ? 1024 : 8192
+                guard (model.family == .parakeet || model.family == .sravaani),
+                    configuration.blankToken == expectedBlank,
+                    configuration.encoderUsesGPU == (model == .redux),
                     model.components.contains(configuration.joint + ".mlmodelc")
                 else {
                     fatalError("Parakeet download and inference disagree")
                 }
-            } else if !model.isQwen && !model.isSraVaani && !model.isSpecialized && !model.isNemotron {
+            } else if !model.isQwen && !model.isSraVaani && !model.isSpecialized && !model.isNemotron && !model.isParakeetCTC {
                 fatalError("Missing Parakeet decoding configuration")
             }
+        }
+        guard DictationTextModel.allCases.count == 6,
+              DictationTextModel.smolLM2.approximateMegabytes < 400
+        else {
+            fatalError("Lightweight local text model catalog incomplete")
         }
         // S1-mini raw framing and model identification
         guard DictationS1Polisher.isS1Mini("hf.co/superwhisper/s1-mini-gguf:Q4_K_M") else {

@@ -28,6 +28,7 @@
 		C1C4E3A20014000000000014 /* NetworkProcessInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10014000000000014 /* NetworkProcessInfo.swift */; };
 		C1C4E3A20014000000000015 /* StatsFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10014000000000015 /* StatsFormatting.swift */; };
 		C1C4E3A20014000000000016 /* AppleSiliconFrequencyReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10014000000000016 /* AppleSiliconFrequencyReader.swift */; };
+		C1C4E3A20014000000000028 /* AppleSMCReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10014000000000028 /* AppleSMCReader.swift */; };
 		C1C4E3A20014000000000017 /* NetworkTelemetryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10014000000000017 /* NetworkTelemetryService.swift */; };
 		C1C4E3A20014000000000018 /* StatsMenuBarRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10014000000000018 /* StatsMenuBarRenderer.swift */; };
 		C1C4E3A20014000000000019 /* StatsProcessIconCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10014000000000019 /* StatsProcessIconCache.swift */; };
@@ -565,6 +566,7 @@
 		7CFE18F8CBA55FDE847886A7 /* CustomCommandListScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1037A76A7501EA4BCCD545B5 /* CustomCommandListScreen.swift */; };
 		7D027F24478DAB019076CA10 /* EventDraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EE496AA4863086BB49CBF2E /* EventDraft.swift */; };
 		7D7FC6BB4A0B25C35CD1CBDD /* DictationModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A54D1E880E274A3B56C6951 /* DictationModel.swift */; };
+		A10000040000000000000001 /* DictationTextModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000040000000000000002 /* DictationTextModel.swift */; };
 		7E3D694A8153C0B560A45CB0 /* CameraPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0BE684A650197A714D6858A /* CameraPanel.swift */; };
 		7ED71583C99F09899B9137D7 /* DictionaryScope.swift in Sources */ = {isa = PBXBuildFile; fileRef = 066784959D573010621D0709 /* DictionaryScope.swift */; };
 		7EEA85B9DD11F94115438135 /* WindowShortcutPresetCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC895E9AF76C4530E52C34BB /* WindowShortcutPresetCoordinator.swift */; };
@@ -809,6 +811,11 @@
 		BFA8B1578664272E7CBFF806 /* ExtensionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B0D967615846F9C4EC3E44F /* ExtensionDetailView.swift */; };
 		BFC17B1BD5D239E0CCD56DDF /* QuickActionFailure.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53DBA322BA1F117530075F51 /* QuickActionFailure.swift */; };
 		BFD24D218C3CC151A9F85E94 /* ParakeetRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C0D8112DC5513C8331D7DAF /* ParakeetRecognizer.swift */; };
+		A10000010000000000000001 /* SraVaaniRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000010000000000000002 /* SraVaaniRecognizer.swift */; };
+		A10000010000000000000003 /* SraVaaniRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000010000000000000002 /* SraVaaniRecognizer.swift */; };
+		A10000020000000000000001 /* ModelLibrarySettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000020000000000000002 /* ModelLibrarySettingsView.swift */; };
+		A10000030000000000000001 /* ParakeetCTCRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000030000000000000002 /* ParakeetCTCRecognizer.swift */; };
+		A10000030000000000000003 /* ParakeetCTCRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000030000000000000002 /* ParakeetCTCRecognizer.swift */; };
 		BFFA3F1DA6CEF6C267648911 /* SyntaxHighlighter.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCF9862B0BB24D73427B676C /* SyntaxHighlighter.swift */; };
 		C05022DE7B77920ECFB177EE /* LauncherItemsTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 934A79BF0F9B66225E5C38CE /* LauncherItemsTable.swift */; };
 		C0642512B709EF0517ABF4CB /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C37CCD024267EB21876C7E9 /* AppDelegate.swift */; };
@@ -1199,6 +1206,7 @@
 		C1C4E3A10014000000000014 /* NetworkProcessInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkProcessInfo.swift; sourceTree = "<group>"; };
 		C1C4E3A10014000000000015 /* StatsFormatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsFormatting.swift; sourceTree = "<group>"; };
 		C1C4E3A10014000000000016 /* AppleSiliconFrequencyReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSiliconFrequencyReader.swift; sourceTree = "<group>"; };
+		C1C4E3A10014000000000028 /* AppleSMCReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSMCReader.swift; sourceTree = "<group>"; };
 		C1C4E3A10014000000000017 /* NetworkTelemetryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkTelemetryService.swift; sourceTree = "<group>"; };
 		C1C4E3A10014000000000018 /* StatsMenuBarRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsMenuBarRenderer.swift; sourceTree = "<group>"; };
 		C1C4E3A10014000000000019 /* StatsProcessIconCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatsProcessIconCache.swift; sourceTree = "<group>"; };
@@ -1565,6 +1573,7 @@
 		590A432CC25ED6372B453BFA /* ScheduleScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleScreen.swift; sourceTree = "<group>"; };
 		5A1E7B96668721F12170CD72 /* WindowActionMemory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowActionMemory.swift; sourceTree = "<group>"; };
 		5A54D1E880E274A3B56C6951 /* DictationModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationModel.swift; sourceTree = "<group>"; };
+		A10000040000000000000002 /* DictationTextModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationTextModel.swift; sourceTree = "<group>"; };
 		5ADCDDCEBA1EBB74810BDFC4 /* CustomQuickAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomQuickAction.swift; sourceTree = "<group>"; };
 		5B1FC5C77AA5F4DD6E2D9B4D /* ExtensionPickerList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionPickerList.swift; sourceTree = "<group>"; };
 		5B2DBBB997953D2E50EBB050 /* MCPServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPServer.swift; sourceTree = "<group>"; };
@@ -1679,6 +1688,9 @@
 		A1B2C3D4E5F6010100000003 /* SnippetFolderIconView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnippetFolderIconView.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6010100000005 /* SnippetFolderConfigField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnippetFolderConfigField.swift; sourceTree = "<group>"; };
 		7C0D8112DC5513C8331D7DAF /* ParakeetRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParakeetRecognizer.swift; sourceTree = "<group>"; };
+		A10000010000000000000002 /* SraVaaniRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SraVaaniRecognizer.swift; sourceTree = "<group>"; };
+		A10000030000000000000002 /* ParakeetCTCRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParakeetCTCRecognizer.swift; sourceTree = "<group>"; };
+		A10000020000000000000002 /* ModelLibrarySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelLibrarySettingsView.swift; sourceTree = "<group>"; };
 		7C0FB3A9CA762A7A8DB99BA6 /* ExtensionPaletteModifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionPaletteModifiers.swift; sourceTree = "<group>"; };
 		7CEAC6A9B7AF400E10A2FB3B /* CustomCommandEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCommandEditorView.swift; sourceTree = "<group>"; };
 		7CFFF4B2F2BF476AD9B111B9 /* MCPCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPCoordinator.swift; sourceTree = "<group>"; };
@@ -2964,6 +2976,7 @@
 				7DCE032DD72DFA1EA930B7EE /* DictationLanguage.swift */,
 				40D8482A9E265FB492B5B0DA /* DictationMode.swift */,
 				5A54D1E880E274A3B56C6951 /* DictationModel.swift */,
+				A10000040000000000000002 /* DictationTextModel.swift */,
 				B5BD1FBE1BBBAC5DDB1FE8A8 /* DictationTextFormatter.swift */,
 				D558FDBE73563E4292E388DD /* DictationVolumeSnapshot.swift */,
 			);
@@ -3474,6 +3487,7 @@
 				0CD9BD942CF0C95ECEFC41F4 /* CompactShortcutsSection.swift */,
 				C1C4E3A1000F000000000099 /* ExtendedFeaturesSettingsView.swift */,
 				418DA899A1546F3B4AC44777 /* GeneralSettingsView.swift */,
+				A10000020000000000000002 /* ModelLibrarySettingsView.swift */,
 				29D547CAB18AFCFC0390C943 /* NavigationSettingsView.swift */,
 				B3C7D17F97002FD58E8A5F53 /* PermissionsSettingsView.swift */,
 			);
@@ -3824,6 +3838,7 @@
 				C1C4E3A10014000000000008 /* SystemTelemetryReader.swift */,
 				C1C4E3A10014000000000009 /* StatsMonitor.swift */,
 				C1C4E3A10014000000000016 /* AppleSiliconFrequencyReader.swift */,
+				C1C4E3A10014000000000028 /* AppleSMCReader.swift */,
 				C1C4E3A10014000000000017 /* NetworkTelemetryService.swift */,
 			);
 			path = Service;
@@ -4312,6 +4327,8 @@
 				3514AC5995904AFF15855E68 /* DictationTokenizer.swift */,
 				C3CAC74EF89303B0B75D5466 /* Info.plist */,
 				7C0D8112DC5513C8331D7DAF /* ParakeetRecognizer.swift */,
+				A10000010000000000000002 /* SraVaaniRecognizer.swift */,
+				A10000030000000000000002 /* ParakeetCTCRecognizer.swift */,
 				FDC04AF159B94B3E8D1A5217 /* QwenRecognizer.swift */,
 			);
 			path = Helper;
@@ -5139,6 +5156,8 @@
 				33CDC9C90C19C0B87F37C7AA /* DictationTokenizer.swift in Sources */,
 				3EFBA95FB1AFD98C6D92E816 /* DictationWire.swift in Sources */,
 				BFD24D218C3CC151A9F85E94 /* ParakeetRecognizer.swift in Sources */,
+				A10000010000000000000001 /* SraVaaniRecognizer.swift in Sources */,
+				A10000030000000000000001 /* ParakeetCTCRecognizer.swift in Sources */,
 				5E069D8489585223193F44FD /* QwenRecognizer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -5378,6 +5397,7 @@
 				C1C4E3A20014000000000014 /* NetworkProcessInfo.swift in Sources */,
 				C1C4E3A20014000000000015 /* StatsFormatting.swift in Sources */,
 				C1C4E3A20014000000000016 /* AppleSiliconFrequencyReader.swift in Sources */,
+				C1C4E3A20014000000000028 /* AppleSMCReader.swift in Sources */,
 				C1C4E3A20014000000000017 /* NetworkTelemetryService.swift in Sources */,
 				C1C4E3A20014000000000018 /* StatsMenuBarRenderer.swift in Sources */,
 				C1C4E3A20014000000000019 /* StatsProcessIconCache.swift in Sources */,
@@ -5528,6 +5548,7 @@
 				B76144EEADE5F07E39D288F8 /* DictationLanguage.swift in Sources */,
 				25035D216193773BE01D6430 /* DictationMode.swift in Sources */,
 				9511690A4C16CA042542A4AC /* DictationModel.swift in Sources */,
+				A10000040000000000000001 /* DictationTextModel.swift in Sources */,
 				359FBB7F7BE95911B07AE9E2 /* DictationModelDownloader.swift in Sources */,
 				E8B5311B9F93E1646D9B4B0B /* DictationModelStore.swift in Sources */,
 				16B744C774114CAEDC3BDDF1 /* DictationPanel.swift in Sources */,
@@ -5686,6 +5707,7 @@
 				FEC954D6727EFEB00E059980 /* FrontmostApp.swift in Sources */,
 								CLB000000000E3F99B74168A /* ChangelogSettingsView.swift in Sources */,
 C5F60D8681235B95DAA3314F /* GeneralSettingsView.swift in Sources */,
+				A10000020000000000000001 /* ModelLibrarySettingsView.swift in Sources */,
 				C1C4E3A2000F000000000099 /* ExtendedFeaturesSettingsView.swift in Sources */,
 				BA81211D8B660F2DD03A20EA /* GlassEffectView.swift in Sources */,
 				35D8AA4E6FE6FD020A56BD8A /* HIDEventSystem.swift in Sources */,
@@ -6192,6 +6214,8 @@ C5F60D8681235B95DAA3314F /* GeneralSettingsView.swift in Sources */,
 				E21FF1214A8BDCE71E0927D0 /* DictationMel.swift in Sources */,
 				7FAC2421B157177ED5B73494 /* DictationTokenizer.swift in Sources */,
 				8316F4FF17D87647F991757A /* ParakeetRecognizer.swift in Sources */,
+				A10000010000000000000003 /* SraVaaniRecognizer.swift in Sources */,
+				A10000030000000000000003 /* ParakeetCTCRecognizer.swift in Sources */,
 				30354659AEB905E43798B981 /* QwenRecognizer.swift in Sources */,
 				725B41870FDFFE34C0D200DE /* NemotronRecognizer.swift in Sources */,
 				BE8EFE5525544F9EE53FBAE2 /* WhisperApexRecognizer.swift in Sources */,

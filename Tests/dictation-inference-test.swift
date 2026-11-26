@@ -185,8 +185,27 @@ struct DictationInferenceTest {
             fatalError("IndicFlex romanized prompt or Whisper ISO resolution failed")
         }
 
+        // SraVaani SentencePiece protobuf parsing + Model metadata check
+        let tok1 = Data("<unk>".utf8)
+        let spPiece = Data([0x0A, UInt8(tok1.count)]) + tok1 + Data([0x15, 0, 0, 0, 0, 0x18, 0x02])
+        let tok2 = Data("▁hi".utf8)
+        let spPiece2 = Data([0x0A, UInt8(tok2.count)]) + tok2
+        let protoData = Data([0x0A, UInt8(spPiece.count)]) + spPiece
+            + Data([0x0A, UInt8(spPiece2.count)]) + spPiece2
+        let spVocab = try SraVaaniRecognizer.parseSentencePieceVocabulary(from: protoData)
+        guard spVocab[0] == "<unk>", spVocab[1] == "▁hi",
+              DictationModel.sravaani.repository == "spashii/SraVaani-1.0-CoreML",
+              DictationModel.sravaani.components.contains("SraVaaniEncoder.mlmodelc"),
+              DictationModel.v2.parakeetConfiguration?.blankToken == 1024,
+              DictationModel.ctc.isParakeetCTC,
+              DictationModel.ctcSmall.isParakeetCTC,
+              DictationModel.ctcSmall.repository == "FluidInference/parakeet-ctc-110m-coreml"
+        else {
+            fatalError("SraVaani / Parakeet v2 / Parakeet CTC metadata check failed")
+        }
+
         print(
-            "Dictation scores, tokenizer, Fourier transform, mel features, listening bands, audio chunks, live cuts and Indic/Whisper prompts passed"
+            "Dictation scores, tokenizer, FFT, mel features, bands, chunks, live cuts & Indic prompts passed"
         )
     }
 

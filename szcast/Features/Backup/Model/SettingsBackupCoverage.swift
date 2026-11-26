@@ -128,6 +128,8 @@ enum SettingsBackupCoverage {
             "S1 polish styling preferences stay local until backup supports them.",
         AppSettingsKey.dictationS1IdleRelease.rawValue:
             "S1 polish idle release preference stays local to this Mac.",
+        AppSettingsKey.dictationLocalTextModel.rawValue:
+            "Selected local GGUF text model stays local to this Mac.",
         AppSettingsKey.clipboardTextSearchEnabled.rawValue:
             "Background OCR is an opt-in processing choice on this Mac; a backup must not enable it.",
         AppSettingsKey.snippetsEnabled.rawValue:
@@ -354,6 +356,8 @@ enum SettingsBackupCoverage {
             "Menu bar item display state local to this Mac.",
         AppSettingsKey.statsNetworkMenuBar.rawValue:
             "Menu bar item display state local to this Mac.",
+        AppSettingsKey.statsMenuBarSpacing.rawValue:
+            "Menu bar spacing tuning local to this Mac's display.",
         AppSettingsKey.statsRefreshInterval.rawValue:
             "System telemetry polling cadence local to this Mac.",
         AppSettingsKey.appThemePreset.rawValue:

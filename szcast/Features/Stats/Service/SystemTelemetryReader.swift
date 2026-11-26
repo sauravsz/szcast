@@ -98,7 +98,8 @@ final class SystemTelemetryReader {
                     userPct = Double(totalUser) / Double(grandTotal) * 100.0
                     sysPct = Double(totalSys) / Double(grandTotal) * 100.0
                     idlePct = Double(totalIdle) / Double(grandTotal) * 100.0
-                    totalUsage = min(100.0, max(0.0, (Double(totalUser + totalSys) / Double(grandTotal) * 100.0)))
+                    let activeTicks = grandTotal > totalIdle ? (grandTotal - totalIdle) : 0
+                    totalUsage = min(100.0, max(0.0, Double(activeTicks) / Double(grandTotal) * 100.0))
                 }
             } else {
                 for i in 0..<Int(numCPUs) {
@@ -263,13 +264,26 @@ final class SystemTelemetryReader {
         var volumes: [DiskVolume] = []
 
         for url in urls {
+            guard url.path == "/" || url.path.hasPrefix("/Volumes/") else { continue }
             guard let values = try? url.resourceValues(forKeys: Set(keys)) else { continue }
             let name = values.volumeName ?? (url.path == "/" ? "Macintosh HD" : url.lastPathComponent)
-            let total = Int64(values.volumeTotalCapacity ?? 0)
-            guard total > 0 else { continue }
+            var total = Int64(values.volumeTotalCapacity ?? 0)
+            var free = (values.volumeAvailableCapacityForImportantUsage.flatMap { $0 > 0 ? $0 : nil })
+                ?? values.volumeAvailableCapacity.map(Int64.init)
+                ?? 0
 
-            let free = values.volumeAvailableCapacityForImportantUsage
-                ?? Int64(values.volumeAvailableCapacity ?? 0)
+            // Non-APFS volumes (e.g., exFAT SD cards) may return 0 from important-usage keys; verify via statfs.
+            if total <= 0 || free <= 0 {
+                var fs = statfs()
+                if statfs(url.path, &fs) == 0 {
+                    let block = Int64(fs.f_bsize)
+                    let statTotal = Int64(fs.f_blocks) * block
+                    let statFree = Int64(fs.f_bavail) * block
+                    if total <= 0 { total = statTotal }
+                    if free <= 0 { free = statFree }
+                }
+            }
+            guard total > 0 else { continue }
             let used = max(0, total - free)
 
             volumes.append(DiskVolume(
@@ -352,29 +366,36 @@ final class SystemTelemetryReader {
             let curCap = desc[kIOPSCurrentCapacityKey] as? Int ?? 100
             let maxCap = desc[kIOPSMaxCapacityKey] as? Int ?? 100
             let percentage = maxCap > 0 ? Int((Double(curCap) / Double(maxCap)) * 100.0) : curCap
-            let isCharging = desc[kIOPSIsChargingKey] as? Bool ?? false
+            let smart = readSmartBatteryDetails()
+            let isCharging = smart.isCharging ?? (desc[kIOPSIsChargingKey] as? Bool ?? false)
+            let isCharged = desc[kIOPSIsChargedKey] as? Bool ?? false
             let powerState = desc[kIOPSPowerSourceStateKey] as? String
             let isAC = powerState == kIOPSACPowerValue
+            let optimizedOnHold = (desc["Optimized Battery Charging Engaged"] as? Int == 1)
+                || smart.optimizedChargingEngaged
 
-            var timeRemaining: Int? = nil
+            var timeRemaining: Int?
             if isCharging {
-                if let toFull = desc[kIOPSTimeToFullChargeKey] as? Int, toFull > 0 {
+                if let toFull = desc[kIOPSTimeToFullChargeKey] as? Int, toFull > 0, toFull < 65535 {
                     timeRemaining = toFull
                 }
-            } else {
-                if let toEmpty = desc[kIOPSTimeToEmptyKey] as? Int, toEmpty > 0 {
+            } else if !isAC {
+                if let toEmpty = desc[kIOPSTimeToEmptyKey] as? Int, toEmpty > 0, toEmpty < 65535 {
                     timeRemaining = toEmpty
                 }
             }
 
+            let adapterInfoWatts = (IOPSCopyExternalPowerAdapterDetails()?.takeRetainedValue()
+                as? [String: Any])?[kIOPSPowerAdapterWattsKey] as? Int
             let health = desc[kIOPSBatteryHealthKey] as? String ?? "Normal"
-            let smart = readSmartBatteryDetails()
 
             return BatteryStats(
                 hasBattery: true,
                 percentage: min(100, max(0, percentage)),
                 isCharging: isCharging,
+                isCharged: isCharged,
                 isACConnected: isAC,
+                optimizedChargingEngaged: optimizedOnHold && !isCharging && !isCharged,
                 timeRemainingMinutes: timeRemaining,
                 cycleCount: smart.cycleCount,
                 health: health,
@@ -385,7 +406,9 @@ final class SystemTelemetryReader {
                 voltageMillivolts: smart.voltageMV,
                 amperageMilliamps: smart.amperageMA,
                 powerWatts: smart.powerWatts,
-                adapterWatts: smart.adapterWatts,
+                adapterWatts: smart.adapterWatts ?? adapterInfoWatts,
+                adapterPowerWatts: smart.adapterPowerWatts,
+                adapterVoltageVolts: smart.adapterVoltageVolts,
                 temperature: smart.temperatureC
             )
         }
@@ -394,6 +417,8 @@ final class SystemTelemetryReader {
     }
 
     private struct SmartBatteryDetails {
+        var isCharging: Bool?
+        var optimizedChargingEngaged = false
         var cycleCount: Int?
         var healthPct: Int?
         var currentMAh: Int?
@@ -403,6 +428,8 @@ final class SystemTelemetryReader {
         var amperageMA: Int?
         var powerWatts: Double?
         var adapterWatts: Int?
+        var adapterPowerWatts: Double?
+        var adapterVoltageVolts: Double?
         var temperatureC: Double?
     }
 
@@ -418,41 +445,90 @@ final class SystemTelemetryReader {
             return details
         }
 
+        details.isCharging = dict["IsCharging"] as? Bool
         details.cycleCount = dict["CycleCount"] as? Int
         let batteryData = dict["BatteryData"] as? [String: Any]
         details.designMAh = (dict["DesignCapacity"] as? Int) ?? (batteryData?["DesignCapacity"] as? Int)
+        // Prefer top-level AppleRawMaxCapacity / NominalChargeCapacity -> nested NominalChargeCapacity (matches System Info).
         details.maxMAh = (dict["AppleRawMaxCapacity"] as? Int)
-            ?? (batteryData?["AppleRawMaxCapacity"] as? Int)
+            ?? (dict["NominalChargeCapacity"] as? Int)
+            ?? (batteryData?["NominalChargeCapacity"] as? Int)
             ?? (batteryData?["FullChargeCapacity"] as? Int)
+            ?? (batteryData?["AppleRawMaxCapacity"] as? Int)
         details.currentMAh = (dict["AppleRawCurrentCapacity"] as? Int)
-            ?? (batteryData?["AppleRawCurrentCapacity"] as? Int)
             ?? (batteryData?["RemainingCapacity"] as? Int)
+            ?? (batteryData?["AppleRawCurrentCapacity"] as? Int)
 
         if let maxCap = details.maxMAh, let designCap = details.designMAh, designCap > 0 {
             details.healthPct = min(100, Int((Double(maxCap) / Double(designCap) * 100.0).rounded()))
         }
 
-        if let voltage = dict["Voltage"] as? Int {
+        if let voltage = (dict["Voltage"] as? NSNumber)?.intValue {
             details.voltageMV = voltage
         }
-        if let ampNum = dict["InstantAmperage"] as? Int64 ?? dict["Amperage"] as? Int64 {
-            details.amperageMA = Int(ampNum)
-        } else if let amp = dict["Amperage"] as? Int {
-            details.amperageMA = amp
+        if let ampNum = (dict["InstantAmperage"] as? NSNumber) ?? (dict["Amperage"] as? NSNumber) {
+            details.amperageMA = Int(ampNum.int64Value)
         }
-        if let v = details.voltageMV, let a = details.amperageMA {
-            details.powerWatts = (Double(v) * Double(a)) / 1_000_000.0
+        let calculatedPower = details.voltageMV.flatMap { v in
+            details.amperageMA.map { a in (Double(v) * Double(a)) / 1_000_000.0 }
         }
-        if let adapter = dict["AdapterDetails"] as? [String: Any], let watts = adapter["Watts"] as? Int, watts > 0 {
-            details.adapterWatts = watts
-        }
-        if let tempRaw = dict["Temperature"] as? Double, tempRaw > 0 {
-            let celsius = tempRaw > 2000 ? (tempRaw / 100.0) : (tempRaw > 200 ? tempRaw / 10.0 - 273.15 : tempRaw / 100.0)
-            if celsius > 0 && celsius < 120 {
-                details.temperatureC = celsius
+        #if arch(arm64)
+        details.powerWatts = AppleSMCReader.shared.readDouble("PPBR") ?? calculatedPower
+        #else
+        details.powerWatts = calculatedPower
+        #endif
+        details.adapterPowerWatts = AppleSMCReader.shared.readDouble("PDTR")
+
+        if let adapter = dict["AdapterDetails"] as? [String: Any] {
+            if let watts = adapter["Watts"] as? Int, watts > 0 {
+                details.adapterWatts = watts
+            }
+            if let mv = adapter["AdapterVoltage"] as? Int, mv > 0 {
+                details.adapterVoltageVolts = Double(mv) / 1000.0
             }
         }
+        if let charger = dict["ChargerData"] as? [String: Any],
+           let reason = charger["NotChargingReason"] as? Int, reason != 0 {
+            details.optimizedChargingEngaged = true
+        }
+        details.temperatureC = readBatteryTemperatureC(smartBatteryDict: dict, batteryData: batteryData)
         return details
+    }
+
+    private func readBatteryTemperatureC(
+        smartBatteryDict: [String: Any],
+        batteryData: [String: Any]?
+    ) -> Double? {
+        if let raw = smartBatteryDict["Temperature"] as? Double, let celsius = Self.decodeBatteryTemp(raw) {
+            return celsius
+        }
+        if let raw = batteryData?["Temperature"] as? Double, let celsius = Self.decodeBatteryTemp(raw) {
+            return celsius
+        }
+        // Apple Silicon stores pack temperature inside AppleSmartBatteryPack.BatteryData.
+        let pack = IOServiceGetMatchingService(kIOMainPortDefault, IOServiceNameMatching("AppleSmartBatteryPack"))
+        if pack != 0 {
+            defer { IOObjectRelease(pack) }
+            if let packData = IORegistryEntryCreateCFProperty(
+                pack, "BatteryData" as CFString, kCFAllocatorDefault, 0
+            )?.takeRetainedValue() as? [String: Any],
+               let raw = packData["Temperature"] as? Double,
+               let celsius = Self.decodeBatteryTemp(raw) {
+                return celsius
+            }
+        }
+        let smcTemps = ["TB1T", "TB2T"].compactMap { AppleSMCReader.shared.readDouble($0) }
+            .filter { $0.isFinite && $0 > 0 && $0 < 120 }
+        if !smcTemps.isEmpty {
+            return smcTemps.reduce(0, +) / Double(smcTemps.count)
+        }
+        return nil
+    }
+
+    private static func decodeBatteryTemp(_ raw: Double) -> Double? {
+        guard raw.isFinite && raw > 0 else { return nil }
+        let celsius = raw / 100.0
+        return (celsius > 0 && celsius < 120) ? celsius : nil
     }
 
     // MARK: - Network
@@ -524,10 +600,9 @@ final class SystemTelemetryReader {
             ?? "en0"
         var chosen = interfaces[chosenName] ?? IfaceAccum()
 
-        // Prefer 64-bit NET_RT_IFLIST2 byte counters so transfers past 4 GiB never wrap.
-        let counters64 = Self.readInterfaceBytes64()
+        // Prefer 64-bit NET_RT_IFLIST2 byte counters for chosenName so transfers past 4 GiB never wrap.
         let sampleUptime = ProcessInfo.processInfo.systemUptime
-        if let c64 = counters64[chosenName] {
+        if let c64 = Self.readInterfaceBytes64(for: chosenName) {
             chosen.inBytes = c64.inBytes
             chosen.outBytes = c64.outBytes
         }
@@ -678,11 +753,30 @@ final class SystemTelemetryReader {
 
     // MARK: - Helpers
 
+    private static let virtualInterfacePrefixes = ["utun", "ipsec", "ppp", "tun", "tap", "gif", "stf", "wg"]
+
     private func readPrimaryInterfaceName() -> String? {
-        guard let dynamicStore,
-              let dict = SCDynamicStoreCopyValue(dynamicStore, "State:/Network/Global/IPv4" as CFString) as? [String: Any]
-        else { return nil }
-        return dict["PrimaryInterface"] as? String
+        guard let dynamicStore else { return nil }
+        if let dict = SCDynamicStoreCopyValue(dynamicStore, "State:/Network/Global/IPv4" as CFString) as? [String: Any],
+           let primary = dict["PrimaryInterface"] as? String {
+            let isVirtual = Self.virtualInterfacePrefixes.contains { primary.hasPrefix($0) }
+            if !isVirtual { return primary }
+        }
+        if let setup = SCDynamicStoreCopyValue(dynamicStore, "Setup:/Network/Global/IPv4" as CFString) as? [String: Any],
+           let order = setup["ServiceOrder"] as? [String] {
+            for serviceID in order {
+                guard let service = SCDynamicStoreCopyValue(
+                    dynamicStore, "State:/Network/Service/\(serviceID)/IPv4" as CFString
+                ) as? [String: Any],
+                      service["Router"] != nil,
+                      let ifName = service["InterfaceName"] as? String,
+                      !Self.virtualInterfacePrefixes.contains(where: { ifName.hasPrefix($0) }) else {
+                    continue
+                }
+                return ifName
+            }
+        }
+        return nil
     }
 
     private func extractMACAddress(_ sa: UnsafeMutablePointer<sockaddr>) -> String? {
@@ -745,38 +839,38 @@ final class SystemTelemetryReader {
         return 0
     }
 
-    private static func readInterfaceBytes64() -> [String: (inBytes: UInt64, outBytes: UInt64)] {
-        var mib: [Int32] = [CTL_NET, PF_ROUTE, 0, 0, NET_RT_IFLIST2, 0]
+    private static func readInterfaceBytes64(for interfaceName: String) -> (inBytes: UInt64, outBytes: UInt64)? {
+        let index = if_nametoindex(interfaceName)
+        guard index != 0 else { return nil }
+
+        var mib: [Int32] = [CTL_NET, PF_ROUTE, 0, 0, NET_RT_IFLIST2, Int32(index)]
         var len = 0
-        guard sysctl(&mib, UInt32(mib.count), nil, &len, nil, 0) == 0, len > 0 else { return [:] }
-        var allocLen = len + 2048
-        var buf = [UInt8](repeating: 0, count: allocLen)
-        guard sysctl(&mib, UInt32(mib.count), &buf, &allocLen, nil, 0) == 0 else { return [:] }
+        guard sysctl(&mib, UInt32(mib.count), nil, &len, nil, 0) == 0, len > 0 else { return nil }
+        var buf = [UInt8](repeating: 0, count: len + 256)
+        var allocLen = buf.count
+        guard sysctl(&mib, UInt32(mib.count), &buf, &allocLen, nil, 0) == 0 else { return nil }
         len = allocLen
 
-        var result: [String: (inBytes: UInt64, outBytes: UInt64)] = [:]
-        let nlenOffset = MemoryLayout<sockaddr_dl>.offset(of: \sockaddr_dl.sdl_nlen) ?? 5
-        let nameOffsetInSDL = MemoryLayout<sockaddr_dl>.offset(of: \sockaddr_dl.sdl_data) ?? 8
-        buf.withUnsafeBytes { raw in
-            var off = 0
-            while off + MemoryLayout<if_msghdr>.stride <= len {
-                let hdr = raw.loadUnaligned(fromByteOffset: off, as: if_msghdr.self)
-                let msgLen = Int(hdr.ifm_msglen)
-                guard msgLen > 0, off + msgLen <= len else { break }
-                let sdlOff = off + MemoryLayout<if_msghdr2>.stride
-                if Int32(hdr.ifm_type) == RTM_IFINFO2, sdlOff + nameOffsetInSDL <= off + msgLen {
-                    let hdr2 = raw.loadUnaligned(fromByteOffset: off, as: if_msghdr2.self)
-                    let nlen = Int(raw[sdlOff + nlenOffset])
-                    let nameStart = sdlOff + nameOffsetInSDL
-                    if nlen > 0, nameStart + nlen <= off + msgLen,
-                       let name = String(bytes: raw[nameStart..<(nameStart + nlen)], encoding: .utf8) {
-                        result[name] = (UInt64(hdr2.ifm_data.ifi_ibytes), UInt64(hdr2.ifm_data.ifi_obytes))
-                    }
-                }
-                off += msgLen
+        var off = 0
+        while off + MemoryLayout<if_msghdr>.size <= len {
+            var hdr = if_msghdr()
+            buf.withUnsafeBytes { src in
+                _ = memcpy(&hdr, src.baseAddress!.advanced(by: off), MemoryLayout<if_msghdr>.size)
             }
+            let msgLen = Int(hdr.ifm_msglen)
+            guard msgLen > 0, off + msgLen <= len else { break }
+            if Int32(hdr.ifm_type) == RTM_IFINFO2, off + MemoryLayout<if_msghdr2>.size <= len {
+                var hdr2 = if_msghdr2()
+                buf.withUnsafeBytes { src in
+                    _ = memcpy(&hdr2, src.baseAddress!.advanced(by: off), MemoryLayout<if_msghdr2>.size)
+                }
+                if UInt32(hdr2.ifm_index) == index {
+                    return (UInt64(hdr2.ifm_data.ifi_ibytes), UInt64(hdr2.ifm_data.ifi_obytes))
+                }
+            }
+            off += msgLen
         }
-        return result
+        return nil
     }
 
     private static func readInterfaceDisplayNames() -> [String: String] {

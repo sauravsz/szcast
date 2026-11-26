@@ -139,6 +139,7 @@ enum AppSettingsKey: String, CaseIterable {
     case dictationS1IdleRelease = "dictationS1IdleReleaseMinutes"
     case dictationTranscriptionProvider = "dictationTranscriptionProvider"
     case dictationPolishProvider = "dictationPolishProvider"
+    case dictationLocalTextModel = "dictationLocalTextModel"
     case dictationGroqTranscriptionModel = "dictationGroqTranscriptionModel"
     case dictationGroqPolishModel = "dictationGroqPolishModel"
     case dictationBengaliMode = "dictationBengaliMode"
@@ -205,6 +206,7 @@ enum AppSettingsKey: String, CaseIterable {
     case statsDiskMenuBar = "statsDiskMenuBar"
     case statsBatteryMenuBar = "statsBatteryMenuBar"
     case statsNetworkMenuBar = "statsNetworkMenuBar"
+    case statsMenuBarSpacing = "statsMenuBarSpacing"
     case statsRefreshInterval = "statsRefreshInterval"
     case extendedFeaturesV1Migrated = "extendedFeaturesV1Migrated"
 }

@@ -8,6 +8,7 @@ final class DictationLlamaServerManager {
 
     private var process: Process?
     private var runningPort: Int?
+    private var runningModel: DictationTextModel?
     private var idleTask: Task<Void, Never>?
     private(set) var currentIdleRelease: DictationIdleRelease = .never
 
@@ -81,24 +82,37 @@ final class DictationLlamaServerManager {
         process?.isRunning == true
     }
 
-    static func defaultDestinationURL() -> URL {
+    nonisolated static func activeTextModel() -> DictationTextModel {
+        UserDefaults.standard.string(forKey: "dictationLocalTextModel")
+            .flatMap(DictationTextModel.init(rawValue:)) ?? .s1Mini
+    }
+
+    static func defaultDestinationURL(for model: DictationTextModel = .s1Mini) -> URL {
         let home = FileManager.default.homeDirectoryForCurrentUser
-        return home.appendingPathComponent("Library/Application Support/szcast/Models/s1-mini/s1-mini-1.0.gguf")
+        if model == .s1Mini {
+            return home.appendingPathComponent("Library/Application Support/szcast/Models/s1-mini/s1-mini-1.0.gguf")
+        }
+        return home.appendingPathComponent("Library/Application Support/szcast/Models/text/\(model.fileName)")
+    }
+
+    nonisolated static func destinationURL(for model: DictationTextModel) -> URL {
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        if model == .s1Mini {
+            return home.appendingPathComponent("Library/Application Support/szcast/Models/s1-mini/s1-mini-1.0.gguf")
+        }
+        return home.appendingPathComponent("Library/Application Support/szcast/Models/text/\(model.fileName)")
     }
 
     @discardableResult
     static func ensureModelDownloaded() async -> URL? {
-        if let existing = resolveGGUFModel() {
+        let active = activeTextModel()
+        if let existing = resolveGGUFModel(for: active) {
             return existing
         }
-        let destination = defaultDestinationURL()
+        let destination = defaultDestinationURL(for: active)
         try? FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
 
-        let mirrors = [
-            primaryGitHubURL,
-            directHuggingFaceURL
-        ]
-        for mirror in mirrors {
+        for mirror in active.downloadURLs {
             var request = URLRequest(url: mirror)
             request.timeoutInterval = 120.0
             request.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)", forHTTPHeaderField: "User-Agent")
@@ -118,15 +132,17 @@ final class DictationLlamaServerManager {
         return nil
     }
 
-    nonisolated static func resolveGGUFModel() -> URL? {
+    nonisolated static func resolveGGUFModel(for model: DictationTextModel = activeTextModel()) -> URL? {
         let home = FileManager.default.homeDirectoryForCurrentUser
-        let candidates = [
-            home.appendingPathComponent("Library/Application Support/szcast/Models/s1-mini/s1-mini-1.0.gguf"),
-            home.appendingPathComponent("Library/Application Support/szcast/Models/s1-mini-1.0.gguf"),
-            home.appendingPathComponent("Library/Application Support/EnviousWispr/Models/s1-mini/s1-mini-1.0.gguf"),
-            home.appendingPathComponent("Library/Application Support/EnviousWispr/Models/s1-mini.gguf"),
-            AppPaths.caches().appendingPathComponent("Dictation/s1-mini/s1-mini-1.0.gguf")
-        ]
+        var candidates: [URL] = [destinationURL(for: model)]
+        if model == .s1Mini {
+            candidates.append(contentsOf: [
+                home.appendingPathComponent("Library/Application Support/szcast/Models/s1-mini-1.0.gguf"),
+                home.appendingPathComponent("Library/Application Support/EnviousWispr/Models/s1-mini/s1-mini-1.0.gguf"),
+                home.appendingPathComponent("Library/Application Support/EnviousWispr/Models/s1-mini.gguf"),
+                AppPaths.caches().appendingPathComponent("Dictation/s1-mini/s1-mini-1.0.gguf")
+            ])
+        }
         for url in candidates {
             if FileManager.default.fileExists(atPath: url.path),
                let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
@@ -169,18 +185,22 @@ final class DictationLlamaServerManager {
         idleTask?.cancel()
         idleTask = nil
 
+        let targetModel = Self.activeTextModel()
         let port = runningPort ?? Self.defaultPort
         let baseURL = URL(string: "http://127.0.0.1:\(port)")!
 
-        if !forceRestart, process?.isRunning == true {
+        if !forceRestart, process?.isRunning == true, runningModel == targetModel {
             scheduleIdleShutdown(idleRelease: currentIdleRelease)
             return baseURL
         }
 
         stop()
 
-        guard let modelURL = Self.resolveGGUFModel() else {
-            throw NSError(domain: "DictationLlamaServer", code: 1, userInfo: [NSLocalizedDescriptionKey: "s1-mini-1.0.gguf not found"])
+        guard let modelURL = Self.resolveGGUFModel(for: targetModel) else {
+            throw NSError(
+                domain: "DictationLlamaServer", code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "\(targetModel.fileName) not found"]
+            )
         }
         guard let binaryURL = Self.resolveServerBinary() else {
             throw NSError(domain: "DictationLlamaServer", code: 2, userInfo: [NSLocalizedDescriptionKey: "llama-server binary not found"])
@@ -213,6 +233,7 @@ final class DictationLlamaServerManager {
         try p.run()
         self.process = p
         self.runningPort = port
+        self.runningModel = targetModel
 
         // Wait up to 15s for health check (with -np 1, ready in ~0.5s; 15s budget prevents premature kill on slow disks)
         for i in 0..<75 {
@@ -274,5 +295,6 @@ final class DictationLlamaServerManager {
         }
         process = nil
         runningPort = nil
+        runningModel = nil
     }
 }

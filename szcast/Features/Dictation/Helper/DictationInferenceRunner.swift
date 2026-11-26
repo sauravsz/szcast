@@ -19,31 +19,8 @@ extension NemotronRecognizer: DictationRecognizer {
 extension QwenRecognizer: DictationRecognizer {}
 extension WhisperApexRecognizer: DictationRecognizer {}
 extension IndicFlexRecognizer: DictationRecognizer {}
-
-final class SraVaaniRecognizer: DictationRecognizer {
-    private let recognizer: ParakeetRecognizer
-    init(directory: URL) throws {
-        recognizer = try ParakeetRecognizer(directory: directory, model: .sravaani)
-    }
-    func transcribeTimed(_ samples: [Float], language: String?) throws -> TimedTranscript {
-        try recognizer.transcribeTimed(samples)
-    }
-}
-
-final class SraVaaniLiveRecognizer: DictationRecognizer {
-    private let directory: URL
-    init(directory: URL) throws {
-        self.directory = directory
-    }
-    func transcribeTimed(_ samples: [Float], language: String?) throws -> TimedTranscript {
-        guard FileManager.default.fileExists(
-            atPath: directory.appendingPathComponent("Preprocessor.mlmodelc").path
-        ) else {
-            throw DictationInferenceError.incompatibleModel
-        }
-        return try ParakeetRecognizer(directory: directory, model: .redux).transcribeTimed(samples)
-    }
-}
+extension SraVaaniRecognizer: DictationRecognizer {}
+extension ParakeetCTCRecognizer: DictationRecognizer {}
 
 final class DictationInferenceSession {
     private var loadedModel: DictationModel?
@@ -63,14 +40,14 @@ final class DictationInferenceSession {
             switch model {
             case .qwenSmall, .qwenLarge:
                 return try QwenRecognizer(directory: directory)
-            case .ultra, .redux:
+            case .ultra, .redux, .v2:
                 return try ParakeetRecognizer(directory: directory, model: model)
+            case .ctc, .ctcSmall:
+                return try ParakeetCTCRecognizer(directory: directory)
             case .nemotron:
                 return try NemotronRecognizer(directory: directory)
             case .sravaani:
                 return try SraVaaniRecognizer(directory: directory)
-            case .sravaaniLive:
-                return try SraVaaniLiveRecognizer(directory: directory)
             case .whisperApex:
                 return try WhisperApexRecognizer(directory: directory)
             case .indicFlex:

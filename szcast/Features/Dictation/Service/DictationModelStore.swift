@@ -8,9 +8,13 @@ final class DictationModelStore {
     private(set) var downloading: DictationModel?
     private(set) var downloadProgress: (received: Int64, total: Int64)?
     private(set) var removing: DictationModel?
+    private(set) var downloadingSupport: DictationSupportModel?
+    private(set) var supportDownloadProgress: (received: Int64, total: Int64)?
+    private(set) var removingSupport: DictationSupportModel?
     private(set) var transcribing = false
     private(set) var loadedModel: DictationModel?
     private(set) var installedModels: Set<DictationModel> = []
+    private(set) var installedSupportModels: Set<DictationSupportModel> = []
     private(set) var isPrewarming = false
     @ObservationIgnored private var worker: DictationWorker?
     @ObservationIgnored private var releaseTask: Task<Void, Never>?
@@ -18,6 +22,8 @@ final class DictationModelStore {
     @ObservationIgnored private var idleRelease: DictationIdleRelease
     @ObservationIgnored private var downloadTask: Task<Void, Error>?
     @ObservationIgnored private var downloadID: UUID?
+    @ObservationIgnored private var supportDownloadTask: Task<Void, Error>?
+    @ObservationIgnored private var supportDownloadID: UUID?
     @ObservationIgnored private let tokenProvider: (@Sendable () -> String?)?
     private let root: URL
     private let makeWorker: () throws -> DictationWorker
@@ -67,11 +73,27 @@ final class DictationModelStore {
             DictationModel.allCases.filter { model in
                 resolvedDirectory(for: model) != nil
             })
+        installedSupportModels = Set(
+            DictationSupportModel.allCases.filter { supportModel in
+                supportDirectoryIfInstalled(supportModel) != nil
+            })
+    }
+
+    func isSupportInstalled(_ supportModel: DictationSupportModel) -> Bool {
+        installedSupportModels.contains(supportModel)
+    }
+
+    func installedSupportSize(_ supportModel: DictationSupportModel) async -> Int64? {
+        guard let directory = supportDirectoryIfInstalled(supportModel) else { return nil }
+        return await directorySize(directory)
     }
 
     func installedSize(_ model: DictationModel) async -> Int64? {
         guard isInstalled(model) else { return nil }
-        let directory = directory(for: model)
+        return await directorySize(directory(for: model))
+    }
+
+    private func directorySize(_ directory: URL) async -> Int64? {
         let task = Task.detached(priority: .utility) { () -> Int64? in
             guard
                 let files = FileManager.default.enumerator(
@@ -273,11 +295,59 @@ final class DictationModelStore {
     }
 
     func downloadSupportModel(_ supportModel: DictationSupportModel) async throws -> URL {
-        if let existing = supportDirectoryIfInstalled(supportModel) { return existing }
+        if let existing = supportDirectoryIfInstalled(supportModel) {
+            installedSupportModels.insert(supportModel)
+            return existing
+        }
+        guard downloadingSupport == nil, removingSupport != supportModel else { throw Failure.busy }
+        downloadingSupport = supportModel
+        let id = UUID()
+        supportDownloadID = id
         let dest = root.appendingPathComponent(supportModel.folderName)
         let token = tokenProvider?()
-        try await DictationModelDownloader.download(supportModel, destination: dest, token: token)
+        let task = Task.detached(priority: .utility) { [weak self] in
+            try await DictationModelDownloader.download(supportModel, destination: dest, token: token) {
+                [weak self] received, total in
+                Task { @MainActor [weak self] in
+                    guard let self, self.supportDownloadID == id else { return }
+                    self.supportDownloadProgress = (max(self.supportDownloadProgress?.received ?? 0, received), total)
+                }
+            }
+        }
+        supportDownloadTask = task
+        defer {
+            downloadingSupport = nil
+            supportDownloadTask = nil
+            supportDownloadID = nil
+            supportDownloadProgress = nil
+        }
+        try await withTaskCancellationHandler {
+            try await task.value
+        } onCancel: {
+            task.cancel()
+        }
+        installedSupportModels.insert(supportModel)
         return dest
+    }
+
+    func cancelSupportDownload() {
+        supportDownloadID = nil
+        supportDownloadTask?.cancel()
+    }
+
+    func deleteSupportModel(_ supportModel: DictationSupportModel) async throws {
+        guard !transcribing, removingSupport == nil, downloadingSupport != supportModel else { throw Failure.busy }
+        removingSupport = supportModel
+        defer { removingSupport = nil }
+        await release()
+        if let dir = supportDirectoryIfInstalled(supportModel) {
+            try await Task.detached(priority: .utility) {
+                if FileManager.default.fileExists(atPath: dir.path) {
+                    try FileManager.default.removeItem(at: dir)
+                }
+            }.value
+        }
+        installedSupportModels.remove(supportModel)
     }
 
     func ensurePrewarmed(_ model: DictationModel) {
@@ -358,12 +428,15 @@ final class DictationModelStore {
 
     func stop() async {
         downloadTask?.cancel()
+        supportDownloadTask?.cancel()
         try? await downloadTask?.value
+        try? await supportDownloadTask?.value
         await release()
     }
 
     func prepareForTermination() {
         downloadTask?.cancel()
+        supportDownloadTask?.cancel()
         prewarmTask?.cancel()
         worker?.terminate()
     }

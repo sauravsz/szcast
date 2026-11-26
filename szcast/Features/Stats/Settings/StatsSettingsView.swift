@@ -63,6 +63,25 @@ struct StatsSettingsView: View {
                         SettingsRowTitle(.statsMenuBar, "Show Network in Menu Bar")
                     }
                     .disabled(!settings.statsNetworkEnabled)
+
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            SettingsRowTitle(.statsMenuBar, "Menu bar spacing")
+                            Text("Side padding around each item in points.")
+                        }
+                        Spacer()
+                        Slider(value: $settings.statsMenuBarSpacing, in: 0...12, step: 1)
+                            .frame(width: 110)
+                        Stepper(
+                            value: $settings.statsMenuBarSpacing,
+                            in: 0...12,
+                            step: 1
+                        ) {
+                            Text(verbatim: "\(Int(settings.statsMenuBarSpacing.rounded())) pt")
+                                .monospacedDigit()
+                                .frame(minWidth: 36, alignment: .trailing)
+                        }
+                    }
                 } header: {
                     SettingsSectionHeader(.statsMenuBar)
                 }
@@ -106,6 +125,9 @@ struct StatsSettingsView: View {
             StatsMenuBarManager.shared.syncWithSettings()
         }
         .onChange(of: settings.statsNetworkMenuBar) { _, _ in
+            StatsMenuBarManager.shared.syncWithSettings()
+        }
+        .onChange(of: settings.statsMenuBarSpacing) { _, _ in
             StatsMenuBarManager.shared.syncWithSettings()
         }
         .onChange(of: settings.statsRefreshInterval) { _, newInterval in

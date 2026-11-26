@@ -62,31 +62,6 @@ struct CPUPopoverView: View {
                 value: StatsFormatting.uptime(cpu.uptimeSeconds)
             )
 
-            StatsSectionDivider(title: "Average load")
-
-            StatsKeyValueRow(label: "1 minute:", value: String(format: "%.2f", cpu.loadAverage1m))
-            StatsKeyValueRow(label: "5 minutes:", value: String(format: "%.2f", cpu.loadAverage5m))
-            StatsKeyValueRow(label: "15 minutes:", value: String(format: "%.2f", cpu.loadAverage15m))
-
-            if let allMHz = cpu.allCoresFrequencyMHz {
-                StatsSectionDivider(title: "Frequency")
-                StatsKeyValueRow(label: "All cores:", value: "\(allMHz) MHz")
-                if let eMHz = cpu.efficiencyFrequencyMHz {
-                    StatsKeyValueRow(
-                        dotColor: StatsPopoverStyle.teal,
-                        label: "Efficiency cores:",
-                        value: "\(eMHz) MHz"
-                    )
-                }
-                if let pMHz = cpu.performanceFrequencyMHz {
-                    StatsKeyValueRow(
-                        dotColor: StatsPopoverStyle.indigo,
-                        label: "Performance cores:",
-                        value: "\(pMHz) MHz"
-                    )
-                }
-            }
-
             StatsSectionDivider(title: "Top processes")
 
             HStack {

@@ -47,7 +47,6 @@ struct QuickActionsSettingsView: View {
 
             Group {
                 actionsSection
-                modelSection
                 languageSection
             }
             .settingsEnabled(appSettings.quickActionsEnabled)
@@ -161,28 +160,6 @@ struct QuickActionsSettingsView: View {
             .toggleStyle(.checkbox)
             .launcherVisibilityHelp()
             .accessibilityLabel("Show \(title) in launcher")
-    }
-
-    private var modelSection: some View {
-        Section {
-            AIModelSelectionRows(
-                selection: store.model,
-                select: store.select,
-                modelLabel: {
-                    SettingsRowTitle(.quickActionsModel, "Model")
-                    Text("Unless an action sets its own.")
-                },
-                effortLabel: {
-                    SettingsRowTitle(.quickActionsModel, "Reasoning effort")
-                }
-            )
-        } header: {
-            SettingsSectionHeader(.quickActionsModel)
-        } footer: {
-            Text("Separate from AI Chat's, so frequent use needn't bill an API.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
     }
 
     private var languageSection: some View {

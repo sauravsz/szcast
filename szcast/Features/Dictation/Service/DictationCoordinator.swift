@@ -230,7 +230,7 @@ final class DictationCoordinator {
         } else {
             guard !settings.groqAPIKey.isEmpty else {
                 field = nil
-                showMessage(String(localized: "Set your Groq API key in Dictation Settings first"), .danger)
+                showMessage(String(localized: "Set your Groq API key in Model Library first"), .danger)
                 return
             }
         }
@@ -766,7 +766,7 @@ final class DictationCoordinator {
             } else {
                 let model = resolved.model
                 if !models.isInstalled(model) {
-                    showMessage(String(localized: "Download the dictation model in Settings first"), .danger)
+                    showMessage(String(localized: "Download the dictation model in Model Library first"), .danger)
                     return
                 }
                 usedModelID = model.rawValue

@@ -6,8 +6,6 @@ struct NetworkPopoverView: View {
     let downloadHistory: [Double]
     let uploadHistory: [Double]
     let topProcesses: [NetworkProcessInfo]
-    let onRefreshInterface: () -> Void
-    let onRefreshAddress: () -> Void
     let onOpenMonitor: () -> Void
     let onOpenSettings: () -> Void
 
@@ -25,89 +23,6 @@ struct NetworkPopoverView: View {
 
             NetworkMirroredChart(downloads: downloadHistory, uploads: uploadHistory)
                 .frame(height: 74)
-
-            StatsSectionDivider(title: "Connectivity history")
-
-            ConnectivityMatrixView(history: network.connectivityHistory)
-                .padding(.vertical, 2)
-
-            StatsSectionDivider(
-                title: "Details",
-                accessorySymbol: "arrow.clockwise",
-                accessoryHelp: "Refresh connectivity",
-                onAccessory: onRefreshInterface
-            )
-
-            StatsKeyValueRow(
-                dotColor: StatsPopoverStyle.red,
-                label: "Total upload:",
-                value: StatsFormatting.bytes(network.totalUploadBytes)
-            )
-            StatsKeyValueRow(
-                dotColor: StatsPopoverStyle.blue,
-                label: "Total download:",
-                value: StatsFormatting.bytes(network.totalDownloadBytes)
-            )
-            badgeRow(label: "Status:", badgeText: network.isInterfaceUp ? "UP" : "DOWN", isGood: network.isInterfaceUp)
-            badgeRow(
-                label: "Internet connection:",
-                badgeText: network.isInternetUp ? "UP" : "DOWN",
-                isGood: network.isInternetUp
-            )
-            StatsKeyValueRow(
-                label: "Latency:",
-                value: network.latencyMs.map { String(format: "%.2f ms", $0) } ?? "—"
-            )
-            StatsKeyValueRow(
-                label: "Jitter:",
-                value: network.jitterMs.map { String(format: "%.2f ms", $0) } ?? "—"
-            )
-
-            StatsSectionDivider(
-                title: "Interface",
-                accessorySymbol: "slider.horizontal.3",
-                accessoryHelp: "Open Network Settings",
-                onAccessory: openNetworkSettings
-            )
-
-            StatsKeyValueRow(label: "Interface:", value: network.interfaceDisplayName)
-            badgeRow(label: "Status:", badgeText: network.isInterfaceUp ? "UP" : "DOWN", isGood: network.isInterfaceUp)
-            if !network.macAddress.isEmpty {
-                StatsKeyValueRow(label: "Physical address:", value: network.macAddress)
-            }
-            if let ssid = network.wifiSSID {
-                StatsKeyValueRow(label: "Network:", value: ssid)
-            } else if network.needsLocationPermissionForSSID {
-                HStack {
-                    Text(verbatim: "Network:")
-                        .font(.system(size: 11.5))
-                        .foregroundStyle(Theme.Colors.textSecondary)
-                    Spacer()
-                    Button(action: openLocationSettings) {
-                        Text(verbatim: "Open Location Settings")
-                            .font(.system(size: 10.5, weight: .medium))
-                            .foregroundStyle(Theme.Colors.textPrimary)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 3)
-                            .background(
-                                RoundedRectangle(cornerRadius: 5, style: .continuous)
-                                    .fill(Theme.Colors.controlSurface)
-                            )
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(.vertical, 1.5)
-            }
-
-            StatsSectionDivider(
-                title: "Address",
-                accessorySymbol: "arrow.clockwise",
-                accessoryHelp: "Refresh public IP",
-                onAccessory: onRefreshAddress
-            )
-
-            StatsKeyValueRow(label: "Local IP:", value: network.localIP)
-            StatsKeyValueRow(label: "Public IP:", value: publicIPDisplay)
 
             StatsSectionDivider(title: "Top processes")
 
@@ -192,37 +107,6 @@ struct NetworkPopoverView: View {
         }
         .frame(maxWidth: .infinity)
     }
-
-    private func badgeRow(label: String, badgeText: String, isGood: Bool) -> some View {
-        HStack {
-            Text(verbatim: label)
-                .font(.system(size: 11.5))
-                .foregroundStyle(Theme.Colors.textSecondary)
-            Spacer()
-            StatsStatusBadge(text: badgeText, isGood: isGood)
-        }
-        .padding(.vertical, 1.5)
-    }
-
-    private var publicIPDisplay: String {
-        guard let ip = network.publicIPv4 else { return "Unavailable" }
-        if let flag = StatsFormatting.flag(countryCode: network.publicCountryCode) {
-            return "\(ip) \(flag)"
-        }
-        return ip
-    }
-
-    private func openLocationSettings() {
-        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_LocationServices") {
-            NSWorkspace.shared.open(url)
-        }
-    }
-
-    private func openNetworkSettings() {
-        if let url = URL(string: "x-apple.systempreferences:com.apple.Network-Settings.extension") {
-            NSWorkspace.shared.open(url)
-        }
-    }
 }
 
 private struct NetworkMirroredChart: View {
@@ -306,42 +190,5 @@ private struct NetworkMirroredChart: View {
             else { path.addLine(to: CGPoint(x: x, y: y)) }
         }
         return path
-    }
-}
-
-private struct ConnectivityMatrixView: View {
-    let history: [Bool]
-    private let columns = 25
-    private let rows = 3
-
-    var body: some View {
-        let total = columns * rows
-        let padded: [Bool?] = {
-            let tail = history.suffix(total).map { Optional($0) }
-            let missing = max(0, total - tail.count)
-            return Array(repeating: nil, count: missing) + tail
-        }()
-
-        VStack(spacing: 3) {
-            ForEach(0..<rows, id: \.self) { row in
-                HStack(spacing: 3) {
-                    ForEach(0..<columns, id: \.self) { col in
-                        let idx = col * rows + row
-                        let state = idx < padded.count ? padded[idx] : nil
-                        RoundedRectangle(cornerRadius: 1.5, style: .continuous)
-                            .fill(cellColor(for: state))
-                            .frame(height: 7)
-                    }
-                }
-            }
-        }
-    }
-
-    private func cellColor(for state: Bool?) -> Color {
-        switch state {
-        case .some(true): return StatsPopoverStyle.green
-        case .some(false): return StatsPopoverStyle.red
-        case .none: return StatsPopoverStyle.mutedTrack
-        }
     }
 }

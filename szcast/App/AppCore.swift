@@ -995,6 +995,7 @@ final class AppCore {
                 _ = $0.statsDiskMenuBar
                 _ = $0.statsBatteryMenuBar
                 _ = $0.statsNetworkMenuBar
+                _ = $0.statsMenuBarSpacing
             },
             reproject: { $0.applyStatsSettings() }
         )

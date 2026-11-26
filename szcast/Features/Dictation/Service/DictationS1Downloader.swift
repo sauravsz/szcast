@@ -15,6 +15,8 @@ final class DictationS1Downloader {
 
     private(set) var status: Status = .idle
     private(set) var installedModelName: String?
+    private(set) var installedModels: Set<DictationTextModel> = []
+    private(set) var activeDownloadModel: DictationTextModel?
     @ObservationIgnored private var downloadCoordinator: DirectDownloadCoordinator?
 
     static let defaultModelID = "hf.co/superwhisper/s1-mini-gguf:Q4_K_M"
@@ -34,11 +36,29 @@ final class DictationS1Downloader {
         return false
     }
 
+    func isInstalled(_ model: DictationTextModel) -> Bool {
+        installedModels.contains(model)
+    }
+
+    func installedSize(_ model: DictationTextModel) -> Int64? {
+        guard let url = DictationLlamaServerManager.resolveGGUFModel(for: model),
+              let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
+              let size = attrs[.size] as? Int64
+        else { return nil }
+        return size
+    }
+
+    func refreshInstalledModels() {
+        installedModels = Set(
+            DictationTextModel.allCases.filter { DictationLlamaServerManager.resolveGGUFModel(for: $0) != nil }
+        )
+    }
+
     func checkStatus() async {
+        refreshInstalledModels()
         if case .downloading = status { return }
         status = .checking
 
-        // Direct local GGUF check (Standalone method)
         if let ggufURL = DictationLlamaServerManager.resolveGGUFModel() {
             installedModelName = ggufURL.path
             status = .installedDirect(path: ggufURL.path)
@@ -52,32 +72,34 @@ final class DictationS1Downloader {
     func cancelDownload() {
         downloadCoordinator?.cancel()
         downloadCoordinator = nil
+        activeDownloadModel = nil
     }
 
-    /// Download s1-mini-1.0.gguf directly from Hugging Face (Default standalone method)
     func download() {
-        downloadDirectGGUF()
+        download(DictationLlamaServerManager.activeTextModel())
     }
 
     func downloadDirectGGUF() {
+        download(.s1Mini)
+    }
+
+    func download(_ model: DictationTextModel) {
         cancelDownload()
+        activeDownloadModel = model
         status = .downloading(progress: 0.0, statusText: "Connecting to model mirror...")
 
-        let destination = DictationLlamaServerManager.defaultDestinationURL()
+        let destination = DictationLlamaServerManager.defaultDestinationURL(for: model)
         try? FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
 
-        let mirrors = [
-            DictationLlamaServerManager.primaryGitHubURL,
-            DictationLlamaServerManager.directHuggingFaceURL
-        ]
-
         let coordinator = DirectDownloadCoordinator(
+            expectedBytes: model.expectedBytes,
             onProgress: { [weak self] progress, statusText in
                 self?.status = .downloading(progress: progress, statusText: statusText)
             },
             onCompletion: { [weak self] result in
                 guard let self else { return }
                 self.downloadCoordinator = nil
+                self.activeDownloadModel = nil
                 switch result {
                 case .success(let tempURL):
                     do {
@@ -100,12 +122,12 @@ final class DictationS1Downloader {
         )
 
         self.downloadCoordinator = coordinator
-        coordinator.start(urls: mirrors)
+        coordinator.start(urls: model.downloadURLs)
     }
 
-    /// Import existing model file from local disk
-    func importModelFile(from sourceURL: URL) async throws {
-        let destination = DictationLlamaServerManager.defaultDestinationURL()
+    /// Import existing GGUF model file from local disk for the chosen local text model slot.
+    func importModelFile(from sourceURL: URL, as model: DictationTextModel = .s1Mini) async throws {
+        let destination = DictationLlamaServerManager.defaultDestinationURL(for: model)
         try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
         if FileManager.default.fileExists(atPath: destination.path) {
             try FileManager.default.removeItem(at: destination)
@@ -113,11 +135,31 @@ final class DictationS1Downloader {
         try FileManager.default.copyItem(at: sourceURL, to: destination)
         await checkStatus()
     }
+
+    /// Removes a downloaded local GGUF text model after stopping the daemon if it is active.
+    func removeModel(_ model: DictationTextModel = DictationLlamaServerManager.activeTextModel()) async throws {
+        if activeDownloadModel == model {
+            cancelDownload()
+        }
+        if DictationLlamaServerManager.activeTextModel() == model {
+            DictationLlamaServerManager.shared.stop()
+        }
+        if let existing = DictationLlamaServerManager.resolveGGUFModel(for: model),
+           FileManager.default.fileExists(atPath: existing.path) {
+            try FileManager.default.removeItem(at: existing)
+        }
+        let defaultURL = DictationLlamaServerManager.defaultDestinationURL(for: model)
+        if FileManager.default.fileExists(atPath: defaultURL.path) {
+            try FileManager.default.removeItem(at: defaultURL)
+        }
+        await checkStatus()
+    }
 }
 
 private final class DirectDownloadCoordinator: NSObject, URLSessionDownloadDelegate, @unchecked Sendable {
     private let onProgress: @MainActor (Double, String) -> Void
     private let onCompletion: @MainActor (Result<URL, Error>) -> Void
+    private let expectedBytes: Int64
     private var session: URLSession?
     private var task: URLSessionDownloadTask?
     private var urls: [URL] = []
@@ -126,9 +168,11 @@ private final class DirectDownloadCoordinator: NSObject, URLSessionDownloadDeleg
     private var retryCount: Int = 0
 
     init(
+        expectedBytes: Int64 = 484_219_808,
         onProgress: @escaping @MainActor (Double, String) -> Void,
         onCompletion: @escaping @MainActor (Result<URL, Error>) -> Void
     ) {
+        self.expectedBytes = expectedBytes
         self.onProgress = onProgress
         self.onCompletion = onCompletion
         super.init()
@@ -185,7 +229,7 @@ private final class DirectDownloadCoordinator: NSObject, URLSessionDownloadDeleg
         totalBytesWritten: Int64,
         totalBytesExpectedToWrite: Int64
     ) {
-        let expected = totalBytesExpectedToWrite > 0 ? totalBytesExpectedToWrite : 484_219_808
+        let expected = totalBytesExpectedToWrite > 0 ? totalBytesExpectedToWrite : expectedBytes
         let progress = min(1.0, max(0.0, Double(totalBytesWritten) / Double(expected)))
         let mbReceived = Double(totalBytesWritten) / (1024 * 1024)
         let mbTotal = Double(expected) / (1024 * 1024)

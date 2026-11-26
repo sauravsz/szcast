@@ -8,7 +8,7 @@ enum StatsMenuBarContent: Equatable {
 
 @MainActor
 enum StatsMenuBarRenderer {
-    private static let horizontalPadding: CGFloat = 4
+    static let defaultHorizontalPadding: CGFloat = 4
     private static let stackedMinContentWidth: CGFloat = 25
     private static let networkMinContentWidth: CGFloat = 29
     private static let batteryBodySize = NSSize(width: 21, height: 11.5)
@@ -19,7 +19,12 @@ enum StatsMenuBarRenderer {
     private static let valueFont = NSFont.monospacedDigitSystemFont(ofSize: 12.0, weight: .medium)
     private static let networkFont = NSFont.monospacedDigitSystemFont(ofSize: 9.0, weight: .regular)
 
-    static func apply(content: StatsMenuBarContent, accessibilityText: String, to item: NSStatusItem) {
+    static func apply(
+        content: StatsMenuBarContent,
+        accessibilityText: String,
+        horizontalPadding: CGFloat = defaultHorizontalPadding,
+        to item: NSStatusItem
+    ) {
         guard let button = item.button else { return }
 
         let view: StatsMenuBarItemView
@@ -32,7 +37,8 @@ enum StatsMenuBarRenderer {
             view = created
         }
 
-        let targetLength = ceil(measuredContentWidth(for: content)) + horizontalPadding * 2
+        let clampedPadding = max(0, horizontalPadding)
+        let targetLength = ceil(measuredContentWidth(for: content)) + clampedPadding * 2
         if abs(item.length - targetLength) > 0.5 {
             item.length = targetLength
         }
@@ -40,6 +46,7 @@ enum StatsMenuBarRenderer {
             view.frame = button.bounds
         }
 
+        view.horizontalPadding = clampedPadding
         view.content = content
         button.setAccessibilityLabel(accessibilityText)
     }
@@ -59,7 +66,11 @@ enum StatsMenuBarRenderer {
         }
     }
 
-    static func draw(content: StatsMenuBarContent, in bounds: NSRect) {
+    static func draw(
+        content: StatsMenuBarContent,
+        horizontalPadding: CGFloat = defaultHorizontalPadding,
+        in bounds: NSRect
+    ) {
         let ink = NSColor.textColor
         let stackSpan: CGFloat = 16.0
         let topCapY = round(bounds.midY - stackSpan / 2.0)
@@ -98,6 +109,7 @@ enum StatsMenuBarRenderer {
                 isCharging: isCharging,
                 isACConnected: isACConnected,
                 hasBattery: hasBattery,
+                horizontalPadding: horizontalPadding,
                 ink: ink,
                 in: bounds
             )
@@ -109,6 +121,7 @@ enum StatsMenuBarRenderer {
         isCharging: Bool,
         isACConnected: Bool,
         hasBattery: Bool,
+        horizontalPadding: CGFloat,
         ink: NSColor,
         in bounds: NSRect
     ) {
@@ -216,6 +229,14 @@ enum StatsMenuBarRenderer {
 }
 
 private final class StatsMenuBarItemView: NSView {
+    var horizontalPadding: CGFloat = StatsMenuBarRenderer.defaultHorizontalPadding {
+        didSet {
+            if abs(oldValue - horizontalPadding) > 0.01 {
+                needsDisplay = true
+            }
+        }
+    }
+
     var content: StatsMenuBarContent? {
         didSet {
             if oldValue != content {
@@ -237,6 +258,6 @@ private final class StatsMenuBarItemView: NSView {
 
     override func draw(_ dirtyRect: NSRect) {
         guard let content else { return }
-        StatsMenuBarRenderer.draw(content: content, in: bounds)
+        StatsMenuBarRenderer.draw(content: content, horizontalPadding: horizontalPadding, in: bounds)
     }
 }

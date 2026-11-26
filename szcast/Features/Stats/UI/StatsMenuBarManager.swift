@@ -82,11 +82,14 @@ final class StatsMenuBarManager: NSObject {
     }
 
     private func updateStatusItems(with snapshot: StatsSnapshot) {
+        let horizontalPadding = CGFloat(settings.statsMenuBarSpacing)
+
         if let item = cpuItem {
             let value = "\(Int(snapshot.cpu.totalUsage.rounded()))%"
             StatsMenuBarRenderer.apply(
                 content: .stackedMetric(label: "CPU", value: value),
                 accessibilityText: "CPU \(value)",
+                horizontalPadding: horizontalPadding,
                 to: item
             )
         }
@@ -96,6 +99,7 @@ final class StatsMenuBarManager: NSObject {
             StatsMenuBarRenderer.apply(
                 content: .stackedMetric(label: "RAM", value: value),
                 accessibilityText: "Memory \(value)",
+                horizontalPadding: horizontalPadding,
                 to: item
             )
         }
@@ -105,6 +109,7 @@ final class StatsMenuBarManager: NSObject {
             StatsMenuBarRenderer.apply(
                 content: .stackedMetric(label: "SSD", value: value),
                 accessibilityText: "Disk \(value)",
+                horizontalPadding: horizontalPadding,
                 to: item
             )
         }
@@ -120,6 +125,7 @@ final class StatsMenuBarManager: NSObject {
                     hasBattery: bat.hasBattery
                 ),
                 accessibilityText: label,
+                horizontalPadding: horizontalPadding,
                 to: item
             )
         }
@@ -130,6 +136,7 @@ final class StatsMenuBarManager: NSObject {
             StatsMenuBarRenderer.apply(
                 content: .networkSpeed(download: downStr, upload: upStr),
                 accessibilityText: "Network down \(downStr), up \(upStr)",
+                horizontalPadding: horizontalPadding,
                 to: item
             )
         }
