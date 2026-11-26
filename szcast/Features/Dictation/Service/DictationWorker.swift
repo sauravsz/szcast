@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 final class DictationWorker: Sendable {
     private let process: Process
@@ -53,16 +54,26 @@ final class DictationWorker: Sendable {
         onReady: @escaping @MainActor @Sendable () -> Void
     ) async throws -> TimedTranscript {
         try Task.checkCancellation()
-        guard samples.count == request.sampleCount, (1...DictationWire.maximumSamples).contains(samples.count)
-        else {
+        let validCount = samples.count == request.sampleCount && (
+            request.prewarmOnly
+                ? samples.isEmpty
+                : (1...DictationWire.maximumSamples).contains(samples.count)
+        )
+        guard validCount else {
             throw DictationWire.Failure.unavailable
         }
-        let timeout = 60 + samples.count / DictationWire.sampleRate * 2
-        let deadline = Task.detached(priority: .utility) {
-            do { try await Task.sleep(for: .seconds(timeout)) } catch { return }
+        // Cold CoreML/ANE specialization can exceed 60s on first load; only bound inference once `.ready` arrives.
+        let prepareTimeoutSeconds = 240
+        let inferenceTimeoutSeconds = 60 + samples.count / DictationWire.sampleRate * 2
+        let prepareDeadline = Task.detached(priority: .utility) {
+            do { try await Task.sleep(for: .seconds(prepareTimeoutSeconds)) } catch { return }
             self.terminate()
         }
-        defer { deadline.cancel() }
+        let inferenceDeadline = Mutex<Task<Void, Never>?>(nil)
+        defer {
+            prepareDeadline.cancel()
+            inferenceDeadline.withLock { $0?.cancel() }
+        }
         return try await withTaskCancellationHandler {
             let responses = AsyncThrowingStream<DictationWire.Response, Error>(
                 bufferingPolicy: .bufferingOldest(2)
@@ -77,8 +88,17 @@ final class DictationWorker: Sendable {
                         else {
                             throw DictationWire.Failure.unavailable
                         }
+                        prepareDeadline.cancel()
+                        inferenceDeadline.withLock { slot in
+                            slot = Task.detached(priority: .utility) {
+                                do { try await Task.sleep(for: .seconds(inferenceTimeoutSeconds)) } catch { return }
+                                self.terminate()
+                            }
+                        }
                         continuation.yield(ready)
-                        try samples.withUnsafeBytes { try self.input.write(contentsOf: $0) }
+                        if !samples.isEmpty {
+                            try samples.withUnsafeBytes { try self.input.write(contentsOf: $0) }
+                        }
                         guard
                             let result = try DictationWire.read(
                                 DictationWire.Response.self, from: self.output),

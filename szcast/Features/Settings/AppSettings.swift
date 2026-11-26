@@ -578,6 +578,10 @@ final class AppSettings {
         didSet { defaults.set(dictationTranscriptionProvider.rawValue, forKey: Key.dictationTranscriptionProvider.rawValue) }
     }
 
+    var dictationCloudSpeechProvider: DictationCloudSpeechProvider {
+        didSet { defaults.set(dictationCloudSpeechProvider.rawValue, forKey: Key.dictationCloudSpeechProvider.rawValue) }
+    }
+
     var dictationPolishProvider: DictationPolishProvider {
         didSet { defaults.set(dictationPolishProvider.rawValue, forKey: Key.dictationPolishProvider.rawValue) }
     }
@@ -593,6 +597,10 @@ final class AppSettings {
 
     var dictationGroqTranscriptionModel: String {
         didSet { defaults.set(dictationGroqTranscriptionModel, forKey: Key.dictationGroqTranscriptionModel.rawValue) }
+    }
+
+    var dictationDeepgramModel: String {
+        didSet { defaults.set(dictationDeepgramModel, forKey: Key.dictationDeepgramModel.rawValue) }
     }
 
     var dictationGroqPolishModel: String {
@@ -671,6 +679,18 @@ final class AppSettings {
                 try? KeychainSecretStore.groqAPIKeys.removeSecret(for: "groq")
             } else {
                 try? KeychainSecretStore.groqAPIKeys.setSecret(trimmed, for: "groq")
+            }
+        }
+    }
+
+    var deepgramAPIKey: String {
+        get { (try? KeychainSecretStore.deepgramAPIKeys.secret(for: "deepgram")) ?? "" }
+        set {
+            let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.isEmpty {
+                try? KeychainSecretStore.deepgramAPIKeys.removeSecret(for: "deepgram")
+            } else {
+                try? KeychainSecretStore.deepgramAPIKeys.setSecret(trimmed, for: "deepgram")
             }
         }
     }
@@ -1326,9 +1346,12 @@ final class AppSettings {
             defaults.object(forKey: Key.dictationS1IdleRelease.rawValue)
             .flatMap { $0 as? Int }
             .flatMap(DictationIdleRelease.init(rawValue:)) ?? .never
-        dictationTranscriptionProvider =
+        dictationTranscriptionProvider = DictationTranscriptionProvider.fromStored(
             defaults.string(forKey: Key.dictationTranscriptionProvider.rawValue)
-            .flatMap(DictationTranscriptionProvider.init(rawValue:)) ?? .parakeet
+        )
+        dictationCloudSpeechProvider =
+            defaults.string(forKey: Key.dictationCloudSpeechProvider.rawValue)
+            .flatMap(DictationCloudSpeechProvider.init(rawValue:)) ?? .groq
         dictationPolishProvider =
             defaults.string(forKey: Key.dictationPolishProvider.rawValue)
             .flatMap(DictationPolishProvider.init(rawValue:)) ?? .localS1
@@ -1337,6 +1360,8 @@ final class AppSettings {
             .flatMap(DictationTextModel.init(rawValue:)) ?? .s1Mini
         let savedStt = defaults.string(forKey: Key.dictationGroqTranscriptionModel.rawValue)
         dictationGroqTranscriptionModel = (savedStt == "whisper-large-v3" || savedStt == nil) ? "whisper-large-v3-turbo" : savedStt!
+        let savedDeepgram = defaults.string(forKey: Key.dictationDeepgramModel.rawValue)
+        dictationDeepgramModel = (savedDeepgram?.isEmpty == false) ? savedDeepgram! : "nova-3"
 
         let validPolishModels = ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"]
         let savedPolish = defaults.string(forKey: Key.dictationGroqPolishModel.rawValue)

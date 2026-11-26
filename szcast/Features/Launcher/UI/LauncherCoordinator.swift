@@ -384,6 +384,8 @@ final class LauncherCoordinator {
         case .dictationInsights:
             dismissPalette()
             core.settingsCoordinator.showSettings(tab: .dictation)
+        case .switchTranscriptionModel:
+            paletteCoordinator.togglePalette(mode: .switchTranscriptionModel, seeding: searchQuery)
         case .transcriptStudio:
             dismissPalette()
             core.transcriptStudio.showWindow()

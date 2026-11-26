@@ -1,24 +1,49 @@
 import Foundation
 
 enum DictationTranscriptionProvider: String, CaseIterable, Identifiable, Sendable {
-    case parakeet = "parakeet"
-    case groq = "groq"
+    case local = "local"
+    case cloud = "cloud"
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .parakeet:
-            return String(localized: "Parakeet (Local)")
-        case .groq:
-            return String(localized: "Groq Whisper (Cloud)")
+        case .local:
+            return String(localized: "Local")
+        case .cloud:
+            return String(localized: "Cloud")
         }
     }
 
     var shortTitle: String {
         switch self {
-        case .parakeet: return "Parakeet"
-        case .groq: return "Groq Cloud"
+        case .local: return "Local"
+        case .cloud: return "Cloud"
+        }
+    }
+
+    static func fromStored(_ raw: String?) -> Self {
+        switch raw?.lowercased() {
+        case "cloud", "groq":
+            return .cloud
+        default:
+            return .local
+        }
+    }
+}
+
+enum DictationCloudSpeechProvider: String, CaseIterable, Identifiable, Sendable {
+    case groq = "groq"
+    case deepgram = "deepgram"
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .groq:
+            return String(localized: "Groq")
+        case .deepgram:
+            return String(localized: "Deepgram")
         }
     }
 }

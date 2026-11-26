@@ -32,6 +32,7 @@ enum PaletteMode: String, CaseIterable, Identifiable {
     case keepassxc
     case textTransformer
     case systemStats
+    case switchTranscriptionModel
 
     var id: String { rawValue }
 
@@ -68,6 +69,7 @@ enum PaletteMode: String, CaseIterable, Identifiable {
         case .keepassxc: return "lock.fill"
         case .textTransformer: return "text.word.spacing"
         case .systemStats: return "gauge.with.needle"
+        case .switchTranscriptionModel: return "cpu"
         }
     }
     var placeholder: String {
@@ -103,6 +105,7 @@ enum PaletteMode: String, CaseIterable, Identifiable {
         case .keepassxc: return String(localized: "Search KeePassXC passwords…")
         case .textTransformer: return String(localized: "Transform, convert casing, format text…")
         case .systemStats: return String(localized: "System Stats & Resource Monitor…")
+        case .switchTranscriptionModel: return String(localized: "Filter transcription models…")
         }
     }
 }

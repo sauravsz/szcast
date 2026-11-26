@@ -401,9 +401,39 @@ struct DictationTest {
         check(HinglishPhoneticConverter.convert("नमस्ते कमल।"), "namaste kamal.")
         check(HinglishPhoneticConverter.convert("यह काम करना है"), "yah kam karna hai")
         check(HinglishPhoneticConverter.convert("sky John"), "sky John")
+        check(
+            HinglishPhoneticConverter.normalizeIfNeeded(
+                "आप कैसे हैं", hindiMode: .off, isCloud: false, localModel: .sravaani
+            ),
+            "aap kaise hain"
+        )
+        check(
+            HinglishPhoneticConverter.normalizeIfNeeded(
+                "आप कैसे हैं", hindiMode: .off, isCloud: false, localModel: .redux
+            ),
+            "आप कैसे हैं"
+        )
         check(AvroPhoneticConverter.convert("আমি ভালো আছি, কেমন?"), "ami bhalo achhi, kemon?")
         check(AvroPhoneticConverter.convert("কাজ করতে যাচ্ছি।"), "kaj korte jachchhi.")
         check(AvroPhoneticConverter.convert("ধন্যবাদ, sky John"), "dhonyobad, sky John")
+        check(
+            AvroPhoneticConverter.normalizeIfNeeded(
+                "আমি ভালো আছি", bengaliMode: .off, isCloud: false, localModel: .sravaani
+            ),
+            "ami bhalo achhi"
+        )
+        check(
+            AvroPhoneticConverter.normalizeIfNeeded(
+                "আমি ভালো আছি", bengaliMode: .off, isCloud: false, localModel: .indicFlex
+            ),
+            "ami bhalo achhi"
+        )
+        check(
+            AvroPhoneticConverter.normalizeIfNeeded(
+                "আমি ভালো আছি", bengaliMode: .off, isCloud: false, localModel: .redux
+            ),
+            "আমি ভালো আছি"
+        )
 
         print("Dictation text formatting passed")
     }

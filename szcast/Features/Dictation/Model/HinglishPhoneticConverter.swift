@@ -11,7 +11,8 @@ public enum HinglishPhoneticConverter {
 
     private static let matras: [Unicode.Scalar: String] = [
         "ा": "a", "ि": "i", "ी": "i", "ु": "u", "ू": "u",
-        "ृ": "ri", "े": "e", "ै": "ai", "ो": "o", "ौ": "au", "ॉ": "o"
+        "ृ": "ri", "े": "e", "ै": "ai", "ो": "o", "ौ": "au",
+        "ॅ": "e", "ॉ": "o", "ॆ": "e", "ॊ": "o"
     ]
 
     private static let consonants: [Unicode.Scalar: String] = [
@@ -20,7 +21,7 @@ public enum HinglishPhoneticConverter {
         "ट": "t", "ठ": "th", "ड": "d", "ढ": "dh", "ण": "n",
         "त": "t", "थ": "th", "द": "d", "ध": "dh", "न": "n",
         "प": "p", "फ": "ph", "ब": "b", "भ": "bh", "म": "m",
-        "य": "y", "र": "r", "ल": "l", "व": "v",
+        "य": "y", "र": "r", "ल": "l", "ळ": "l", "व": "v",
         "श": "sh", "ष": "sh", "स": "s", "ह": "h",
         "ड़": "r", "ढ़": "rh", "फ़": "f", "ज़": "z", "क़": "q", "ख़": "kh", "ग़": "gh"
     ]
@@ -50,6 +51,24 @@ public enum HinglishPhoneticConverter {
         text.unicodeScalars.contains { scalar in
             scalar.value >= 0x0900 && scalar.value <= 0x097F
         }
+    }
+
+    /// Transliterates Devanagari Hindi to Latin letters when Hinglish conversion is requested
+    /// or when an Indic CoreML model (`SraVaani`) emits native Devanagari script.
+    static func normalizeIfNeeded(
+        _ text: String,
+        hindiMode: DictationHindiMode,
+        isCloud: Bool,
+        localModel: DictationModel
+    ) -> String {
+        if hindiMode == .phoneticEngine {
+            return convert(text)
+        }
+        if (!isCloud && (localModel == .sravaani || localModel == .whisperApex || localModel == .indicFlex))
+            || (hindiMode != .off && containsHindi(text)) {
+            return convert(text)
+        }
+        return text
     }
 
     /// Converts Hindi Devanagari script to Romanized Latin characters (Hinglish).
@@ -91,8 +110,12 @@ public enum HinglishPhoneticConverter {
                     && scalars[index + 1] == halant && scalars[index + 2] == "ष"
                 let isGya = scalar == "ज" && index + 2 < count
                     && scalars[index + 1] == halant && scalars[index + 2] == "ञ"
-                if isKsha || isGya {
-                    c = isKsha ? "ksh" : "gy"
+                let isTra = scalar == "त" && index + 2 < count
+                    && scalars[index + 1] == halant && scalars[index + 2] == "र"
+                let isShra = scalar == "श" && index + 2 < count
+                    && scalars[index + 1] == halant && scalars[index + 2] == "र"
+                if isKsha || isGya || isTra || isShra {
+                    c = isKsha ? "ksh" : (isGya ? "gy" : (isTra ? "tr" : "shr"))
                     index += 3
                 } else {
                     index += 1

@@ -260,10 +260,14 @@ enum SettingsBackupCoverage {
             "AI Chat code font family depends on fonts installed on this Mac.",
         AppSettingsKey.dictationTranscriptionProvider.rawValue:
             "Transcription provider preference stays local to this Mac.",
+        AppSettingsKey.dictationCloudSpeechProvider.rawValue:
+            "Cloud speech provider preference stays local to this Mac.",
         AppSettingsKey.dictationPolishProvider.rawValue:
             "Speech normalization provider preference stays local to this Mac.",
         AppSettingsKey.dictationGroqTranscriptionModel.rawValue:
             "Cloud transcription model selection stays local to this Mac.",
+        AppSettingsKey.dictationDeepgramModel.rawValue:
+            "Deepgram transcription model selection stays local to this Mac.",
         AppSettingsKey.dictationGroqPolishModel.rawValue:
             "Cloud speech normalization model selection stays local to this Mac.",
         AppSettingsKey.dictationBengaliMode.rawValue:

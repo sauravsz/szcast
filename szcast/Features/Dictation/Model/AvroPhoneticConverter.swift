@@ -51,6 +51,24 @@ public enum AvroPhoneticConverter {
         }
     }
 
+    /// Transliterates Bengali script to Latin letters when Banglish conversion is requested
+    /// or when an Indic/Banglish CoreML model emits native Bengali characters.
+    static func normalizeIfNeeded(
+        _ text: String,
+        bengaliMode: DictationBengaliMode,
+        isCloud: Bool,
+        localModel: DictationModel
+    ) -> String {
+        if bengaliMode == .avroPhonetic {
+            return convert(text)
+        }
+        if (!isCloud && (localModel == .sravaani || localModel == .indicFlex))
+            || (bengaliMode != .off && containsBengali(text)) {
+            return convert(text)
+        }
+        return text
+    }
+
     /// Converts Bengali script to Romanized Latin characters (Banglish).
     public static func convert(_ input: String) -> String {
         guard containsBengali(input) else { return input }

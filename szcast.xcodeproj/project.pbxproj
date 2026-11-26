@@ -43,6 +43,7 @@
 		CLB000000000E3F99B74168A /* ChangelogSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CLR000000000AE455707835D /* ChangelogSettingsView.swift */; };
 		C1C4E3A20008000000000001 /* DictationProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10008000000000001 /* DictationProvider.swift */; };
 		C1C4E3A20008000000000002 /* GroqAudioService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10008000000000002 /* GroqAudioService.swift */; };
+		C1C4E3A20008000000000004 /* DeepgramAudioService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10008000000000004 /* DeepgramAudioService.swift */; };
 		C1C4E3A20008000000000003 /* GroqPolishService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10008000000000003 /* GroqPolishService.swift */; };
 		C1C4E3A20009000000000001 /* DisplayTweaksPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10009000000000001 /* DisplayTweaksPreset.swift */; };
 		C1C4E3A20009000000000002 /* DisplayTweaksService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C4E3A10009000000000002 /* DisplayTweaksService.swift */; };
@@ -173,6 +174,7 @@
 		16A8F14D5FC9C26CA6B616FB /* MCPServerConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B883E55507FA5BE11A31B54 /* MCPServerConnection.swift */; };
 		16B744C774114CAEDC3BDDF1 /* DictationPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE7D64F656A9DD6EE1CCC93A /* DictationPanel.swift */; };
 		A7B8C9D0E1F2A3B4C5D6E7F8 /* DictationInsightsDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6A1B2C3D4E5F60718293A4B /* DictationInsightsDashboardView.swift */; };
+		A7B8C9D0E1F2A3B4C5D6E7F9 /* DictationModelSwitcherScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6A1B2C3D4E5F60718293A4C /* DictationModelSwitcherScreen.swift */; };
 		16F81066F7B59AD44CE09261 /* ActivationPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2575583134BE03EA9FA719CD /* ActivationPolicy.swift */; };
 		170C8ABCDB7848A9DA0A0524 /* PinnedEmojiStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114F2E3148CA76595B795B37 /* PinnedEmojiStore.swift */; };
 		175DAAED3859A54861D8CEBC /* SnippetRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BFFB1471D30C915BBC5DCBA /* SnippetRepository.swift */; };
@@ -1159,6 +1161,7 @@
 		CLR000000000AE455707835D /* ChangelogSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangelogSettingsView.swift; sourceTree = "<group>"; };
 		C1C4E3A10008000000000001 /* DictationProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationProvider.swift; sourceTree = "<group>"; };
 		C1C4E3A10008000000000002 /* GroqAudioService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroqAudioService.swift; sourceTree = "<group>"; };
+		C1C4E3A10008000000000004 /* DeepgramAudioService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepgramAudioService.swift; sourceTree = "<group>"; };
 		C1C4E3A10008000000000003 /* GroqPolishService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroqPolishService.swift; sourceTree = "<group>"; };
 		C1C4E3A10009000000000001 /* DisplayTweaksPreset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayTweaksPreset.swift; sourceTree = "<group>"; };
 		C1C4E3A10009000000000002 /* DisplayTweaksService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayTweaksService.swift; sourceTree = "<group>"; };
@@ -1957,6 +1960,7 @@
 		BE6972F177922B1EB8831735 /* OnboardingCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingCard.swift; sourceTree = "<group>"; };
 		BE7D64F656A9DD6EE1CCC93A /* DictationPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationPanel.swift; sourceTree = "<group>"; };
 		B6A1B2C3D4E5F60718293A4B /* DictationInsightsDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationInsightsDashboardView.swift; sourceTree = "<group>"; };
+		B6A1B2C3D4E5F60718293A4C /* DictationModelSwitcherScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DictationModelSwitcherScreen.swift; sourceTree = "<group>"; };
 		BEBE95E04A3E8B4BCF973A04 /* MathBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MathBox.swift; sourceTree = "<group>"; };
 		BEDDA8820165672AF8464E25 /* SettingsComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsComponents.swift; sourceTree = "<group>"; };
 		BF36BDC9ACE867DCC2CCF746 /* SystemPromptEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemPromptEditor.swift; sourceTree = "<group>"; };
@@ -2715,6 +2719,7 @@
 				C1C4E3A10010000000000004 /* MeetingNotetakerCoordinator.swift */,
 				C1C4E3A1000F000000000003 /* DictationFileTranscriber.swift */,
 				C1C4E3A10008000000000002 /* GroqAudioService.swift */,
+				C1C4E3A10008000000000004 /* DeepgramAudioService.swift */,
 				C1C4E3A10008000000000003 /* GroqPolishService.swift */,
 				5514468C4D18274EF07EE1E7 /* DictationDictionaryStore.swift */,
 				16DDD06310C52049BD45EA67 /* DictationHistoryStore.swift */,
@@ -2878,6 +2883,7 @@
 				D1CAB6330A4AF3DF78305F3F /* TranscriptStudioWindowView.swift */,
 				BE7D64F656A9DD6EE1CCC93A /* DictationPanel.swift */,
 				B6A1B2C3D4E5F60718293A4B /* DictationInsightsDashboardView.swift */,
+				B6A1B2C3D4E5F60718293A4C /* DictationModelSwitcherScreen.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -5350,6 +5356,7 @@
 				C1C4E3A20010000000000003 /* MeetingNote.swift in Sources */,
 				C1C4E3A20010000000000004 /* MeetingNotetakerCoordinator.swift in Sources */,
 				C1C4E3A20008000000000002 /* GroqAudioService.swift in Sources */,
+				C1C4E3A20008000000000004 /* DeepgramAudioService.swift in Sources */,
 				C1C4E3A20008000000000003 /* GroqPolishService.swift in Sources */,
 				C1C4E3A20009000000000001 /* DisplayTweaksPreset.swift in Sources */,
 				C1C4E3A20009000000000002 /* DisplayTweaksService.swift in Sources */,
@@ -5553,6 +5560,7 @@
 				E8B5311B9F93E1646D9B4B0B /* DictationModelStore.swift in Sources */,
 				16B744C774114CAEDC3BDDF1 /* DictationPanel.swift in Sources */,
 				A7B8C9D0E1F2A3B4C5D6E7F8 /* DictationInsightsDashboardView.swift in Sources */,
+				A7B8C9D0E1F2A3B4C5D6E7F9 /* DictationModelSwitcherScreen.swift in Sources */,
 				4963DF703487FA79850C2DF3 /* DictationSettingsView.swift in Sources */,
 				2672173B7EE995B0FD4A0E13 /* DictationSpectrum.swift in Sources */,
 				9640B5D294EA4D3ACA1D0A85 /* DictationTextFormatter.swift in Sources */,

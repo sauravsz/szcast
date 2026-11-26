@@ -10,9 +10,10 @@ enum DictationHelper {
         do {
             while let request = try DictationWire.read(DictationWire.Request.self, from: input) {
                 try DictationTensor.checkParent()
-                guard (1...DictationWire.maximumSamples).contains(request.sampleCount),
-                    request.directory.isFileURL
-                else {
+                let validCount = request.prewarmOnly
+                    ? request.sampleCount == 0
+                    : (1...DictationWire.maximumSamples).contains(request.sampleCount)
+                guard validCount, request.directory.isFileURL else {
                     throw DictationInferenceError.invalidAudio
                 }
                 do {
@@ -23,6 +24,11 @@ enum DictationHelper {
                     continue
                 }
                 try DictationWire.write(DictationWire.Response(id: request.id, status: .ready), to: output)
+                if request.prewarmOnly {
+                    try DictationWire.write(
+                        DictationWire.Response(id: request.id, status: .result), to: output)
+                    continue
+                }
                 try autoreleasepool {
                     let data = try DictationWire.readExactly(
                         request.sampleCount * MemoryLayout<Float>.size, from: input)

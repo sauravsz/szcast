@@ -27,6 +27,7 @@ final class MeetingNotetakerCoordinator {
     private let models: DictationModelStore
     private let s1Polisher = DictationS1Polisher()
     private let groqAudio = GroqAudioService()
+    private let deepgramAudio = DeepgramAudioService()
     private let groqPolish = GroqPolishService()
     private let settings: AppSettings
     private let store: TranscriptStore
@@ -258,23 +259,77 @@ final class MeetingNotetakerCoordinator {
     }
 
     private func transcribeSamples(_ samples: [Float], diarizeSpeakers: Int?) async throws -> TimedTranscript {
-        if settings.dictationTranscriptionProvider == .groq, !settings.groqAPIKey.isEmpty {
-            let text = try await groqAudio.transcribe(
+        if settings.dictationTranscriptionProvider == .cloud,
+           DictationCloudSpeechService.hasAPIKey(
+               for: settings.dictationCloudSpeechProvider,
+               groqAPIKey: settings.groqAPIKey,
+               deepgramAPIKey: settings.deepgramAPIKey
+           ) {
+            let result = try await DictationCloudSpeechService.transcribe(
+                provider: settings.dictationCloudSpeechProvider,
                 samples: samples,
-                apiKey: settings.groqAPIKey,
-                model: settings.dictationGroqTranscriptionModel,
-                language: settings.dictationLanguage
+                groqAudio: groqAudio,
+                deepgramAudio: deepgramAudio,
+                groqAPIKey: settings.groqAPIKey,
+                deepgramAPIKey: settings.deepgramAPIKey,
+                groqModel: settings.dictationGroqTranscriptionModel,
+                deepgramModel: settings.dictationDeepgramModel,
+                language: settings.dictationLanguage,
+                keyterms: dictionaryStore.promptVocabularyHint()
             )
-            return TimedTranscript(text: text)
+            return TimedTranscript(text: result.text)
         }
         let model = models.isInstalled(settings.dictationModel) ? settings.dictationModel : .redux
-        return try await models.transcribeTimed(
+        var timed = try await models.transcribeTimed(
             samples,
             model: model,
             language: settings.dictationLanguage,
             useVAD: settings.dictationVADEnabled,
             diarizeSpeakers: diarizeSpeakers
         )
+        let hindiMode = settings.dictationHindiMode
+        let bengaliMode = settings.dictationBengaliMode
+        let normalizeIndic: (String) -> String = { raw in
+            let withBanglish = AvroPhoneticConverter.normalizeIfNeeded(
+                raw,
+                bengaliMode: bengaliMode,
+                isCloud: false,
+                localModel: model
+            )
+            return HinglishPhoneticConverter.normalizeIfNeeded(
+                withBanglish,
+                hindiMode: hindiMode,
+                isCloud: false,
+                localModel: model
+            )
+        }
+        let normalized = normalizeIndic(timed.text)
+        if normalized != timed.text {
+            let normalizeWord: (TranscriptWord) -> TranscriptWord = { word in
+                TranscriptWord(
+                    text: normalizeIndic(word.text),
+                    start: word.start,
+                    end: word.end,
+                    confidence: word.confidence
+                )
+            }
+            let convertedSegments = timed.segments.map { seg in
+                TranscriptSegment(
+                    id: seg.id,
+                    speaker: seg.speaker,
+                    text: normalizeIndic(seg.text),
+                    start: seg.start,
+                    end: seg.end,
+                    words: seg.words.map(normalizeWord)
+                )
+            }
+            timed = TimedTranscript(
+                text: normalized,
+                words: timed.words.map(normalizeWord),
+                segments: convertedSegments
+            )
+        }
+        return timed
     }
 
     private func generateMemoAndNote(

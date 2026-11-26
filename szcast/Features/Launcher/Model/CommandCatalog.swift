@@ -78,7 +78,9 @@ extension SettingsTab {
         case .emoji: [.searchEmoji]
         case .calendar:
             [.joinNextMeeting, .mySchedule, .createEvent, .copyMeetingLink, .openInCalendar]
-        case .dictation: [.dictationInsights, .transcriptStudio, .recordMeeting, .transcribeMediaURL]
+        case .dictation: [
+            .dictationInsights, .switchTranscriptionModel, .transcriptStudio, .recordMeeting, .transcribeMediaURL
+        ]
         case .cleanKeyboard: [.cleanKeyboard]
         case .enteAuth: [.enteAuth]
         case .duckDuckGoEmail: [.generateDuckAddress]

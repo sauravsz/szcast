@@ -23,10 +23,10 @@ struct DictationInsightsDashboardView: View {
     private var engineSummary: String {
         let asrName: String
         switch settings.dictationTranscriptionProvider {
-        case .parakeet:
+        case .local:
             asrName = settings.dictationModel.variantTitle
-        case .groq:
-            asrName = "Groq Cloud"
+        case .cloud:
+            asrName = settings.dictationCloudSpeechProvider.title
         }
 
         let polishName: String

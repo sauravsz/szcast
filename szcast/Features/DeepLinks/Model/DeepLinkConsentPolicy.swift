@@ -60,7 +60,7 @@ enum DeepLinkConsentPolicy {
             .searchNotes, .createWindowLayout, .switchRoom, .createRoom, .createQuicklink,
             .searchQuicklinks, .importQuicklinks, .exportQuicklinks, .searchSnippets, .createSnippet,
             .exportSettings, .importSettings, .importFromRaycast, .checkForUpdates, .settings, .about,
-            .support, .focusTimer, .cleanClipboardURL, .dictationInsights, .transcriptStudio, .transcribeMediaURL, .changelog, .textTransformer, .systemStats:
+            .support, .focusTimer, .cleanClipboardURL, .dictationInsights, .switchTranscriptionModel, .transcriptStudio, .transcribeMediaURL, .changelog, .textTransformer, .systemStats:
             false
         }
     }

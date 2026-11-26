@@ -15,6 +15,7 @@ final class DictationCoordinator {
     let s1Downloader = DictationS1Downloader()
     private let s1Polisher = DictationS1Polisher()
     private let groqAudio = GroqAudioService()
+    private let deepgramAudio = DeepgramAudioService()
     private let groqPolish = GroqPolishService()
     private let livePreviewCoordinator = DictationLivePreviewCoordinator()
     let transformStore = DictationTransformStore()
@@ -220,7 +221,7 @@ final class DictationCoordinator {
     }
 
     private func begin(target: InjectionTarget?) {
-        if settings.dictationTranscriptionProvider == .parakeet {
+        if settings.dictationTranscriptionProvider == .local {
             guard models.isInstalled(settings.dictationModel) else {
                 field = nil
                 showMessage(String(localized: "Download the dictation model in Settings first"), .danger)
@@ -228,9 +229,14 @@ final class DictationCoordinator {
             }
             models.prewarm(settings.dictationModel)
         } else {
-            guard !settings.groqAPIKey.isEmpty else {
+            let cloudProvider = settings.dictationCloudSpeechProvider
+            guard DictationCloudSpeechService.hasAPIKey(
+                for: cloudProvider,
+                groqAPIKey: settings.groqAPIKey,
+                deepgramAPIKey: settings.deepgramAPIKey
+            ) else {
                 field = nil
-                showMessage(String(localized: "Set your Groq API key in Model Library first"), .danger)
+                showMessage(DictationCloudSpeechService.missingKeyPrompt(for: cloudProvider), .danger)
                 return
             }
         }
@@ -354,18 +360,21 @@ final class DictationCoordinator {
                 : nil
             do {
                 var timed = TimedTranscript(text: "")
-                if settings.dictationTranscriptionProvider == .groq {
-                    guard !settings.groqAPIKey.isEmpty else {
-                        throw GroqAudioService.GroqAudioError.missingAPIKey
-                    }
-                    let text = try await groqAudio.transcribe(
+                if settings.dictationTranscriptionProvider == .cloud {
+                    let result = try await DictationCloudSpeechService.transcribe(
+                        provider: settings.dictationCloudSpeechProvider,
                         samples: samples,
-                        apiKey: settings.groqAPIKey,
-                        model: settings.dictationGroqTranscriptionModel,
+                        groqAudio: groqAudio,
+                        deepgramAudio: deepgramAudio,
+                        groqAPIKey: settings.groqAPIKey,
+                        deepgramAPIKey: settings.deepgramAPIKey,
+                        groqModel: settings.dictationGroqTranscriptionModel,
+                        deepgramModel: settings.dictationDeepgramModel,
                         language: language,
-                        prompt: buildGroqPrompt(surroundingSnippet: surroundingSnippet)
+                        keyterms: dictionaryStore.promptVocabularyHint(),
+                        groqPrompt: buildGroqPrompt(surroundingSnippet: surroundingSnippet)
                     )
-                    timed = TimedTranscript(text: text)
+                    timed = TimedTranscript(text: result.text)
                 } else {
                     timed = try await models.transcribeTimed(
                         samples,
@@ -467,12 +476,18 @@ final class DictationCoordinator {
                     processed = dictionaryStore.applySnippets(processed)
                 }
 
-                if settings.dictationBengaliMode == .avroPhonetic {
-                    processed = AvroPhoneticConverter.convert(processed)
-                }
-                if settings.dictationHindiMode == .phoneticEngine {
-                    processed = HinglishPhoneticConverter.convert(processed)
-                }
+                processed = AvroPhoneticConverter.normalizeIfNeeded(
+                    processed,
+                    bengaliMode: settings.dictationBengaliMode,
+                    isCloud: settings.dictationTranscriptionProvider == .cloud,
+                    localModel: model
+                )
+                processed = HinglishPhoneticConverter.normalizeIfNeeded(
+                    processed,
+                    hindiMode: settings.dictationHindiMode,
+                    isCloud: settings.dictationTranscriptionProvider == .cloud,
+                    localModel: model
+                )
 
                 // A mic belongs to its field: the text goes in there, never to the clipboard.
                 let context = destination.pastes ? insertionContext() : nil
@@ -578,7 +593,7 @@ final class DictationCoordinator {
             let stoppedSamples = await capture.stop()
             let samplesToKeep = stoppedSamples.isEmpty ? capturedSnapshot : stoppedSamples
             if retainCancelled, samplesToKeep.count >= 8_000,
-                settings.dictationTranscriptionProvider == .parakeet,
+                settings.dictationTranscriptionProvider == .local,
                 models.isInstalled(activeModel)
             {
                 if let timed = try? await models.transcribeTimed(
@@ -750,19 +765,22 @@ final class DictationCoordinator {
             let language = resolved.language
             var timed = TimedTranscript(text: "")
             var usedModelID = settings.dictationModel.rawValue
-            if settings.dictationTranscriptionProvider == .groq {
-                guard !settings.groqAPIKey.isEmpty else {
-                    throw GroqAudioService.GroqAudioError.missingAPIKey
-                }
-                let text = try await groqAudio.transcribe(
+            if settings.dictationTranscriptionProvider == .cloud {
+                let result = try await DictationCloudSpeechService.transcribe(
+                    provider: settings.dictationCloudSpeechProvider,
                     samples: samples,
-                    apiKey: settings.groqAPIKey,
-                    model: settings.dictationGroqTranscriptionModel,
+                    groqAudio: groqAudio,
+                    deepgramAudio: deepgramAudio,
+                    groqAPIKey: settings.groqAPIKey,
+                    deepgramAPIKey: settings.deepgramAPIKey,
+                    groqModel: settings.dictationGroqTranscriptionModel,
+                    deepgramModel: settings.dictationDeepgramModel,
                     language: language,
-                    prompt: buildGroqPrompt(surroundingSnippet: nil)
+                    keyterms: dictionaryStore.promptVocabularyHint(),
+                    groqPrompt: buildGroqPrompt(surroundingSnippet: nil)
                 )
-                timed = TimedTranscript(text: text)
-                usedModelID = settings.dictationGroqTranscriptionModel
+                timed = TimedTranscript(text: result.text)
+                usedModelID = result.modelID
             } else {
                 let model = resolved.model
                 if !models.isInstalled(model) {
@@ -821,12 +839,18 @@ final class DictationCoordinator {
                 processed = dictionaryStore.applySnippets(processed)
             }
 
-            if settings.dictationBengaliMode == .avroPhonetic {
-                processed = AvroPhoneticConverter.convert(processed)
-            }
-            if settings.dictationHindiMode == .phoneticEngine {
-                processed = HinglishPhoneticConverter.convert(processed)
-            }
+            processed = AvroPhoneticConverter.normalizeIfNeeded(
+                processed,
+                bengaliMode: settings.dictationBengaliMode,
+                isCloud: settings.dictationTranscriptionProvider == .cloud,
+                localModel: resolved.model
+            )
+            processed = HinglishPhoneticConverter.normalizeIfNeeded(
+                processed,
+                hindiMode: settings.dictationHindiMode,
+                isCloud: settings.dictationTranscriptionProvider == .cloud,
+                localModel: resolved.model
+            )
 
             let text = DictationTextFormatter.format(
                 processed, context: nil,
@@ -864,15 +888,23 @@ final class DictationCoordinator {
         }
     }
 
-    private func resolvedLocalModelAndLanguage() -> (model: DictationModel, language: String?) {
-        var model = settings.dictationModel
-        var language = settings.dictationLanguage
-        if settings.dictationHindiMode == .whisperApex, models.isInstalled(.whisperApex) {
-            model = .whisperApex
-        } else if settings.dictationBengaliMode == .indicFlex, models.isInstalled(.indicFlex) {
-            model = .indicFlex
+    func activateLocalModel(_ model: DictationModel) {
+        guard models.isInstalled(model) else { return }
+        settings.dictationTranscriptionProvider = .local
+        settings.dictationModel = model
+        if settings.dictationHindiMode == .whisperApex && model != .whisperApex {
+            settings.dictationHindiMode = .phoneticEngine
         }
-        if model == .indicFlex, settings.dictationBengaliMode == .indicFlex {
+        if settings.dictationBengaliMode == .indicFlex && model != .indicFlex {
+            settings.dictationBengaliMode = .avroPhonetic
+        }
+        models.prewarm(model)
+    }
+
+    private func resolvedLocalModelAndLanguage() -> (model: DictationModel, language: String?) {
+        let model = settings.dictationModel
+        var language = settings.dictationLanguage
+        if model == .indicFlex {
             let iso = DictationLanguage.isoCode(for: language)
             if iso == nil || iso == "en" {
                 language = DictationLanguage.bengali.rawValue

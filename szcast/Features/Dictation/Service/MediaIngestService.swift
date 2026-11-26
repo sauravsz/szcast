@@ -94,7 +94,6 @@ final class MediaIngestService {
             }
             let s1Polisher = DictationS1Polisher()
             let groqPolish = GroqPolishService()
-            let groqAudio = GroqAudioService()
 
             while let nextIndex = self.jobs.firstIndex(where: { $0.status == .queued }) {
                 let job = self.jobs[nextIndex]
@@ -121,15 +120,26 @@ final class MediaIngestService {
 
                     let timed: TimedTranscript
                     let usedModel: String
-                    if settings.dictationTranscriptionProvider == .groq, !settings.groqAPIKey.isEmpty {
-                        let text = try await groqAudio.transcribe(
+                    if settings.dictationTranscriptionProvider == .cloud,
+                       DictationCloudSpeechService.hasAPIKey(
+                           for: settings.dictationCloudSpeechProvider,
+                           groqAPIKey: settings.groqAPIKey,
+                           deepgramAPIKey: settings.deepgramAPIKey
+                       ) {
+                        let result = try await DictationCloudSpeechService.transcribe(
+                            provider: settings.dictationCloudSpeechProvider,
                             samples: fetched.samples,
-                            apiKey: settings.groqAPIKey,
-                            model: settings.dictationGroqTranscriptionModel,
-                            language: settings.dictationLanguage
+                            groqAudio: GroqAudioService(),
+                            deepgramAudio: DeepgramAudioService(),
+                            groqAPIKey: settings.groqAPIKey,
+                            deepgramAPIKey: settings.deepgramAPIKey,
+                            groqModel: settings.dictationGroqTranscriptionModel,
+                            deepgramModel: settings.dictationDeepgramModel,
+                            language: settings.dictationLanguage,
+                            keyterms: dictionaryStore.promptVocabularyHint()
                         )
-                        timed = TimedTranscript(text: text)
-                        usedModel = settings.dictationGroqTranscriptionModel
+                        timed = TimedTranscript(text: result.text)
+                        usedModel = result.modelID
                     } else {
                         let model = models.isInstalled(settings.dictationModel) ? settings.dictationModel : .redux
                         guard models.isInstalled(model) else {
@@ -173,6 +183,25 @@ final class MediaIngestService {
                             groq: groqPolish
                         )
                     }
+
+                    let isCloud = settings.dictationTranscriptionProvider == .cloud
+                        && DictationCloudSpeechService.hasAPIKey(
+                            for: settings.dictationCloudSpeechProvider,
+                            groqAPIKey: settings.groqAPIKey,
+                            deepgramAPIKey: settings.deepgramAPIKey
+                        )
+                    text = AvroPhoneticConverter.normalizeIfNeeded(
+                        text,
+                        bengaliMode: settings.dictationBengaliMode,
+                        isCloud: isCloud,
+                        localModel: settings.dictationModel
+                    )
+                    text = HinglishPhoneticConverter.normalizeIfNeeded(
+                        text,
+                        hindiMode: settings.dictationHindiMode,
+                        isCloud: isCloud,
+                        localModel: settings.dictationModel
+                    )
 
                     let recID = UUID()
                     let wavName = "\(recID.uuidString).wav"

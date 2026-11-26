@@ -77,6 +77,7 @@ enum CommandID: String, CaseIterable, Sendable {
     case textTransformer = "command:text-transformer"
     case systemStats = "command:system-stats"
     case dictationInsights = "command:dictation-insights"
+    case switchTranscriptionModel = "command:switch-transcription-model"
     case transcriptStudio = "command:transcript-studio"
     case recordMeeting = "command:record-meeting"
     case transcribeMediaURL = "command:transcribe-media-url"
@@ -185,6 +186,7 @@ enum CommandID: String, CaseIterable, Sendable {
         case .textTransformer: return "Text Transformer"
         case .systemStats: return "System Stats"
         case .dictationInsights: return "Dictation Insights"
+        case .switchTranscriptionModel: return "Switch Transcription Model"
         case .transcriptStudio: return "Open Transcript Studio"
         case .recordMeeting: return "Toggle Meeting Recording"
         case .transcribeMediaURL: return "Transcribe URL / Podcast"
@@ -268,6 +270,7 @@ enum CommandID: String, CaseIterable, Sendable {
         case .textTransformer: return "text.word.spacing"
         case .systemStats: return "gauge.with.needle"
         case .dictationInsights: return "chart.bar.xaxis"
+        case .switchTranscriptionModel: return "cpu"
         case .transcriptStudio: return "text.bubble.rtl"
         case .recordMeeting: return "record.circle"
         case .transcribeMediaURL: return "link.badge.plus"
@@ -342,6 +345,10 @@ enum CommandID: String, CaseIterable, Sendable {
         case .textTransformer: ["transform", "casing", "camelcase", "snakecase", "json", "prettify", "base64", "urlencode", "hex", "slugify"]
         case .systemStats: ["stats", "system stats", "cpu", "ram", "memory", "battery", "hardware", "disk", "activity monitor", "processes"]
         case .dictationInsights: ["insights", "wpm", "words per minute", "dictation insights", "dictation dashboard", "streak"]
+        case .switchTranscriptionModel: [
+            "switch model", "transcription model", "dictation model", "parakeet", "sravaani",
+            "groq", "deepgram", "whisper", "model"
+        ]
         case .transcriptStudio: ["transcript", "transcript studio", "recordings", "diarization", "srt", "vtt", "dapt", "meeting notes"]
         case .recordMeeting: ["record meeting", "notetaker", "meeting", "system audio"]
         case .transcribeMediaURL: ["youtube", "podcast", "apple podcasts", "url", "yt-dlp", "transcribe url"]

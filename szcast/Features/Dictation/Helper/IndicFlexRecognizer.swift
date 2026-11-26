@@ -46,8 +46,9 @@ final class IndicFlexRecognizer {
 
         preprocessor = try DictationTensor.load("indic_flex_preprocessor", at: int8Dir, units: .cpuOnly)
         encoder = try DictationTensor.load("indic_flex_encoder", at: int8Dir, units: .all)
+        // CoreML's stateful GPU/MPSGraph path overflows FP16 on this int8 decoder; CPU FP32 decodes cleanly.
         decoder = try DictationTensor.load(
-            "indic_flex_decoder_stateful", at: int8Dir, units: .cpuAndGPU)
+            "indic_flex_decoder_stateful", at: int8Dir, units: .cpuOnly)
     }
 
     /// Parses `vocab.json` supporting both array (`[String]`) and object (`[String: Int]`) layouts.
@@ -154,18 +155,13 @@ final class IndicFlexRecognizer {
                 }
 
                 let state = decoder.makeState()
-                let selfMask = try DictationTensor.zeros([1, 1, 1, maxDecode])
-                selfMask.withUnsafeMutableBufferPointer(ofType: Float.self) { dst, _ in
-                    dst.initialize(repeating: -10_000)
-                }
-
                 var pos = 0
+
                 func stepToken(_ tokenID: Int) throws -> [Float] {
                     try DictationTensor.checkParent()
                     guard pos < maxDecode else { return [] }
-                    selfMask.withUnsafeMutableBufferPointer(ofType: Float.self) { dst, _ in
-                        dst[pos] = 0
-                    }
+                    let endStep = pos + 1
+                    let selfMask = try DictationTensor.zeros([1, 1, 1, endStep])
                     let pred = try decoder.prediction(
                         from: MLDictionaryFeatureProvider(dictionary: [
                             "input_ids": DictationTensor.integer(tokenID, shape: [1, 1]),
@@ -176,12 +172,49 @@ final class IndicFlexRecognizer {
                         ]),
                         using: state
                     )
-                    pos += 1
+                    pos = endStep
                     return try DictationTensor.floatValues(from: DictationTensor.array("logits", from: pred))
                 }
 
-                var scores = [Float]()
-                for p in prompt { scores = try stepToken(p) }
+                func prefillPrompt(_ prompt: [Int]) throws -> [Float] {
+                    try DictationTensor.checkParent()
+                    let q = min(prompt.count, maxDecode)
+                    guard q > 0 else { return [] }
+                    let inputIDs = try DictationTensor.zeros([1, q], type: .int32)
+                    let posIDs = try DictationTensor.zeros([1, q], type: .int32)
+                    inputIDs.withUnsafeMutableBufferPointer(ofType: Int32.self) { dst, _ in
+                        for (idx, tok) in prompt.prefix(q).enumerated() { dst[idx] = Int32(tok) }
+                    }
+                    posIDs.withUnsafeMutableBufferPointer(ofType: Int32.self) { dst, _ in
+                        for idx in 0..<q { dst[idx] = Int32(idx) }
+                    }
+                    let selfMask = try DictationTensor.zeros([1, 1, q, q])
+                    selfMask.withUnsafeMutableBufferPointer(ofType: Float.self) { dst, _ in
+                        for row in 0..<q {
+                            for col in 0..<q {
+                                dst[row * q + col] = col <= row ? 0 : -10_000
+                            }
+                        }
+                    }
+                    let pred = try decoder.prediction(
+                        from: MLDictionaryFeatureProvider(dictionary: [
+                            "input_ids": inputIDs,
+                            "position_ids": posIDs,
+                            "encoder_states": encStates,
+                            "cross_mask": crossMask,
+                            "self_attn_mask": selfMask
+                        ]),
+                        using: state
+                    )
+                    pos = q
+                    let logits = try DictationTensor.array("logits", from: pred)
+                    let values = try DictationTensor.floatValues(from: logits)
+                    let vocabSize = logits.shape.last?.intValue ?? 0
+                    guard vocabSize > 0, values.count >= q * vocabSize else { return [] }
+                    return Array(values[((q - 1) * vocabSize)..<(q * vocabSize)])
+                }
+
+                var scores = try prefillPrompt(prompt)
                 var pieces = [String]()
                 while pos < maxDecode, let nextID = scores.indices.max(by: { scores[$0] < scores[$1] }) {
                     if nextID == tokenizerConfig.eosId || nextID == tokenizerConfig.padId { break }

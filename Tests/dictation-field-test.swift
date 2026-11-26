@@ -348,9 +348,11 @@ final class AppSettings {
     var dictationS1IdleRelease = DictationIdleRelease.tenMinutes
     var dictationPasteMode = DictationPasteMode.allAtOnce
     var dictationLivePreviewEnabled = true
-    var dictationTranscriptionProvider = DictationTranscriptionProvider.parakeet
+    var dictationTranscriptionProvider = DictationTranscriptionProvider.local
+    var dictationCloudSpeechProvider = DictationCloudSpeechProvider.groq
     var dictationPolishProvider = DictationPolishProvider.localS1
     var dictationGroqTranscriptionModel = "whisper-large-v3-turbo"
+    var dictationDeepgramModel = "nova-3"
     var dictationGroqPolishModel = "openai/gpt-oss-120b"
     var dictationBengaliMode = DictationBengaliMode.off
     var dictationHindiMode = DictationHindiMode.off
@@ -369,6 +371,7 @@ final class AppSettings {
     var dictationAutoStopSilenceSeconds: Double = 0
     var calendarSuggestsMeetingRecording = false
     var groqAPIKey = ""
+    var deepgramAPIKey = ""
 }
 
 enum HotKeyAction { case dictation, dictationSecondary, dictationAddWord, dictationPasteLast, dictationCopyLast }

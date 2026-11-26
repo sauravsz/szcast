@@ -26,6 +26,7 @@ nonisolated enum DictationWire {
         let vadDirectory: URL?
         let diarizeSpeakers: Int?
         let diarizationDirectory: URL?
+        let prewarmOnly: Bool
 
         init(
             id: UUID,
@@ -36,7 +37,8 @@ nonisolated enum DictationWire {
             useVAD: Bool = false,
             vadDirectory: URL? = nil,
             diarizeSpeakers: Int? = nil,
-            diarizationDirectory: URL? = nil
+            diarizationDirectory: URL? = nil,
+            prewarmOnly: Bool = false
         ) {
             self.id = id
             self.model = model
@@ -47,6 +49,7 @@ nonisolated enum DictationWire {
             self.vadDirectory = vadDirectory
             self.diarizeSpeakers = diarizeSpeakers
             self.diarizationDirectory = diarizationDirectory
+            self.prewarmOnly = prewarmOnly
         }
     }
 

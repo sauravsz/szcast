@@ -392,6 +392,17 @@ struct DictationSettingsView: View {
                     ShortcutRecorder(action: .dictationSecondary)
                 }
 
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Switch transcription model")
+                        Text("Opens a quick picker for downloaded local and configured cloud models.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    ShortcutRecorder(action: .command(.switchTranscriptionModel))
+                }
+
                 Toggle(isOn: $bSettings.dictationRetainCancelled) {
                     SettingsRowTitle(.dictationCommands, "Retain cancelled dictations")
                     Text("Transcribes and saves cancelled (Esc) recordings to history instead of discarding.")
@@ -707,6 +718,9 @@ struct DictationSettingsView: View {
                     SettingsRowTitle(.dictationOutput, "Bengali Romanization (Banglish)")
                     Text(settings.dictationBengaliMode.summary)
                 }
+                .onChange(of: settings.dictationBengaliMode) { _, newValue in
+                    if newValue == .indicFlex { coordinator.activateLocalModel(.indicFlex) }
+                }
 
                 Picker(selection: $bSettings.dictationHindiMode) {
                     ForEach(DictationHindiMode.allCases) { mode in
@@ -715,6 +729,9 @@ struct DictationSettingsView: View {
                 } label: {
                     SettingsRowTitle(.dictationOutput, "Hindi Romanization (Hinglish)")
                     Text(settings.dictationHindiMode.summary)
+                }
+                .onChange(of: settings.dictationHindiMode) { _, newValue in
+                    if newValue == .whisperApex { coordinator.activateLocalModel(.whisperApex) }
                 }
             }
         } header: {

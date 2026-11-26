@@ -378,7 +378,9 @@ enum SettingsSearchCatalog {
         .init(.dictationOutput, "Start meetings muted", keywords: ["mute", "mic", "meeting"]),
         .init(.dictationOutput, "Auto-stop on prolonged silence", keywords: ["timeout", "idle", "stop"]),
         .init(.dictationCommands, "Transcript Studio & CLI", keywords: ["szcast-cli", "terminal", "studio", "export"]),
-        .init(.modelLibrarySpeech, "Transcription engine", keywords: ["parakeet", "groq", "engine", "asr"]),
+        .init(.modelLibrarySpeech, "Transcription engine", keywords: ["local", "cloud", "parakeet", "groq", "deepgram", "engine", "asr"]),
+        .init(.modelLibrarySpeech, "Cloud provider", keywords: ["cloud", "groq", "deepgram", "api"]),
+        .init(.modelLibrarySpeech, "Deepgram model", keywords: ["deepgram", "nova-3", "nova-2", "cloud", "stt"]),
         .init(.modelLibrarySpeech, "Speech model", keywords: ["parakeet", "sravaani", "whisper", "nemotron", "qwen", "download"]),
         .init(.modelLibraryPolish, "Normalization engine", keywords: ["s1", "polish", "groq", "llama"]),
         .init(

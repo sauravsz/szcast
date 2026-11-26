@@ -20,6 +20,8 @@ struct KeychainSecretStore: Sendable {
     static let webSearchAPIKeys = KeychainSecretStore(scope: "web-search-api-keys")
     /// Groq Cloud API key.
     static let groqAPIKeys = KeychainSecretStore(scope: "groq-api-keys")
+    /// Deepgram Cloud API key.
+    static let deepgramAPIKeys = KeychainSecretStore(scope: "deepgram-api-keys")
     /// DuckDuckGo Email Protection API token.
     static let duckDuckGoToken = KeychainSecretStore(scope: "duckduckgo-token")
     /// KeePassXC database secrets.

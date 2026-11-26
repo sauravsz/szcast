@@ -47,10 +47,19 @@ final class WhisperApexRecognizer {
             suppressTokens = Set(gen.suppressTokens ?? [])
             beginSuppressTokens = Set(gen.beginSuppressTokens ?? [])
         } else {
-            langToID = ["<|en|>": 50_259, "<|hi|>": 50_276]
+            langToID = ["<|en|>": 50_259, "<|hi|>": 50_276, "<|bn|>": 50_302]
             transcribeTaskID = 50_360
             noTimestampsID = 50_364
-            suppressTokens = []
+            suppressTokens = [
+                1, 2, 7, 8, 9, 10, 14, 25, 26, 27, 28, 29, 31, 58, 59, 60, 61, 62, 63,
+                90, 91, 92, 93, 359, 503, 522, 542, 873, 893, 902, 918, 922, 931,
+                1350, 1853, 1982, 2460, 2627, 3246, 3253, 3268, 3536, 3846, 3961,
+                4183, 4667, 6585, 6647, 7273, 9061, 9383, 10428, 10929, 11938, 12033,
+                12331, 12562, 13793, 14157, 14635, 15265, 15618, 16553, 16604, 18362,
+                18956, 20075, 21675, 22520, 26130, 26161, 26435, 28279, 29464, 31650,
+                32302, 32470, 36865, 42863, 47425, 49870, 50254, 50258, 50359, 50360,
+                50361, 50362, 50363
+            ]
             beginSuppressTokens = [220, 50_257]
         }
 
@@ -60,7 +69,8 @@ final class WhisperApexRecognizer {
             prompts: []
         )
         melModel = try DictationTensor.load("MelSpectrogram", at: directory, units: .cpuOnly)
-        encoder = try DictationTensor.load("AudioEncoder", at: directory, units: .cpuAndNeuralEngine)
+        // GPU avoids ANECompilerService stalls on the 6-bit palettized Whisper Large-v3-Turbo encoder.
+        encoder = try DictationTensor.load("AudioEncoder", at: directory, units: .cpuAndGPU)
         decoder = try DictationTensor.load("TextDecoder", at: directory, units: .cpuAndGPU)
     }
 
@@ -78,8 +88,14 @@ final class WhisperApexRecognizer {
         var chunkTexts = [String]()
         var words = [TranscriptWord]()
 
-        let shortLang = DictationLanguage.isoCode(for: language).map { "<|\($0)|>" } ?? "<|hi|>"
-        let langToken = langToID[shortLang] ?? langToID["<|hi|>"] ?? 50_276
+        // Per Oriserve/Whisper-Hindi2Hinglish-Apex, Hinglish is emitted under the English `<|en|>` token.
+        let iso = DictationLanguage.isoCode(for: language)
+        let shortLang: String = if iso == nil || iso == "hi" || iso == "en" {
+            "<|en|>"
+        } else {
+            "<|\(iso ?? "en")|>"
+        }
+        let langToken = langToID[shortLang] ?? langToID["<|en|>"] ?? 50_259
         let promptTokens = [
             config.decoderStartTokenId,
             langToken,

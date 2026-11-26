@@ -93,6 +93,14 @@ struct DictationWorkerTest {
             }
         }
         guard readiness.workers == 2 else { fatalError("Worker reuse or model-switch cleanup failed") }
+        store.prewarm(.redux)
+        store.prewarm(.ultra)
+        for _ in 0..<40 where store.isPrewarming {
+            try await Task.sleep(for: .milliseconds(50))
+        }
+        guard !store.isPrewarming, store.loadedModel == .ultra, store.isWorkerRunning else {
+            fatalError("Rapid prewarm model switch left stale warming state")
+        }
         try await store.delete(.ultra)
         guard store.loadedModel == nil, store.removing == nil, !store.isInstalled(.ultra),
             !FileManager.default.fileExists(
@@ -214,6 +222,11 @@ struct DictationWorkerTest {
             try DictationWire.write(
                 DictationWire.Response(id: request.id, status: .ready), to: .standardOutput)
             if CommandLine.arguments.contains("crash") { exit(1) }
+            if request.prewarmOnly {
+                try DictationWire.write(
+                    DictationWire.Response(id: request.id, status: .result), to: .standardOutput)
+                continue
+            }
             _ = try DictationWire.readExactly(request.sampleCount * 4, from: .standardInput)
             if CommandLine.arguments.contains("wait") {
                 _ = try DictationWire.readExactly(1, from: .standardInput)

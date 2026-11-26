@@ -444,6 +444,7 @@ run dictation-field-test   Szcast/Features/Dictation/Model/DictationModel.swift 
                            Szcast/Features/Dictation/Service/DictationS1Downloader.swift \
                            Szcast/Features/Dictation/Service/DictationLlamaServerManager.swift \
                            Szcast/Features/Dictation/Service/GroqAudioService.swift \
+                           Szcast/Features/Dictation/Service/DeepgramAudioService.swift \
                            Szcast/Features/Dictation/Service/GroqPolishService.swift \
                            Szcast/Platform/KeychainSecretStore.swift \
                            Szcast/DesignSystem/ChatTypography.swift \

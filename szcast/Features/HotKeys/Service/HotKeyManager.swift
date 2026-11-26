@@ -202,23 +202,36 @@ final class HotKeyManager {
     /// One-time seed, so a fresh install ships with working chords instead of an empty recorder.
     /// A key that already holds a value means the seed ran, so a cleared binding stays cleared.
     func seedDefaultsIfNeeded() {
-        guard !defaults.bool(forKey: Self.seededDefaultsKey) else { return }
-        var seeded = 0
-        // Through `setBinding`, so the seed takes the same path a recorded chord does: indexed,
-        // registered, and conflict-checked. Writing the JSON directly skipped all three.
-        for (action, binding) in DefaultHotKeys.bindings where bindings[action] == nil {
-            guard conflictOwner(of: binding, excluding: action) == nil else { continue }
+        if !defaults.bool(forKey: Self.seededDefaultsKey) {
+            var seeded = 0
+            // Through `setBinding`, so the seed takes the same path a recorded chord does: indexed,
+            // registered, and conflict-checked. Writing the JSON directly skipped all three.
+            for (action, binding) in DefaultHotKeys.bindings where bindings[action] == nil {
+                guard conflictOwner(of: binding, excluding: action) == nil else { continue }
+                setBinding(binding, for: action)
+                seeded += 1
+            }
+            // Only after a pass that bound something: a run where nothing landed must retry next launch
+            // rather than mark the seed done and leave every chord unbound for good.
+            if seeded > 0 || DefaultHotKeys.bindings.allSatisfy({ bindings[$0.0] != nil }) {
+                defaults.set(true, forKey: Self.seededDefaultsKey)
+            }
+        }
+        seedSwitchModelHotKeyIfNeeded()
+    }
+
+    private func seedSwitchModelHotKeyIfNeeded() {
+        guard !defaults.bool(forKey: Self.seededSwitchModelKey) else { return }
+        let action = HotKeyAction.command(.switchTranscriptionModel)
+        let binding = DefaultHotKeys.bindings.first { $0.0 == action }?.1
+        if bindings[action] == nil, let binding, conflictOwner(of: binding, excluding: action) == nil {
             setBinding(binding, for: action)
-            seeded += 1
         }
-        // Only after a pass that bound something: a run where nothing landed must retry next launch
-        // rather than mark the seed done and leave every chord unbound for good.
-        if seeded > 0 || DefaultHotKeys.bindings.allSatisfy({ bindings[$0.0] != nil }) {
-            defaults.set(true, forKey: Self.seededDefaultsKey)
-        }
+        defaults.set(true, forKey: Self.seededSwitchModelKey)
     }
 
     private static let seededDefaultsKey = "szcastHotKeyDefaultsSeeded"
+    private static let seededSwitchModelKey = "szcastSwitchModelHotKeySeeded"
 
     private func storedBinding(for action: HotKeyAction) -> HotKeyBinding? {
         guard

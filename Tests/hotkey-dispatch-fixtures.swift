@@ -9,6 +9,7 @@ enum CommandID: String, CaseIterable, Sendable {
     case generateDuckAddress
     case cleanKeyboard
     case keepassxc
+    case switchTranscriptionModel
     var name: String { rawValue }
     var hotKeyAction: HotKeyAction? { .command(self) }
 }

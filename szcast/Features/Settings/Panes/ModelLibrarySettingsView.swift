@@ -110,10 +110,10 @@ struct ModelLibrarySettingsView: View {
                 }
             } label: {
                 SettingsRowTitle(.modelLibrarySpeech, "Transcription engine")
-                Text("Choose between on-device CoreML models or Groq Cloud Whisper.")
+                Text("Choose between on-device Local models or Cloud speech APIs.")
             }
 
-            if settings.dictationTranscriptionProvider == .parakeet {
+            if settings.dictationTranscriptionProvider == .local {
                 Picker(selection: $selectedFamilyFilter) {
                     Text("All families").tag(DictationModel.Family?.none)
                     ForEach(DictationModel.Family.allCases) { family in
@@ -128,14 +128,37 @@ struct ModelLibrarySettingsView: View {
                     speechModelRow(model)
                 }
             } else {
-                Picker(selection: bSettings.dictationGroqTranscriptionModel) {
-                    Text("whisper-large-v3-turbo (Free)").tag("whisper-large-v3-turbo")
+                Picker(selection: bSettings.dictationCloudSpeechProvider) {
+                    ForEach(DictationCloudSpeechProvider.allCases) { cloud in
+                        Text(cloud.title).tag(cloud)
+                    }
                 } label: {
-                    SettingsRowTitle(.modelLibrarySpeech, "Groq STT model")
-                    Text("Cloud speech recognition powered by Groq LPU hardware (~250ms).")
+                    SettingsRowTitle(.modelLibrarySpeech, "Cloud provider")
+                    Text("Select a cloud speech-to-text provider and supply its API key.")
                 }
 
-                groqKeyRow(bSettings: bSettings)
+                if settings.dictationCloudSpeechProvider == .groq {
+                    Picker(selection: bSettings.dictationGroqTranscriptionModel) {
+                        Text("whisper-large-v3-turbo (Free)").tag("whisper-large-v3-turbo")
+                    } label: {
+                        SettingsRowTitle(.modelLibrarySpeech, "Groq STT model")
+                        Text("Cloud speech recognition powered by Groq LPU hardware (~250ms).")
+                    }
+
+                    groqKeyRow(bSettings: bSettings)
+                } else {
+                    Picker(selection: bSettings.dictationDeepgramModel) {
+                        Text("nova-3 (Recommended)").tag("nova-3")
+                        Text("nova-3-medical").tag("nova-3-medical")
+                        Text("nova-2").tag("nova-2")
+                        Text("whisper-large").tag("whisper-large")
+                    } label: {
+                        SettingsRowTitle(.modelLibrarySpeech, "Deepgram model")
+                        Text("Low-latency cloud speech recognition powered by Deepgram.")
+                    }
+
+                    deepgramKeyRow(bSettings: bSettings)
+                }
             }
         } header: {
             SettingsSectionHeader(.modelLibrarySpeech)
@@ -543,6 +566,37 @@ struct ModelLibrarySettingsView: View {
     }
 
     @ViewBuilder
+    private func deepgramKeyRow(bSettings: Bindable<AppSettings>) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
+            HStack {
+                SettingsRowTitle(.modelLibrarySpeech, "Deepgram API key")
+                Spacer()
+                SecureField("Deepgram API key", text: bSettings.deepgramAPIKey)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(maxWidth: 220)
+                Button {
+                    if let url = URL(string: "https://console.deepgram.com/") {
+                        NSWorkspace.shared.open(url)
+                    }
+                } label: {
+                    Label("Get Key", systemImage: "arrow.up.right.square")
+                }
+                .buttonStyle(.bordered)
+            }
+            let key = settings.deepgramAPIKey.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !key.isEmpty {
+                Label("Stored securely in macOS Keychain.", systemImage: "checkmark.circle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.green)
+            } else {
+                Label("Required for Deepgram cloud speech recognition.", systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
+        }
+    }
+
+    @ViewBuilder
     private func downloadProgressBar(received: Int64, total: Int64) -> some View {
         if total > 0 {
             VStack(alignment: .leading, spacing: 2) {
@@ -610,9 +664,7 @@ struct ModelLibrarySettingsView: View {
     }
 
     private func activateSpeechModel(_ model: DictationModel) {
-        guard coordinator.models.isInstalled(model) else { return }
-        settings.dictationModel = model
-        coordinator.models.prewarm(model)
+        coordinator.activateLocalModel(model)
     }
 
     private func downloadSpeechModel(_ model: DictationModel) {

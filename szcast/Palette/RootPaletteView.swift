@@ -146,6 +146,8 @@ struct RootPaletteView: View {
             return TextTransformerScreen(coordinator: core.textTransformerCoordinator, core: core, vm: vm)
         case .systemStats:
             return StatsScreen(core: core, vm: vm)
+        case .switchTranscriptionModel:
+            return DictationModelSwitcherScreen(core: core, vm: vm)
         }
     }
 
