@@ -181,6 +181,7 @@ struct DictationModelSwitcherScreen: PaletteScreen {
                                 ForEach(Array(items.enumerated()), id: \.element.id) { index, option in
                                     DictationModelOptionRow(
                                         option: option,
+                                        slot: FavoriteSlots.digit(at: index),
                                         isSelected: index == selection,
                                         onSelect: { activate(at: index) }
                                     )
@@ -205,6 +206,7 @@ struct DictationModelSwitcherScreen: PaletteScreen {
 
 private struct DictationModelOptionRow: View {
     let option: DictationModelSwitcherScreen.Option
+    let slot: Character?
     let isSelected: Bool
     let onSelect: () -> Void
 
@@ -239,10 +241,12 @@ private struct DictationModelOptionRow: View {
 
             Spacer()
 
-            if option.isActive {
-                Label(String(localized: "Active"), systemImage: "checkmark.circle.fill")
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(Color.accentColor)
+            SlotChordReveal(slot: slot) {
+                if option.isActive {
+                    Label(String(localized: "Active"), systemImage: "checkmark.circle.fill")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(Color.accentColor)
+                }
             }
         }
         .padding(.horizontal, Theme.Spacing.md)
