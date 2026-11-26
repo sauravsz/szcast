@@ -10,8 +10,6 @@ enum StatsMenuBarContent: Equatable {
 enum StatsMenuBarRenderer {
     static let defaultHorizontalPadding: CGFloat = 4
     private static let verticalMargin: CGFloat = 2
-    private static let stackedMinContentWidth: CGFloat = 31
-    private static let networkMinContentWidth: CGFloat = 48
     private static let batteryBodySize = NSSize(width: 22, height: 12)
     private static let batteryNubGap: CGFloat = 1
     private static let batteryNubSize = NSSize(width: 2, height: 4)
@@ -58,11 +56,11 @@ enum StatsMenuBarRenderer {
         case let .stackedMetric(label, value):
             let topW = NSAttributedString(string: label, attributes: [.font: labelFont]).size().width
             let botW = NSAttributedString(string: value, attributes: [.font: valueFont]).size().width
-            return max(stackedMinContentWidth, ceil(max(topW, botW)))
+            return ceil(max(topW, botW))
         case let .networkSpeed(download, upload):
-            let topW = NSAttributedString(string: download, attributes: [.font: networkFont]).size().width.rounded(.up)
-            let botW = NSAttributedString(string: upload, attributes: [.font: networkFont]).size().width.rounded(.up)
-            return max(networkMinContentWidth, max(topW, botW))
+            let topW = NSAttributedString(string: download, attributes: [.font: networkFont]).size().width
+            let botW = NSAttributedString(string: upload, attributes: [.font: networkFont]).size().width
+            return ceil(max(topW, botW))
         case .battery:
             return ceil(batteryBodySize.width + 2 + batteryNubSize.width)
         }
