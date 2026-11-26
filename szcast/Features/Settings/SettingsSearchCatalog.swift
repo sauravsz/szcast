@@ -111,7 +111,7 @@ enum SettingsSearchCatalog {
 
     static let entries: [SettingsSearchEntry] =
         general + applications + systemSettings + systemActions + commands + quicklinks
-        + appleShortcuts + fallbacks + clipboard + snippets + fileSearch + modelLibrary + windowManagement
+        + appleShortcuts + fallbacks + clipboard + snippets + fileSearch + windowManagement
         + cleanKeyboard + navigation + notes + calendar + emoji + ai + quickActions + dictation + extensions + permissions
         + backup + displayTweaks + enteAuth + duckDuckGoEmail + keepassxc + textTransformer + stats + extendedFeatures + changelog + about
 
@@ -354,13 +354,30 @@ enum SettingsSearchCatalog {
             keywords: ["language", "locale"])
     ]
 
-    private static let modelLibrary: [SettingsSearchEntry] = [
+    private static let dictation: [SettingsSearchEntry] = [
         .init(
-            pane: .modelLibrary,
+            pane: .dictation,
             keywords: [
-                "models", "download", "sravaani", "parakeet", "whisper", "indic",
+                "speech", "voice", "transcription", "microphone",
+                "models", "model library", "download", "sravaani", "parakeet", "whisper", "indic",
                 "banglish", "hinglish", "s1-mini", "groq", "providers", "llm", "vad", "diarization"
             ]),
+        .init(.dictationDictation, "Enable Dictation"),
+        .init(.dictationCommands, "Recording mode"),
+        .init(.dictationCommands, "Shortcut"),
+        .init(.dictationCommands, "Play sounds", keywords: ["sound", "chime", "beep", "audio", "feedback"]),
+        .init(.dictationOutput, "Input device", keywords: ["microphone", "audio", "input"]),
+        .init(.dictationOutput, "When finished"),
+        .init(.dictationOutput, "Pasting method", keywords: ["paste", "typewriter", "instant"]),
+        .init(.dictationOutput, "Enable AI Polish (S1-mini)", keywords: ["s1", "polish", "clean", "normalize"]),
+        .init(.dictationCommands, "Secondary dictation (Raw mode)", keywords: ["shortcut", "raw", "verbatim", "hotkey"]),
+        .init(.dictationCommands, "Retain cancelled dictations", keywords: ["escape", "cancel", "history", "save"]),
+        .init(.dictationOutput, "Voice activity detection (VAD)", keywords: ["silero", "vad", "silence", "chunking"]),
+        .init(.dictationOutput, "Speaker diarization", keywords: ["speakers", "diarize", "meeting", "labels"]),
+        .init(.dictationOutput, "Capture system audio in meetings", keywords: ["process tap", "others", "dual track"]),
+        .init(.dictationOutput, "Start meetings muted", keywords: ["mute", "mic", "meeting"]),
+        .init(.dictationOutput, "Auto-stop on prolonged silence", keywords: ["timeout", "idle", "stop"]),
+        .init(.dictationCommands, "Transcript Studio & CLI", keywords: ["szcast-cli", "terminal", "studio", "export"]),
         .init(.modelLibrarySpeech, "Transcription engine", keywords: ["parakeet", "groq", "engine", "asr"]),
         .init(.modelLibrarySpeech, "Speech model", keywords: ["parakeet", "sravaani", "whisper", "nemotron", "qwen", "download"]),
         .init(.modelLibraryPolish, "Normalization engine", keywords: ["s1", "polish", "groq", "llama"]),
@@ -378,26 +395,6 @@ enum SettingsSearchCatalog {
         .init(.modelLibraryAIModels, "Default model", keywords: ["llm", "gpt", "claude", "grok", "ai"]),
         .init(.modelLibraryAIModels, "Reasoning effort", keywords: ["thinking", "effort", "deepseek"]),
         .init(.modelLibraryAIModels, "Quick Actions model", keywords: ["quick actions", "llm", "override"])
-    ]
-
-    private static let dictation: [SettingsSearchEntry] = [
-        .init(pane: .dictation, keywords: ["speech", "voice", "transcription", "microphone"]),
-        .init(.dictationDictation, "Enable Dictation"),
-        .init(.dictationCommands, "Recording mode"),
-        .init(.dictationCommands, "Shortcut"),
-        .init(.dictationCommands, "Play sounds", keywords: ["sound", "chime", "beep", "audio", "feedback"]),
-        .init(.dictationOutput, "Input device", keywords: ["microphone", "audio", "input"]),
-        .init(.dictationOutput, "When finished"),
-        .init(.dictationOutput, "Pasting method", keywords: ["paste", "typewriter", "instant"]),
-        .init(.dictationOutput, "Enable AI Polish (S1-mini)", keywords: ["s1", "polish", "clean", "normalize"]),
-        .init(.dictationCommands, "Secondary dictation (Raw mode)", keywords: ["shortcut", "raw", "verbatim", "hotkey"]),
-        .init(.dictationCommands, "Retain cancelled dictations", keywords: ["escape", "cancel", "history", "save"]),
-        .init(.dictationOutput, "Voice activity detection (VAD)", keywords: ["silero", "vad", "silence", "chunking"]),
-        .init(.dictationOutput, "Speaker diarization", keywords: ["speakers", "diarize", "meeting", "labels"]),
-        .init(.dictationOutput, "Capture system audio in meetings", keywords: ["process tap", "others", "dual track"]),
-        .init(.dictationOutput, "Start meetings muted", keywords: ["mute", "mic", "meeting"]),
-        .init(.dictationOutput, "Auto-stop on prolonged silence", keywords: ["timeout", "idle", "stop"]),
-        .init(.dictationCommands, "Transcript Studio & CLI", keywords: ["szcast-cli", "terminal", "studio", "export"])
     ]
 
     private static let fileSearch: [SettingsSearchEntry] = [

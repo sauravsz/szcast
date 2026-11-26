@@ -7,19 +7,26 @@ enum DictationSettingsSection: String, CaseIterable, Identifiable {
     case insights = "Insights"
     case general = "General"
     case formatting = "Format & AI"
+    case modelLibrary = "Model Library"
     case dictionary = "Dictionary"
     case snippets = "Snippets"
     case history = "History"
 
     var id: Self { self }
 
-    var title: String { rawValue }
+    var title: String {
+        switch self {
+        case .modelLibrary: return String(localized: "Model Library")
+        default: return rawValue
+        }
+    }
 }
 
 struct DictationSettingsView: View {
     @Environment(DictationCoordinator.self) private var coordinator
     @Environment(AppSettings.self) private var settings
     @Environment(HotKeyManager.self) private var hotKeys
+    @Environment(SettingsNavigationState.self) private var navigation
     @State private var selectedSection: DictationSettingsSection = .insights
     @State private var microphones: [AVCaptureDevice] = []
     @State private var microphoneAccess = Permissions.microphoneAccess()
@@ -78,10 +85,12 @@ struct DictationSettingsView: View {
             if selectedSection == .insights {
                 DictationInsightsDashboardView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            } else if selectedSection == .modelLibrary {
+                ModelLibrarySettingsView()
             } else {
                 Form {
                     switch selectedSection {
-                    case .insights:
+                    case .insights, .modelLibrary:
                         EmptyView()
                     case .general:
                         generalSection(settings: settings)
@@ -100,8 +109,12 @@ struct DictationSettingsView: View {
         }
         .settingsScrollTarget(.dictation)
         .onAppear {
+            syncSectionForScrollRequest(navigation.scrollRequest)
             microphoneAccess = Permissions.microphoneAccess()
             if settings.dictationEnabled { microphones = DictationCapture.microphones }
+        }
+        .onChange(of: navigation.scrollRequest) { _, request in
+            syncSectionForScrollRequest(request)
         }
         .onChange(of: settings.dictationEnabled) { _, enabled in
             if enabled { microphones = DictationCapture.microphones }
@@ -122,6 +135,20 @@ struct DictationSettingsView: View {
         }
         .sheet(isPresented: $showingAddSnippetSheet) {
             addSnippetSheet
+        }
+    }
+
+    private func syncSectionForScrollRequest(_ request: SettingsScrollRequest?) {
+        guard let anchor = request?.target.anchor else { return }
+        switch anchor {
+        case .modelLibrarySpeech, .modelLibraryPolish, .modelLibraryAudioTools, .modelLibraryAIModels:
+            selectedSection = .modelLibrary
+        case .dictationDictation, .dictationCommands:
+            selectedSection = .general
+        case .dictationOutput:
+            selectedSection = .formatting
+        default:
+            break
         }
     }
 

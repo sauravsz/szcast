@@ -20,7 +20,6 @@ struct SettingsDetailView: View {
             case .quickActions: QuickActionsSettingsView()
             case .dictation: DictationSettingsView()
             case .fileSearch: FileSearchSettingsView()
-            case .modelLibrary: ModelLibrarySettingsView()
             case .notes: NotesSettingsView()
             case .snippets: SnippetsSettingsView()
             case .navigation: NavigationSettingsView()

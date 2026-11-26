@@ -62,10 +62,10 @@ extension SettingsAnchor {
     static let dictationCommands = Self(tab: .dictation, title: "Commands")
     static let dictationOutput = Self(tab: .dictation, title: "Output")
 
-    static let modelLibrarySpeech = Self(tab: .modelLibrary, title: "Speech Recognition")
-    static let modelLibraryPolish = Self(tab: .modelLibrary, title: "Voice Polish")
-    static let modelLibraryAudioTools = Self(tab: .modelLibrary, title: "Audio Intelligence")
-    static let modelLibraryAIModels = Self(tab: .modelLibrary, title: "AI & Quick Actions")
+    static let modelLibrarySpeech = Self(tab: .dictation, title: "Speech Recognition")
+    static let modelLibraryPolish = Self(tab: .dictation, title: "Voice Polish")
+    static let modelLibraryAudioTools = Self(tab: .dictation, title: "Audio Intelligence")
+    static let modelLibraryAIModels = Self(tab: .dictation, title: "AI & Quick Actions")
 
     static let fileSearchFileSearch = Self(tab: .fileSearch, title: "File Search")
     static let fileSearchFullDiskAccess = Self(tab: .fileSearch, title: "Full Disk Access")

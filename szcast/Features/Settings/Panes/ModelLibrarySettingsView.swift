@@ -75,7 +75,6 @@ struct ModelLibrarySettingsView: View {
             }
             .formStyle(.grouped)
         }
-        .settingsScrollTarget(.modelLibrary)
         .settingsEditorPanel(isPresented: $providersPresented) {
             AIProvidersPanel(onDone: { providersPresented = false })
         }
