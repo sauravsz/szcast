@@ -82,31 +82,56 @@ final class StatsMenuBarManager: NSObject {
     }
 
     private func updateStatusItems(with snapshot: StatsSnapshot) {
-        if let btn = cpuItem?.button {
+        if let item = cpuItem {
             let value = "\(Int(snapshot.cpu.totalUsage.rounded()))%"
-            btn.image = StatsMenuBarRenderer.stackedMetricImage(label: "CPU", value: value)
+            StatsMenuBarRenderer.apply(
+                content: .stackedMetric(label: "CPU", value: value),
+                accessibilityText: "CPU \(value)",
+                to: item
+            )
         }
 
-        if let btn = ramItem?.button {
+        if let item = ramItem {
             let value = "\(Int(snapshot.ram.usagePercentage.rounded()))%"
-            btn.image = StatsMenuBarRenderer.stackedMetricImage(label: "RAM", value: value)
+            StatsMenuBarRenderer.apply(
+                content: .stackedMetric(label: "RAM", value: value),
+                accessibilityText: "Memory \(value)",
+                to: item
+            )
         }
 
-        if let btn = diskItem?.button {
-            let pct = Int((snapshot.disk.rootVolume?.usagePercentage ?? 0).rounded())
-            btn.image = StatsMenuBarRenderer.stackedMetricImage(label: "SSD", value: "\(pct)%")
+        if let item = diskItem {
+            let value = "\(Int((snapshot.disk.rootVolume?.usagePercentage ?? 0).rounded()))%"
+            StatsMenuBarRenderer.apply(
+                content: .stackedMetric(label: "SSD", value: value),
+                accessibilityText: "Disk \(value)",
+                to: item
+            )
         }
 
-        if let btn = batteryItem?.button {
-            let label = snapshot.battery.isCharging ? "⚡ BAT" : "BAT"
-            let value = snapshot.battery.hasBattery ? "\(snapshot.battery.percentage)%" : "AC"
-            btn.image = StatsMenuBarRenderer.stackedMetricImage(label: label, value: value)
+        if let item = batteryItem {
+            let bat = snapshot.battery
+            let label = bat.hasBattery ? "Battery \(bat.percentage)%" : "AC Power"
+            StatsMenuBarRenderer.apply(
+                content: .battery(
+                    percentage: bat.percentage,
+                    isCharging: bat.isCharging,
+                    isACConnected: bat.isACConnected,
+                    hasBattery: bat.hasBattery
+                ),
+                accessibilityText: label,
+                to: item
+            )
         }
 
-        if let btn = networkItem?.button {
+        if let item = networkItem {
             let downStr = StatsFormatting.speed(snapshot.network.downloadBytesPerSecond)
             let upStr = StatsFormatting.speed(snapshot.network.uploadBytesPerSecond)
-            btn.image = StatsMenuBarRenderer.networkSpeedImage(download: downStr, upload: upStr)
+            StatsMenuBarRenderer.apply(
+                content: .networkSpeed(download: downStr, upload: upStr),
+                accessibilityText: "Network down \(downStr), up \(upStr)",
+                to: item
+            )
         }
     }
 
@@ -116,7 +141,8 @@ final class StatsMenuBarManager: NSObject {
         button.action = action
         // Left-down gives instant popover toggle before resignKey clears currentModule.
         button.sendAction(on: [.leftMouseDown, .rightMouseUp])
-        button.imagePosition = .imageOnly
+        button.imagePosition = .noImage
+        button.image = nil
         button.title = ""
     }
 

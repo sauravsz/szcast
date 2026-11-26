@@ -32,7 +32,7 @@ struct NetworkPopoverView: View {
                 .padding(.vertical, 2)
 
             StatsSectionDivider(
-                title: "Interface",
+                title: "Details",
                 accessorySymbol: "arrow.clockwise",
                 accessoryHelp: "Refresh connectivity",
                 onAccessory: onRefreshInterface

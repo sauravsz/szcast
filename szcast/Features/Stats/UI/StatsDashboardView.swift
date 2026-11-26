@@ -491,7 +491,9 @@ struct SparklineGraphView: View {
                         path.addQuadCurve(to: mid, control: CGPoint(x: (mid.x + p0.x) / 2, y: p0.y))
                         path.addQuadCurve(to: p1, control: CGPoint(x: (mid.x + p1.x) / 2, y: p1.y))
                     }
-                    path.addLine(to: CGPoint(x: points.last!.x, y: h))
+                    if let lastPoint = points.last {
+                        path.addLine(to: CGPoint(x: lastPoint.x, y: h))
+                    }
                     path.closeSubpath()
                 }
                 .fill(
