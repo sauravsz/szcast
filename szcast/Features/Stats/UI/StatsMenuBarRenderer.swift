@@ -10,14 +10,14 @@ enum StatsMenuBarContent: Equatable {
 enum StatsMenuBarRenderer {
     private static let horizontalPadding: CGFloat = 4
     private static let stackedMinContentWidth: CGFloat = 25
-    private static let networkMinContentWidth: CGFloat = 30
+    private static let networkMinContentWidth: CGFloat = 29
     private static let batteryBodySize = NSSize(width: 21, height: 11.5)
     private static let batteryNubGap: CGFloat = 1
     private static let batteryNubSize = NSSize(width: 1.75, height: 4.5)
 
-    private static let labelFont = NSFont.systemFont(ofSize: 8.0, weight: .medium)
-    private static let valueFont = NSFont.monospacedDigitSystemFont(ofSize: 11.0, weight: .bold)
-    private static let networkFont = NSFont.monospacedDigitSystemFont(ofSize: 9.0, weight: .semibold)
+    private static let labelFont = NSFont.systemFont(ofSize: 7.0, weight: .regular)
+    private static let valueFont = NSFont.monospacedDigitSystemFont(ofSize: 12.0, weight: .medium)
+    private static let networkFont = NSFont.monospacedDigitSystemFont(ofSize: 9.0, weight: .regular)
 
     static func apply(content: StatsMenuBarContent, accessibilityText: String, to item: NSStatusItem) {
         guard let button = item.button else { return }

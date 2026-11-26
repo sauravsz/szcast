@@ -83,6 +83,11 @@ struct StatsFeatureTests {
         expect(parsedNet[1234]?.name == "com.apple.Safari" && parsedNet[1234]?.bytesIn == 4096, "Parses dotted nettop process names")
         expect(parsedNet[99]?.bytesOut == 500, "Parses simple nettop process entries")
 
+        expect(SystemTelemetryReader.counterDelta(current: 5000, previous: 2000) == 3000, "Normal counter delta")
+        let wrapDelta = SystemTelemetryReader.counterDelta(current: 1024, previous: UInt64(UInt32.max) - 1023)
+        expect(wrapDelta == 2048, "32-bit interface counter rollover delta")
+        expect(SystemTelemetryReader.counterDelta(current: 500, previous: UInt64(UInt32.max) + 500) == 0, "Counter reset returns zero")
+
         // 8. Full Snapshot capture
         let snapshot = reader.captureSnapshot(processLimit: 5)
         expect(snapshot.cpu.logicalCores >= 1, "Snapshot carries valid CPU stats")
