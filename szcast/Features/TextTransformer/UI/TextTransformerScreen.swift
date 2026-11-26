@@ -24,6 +24,47 @@ struct TextTransformerScreen: PaletteScreen {
         return String(localized: "Paste to Active App")
     }
 
+    func actions(at selection: Int) -> PopoverMenuContent? {
+        guard rows.indices.contains(selection) else { return nil }
+        let item = rows[selection].transform
+        return PopoverMenuContent(
+            header: item.title,
+            items: [
+                PopoverMenuItem(
+                    title: primaryActionTitle,
+                    systemImage: "doc.on.clipboard",
+                    shortcut: "↵"
+                ) {
+                    activate(at: selection)
+                },
+                PopoverMenuItem(
+                    title: String(localized: "Copy Output"),
+                    systemImage: "doc.on.doc",
+                    shortcut: "⌘C"
+                ) {
+                    _ = secondary(at: selection)
+                },
+                PopoverMenuItem(
+                    title: coordinator.isDiffMode
+                        ? String(localized: "Stacked View")
+                        : String(localized: "Side-by-Side Diff"),
+                    systemImage: "arrow.left.and.right.righttriangle.left.righttriangle.right",
+                    startsSection: true,
+                    shortcut: "⌘D"
+                ) {
+                    _ = perform(.duplicate, at: selection)
+                },
+                PopoverMenuItem(
+                    title: String(localized: "Reset Input"),
+                    systemImage: "arrow.counterclockwise",
+                    shortcut: "⌘R"
+                ) {
+                    _ = perform(.restart, at: selection)
+                }
+            ]
+        )
+    }
+
     func activate(at selection: Int) {
         guard rows.indices.contains(selection) else { return }
         let item = rows[selection].transform
@@ -44,6 +85,8 @@ struct TextTransformerScreen: PaletteScreen {
 
     func perform(_ shortcut: PaletteShortcut, at selection: Int) -> Bool {
         switch shortcut {
+        case .copyFile:
+            return secondary(at: selection)
         case .restart:
             coordinator.resetToInitial()
             core.showMessage(String(localized: "Reset text to initial input"), tone: .neutral)

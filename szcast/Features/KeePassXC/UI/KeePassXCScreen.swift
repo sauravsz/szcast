@@ -27,9 +27,83 @@ struct KeePassXCScreen: PaletteScreen {
 
     var primaryActionTitle: String {
         if service.resumedEntry != nil {
-            return String(localized: "Copy Password (⌘C)")
+            return String(localized: "Copy Password")
         }
         return String(localized: "Open Account")
+    }
+
+    func hasActions(at selection: Int) -> Bool {
+        guard service.isConfigured, service.isUnlocked else { return false }
+        return service.resumedEntry != nil || filteredItems.indices.contains(selection)
+    }
+
+    func actions(at selection: Int) -> PopoverMenuContent? {
+        guard service.isConfigured, service.isUnlocked else { return nil }
+        let targetEntry: KeePassXCEntry?
+        if let resumed = service.resumedEntry {
+            targetEntry = resumed
+        } else {
+            let items = filteredItems
+            targetEntry = items.indices.contains(selection) ? items[selection] : nil
+        }
+        guard let entry = targetEntry else { return nil }
+
+        var menuItems: [PopoverMenuItem] = []
+        if service.resumedEntry == nil {
+            menuItems.append(
+                PopoverMenuItem(
+                    title: String(localized: "Open Account"),
+                    systemImage: "person.text.rectangle",
+                    shortcut: "↵"
+                ) {
+                    activate(at: selection)
+                }
+            )
+        }
+        menuItems.append(contentsOf: [
+            PopoverMenuItem(
+                title: String(localized: "Copy Password"),
+                systemImage: "key",
+                startsSection: service.resumedEntry == nil,
+                shortcut: "⌘C"
+            ) {
+                service.handleShortcutCopyPassword(entry: entry)
+            },
+            PopoverMenuItem(
+                title: String(localized: "Copy TOTP"),
+                systemImage: "number",
+                shortcut: "⌘T"
+            ) {
+                service.handleShortcutCopyTOTP(entry: entry)
+            },
+            PopoverMenuItem(
+                title: String(localized: "Copy Username"),
+                systemImage: "person",
+                shortcut: "⌘B"
+            ) {
+                service.handleShortcutCopyUsername(entry: entry)
+            },
+            PopoverMenuItem(
+                title: String(localized: "Open URL"),
+                systemImage: "arrow.up.right.square",
+                shortcut: "⌘U"
+            ) {
+                service.handleShortcutOpenURL(entry: entry)
+            }
+        ])
+        if service.resumedEntry != nil {
+            menuItems.append(
+                PopoverMenuItem(
+                    title: String(localized: "Back to List"),
+                    systemImage: "chevron.left",
+                    startsSection: true,
+                    shortcut: "Esc"
+                ) {
+                    service.clearResumedEntry()
+                }
+            )
+        }
+        return PopoverMenuContent(header: entry.title, items: menuItems)
     }
 
     private var filteredItems: [KeePassXCEntry] {
@@ -409,45 +483,11 @@ private struct KeePassXCEntryDetailView: View {
                 .padding(.horizontal, Theme.Spacing.lg)
                 .padding(.vertical, Theme.Spacing.md)
             }
-
-            Divider()
-
-            // Footer Shortcut Legend
-            HStack(spacing: Theme.Spacing.lg) {
-                ShortcutBadge(shortcut: "⌘C", label: "Copy Password")
-                ShortcutBadge(shortcut: "⌘T", label: "Copy TOTP")
-                ShortcutBadge(shortcut: "⌘B", label: "Copy Username")
-                ShortcutBadge(shortcut: "⌘U", label: "Open URL")
-                Spacer()
-                ShortcutBadge(shortcut: "Esc", label: "Back")
-            }
-            .padding(.horizontal, Theme.Spacing.lg)
-            .padding(.vertical, Theme.Spacing.sm)
-            .background(Color.primary.opacity(0.03))
         }
         .task {
             if let full = try? await service.fetchEntryDetails(entryPath: entry.path) {
                 activeEntry = full
             }
-        }
-    }
-}
-
-private struct ShortcutBadge: View {
-    let shortcut: String
-    let label: String
-
-    var body: some View {
-        HStack(spacing: Theme.Spacing.xs) {
-            Text(shortcut)
-                .font(.caption2.monospaced().weight(.semibold))
-                .padding(.horizontal, Theme.Spacing.xs)
-                .padding(.vertical, Theme.Spacing.xxs)
-                .background(Color.primary.opacity(0.08))
-                .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.glyph * 2))
-            Text(label)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
         }
     }
 }
@@ -525,23 +565,6 @@ private struct KeePassXCEntryRow: View {
             }
 
             Spacer()
-
-            if isSelected {
-                HStack(spacing: 6) {
-                    Text("⌘C")
-                        .font(.caption2.monospaced().weight(.semibold))
-                        .foregroundStyle(.secondary)
-                    Text("⌘T")
-                        .font(.caption2.monospaced().weight(.semibold))
-                        .foregroundStyle(.secondary)
-                    Text("⌘B")
-                        .font(.caption2.monospaced().weight(.semibold))
-                        .foregroundStyle(.secondary)
-                    Text("⌘U")
-                        .font(.caption2.monospaced().weight(.semibold))
-                        .foregroundStyle(.secondary)
-                }
-            }
         }
         .padding(.horizontal, Theme.Spacing.md)
         .padding(.vertical, 8)

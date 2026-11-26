@@ -1097,7 +1097,7 @@ struct RootPaletteView: View {
                 UpdatePill()
             }
             .modifier(ExtensionToastSlot(extensions: extensions, showing: vm.mode == .extensionCommand))
-            contextualShortcutStrip
+            Spacer(minLength: 0)
             if showActionGroup {
                 actionGroup(
                     pillLabel: pillLabel, formPrimaryShortcut: formPrimaryShortcut,
@@ -1110,89 +1110,6 @@ struct RootPaletteView: View {
         .padding(.horizontal, metrics.spacing.md)
         .frame(height: metrics.size.bottomBarHeight)
         .frame(maxWidth: .infinity)
-    }
-
-    private var contextualShortcutStrip: some View {
-        HStack(spacing: metrics.spacing.sm) {
-            ForEach(currentContextualShortcuts) { shortcut in
-                HStack(spacing: metrics.spacing.xxs) {
-                    HStack(spacing: 1) {
-                        ForEach(shortcut.keys, id: \.self) { key in
-                            KeyCapChip(text: key, style: .outline, scale: .compact)
-                        }
-                    }
-                    Text(shortcut.label)
-                        .font(metrics.typography.bar)
-                        .foregroundStyle(Theme.Colors.textSecondary)
-                }
-            }
-        }
-        .padding(.trailing, metrics.spacing.xs)
-        .lineLimit(1)
-        .truncationMode(.tail)
-        .opacity(currentContextualShortcuts.isEmpty ? 0 : 1)
-        .animation(.easeInOut(duration: 0.15), value: vm.mode)
-    }
-
-    private var currentContextualShortcuts: [ContextualShortcut] {
-        switch vm.mode {
-        case .snippets:
-            return [
-                ContextualShortcut(id: "copy", keys: ["⌘", "↵"], label: "Copy"),
-                ContextualShortcut(id: "duplicate", keys: ["⌘", "D"], label: "Duplicate"),
-                ContextualShortcut(id: "pin", keys: ["⌘", "."], label: "Pin")
-            ]
-        case .clipboard:
-            return [
-                ContextualShortcut(id: "paste", keys: ["↵"], label: "Paste"),
-                ContextualShortcut(id: "copy", keys: ["⌘", "C"], label: "Copy"),
-                ContextualShortcut(id: "plain", keys: ["⌥", "↵"], label: "Plain Text"),
-                ContextualShortcut(id: "delete", keys: ["⌘", "⌫"], label: "Delete")
-            ]
-        case .emoji:
-            return [
-                ContextualShortcut(id: "copy", keys: ["⌘", "↵"], label: "Copy"),
-                ContextualShortcut(id: "tone", keys: ["⌥", "⌘", "V"], label: "Tone"),
-                ContextualShortcut(id: "keywords", keys: ["⌘", "E"], label: "Keywords"),
-                ContextualShortcut(id: "pin", keys: ["⌘", "."], label: "Pin")
-            ]
-        case .launcher:
-            return []
-        case .fileSearch:
-            return [
-                ContextualShortcut(id: "open", keys: ["↵"], label: "Open"),
-                ContextualShortcut(id: "finder", keys: ["⌘", "↵"], label: "Finder"),
-                ContextualShortcut(id: "quicklook", keys: ["⌘", "Y"], label: "Quick Look")
-            ]
-        case .systemStats:
-            return [
-                ContextualShortcut(id: "refresh", keys: ["↵"], label: "Refresh"),
-                ContextualShortcut(id: "settings", keys: ["⌘", ","], label: "Settings")
-            ]
-        case .textTransformer:
-            return [
-                ContextualShortcut(id: "copy", keys: ["⌘", "C"], label: "Copy"),
-                ContextualShortcut(id: "diff", keys: ["⌘", "D"], label: "Diff")
-            ]
-        case .quicklinks:
-            return [
-                ContextualShortcut(id: "open", keys: ["↵"], label: "Open"),
-                ContextualShortcut(id: "copy", keys: ["⌘", "C"], label: "Copy URL"),
-                ContextualShortcut(id: "edit", keys: ["⌘", "E"], label: "Edit")
-            ]
-        case .keepassxc:
-            return [
-                ContextualShortcut(id: "pass", keys: ["⌘", "C"], label: "Password"),
-                ContextualShortcut(id: "totp", keys: ["⌘", "T"], label: "TOTP"),
-                ContextualShortcut(id: "user", keys: ["⌘", "B"], label: "Username")
-            ]
-        case .enteAuth:
-            return [
-                ContextualShortcut(id: "copy", keys: ["↵"], label: "Copy Code")
-            ]
-        default:
-            return []
-        }
     }
 
     private var appMenuButton: some View {
@@ -1849,12 +1766,6 @@ private struct HeaderBackButton: View {
         .animation(.easeOut(duration: Theme.Duration.hover), value: hovered)
         .help(help)
     }
-}
-
-private struct ContextualShortcut: Identifiable, Equatable {
-    let id: String
-    let keys: [String]
-    let label: String
 }
 
 private struct SnippetFolderBreadcrumbButton: View {

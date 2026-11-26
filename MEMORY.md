@@ -380,8 +380,13 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - Replaced the editor's free-text folder/tag field with a folder picker + live prefix preview (`SnippetEditorView.swift`), added `SnippetFolderConfigField.swift` & `SnippetFolderIconView.swift`, and grouped Settings Library into a collapsible 3-level folder tree (`SnippetsSettingsView.swift`).
   - Verified `./Scripts/lint.sh` (`✓ lint-clean`), Debug `xcodebuild`, and 139/139 harnesses in `./Scripts/run-tests.sh` (note: installed `swiftlint` & `xcodegen`; kept `HEAD`'s `project.pbxproj` base over drifted `project.yml`).
 
+- **Footer Shortcut Strip Moved to `⌘K` Actions (2026-11-26)**:
+  - Removed `contextualShortcutStrip`, `currentContextualShortcuts`, and `ContextualShortcut` from `RootPaletteView.swift`, restoring a clean bottom bar across all 9 modes (`.snippets`, `.clipboard`, `.emoji`, `.fileSearch`, `.systemStats`, `.textTransformer`, `.quicklinks`, `.keepassxc`, `.enteAuth`).
+  - Removed KeePassXC's detail `Footer Shortcut Legend` (`ShortcutBadge`) and row shortcut badges in `KeePassXCScreen.swift`, and added `actions(at:)` menus to `StatsScreen.swift`, `TextTransformerScreen.swift`, `EnteAuthScreen.swift`, and `KeePassXCScreen.swift`.
+  - Synced and translated 8 new keys in `Localizable.xcstrings` across all 8 languages; `./Scripts/lint.sh`, Debug `xcodebuild`, and 139/139 harnesses in `./Scripts/run-tests.sh` pass.
+
 ## Active State & Next Steps
-- **Active State**: Committed and pushed 3-level snippet folders to `origin/main` (139/139 harnesses pass, Debug build & lint clean); `/Applications/szcast.app` remains on the prior v1.1.6 Release build (user opted to commit/push without releasing).
+- **Active State**: Committed and pushed 3-level snippet folders and `⌘K` actions consolidation to `origin/main`; signed Release build (`v1.1.6`) built via `Scripts/build-dmg.sh` and installed to `/Applications/szcast.app` (139/139 harnesses pass, lint & Debug build clean).
 - **Immediate Next Steps**:
   1. Test long continuous dictation (5+ minutes) in real-world workflows across Hindi and Bengali models.
   2. Perform weekly upstream radar audit (`./Scripts/upstream-radar.sh`).

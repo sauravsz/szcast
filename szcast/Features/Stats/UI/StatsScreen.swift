@@ -14,6 +14,29 @@ struct StatsScreen: PaletteScreen {
 
     var primaryActionTitle: String { String(localized: "Refresh Metrics") }
 
+    func actions(at selection: Int) -> PopoverMenuContent? {
+        PopoverMenuContent(
+            header: String(localized: "System Stats"),
+            items: [
+                PopoverMenuItem(
+                    title: String(localized: "Refresh Metrics"),
+                    systemImage: "arrow.clockwise",
+                    shortcut: "↵"
+                ) {
+                    monitor.refresh()
+                },
+                PopoverMenuItem(
+                    title: String(localized: "System Stats Settings"),
+                    systemImage: "gearshape",
+                    startsSection: true,
+                    shortcut: "⌘,"
+                ) {
+                    core.settingsCoordinator.showSettings(tab: .stats)
+                }
+            ]
+        )
+    }
+
     func activate(at selection: Int) {
         monitor.refresh()
     }

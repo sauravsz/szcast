@@ -91,6 +91,45 @@ struct EnteAuthScreen: PaletteScreen {
         return String(localized: "Copy TOTP")
     }
 
+    func actions(at selection: Int) -> PopoverMenuContent? {
+        let items = rows
+        guard items.indices.contains(selection) else { return nil }
+        let row = items[selection]
+        if row.isImportAction {
+            return PopoverMenuContent(
+                header: row.title,
+                items: [
+                    PopoverMenuItem(
+                        title: String(localized: "Import Accounts"),
+                        systemImage: "arrow.down.doc",
+                        shortcut: "↵"
+                    ) {
+                        activate(at: selection)
+                    }
+                ]
+            )
+        }
+        return PopoverMenuContent(
+            header: row.title,
+            items: [
+                PopoverMenuItem(
+                    title: String(localized: "Copy TOTP"),
+                    systemImage: "doc.on.doc",
+                    shortcut: "↵"
+                ) {
+                    activate(at: selection)
+                },
+                PopoverMenuItem(
+                    title: String(localized: "Paste TOTP"),
+                    systemImage: "doc.on.clipboard",
+                    shortcut: "⌘↵"
+                ) {
+                    _ = secondary(at: selection)
+                }
+            ]
+        )
+    }
+
     func activate(at selection: Int) {
         let items = rows
         guard items.indices.contains(selection) else { return }
