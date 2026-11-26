@@ -33,6 +33,8 @@ enum TranscriptAIService {
         _ text: String,
         provider: DictationPolishProvider,
         s1Settings: DictationS1Settings,
+        vocabularyTerms: [String] = [],
+        surroundingContext: String? = nil,
         groqAPIKey: String,
         groqModel: String,
         polisher: DictationS1Polisher,
@@ -49,10 +51,21 @@ enum TranscriptAIService {
                 let result: String
                 switch provider {
                 case .localS1:
-                    result = await polisher.polish(chunk, settings: s1Settings)
+                    result = await polisher.polish(
+                        chunk,
+                        settings: s1Settings,
+                        vocabularyTerms: vocabularyTerms,
+                        surroundingContext: surroundingContext
+                    )
                 case .groq:
                     result = try await groq.polish(
-                        chunk, apiKey: groqAPIKey, settings: s1Settings, model: groqModel)
+                        chunk,
+                        apiKey: groqAPIKey,
+                        settings: s1Settings,
+                        vocabularyTerms: vocabularyTerms,
+                        surroundingContext: surroundingContext,
+                        model: groqModel
+                    )
                 }
                 cleaned.append(result)
             } catch {

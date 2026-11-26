@@ -21,6 +21,8 @@ final class IndicFlexRecognizer {
     private let idToToken: [Int: String]
     private let tokenizerConfig: TokenizerConfig
     private let metadata: Metadata
+    private let romanizedTokenID: Int?
+    private let noRomanizedTokenID: Int?
 
     init(directory: URL) throws {
         let int8Dir = FileManager.default.fileExists(
@@ -37,18 +39,54 @@ final class IndicFlexRecognizer {
             from: Data(contentsOf: int8Dir.appendingPathComponent("tokenizer_config.json")))
 
         let vocabData = try Data(contentsOf: int8Dir.appendingPathComponent("vocab.json"))
-        let rawVocab = try JSONDecoder().decode([String: Int].self, from: vocabData)
-        var reverse = [Int: String]()
-        for (k, v) in rawVocab { reverse[v] = k }
-        if let list = try? JSONDecoder().decode([String].self, from: vocabData) {
-            for (idx, piece) in list.enumerated() { reverse[idx] = piece }
-        }
-        idToToken = reverse
+        let parsed = try Self.parseVocabulary(from: vocabData)
+        idToToken = parsed.idToToken
+        romanizedTokenID = parsed.romanizedID
+        noRomanizedTokenID = parsed.noRomanizedID
 
         preprocessor = try DictationTensor.load("indic_flex_preprocessor", at: int8Dir, units: .cpuOnly)
-        encoder = try DictationTensor.load("indic_flex_encoder", at: int8Dir, units: .cpuAndNeuralEngine)
+        encoder = try DictationTensor.load("indic_flex_encoder", at: int8Dir, units: .all)
         decoder = try DictationTensor.load(
             "indic_flex_decoder_stateful", at: int8Dir, units: .cpuAndGPU)
+    }
+
+    /// Parses `vocab.json` supporting both array (`[String]`) and object (`[String: Int]`) layouts.
+    static func parseVocabulary(
+        from data: Data
+    ) throws -> (idToToken: [Int: String], romanizedID: Int?, noRomanizedID: Int?) {
+        var reverse = [Int: String]()
+        if let list = try? JSONDecoder().decode([String].self, from: data) {
+            for (idx, piece) in list.enumerated() { reverse[idx] = piece }
+        } else if let dict = try? JSONDecoder().decode([String: Int].self, from: data) {
+            for (piece, idx) in dict { reverse[idx] = piece }
+        } else {
+            throw DictationInferenceError.incompatibleModel
+        }
+
+        var romanizedID: Int?
+        var noRomanizedID: Int?
+        for (idx, piece) in reverse {
+            if piece == "<|romanized|>" { romanizedID = idx }
+            else if piece == "<|noromanized|>" { noRomanizedID = idx }
+        }
+        return (reverse, romanizedID, noRomanizedID)
+    }
+
+    /// Resolves the prompt sequence, swapping `<|noromanized|>` for `<|romanized|>` for Banglish/Hinglish.
+    static func romanizedPrompt(
+        language: String?,
+        promptIdsByLang: [String: [Int]],
+        fallbackBosID: Int,
+        romanizedID: Int?,
+        noRomanizedID: Int?
+    ) -> [Int] {
+        let iso = DictationLanguage.isoCode(for: language) ?? "bn"
+        let basePrompt = promptIdsByLang[iso]
+            ?? promptIdsByLang["bn"]
+            ?? promptIdsByLang["hi"]
+            ?? [fallbackBosID]
+        guard let romanizedID, let noRomanizedID else { return basePrompt }
+        return basePrompt.map { $0 == noRomanizedID ? romanizedID : $0 }
     }
 
     func transcribe(_ samples: [Float], language: String?) throws -> String {
@@ -62,10 +100,13 @@ final class IndicFlexRecognizer {
 
         let chunkSamples = Int((metadata.chunkSeconds ?? 30.0) * Double(DictationWire.sampleRate))
         let maxDecode = metadata.maxCacheSeqLen ?? 320
-        let langKey = language?.split(separator: "-").first.map(String.init).map { $0.lowercased() } ?? "hi"
-        let prompt = tokenizerConfig.promptIdsByLang[langKey]
-            ?? tokenizerConfig.promptIdsByLang["hi"]
-            ?? [tokenizerConfig.bosId]
+        let prompt = Self.romanizedPrompt(
+            language: language,
+            promptIdsByLang: tokenizerConfig.promptIdsByLang,
+            fallbackBosID: tokenizerConfig.bosId,
+            romanizedID: romanizedTokenID,
+            noRomanizedID: noRomanizedTokenID
+        )
 
         var chunkTexts = [String]()
         var words = [TranscriptWord]()
@@ -93,8 +134,8 @@ final class IndicFlexRecognizer {
                 let validFeatFrames = featLens[0].intValue
                 let melFrames = features.shape.last?.intValue ?? validFeatFrames
 
-                let attnMask = try DictationTensor.zeros([1, melFrames])
-                attnMask.withUnsafeMutableBufferPointer(ofType: Float.self) { dst, _ in
+                let attnMask = try DictationTensor.zeros([1, melFrames], type: .int32)
+                attnMask.withUnsafeMutableBufferPointer(ofType: Int32.self) { dst, _ in
                     dst.initialize(repeating: 0)
                     for i in 0..<min(validFeatFrames, melFrames) { dst[i] = 1 }
                 }
@@ -128,7 +169,7 @@ final class IndicFlexRecognizer {
                     let pred = try decoder.prediction(
                         from: MLDictionaryFeatureProvider(dictionary: [
                             "input_ids": DictationTensor.integer(tokenID, shape: [1, 1]),
-                            "position_ids": DictationTensor.integer(pos, shape: [1]),
+                            "position_ids": DictationTensor.integer(pos, shape: [1, 1]),
                             "encoder_states": encStates,
                             "cross_mask": crossMask,
                             "self_attn_mask": selfMask
@@ -144,7 +185,10 @@ final class IndicFlexRecognizer {
                 var pieces = [String]()
                 while pos < maxDecode, let nextID = scores.indices.max(by: { scores[$0] < scores[$1] }) {
                     if nextID == tokenizerConfig.eosId || nextID == tokenizerConfig.padId { break }
-                    if let piece = idToToken[nextID], nextID >= 1152 { pieces.append(piece) }
+                    if let piece = idToToken[nextID], nextID >= 1151,
+                       !(piece.hasPrefix("<|") && piece.hasSuffix("|>")) {
+                        pieces.append(piece)
+                    }
                     scores = try stepToken(nextID)
                 }
                 return pieces.joined()

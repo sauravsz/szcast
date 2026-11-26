@@ -52,6 +52,8 @@ actor DictationS1Polisher {
     func polish(
         _ transcript: String,
         settings: DictationS1Settings,
+        vocabularyTerms: [String] = [],
+        surroundingContext: String? = nil,
         endpointURL: URL? = nil,
         model: String = "s1-mini"
     ) async -> String {
@@ -59,7 +61,12 @@ actor DictationS1Polisher {
             return transcript
         }
 
-        let userMessage = "\(settings.controlLine)\n\(transcript)"
+        let userMessage = DictationS1Settings.normalizedUserMessage(
+            controlLine: settings.controlLine,
+            transcript: transcript,
+            vocabularyTerms: vocabularyTerms,
+            surroundingContext: surroundingContext
+        )
         let transcriptWordCount = transcript.split(separator: " ").count
         let effectiveSystemPrompt = settings.effectiveSystemPrompt(for: transcript)
 

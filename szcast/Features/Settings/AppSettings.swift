@@ -139,6 +139,12 @@ final class AppSettings {
         didSet { defaults.set(clipboardTextSearchEnabled, forKey: Key.clipboardTextSearchEnabled.rawValue) }
     }
 
+    var clipboardFetchLinkPreviews: Bool {
+        didSet {
+            defaults.set(clipboardFetchLinkPreviews, forKey: Key.clipboardFetchLinkPreviews.rawValue)
+        }
+    }
+
     var clipboardRetention: ClipboardRetention {
         didSet {
             defaults.set(clipboardRetention.rawValue, forKey: Key.clipboardRetention.rawValue)
@@ -1111,6 +1117,9 @@ final class AppSettings {
         clipboardTextSearchEnabled =
             defaults.object(forKey: Key.clipboardTextSearchEnabled.rawValue) == nil
             || defaults.bool(forKey: Key.clipboardTextSearchEnabled.rawValue)
+        clipboardFetchLinkPreviews =
+            defaults.object(forKey: Key.clipboardFetchLinkPreviews.rawValue) == nil
+            || defaults.bool(forKey: Key.clipboardFetchLinkPreviews.rawValue)
         clipboardRetention =
             ClipboardRetention(rawValue: defaults.integer(forKey: Key.clipboardRetention.rawValue))
             ?? .threeMonths

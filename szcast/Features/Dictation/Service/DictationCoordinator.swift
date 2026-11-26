@@ -330,25 +330,28 @@ final class DictationCoordinator {
         }
 
         let current = token
-        var model = settings.dictationModel
-        let language = settings.dictationLanguage
-        if settings.dictationHindiMode == .whisperApex, models.isInstalled(.whisperApex) {
-            model = .whisperApex
-        } else if settings.dictationBengaliMode == .indicFlex, models.isInstalled(.indicFlex) {
-            model = .indicFlex
-        }
+        let resolved = resolvedLocalModelAndLanguage()
+        let model = resolved.model
+        let language = resolved.language
         transcriptionTask = Task { [weak self] in
             guard let self else { return }
-            let samples = await capture.stop()
+            let rawSamples = await capture.stop()
             guard token == current else { return }
             let destination = field == nil ? settings.dictationDestination : .paste
-            if samples.count < 1_600 {
+            if rawSamples.count < 1_600 {
                 reset(cancelTranscription: false)
                 if settings.dictationMode != .pushToTalk {
                     showMessage(String(localized: "No speech was recorded"), .danger)
                 }
                 return
             }
+            let samples = DictationAudioChunks.conditionForTranscription(
+                rawSamples,
+                whisperMode: settings.dictationWhisperMode
+            )
+            let surroundingSnippet = destination.pastes
+                ? DictationInsertionContext.surroundingSnippet(in: target)
+                : nil
             do {
                 var timed = TimedTranscript(text: "")
                 if settings.dictationTranscriptionProvider == .groq {
@@ -359,7 +362,8 @@ final class DictationCoordinator {
                         samples: samples,
                         apiKey: settings.groqAPIKey,
                         model: settings.dictationGroqTranscriptionModel,
-                        language: language
+                        language: language,
+                        prompt: buildGroqPrompt(surroundingSnippet: surroundingSnippet)
                     )
                     timed = TimedTranscript(text: text)
                 } else {
@@ -374,6 +378,7 @@ final class DictationCoordinator {
                 guard token == current else { return }
 
                 var processed = transcript
+                processed = DictationTextFormatter.stripHallucinations(processed)
                 processed = DictationTextFormatter.resolveBacktracks(processed)
                 processed = DictationTextFormatter.collapseRepetitions(processed)
                 if settings.dictationConvertSpokenEmoji {
@@ -449,6 +454,8 @@ final class DictationCoordinator {
                         processed,
                         provider: polishProvider,
                         s1Settings: s1,
+                        vocabularyTerms: dictionaryStore.promptVocabularyHint(for: processed),
+                        surroundingContext: surroundingSnippet,
                         groqAPIKey: settings.groqAPIKey,
                         groqModel: settings.dictationGroqPolishModel,
                         polisher: s1Polisher,
@@ -732,13 +739,15 @@ final class DictationCoordinator {
     private func executeFileTranscription(from url: URL) async {
         showMessage(String(localized: "Transcribing \(url.lastPathComponent)…"), .neutral)
         do {
-            let samples = try await DictationFileTranscriber.extractSamples(from: url)
-            guard !samples.isEmpty else {
+            let rawSamples = try await DictationFileTranscriber.extractSamples(from: url)
+            guard !rawSamples.isEmpty else {
                 showMessage(String(localized: "No audio data found in \(url.lastPathComponent)"), .danger)
                 return
             }
+            let samples = DictationAudioChunks.conditionForTranscription(rawSamples)
 
-            let language = settings.dictationLanguage
+            let resolved = resolvedLocalModelAndLanguage()
+            let language = resolved.language
             var timed = TimedTranscript(text: "")
             var usedModelID = settings.dictationModel.rawValue
             if settings.dictationTranscriptionProvider == .groq {
@@ -749,17 +758,13 @@ final class DictationCoordinator {
                     samples: samples,
                     apiKey: settings.groqAPIKey,
                     model: settings.dictationGroqTranscriptionModel,
-                    language: language
+                    language: language,
+                    prompt: buildGroqPrompt(surroundingSnippet: nil)
                 )
                 timed = TimedTranscript(text: text)
                 usedModelID = settings.dictationGroqTranscriptionModel
             } else {
-                var model = settings.dictationModel
-                if settings.dictationHindiMode == .whisperApex, models.isInstalled(.whisperApex) {
-                    model = .whisperApex
-                } else if settings.dictationBengaliMode == .indicFlex, models.isInstalled(.indicFlex) {
-                    model = .indicFlex
-                }
+                let model = resolved.model
                 if !models.isInstalled(model) {
                     showMessage(String(localized: "Download the dictation model in Settings first"), .danger)
                     return
@@ -776,6 +781,7 @@ final class DictationCoordinator {
             let transcript = timed.text
 
             var processed = transcript
+            processed = DictationTextFormatter.stripHallucinations(processed)
             processed = DictationTextFormatter.collapseRepetitions(processed)
             if settings.dictationConvertSpokenEmoji {
                 processed = DictationTextFormatter.convertSpokenEmoji(processed)
@@ -805,6 +811,7 @@ final class DictationCoordinator {
                     processed,
                     provider: polishProvider,
                     s1Settings: s1,
+                    vocabularyTerms: dictionaryStore.promptVocabularyHint(for: processed),
                     groqAPIKey: settings.groqAPIKey,
                     groqModel: settings.dictationGroqPolishModel,
                     polisher: s1Polisher,
@@ -855,6 +862,35 @@ final class DictationCoordinator {
         } catch {
             showMessage(error.localizedDescription, .danger)
         }
+    }
+
+    private func resolvedLocalModelAndLanguage() -> (model: DictationModel, language: String?) {
+        var model = settings.dictationModel
+        var language = settings.dictationLanguage
+        if settings.dictationHindiMode == .whisperApex, models.isInstalled(.whisperApex) {
+            model = .whisperApex
+        } else if settings.dictationBengaliMode == .indicFlex, models.isInstalled(.indicFlex) {
+            model = .indicFlex
+        }
+        if model == .indicFlex, settings.dictationBengaliMode == .indicFlex {
+            let iso = DictationLanguage.isoCode(for: language)
+            if iso == nil || iso == "en" {
+                language = DictationLanguage.bengali.rawValue
+            }
+        }
+        return (model, language)
+    }
+
+    private func buildGroqPrompt(surroundingSnippet: String?) -> String? {
+        let terms = dictionaryStore.promptVocabularyHint()
+        var parts: [String] = []
+        if let snippet = surroundingSnippet?.trimmingCharacters(in: .whitespacesAndNewlines), !snippet.isEmpty {
+            parts.append(snippet)
+        }
+        if !terms.isEmpty {
+            parts.append("Vocabulary: " + terms.joined(separator: ", "))
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: "\n")
     }
 }
 

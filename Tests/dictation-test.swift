@@ -354,6 +354,56 @@ struct DictationTest {
         dictStore.addSnippet(keyword: "my sig", expansion: "Best, Sz")
         check(dictStore.applySnippets("Thanks, my sig"), "Thanks, Best, Sz")
 
+        // Phonetic dictionary recovery + anti-false-insertion guard
+        dictStore.addWord(canonical: "Shubham")
+        dictStore.addWord(canonical: "XcodeGen")
+        check(dictStore.applyDictionaryAndPacks("Ask Subham to update ex code gen"), "Ask Shubham to update XcodeGen")
+        check(dictStore.applyDictionaryAndPacks("Their thinking about working today"), "Their thinking about working today")
+        let hints = dictStore.promptVocabularyHint(for: "Ask Subham about PostgreSQL", maxTerms: 10)
+        assertTrue(hints.contains("Shubham") && hints.contains("PostgreSQL"), "Vocabulary prompt hint prioritizes matching terms")
+
+        // Whisper hallucination & repetition loop suppression
+        check(DictationTextFormatter.stripHallucinations("Thank you for watching."), "")
+        check(DictationTextFormatter.stripHallucinations("Deploy it tonight. Thanks for watching!"), "Deploy it tonight.")
+        check(
+            DictationTextFormatter.stripHallucinations("We shipped v2. We shipped v2. We shipped v2."),
+            "We shipped v2."
+        )
+
+        // ISO language code resolution + unified code-switching prompt
+        assertTrue(DictationLanguage.isoCode(for: "English") == "en", "English maps to en")
+        assertTrue(DictationLanguage.isoCode(for: "Hindi") == "hi", "Hindi maps to hi")
+        assertTrue(DictationLanguage.isoCode(for: "auto") == nil, "auto omits explicit language")
+        let codeSwitchSettings = DictationS1Settings(
+            enabled: true, tone: .semiFormal, structure: .prose, context: .general, hindiMode: .s1MiniPrompt
+        )
+        let prompt = codeSwitchSettings.effectiveSystemPrompt(for: "meeting 5 बजे hai")
+        assertTrue(prompt.contains("Hinglish") && prompt.contains("restarts"), "Hindi S1 prompt preserves speech repair and code-switching")
+        let userMsg = DictationS1Settings.normalizedUserMessage(
+            controlLine: codeSwitchSettings.controlLine,
+            transcript: "test",
+            vocabularyTerms: ["Shubham"],
+            surroundingContext: "Hi team,"
+        )
+        assertTrue(
+            userMsg.contains("[Vocabulary: Shubham]") && userMsg.contains("[Preceding text"),
+            "Normalized user message embeds hints cleanly"
+        )
+
+        // Deterministic Hinglish & Banglish phonetic converters (schwa insertion + word-boundary protection)
+        check(HinglishPhoneticConverter.convert("नमस्ते कमल।"), "namaste kamal.")
+        check(HinglishPhoneticConverter.convert("यह काम करना है"), "yah kam karna hai")
+        check(HinglishPhoneticConverter.convert("sky John"), "sky John")
+        check(AvroPhoneticConverter.convert("আমি ভালো আছি, কেমন?"), "ami bhalo achhi, kemon?")
+        check(AvroPhoneticConverter.convert("কাজ করতে যাচ্ছি।"), "kaj korte jachchhi.")
+        check(AvroPhoneticConverter.convert("ধন্যবাদ, sky John"), "dhonyobad, sky John")
+
         print("Dictation text formatting passed")
+    }
+
+    private static func assertTrue(_ condition: @autoclosure () -> Bool, _ message: String) {
+        if !condition() {
+            fatalError("Assertion failed: \(message)")
+        }
     }
 }

@@ -556,6 +556,9 @@ enum SettingsSearchCatalog {
             .clipboardHistory, "Search text in images and PDFs",
             keywords: ["OCR", "recognize", "scan", "screenshot", "background", "idle"]),
         .init(
+            .clipboardHistory, "Fetch website previews for links",
+            keywords: ["URL", "link", "preview", "website", "title", "image", "metadata"]),
+        .init(
             .clipboardHistory, "Default action",
             keywords: ["enter", "return", "paste", "copy", "primary"]),
         .init(

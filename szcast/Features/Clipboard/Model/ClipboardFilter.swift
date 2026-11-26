@@ -87,6 +87,25 @@ extension ClipboardItem {
     }
 
     /// A link or an address is one short token, so anything longer is prose by definition.
+    /// Normalized HTTP(S) URL for copied web links (returns nil for plain text, emails, or custom schemes).
+    var websiteURL: URL? {
+        guard textForm == .link, let raw = text?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !raw.isEmpty
+        else { return nil }
+        let normalized: String
+        if raw.range(of: "://") == nil {
+            normalized = "https://" + raw
+        } else {
+            normalized = raw
+        }
+        guard let url = URL(string: normalized),
+              let scheme = url.scheme?.lowercased(),
+              scheme == "http" || scheme == "https",
+              let host = url.host, !host.isEmpty
+        else { return nil }
+        return url
+    }
+
     private static let detectionLimit = 2048
 
     /// A scheme-less link needs a TLD people actually copy, or every `report.pdf` reads as one.
@@ -152,5 +171,146 @@ extension ClipboardItem {
 
     private static func isHostLabel(_ label: Substring) -> Bool {
         !label.isEmpty && label.allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "-") }
+    }
+}
+
+struct ClipboardLinkMetadata: Codable, Equatable, Sendable {
+    var title: String?
+    var summary: String?
+    var siteName: String?
+    var imageURL: URL?
+    var faviconURL: URL?
+
+    static func parse(html: String, baseURL: URL) -> ClipboardLinkMetadata {
+        let headSlice: String
+        if let closeHead = html.range(of: "</head>", options: .caseInsensitive) {
+            headSlice = String(html[..<closeHead.upperBound])
+        } else {
+            headSlice = String(html.prefix(65_536))
+        }
+
+        let metas = extractTags(named: "meta", in: headSlice)
+        let links = extractTags(named: "link", in: headSlice)
+
+        func metaContent(forKeys keys: [String]) -> String? {
+            for key in keys {
+                for attrs in metas {
+                    let name = attrs["property"] ?? attrs["name"] ?? attrs["itemprop"]
+                    if name?.caseInsensitiveCompare(key) == .orderedSame,
+                       let raw = attrs["content"]?.trimmingCharacters(in: .whitespacesAndNewlines),
+                       !raw.isEmpty {
+                        return decodeHTMLEntities(raw)
+                    }
+                }
+            }
+            return nil
+        }
+
+        let title = metaContent(forKeys: ["og:title", "twitter:title"])
+            ?? extractTitleTag(in: headSlice).map(decodeHTMLEntities)
+        let summary = metaContent(forKeys: ["og:description", "twitter:description", "description"])
+        let siteName = metaContent(forKeys: ["og:site_name", "application-name"])
+            ?? baseURL.host?.replacingOccurrences(of: "^www\\.", with: "", options: .regularExpression)
+
+        let rawImage = metaContent(forKeys: ["og:image:secure_url", "og:image", "twitter:image", "twitter:image:src"])
+        let imageURL = rawImage.flatMap { URL(string: $0, relativeTo: baseURL)?.absoluteURL }
+
+        var faviconURL: URL?
+        for relPriority in ["apple-touch-icon", "icon", "shortcut icon"] {
+            if let match = links.first(where: {
+                let rel = ($0["rel"] ?? "").lowercased()
+                return rel == relPriority || rel.split(separator: " ").contains(Substring(relPriority))
+            }), let href = match["href"]?.trimmingCharacters(in: .whitespacesAndNewlines), !href.isEmpty,
+               let resolved = URL(string: href, relativeTo: baseURL)?.absoluteURL {
+                faviconURL = resolved
+                break
+            }
+        }
+        if faviconURL == nil, let scheme = baseURL.scheme, let host = baseURL.host {
+            faviconURL = URL(string: "\(scheme)://\(host)/favicon.ico")
+        }
+
+        return ClipboardLinkMetadata(
+            title: title?.trimmingCharacters(in: .whitespacesAndNewlines),
+            summary: summary?.trimmingCharacters(in: .whitespacesAndNewlines),
+            siteName: siteName?.trimmingCharacters(in: .whitespacesAndNewlines),
+            imageURL: imageURL,
+            faviconURL: faviconURL
+        )
+    }
+
+    private static let titleRegex = try? NSRegularExpression(
+        pattern: #"<title[^>]*>([\s\S]*?)</title>"#,
+        options: [.caseInsensitive]
+    )
+    private static let attrRegex = try? NSRegularExpression(
+        pattern: #"([a-zA-Z0-9_:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))"#,
+        options: []
+    )
+
+    private static func extractTitleTag(in html: String) -> String? {
+        guard let titleRegex else { return nil }
+        let ns = html as NSString
+        guard let match = titleRegex.firstMatch(in: html, range: NSRange(location: 0, length: ns.length)),
+              match.numberOfRanges > 1
+        else { return nil }
+        let raw = ns.substring(with: match.range(at: 1))
+            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return raw.isEmpty ? nil : raw
+    }
+
+    private static func extractTags(named tagName: String, in html: String) -> [[String: String]] {
+        guard let tagRegex = try? NSRegularExpression(
+            pattern: "<\(tagName)\\b([^>]*)/?>",
+            options: [.caseInsensitive]
+        ), let attrRegex else { return [] }
+
+        let ns = html as NSString
+        let matches = tagRegex.matches(in: html, range: NSRange(location: 0, length: ns.length))
+        return matches.map { tagMatch in
+            let body = ns.substring(with: tagMatch.range(at: 1))
+            let nsBody = body as NSString
+            let attrMatches = attrRegex.matches(in: body, range: NSRange(location: 0, length: nsBody.length))
+            var dict: [String: String] = [:]
+            for m in attrMatches {
+                let key = nsBody.substring(with: m.range(at: 1)).lowercased()
+                let valRange: NSRange
+                if m.range(at: 2).location != NSNotFound { valRange = m.range(at: 2) }
+                else if m.range(at: 3).location != NSNotFound { valRange = m.range(at: 3) }
+                else { valRange = m.range(at: 4) }
+                if valRange.location != NSNotFound {
+                    dict[key] = nsBody.substring(with: valRange)
+                }
+            }
+            return dict
+        }
+    }
+
+    static func decodeHTMLEntities(_ text: String) -> String {
+        var result = text
+        for (entity, replacement) in [
+            ("&amp;", "&"), ("&lt;", "<"), ("&gt;", ">"), ("&quot;", "\""),
+            ("&#39;", "'"), ("&apos;", "'"), ("&nbsp;", " "), ("&ndash;", "–"), ("&mdash;", "—")
+        ] {
+            result = result.replacingOccurrences(of: entity, with: replacement)
+        }
+        guard let numericRegex = try? NSRegularExpression(pattern: #"&#(x?[0-9A-Fa-f]+);"#, options: []) else {
+            return result
+        }
+        let ns = result as NSString
+        let matches = numericRegex.matches(in: result, range: NSRange(location: 0, length: ns.length))
+        guard !matches.isEmpty else { return result }
+        let mutable = NSMutableString(string: result)
+        for match in matches.reversed() {
+            let token = ns.substring(with: match.range(at: 1))
+            let codePoint: UInt32? = token.lowercased().hasPrefix("x")
+                ? UInt32(token.dropFirst(), radix: 16)
+                : UInt32(token, radix: 10)
+            if let cp = codePoint, let scalar = UnicodeScalar(cp) {
+                mutable.replaceCharacters(in: match.range, with: String(scalar))
+            }
+        }
+        return mutable as String
     }
 }

@@ -95,14 +95,31 @@ struct DictationS1Settings: Codable, Sendable, Equatable {
     }
 
     static let systemPrompt =
-        "You are a text normalizer for speech-to-text transcripts. The input begins with a control line specifying the styling, structure, and context settings; clean the transcript to match those settings and output only the cleaned text."
+        "You are a text normalizer for speech-to-text transcripts. The input begins with a control line specifying styling, structure, context, and optional [Vocabulary] or [Preceding text] hints. Clean the transcript, resolve mid-sentence restarts, fix misspelled names/terms ONLY when phonetically spoken in the transcript (never insert unlisted or unspoken vocabulary), use preceding text solely for disambiguation without repeating it, and output only the cleaned text."
+
+    static func normalizedUserMessage(
+        controlLine: String,
+        transcript: String,
+        vocabularyTerms: [String] = [],
+        surroundingContext: String? = nil
+    ) -> String {
+        var header = controlLine
+        if !vocabularyTerms.isEmpty {
+            header += " [Vocabulary: \(vocabularyTerms.joined(separator: ", "))]"
+        }
+        if let ctx = surroundingContext?.trimmingCharacters(in: .whitespacesAndNewlines), !ctx.isEmpty {
+            let clipped = ctx.count > 160 ? String(ctx.suffix(160)) : ctx
+            header += " [Preceding text (context only, do not repeat): \(clipped)]"
+        }
+        return "\(header)\n\(transcript)"
+    }
 
     func effectiveSystemPrompt(for text: String) -> String {
         if bengaliMode == .s1MiniPrompt && AvroPhoneticConverter.containsBengali(text) {
-            return "You are a text normalizer for speech-to-text transcripts. Transliterate all Bengali script phonetically into Romanized Latin script (Banglish) as commonly typed on mobile messaging apps. Do not translate the meaning to English words; output phonetic Bengali in the English alphabet only. Example: 'কেমন আছো' -> 'kemon acho'."
+            return "You are a text normalizer for bilingual speech-to-text transcripts. Clean disfluencies and resolve restarts while keeping English words and technical terms in English, and transliterate all Bengali script phonetically into Romanized Latin script (Banglish) as typed on messaging apps without translating to English. Example: 'Ami office e jabo at 5' stays 'Ami office e jabo at 5'. Output only the cleaned text."
         }
         if hindiMode == .s1MiniPrompt && HinglishPhoneticConverter.containsHindi(text) {
-            return "You are a text normalizer for speech-to-text transcripts. Transliterate all Hindi words into natural, standard phonetic Romanized Latin script (Hinglish) as commonly typed on mobile messaging apps. Do not translate the meaning to English words; output phonetic Hindi in the English alphabet only. Example: 'आप कैसे हैं' -> 'aap kaise ho', 'क्या चल रहा है' -> 'kya chal raha hai'."
+            return "You are a text normalizer for bilingual speech-to-text transcripts. Clean disfluencies and resolve restarts while keeping English words and technical terms in English, and transliterate all Hindi Devanagari words phonetically into natural Romanized Latin script (Hinglish) as typed on messaging apps without translating to English. Example: 'आप कैसे हैं, meeting 5 बजे है' -> 'aap kaise ho, meeting 5 baje hai'. Output only the cleaned text."
         }
         return Self.systemPrompt
     }

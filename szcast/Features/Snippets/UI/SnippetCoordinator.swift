@@ -437,8 +437,12 @@ final class SnippetCoordinator {
             defaultIndex: 0)
         guard choice < options.count - 1 else { return }
         let targetFolder: String? = choice == 0 ? nil : folderPaths[choice - 1]
-        guard targetFolder != record.snippet.folder else { return }
-        var updated = record
+        await moveSnippet(id: record.id, toFolder: targetFolder)
+    }
+
+    func moveSnippet(id: StoredSnippet.ID, toFolder targetFolder: String?) async {
+        guard settings.snippetsEnabled, var updated = store.record(id: id) else { return }
+        guard targetFolder != updated.snippet.folder else { return }
         updated.snippet.folder = targetFolder
         do {
             try await store.save(updated)
@@ -451,6 +455,19 @@ final class SnippetCoordinator {
             await core.showNotice(
                 title: String(localized: "Couldn’t Move Snippet"),
                 message: error.localizedDescription, symbol: "folder", tone: .danger)
+        }
+    }
+
+    func setSnippetEnabled(_ enabled: Bool, id: StoredSnippet.ID) async {
+        guard settings.snippetsEnabled, var updated = store.record(id: id) else { return }
+        guard updated.snippet.isEnabled != enabled else { return }
+        updated.snippet.isEnabled = enabled
+        do {
+            try await store.save(updated)
+        } catch {
+            await core.showNotice(
+                title: String(localized: "Couldn’t Save the Change"),
+                message: error.localizedDescription, symbol: "curlybraces", tone: .danger)
         }
     }
 

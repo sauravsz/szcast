@@ -134,8 +134,59 @@ struct DictationInferenceTest {
         else {
             fatalError("Live insertion flushed speech without a pause, or silence as speech")
         }
+
+        // vDSP 80 Hz high-pass & loudness conditioning
+        let lowHum = (0..<1600).map { i -> Float in
+            let hum = 0.04 * sin(2 * Float.pi * 40 * Float(i) / 16000)
+            let voice = 0.008 * sin(2 * Float.pi * 300 * Float(i) / 16000)
+            return hum + voice
+        }
+        let conditioned = DictationAudioChunks.conditionForTranscription(lowHum)
+        let silentBuf = [Float](repeating: 0.0001, count: 1600)
+        let conditionedSilent = DictationAudioChunks.conditionForTranscription(silentBuf)
+        guard conditioned.count == lowHum.count,
+              conditioned.allSatisfy({ abs($0) <= 1.0 }),
+              conditionedSilent.allSatisfy({ abs($0) < 0.001 })
+        else {
+            fatalError("Audio conditioning failed bounds or silence floor preservation")
+        }
+
+        // IndicFlex array vocab + romanized prompt + WhisperApex ISO codes
+        let vocabJSON = Data("""
+        ["<pad>","<bos>","<eos>","<s>","</s>","<|bn|>","<|hi|>","<|romanized|>","<|noromanized|>","▁","ami"]
+        """.utf8)
+        let parsed = try IndicFlexRecognizer.parseVocabulary(from: vocabJSON)
+        guard parsed.idToToken[9] == "▁",
+              parsed.idToToken[10] == "ami",
+              parsed.romanizedID == 7,
+              parsed.noRomanizedID == 8
+        else {
+            fatalError("IndicFlex array vocabulary parsing failed")
+        }
+        let promptsByLang = ["bn": [1, 5, 8], "hi": [1, 6, 8]]
+        guard
+            IndicFlexRecognizer.romanizedPrompt(
+                language: "Bengali", promptIdsByLang: promptsByLang,
+                fallbackBosID: 1, romanizedID: parsed.romanizedID, noRomanizedID: parsed.noRomanizedID
+            ) == [1, 5, 7],
+            IndicFlexRecognizer.romanizedPrompt(
+                language: "en", promptIdsByLang: promptsByLang,
+                fallbackBosID: 1, romanizedID: parsed.romanizedID, noRomanizedID: parsed.noRomanizedID
+            ) == [1, 5, 7],
+            IndicFlexRecognizer.romanizedPrompt(
+                language: "Hindi", promptIdsByLang: promptsByLang,
+                fallbackBosID: 1, romanizedID: parsed.romanizedID, noRomanizedID: parsed.noRomanizedID
+            ) == [1, 6, 7],
+            DictationLanguage.isoCode(for: "Bengali") == "bn",
+            DictationLanguage.isoCode(for: "Hindi") == "hi",
+            DictationLanguage.isoCode(for: "Banglish") == "bn",
+            DictationLanguage.isoCode(for: "Hinglish") == "hi"
+        else {
+            fatalError("IndicFlex romanized prompt or Whisper ISO resolution failed")
+        }
+
         print(
-            "Dictation scores, tokenizer, Fourier transform, mel features, listening bands, audio chunks and live cuts passed"
+            "Dictation scores, tokenizer, Fourier transform, mel features, listening bands, audio chunks, live cuts and Indic/Whisper prompts passed"
         )
     }
 

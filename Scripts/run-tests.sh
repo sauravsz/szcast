@@ -463,12 +463,17 @@ run index -O dictation-performance Szcast/Platform/ProcessExit.swift \
                            Szcast/Features/Dictation/Model/DictationModel.swift \
                            Szcast/Features/Dictation/Model/TimedTranscript.swift \
                            Szcast/Features/Dictation/Service/DictationWire.swift
-run dictation-inference-test Szcast/Features/Dictation/Model/DictationAudioChunks.swift \
+run dictation-inference-test Szcast/Features/Dictation/Model/DictationModel.swift \
+    Szcast/Features/Dictation/Model/DictationAudioChunks.swift \
+    Szcast/Features/Dictation/Model/DictationLanguage.swift \
     Szcast/Features/Dictation/Model/TimedTranscript.swift \
     Szcast/Features/Dictation/Model/SpeakerClustering.swift \
     Szcast/Features/Dictation/Service/DictationSpectrum.swift \
+    Szcast/Features/Dictation/Service/DictationWire.swift \
     Szcast/Features/Dictation/Helper/DictationTensor.swift Szcast/Features/Dictation/Helper/DictationTokenizer.swift \
-    Szcast/Features/Dictation/Helper/DictationMel.swift
+    Szcast/Features/Dictation/Helper/DictationMel.swift \
+    Szcast/Features/Dictation/Helper/IndicFlexRecognizer.swift \
+    Szcast/Features/Dictation/Helper/WhisperApexRecognizer.swift
 run dictation-worker-test  Szcast/Features/Dictation/Model/DictationModel.swift \
                            Szcast/Features/Dictation/Model/DictationSupportModel.swift \
                            Szcast/Features/Dictation/Model/DictationIdleRelease.swift \

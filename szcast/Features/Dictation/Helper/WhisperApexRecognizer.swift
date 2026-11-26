@@ -16,6 +16,7 @@ final class WhisperApexRecognizer {
         let taskToId: [String: Int]?
         let noTimestampsTokenId: Int?
         let suppressTokens: [Int]?
+        let beginSuppressTokens: [Int]?
     }
 
     private let melModel: MLModel
@@ -27,6 +28,7 @@ final class WhisperApexRecognizer {
     private let transcribeTaskID: Int
     private let noTimestampsID: Int
     private let suppressTokens: Set<Int>
+    private let beginSuppressTokens: Set<Int>
 
     init(directory: URL) throws {
         let dec = JSONDecoder()
@@ -43,11 +45,13 @@ final class WhisperApexRecognizer {
             transcribeTaskID = gen.taskToId?["transcribe"] ?? 50_360
             noTimestampsID = gen.noTimestampsTokenId ?? 50_364
             suppressTokens = Set(gen.suppressTokens ?? [])
+            beginSuppressTokens = Set(gen.beginSuppressTokens ?? [])
         } else {
             langToID = ["<|en|>": 50_259, "<|hi|>": 50_276]
             transcribeTaskID = 50_360
             noTimestampsID = 50_364
             suppressTokens = []
+            beginSuppressTokens = [220, 50_257]
         }
 
         tokenizer = try DictationTokenizer(
@@ -74,7 +78,7 @@ final class WhisperApexRecognizer {
         var chunkTexts = [String]()
         var words = [TranscriptWord]()
 
-        let shortLang = language?.split(separator: "-").first.map { "<|\($0.lowercased())|>" } ?? "<|hi|>"
+        let shortLang = DictationLanguage.isoCode(for: language).map { "<|\($0)|>" } ?? "<|hi|>"
         let langToken = langToID[shortLang] ?? langToID["<|hi|>"] ?? 50_276
         let promptTokens = [
             config.decoderStartTokenId,
@@ -140,6 +144,11 @@ final class WhisperApexRecognizer {
                     for sup in suppressTokens where sup < scores.count {
                         scores[sup] = -Float.greatestFiniteMagnitude
                     }
+                    if pos == promptTokens.count {
+                        for sup in beginSuppressTokens where sup < scores.count {
+                            scores[sup] = -Float.greatestFiniteMagnitude
+                        }
+                    }
                     return scores.indices.max(by: { scores[$0] < scores[$1] }) ?? config.eosTokenId
                 }
 
@@ -194,12 +203,18 @@ final class WhisperApexRecognizer {
     private static func scatterCacheColumn(
         from update: MLMultiArray, into cache: MLMultiArray, column: Int, maxSeq: Int, channels: Int
     ) {
+        let dstChStride = cache.strides.count >= 2 ? cache.strides[1].intValue : maxSeq
+        let dstColStride = cache.strides.count >= 4 ? cache.strides[3].intValue : 1
+        let srcChStride = update.strides.count >= 2 ? update.strides[1].intValue : 1
         update.withUnsafeBytes { srcRaw in
             cache.withUnsafeMutableBytes { dstRaw, _ in
                 let src = srcRaw.bindMemory(to: UInt16.self)
                 let dst = dstRaw.bindMemory(to: UInt16.self)
-                for ch in 0..<min(channels, src.count) {
-                    dst[ch * maxSeq + column] = src[ch]
+                for ch in 0..<channels {
+                    let sIdx = ch * srcChStride
+                    let dIdx = ch * dstChStride + column * dstColStride
+                    guard sIdx < src.count, dIdx < dst.count else { break }
+                    dst[dIdx] = src[sIdx]
                 }
             }
         }

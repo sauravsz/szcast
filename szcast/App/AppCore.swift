@@ -317,6 +317,9 @@ final class AppCore {
         aiChats = AIChatSurfacesState(history: chatHistory)
         appIndex = AppIndex(ranking: launcherRanking, aliases: aliases)
         let clipboardManager = ClipboardManager(store: clipboardStore, settings: settings)
+        clipboardManager.onWebLinkCaptured = { url in
+            ClipboardLinkPreviewCache.shared.prefetch(url: url)
+        }
         self.clipboardManager = clipboardManager
         extensions = ExtensionManager(clipboardStore: clipboardStore)
         snippetsStore = SnippetsStore(repository: Self.snippetsRepository(for: settings))

@@ -4,6 +4,7 @@ import Foundation
 enum SettingsBackupCoverage {
     static let mirrored: [String: AppSettingsKey] = [
         "clipboardEnabled": .clipboardEnabled,
+        "clipboardFetchLinkPreviews": .clipboardFetchLinkPreviews,
         "clipboardRetentionDays": .clipboardRetention,
         "clipboardDefaultAction": .clipboardDefaultAction,
         "clipboardDisabledApps": .clipboardDisabledApps,

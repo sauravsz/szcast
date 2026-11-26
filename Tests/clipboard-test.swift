@@ -41,6 +41,7 @@ struct ClipboardTests {
         defaultActionChords()
         plainTextSkipsTheFile()
         offersTextExtraction()
+        linkPreviewMetadataAndURL()
 
         print("\(passes)/\(passes + failures) passed")
         if failures > 0 { exit(1) }
@@ -947,6 +948,45 @@ struct ClipboardTests {
             !ClipboardItem(filePath: "/Users/me/report.pdf", sourceBundleID: nil)
                 .offersTextExtraction,
             "a PDF stays a background-indexing capability")
+    }
+
+    static func linkPreviewMetadataAndURL() {
+        expect(
+            ClipboardItem(text: "https://wisprflow.ai/canto-2", sourceBundleID: nil).websiteURL?
+                .absoluteString == "https://wisprflow.ai/canto-2",
+            "https URL resolves to websiteURL")
+        expect(
+            ClipboardItem(text: "github.com/sauravsz/szcast", sourceBundleID: nil).websiteURL?
+                .absoluteString == "https://github.com/sauravsz/szcast",
+            "bare domain normalizes to https websiteURL")
+        expect(
+            ClipboardItem(text: "vscode://file/tmp/a.swift", sourceBundleID: nil).websiteURL == nil,
+            "custom URL scheme is not fetched as website preview")
+
+        let html = """
+            <!doctype html>
+            <html>
+            <head>
+            <meta property="og:title" content="Canto 2 &amp; Accuracy" />
+            <meta name="description" content="Next-gen dictation &quot;model&quot;." />
+            <meta property="og:site_name" content="Wispr Flow" />
+            <meta content="/assets/hero.png" property="og:image" />
+            <link rel="icon" href="/favicon-32.png" />
+            </head>
+            <body>Hello</body>
+            </html>
+            """
+        let base = URL(string: "https://wisprflow.ai/canto-2")!
+        let parsed = ClipboardLinkMetadata.parse(html: html, baseURL: base)
+        expect(parsed.title == "Canto 2 & Accuracy", "parses og:title and HTML entities")
+        expect(parsed.summary == "Next-gen dictation \"model\".", "parses meta description")
+        expect(parsed.siteName == "Wispr Flow", "parses og:site_name")
+        expect(
+            parsed.imageURL?.absoluteString == "https://wisprflow.ai/assets/hero.png",
+            "resolves relative og:image URL against base")
+        expect(
+            parsed.faviconURL?.absoluteString == "https://wisprflow.ai/favicon-32.png",
+            "resolves relative link icon URL against base")
     }
 
     // MARK: - Harness

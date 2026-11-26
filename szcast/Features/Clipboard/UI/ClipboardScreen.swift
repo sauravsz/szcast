@@ -232,6 +232,14 @@ enum ClipboardActionsMenu {
                     })
             }
             if let text = item.text, URLSanitizer.containsURL(text) {
+                if let webURL = item.websiteURL {
+                    items.append(
+                        PopoverMenuItem(
+                            title: String(localized: "Open Link"), systemImage: "safari"
+                        ) {
+                            NSWorkspace.shared.open(webURL)
+                        })
+                }
                 items.append(
                     PopoverMenuItem(
                         title: String(localized: "Copy Clean URL"), systemImage: "link.badge.plus",

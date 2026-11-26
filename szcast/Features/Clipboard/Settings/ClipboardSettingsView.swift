@@ -33,6 +33,10 @@ struct ClipboardSettingsView: View {
                     SettingsRowTitle(.clipboardHistory, "Search text in images and PDFs")
                     Text("Recognized on this Mac while idle.")
                 }
+                Toggle(isOn: $settings.clipboardFetchLinkPreviews) {
+                    SettingsRowTitle(.clipboardHistory, "Fetch website previews for links")
+                    Text("Show title, summary, and preview image for copied URLs.")
+                }
                 Picker(selection: $settings.clipboardDefaultAction) {
                     ForEach(ClipboardDefaultAction.allCases) { action in
                         Text(action.title).tag(action)

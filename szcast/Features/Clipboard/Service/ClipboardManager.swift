@@ -17,6 +17,7 @@ final class ClipboardManager {
 
     private let store: ClipboardStore
     private let settings: AppSettings
+    var onWebLinkCaptured: (@MainActor (URL) -> Void)?
     private var timer: Timer?
     private var sessionTokens: [NotificationToken] = []
     private var lastChangeCount = 0
@@ -172,6 +173,10 @@ final class ClipboardManager {
         {
             guard text.count <= ClipboardStore.maxTextLength else { return }
             store.addText(text, sourceBundleID: sourceBundleID)
+            if settings.clipboardFetchLinkPreviews,
+               let url = ClipboardItem(text: text, sourceBundleID: sourceBundleID).websiteURL {
+                onWebLinkCaptured?(url)
+            }
             return
         }
 

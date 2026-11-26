@@ -245,6 +245,52 @@ enum DictationTextFormatter {
         return result
     }
 
+    // MARK: - ASR Hallucination & Loop Suppression
+
+    private static let phantomCaptions: [String] = [
+        "thank you for watching",
+        "thanks for watching",
+        "please subscribe",
+        "like and subscribe",
+        "subscribe to my channel",
+        "subtitles by",
+        "captioned by",
+        "amara.org"
+    ]
+
+    /// Removes known phantom Whisper artifacts and collapses degenerate trailing clause loops.
+    static func stripHallucinations(_ text: String) -> String {
+        var trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return trimmed }
+
+        let sentences = trimmed.split(omittingEmptySubsequences: true) { ".!?".contains($0) }
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+
+        if sentences.count >= 3, let last = sentences.last {
+            let normLast = last.lowercased()
+            let repeats = sentences.reversed().prefix(while: { $0.lowercased() == normLast }).count
+            if repeats >= 3 {
+                let keptCount = sentences.count - repeats + 1
+                trimmed = sentences.prefix(keptCount).joined(separator: ". ") + "."
+            }
+        }
+
+        let normalizedWhole = trimmed.lowercased()
+            .trimmingCharacters(in: .punctuationCharacters.union(.whitespacesAndNewlines))
+        if phantomCaptions.contains(where: { normalizedWhole == $0 || normalizedWhole.hasPrefix("subtitles by ") }) {
+            return ""
+        }
+
+        for phantom in phantomCaptions {
+            let escaped = NSRegularExpression.escapedPattern(for: phantom)
+            let pattern = #"(?i)(?:(?<=[.!?])\s+|\s+)"# + escaped + #"[.!?…]*$"#
+            trimmed = trimmed.replacingOccurrences(of: pattern, with: "", options: .regularExpression)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        return trimmed
+    }
+
     // MARK: - Echo Stripping
 
     static func stripEcho(_ text: String, after previous: String) -> String {

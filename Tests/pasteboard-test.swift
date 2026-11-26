@@ -448,6 +448,7 @@ struct PasteboardTests {
 @MainActor
 final class AppSettings {
     var clipboardDisabledApps: Set<String> = []
+    var clipboardFetchLinkPreviews = true
 }
 
 enum Permissions {

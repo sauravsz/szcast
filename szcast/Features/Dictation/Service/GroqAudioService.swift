@@ -30,7 +30,8 @@ actor GroqAudioService {
         samples: [Float],
         apiKey: String,
         model: String = "whisper-large-v3-turbo",
-        language: String? = nil
+        language: String? = nil,
+        prompt: String? = nil
     ) async throws -> String {
         let key = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !key.isEmpty else {
@@ -61,12 +62,19 @@ actor GroqAudioService {
         body.append("Content-Disposition: form-data; name=\"response_format\"\r\n\r\n".data(using: .utf8)!)
         body.append("json\r\n".data(using: .utf8)!)
 
-        // 3. Language (optional)
-        if let language, !language.isEmpty {
-            let langCode = language.split(separator: "-").first.map(String.init) ?? language
+        // 3. Language (optional; omitted in auto-detect so multilingual code-switching works naturally)
+        if let langCode = DictationLanguage.isoCode(for: language) {
             body.append("--\(boundary)\r\n".data(using: .utf8)!)
             body.append("Content-Disposition: form-data; name=\"language\"\r\n\r\n".data(using: .utf8)!)
             body.append("\(langCode)\r\n".data(using: .utf8)!)
+        }
+
+        // 4. Contextual vocabulary & surrounding snippet prompt (bounded to stay within Whisper limits)
+        if let trimmedPrompt = prompt?.trimmingCharacters(in: .whitespacesAndNewlines), !trimmedPrompt.isEmpty {
+            let safePrompt = trimmedPrompt.count > 700 ? String(trimmedPrompt.suffix(700)) : trimmedPrompt
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"prompt\"\r\n\r\n".data(using: .utf8)!)
+            body.append("\(safePrompt)\r\n".data(using: .utf8)!)
         }
 
         // 4. Audio file

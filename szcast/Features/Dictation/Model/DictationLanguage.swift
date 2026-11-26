@@ -65,6 +65,22 @@ enum DictationLanguage: String, CaseIterable, Identifiable, Sendable {
         return Locale(identifier: trimmed)
     }
 
+    /// Resolves ISO-639-1 code for Whisper/Groq API, returning `nil` when set to auto-detect.
+    static func isoCode(for settingValue: String?) -> String? {
+        guard let trimmed = settingValue?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !trimmed.isEmpty,
+              trimmed.caseInsensitiveCompare("auto") != .orderedSame
+        else { return nil }
+        let lower = trimmed.lowercased()
+        if lower == "banglish" { return "bn" }
+        if lower == "hinglish" { return "hi" }
+        if let language = Self.allCases.first(where: { $0.rawValue.lowercased() == lower }) {
+            return language.code
+        }
+        let prefix = trimmed.split(separator: "-").first.map { String($0).lowercased() } ?? ""
+        return (2...3).contains(prefix.count) ? prefix : nil
+    }
+
     private var code: String {
         switch self {
         case .arabic: "ar"

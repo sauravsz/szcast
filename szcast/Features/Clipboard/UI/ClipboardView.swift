@@ -1,4 +1,5 @@
 import AppKit
+import CryptoKit
 import SwiftUI
 
 struct ClipboardList: View {
@@ -186,6 +187,10 @@ private struct ClipboardRow: View {
             if let color {
                 ColorSwatch(color: color)
                     .frame(width: artworkSize, height: artworkSize)
+            } else if item.textForm == .link {
+                Image(nsImage: IconCache.symbolIcon(named: "link")).resizable()
+            } else if item.textForm == .email {
+                Image(nsImage: IconCache.symbolIcon(named: "at")).resizable()
             } else {
                 Image(nsImage: IconCache.symbolIcon(named: "doc.text")).resizable()
             }
@@ -288,6 +293,7 @@ struct ClipboardPreview: View {
     @Environment(\.metrics) private var metrics
     let item: ClipboardItem?
     @Environment(ClipboardStore.self) private var store
+    @Environment(AppSettings.self) private var settings
 
     var body: some View {
         if let item {
@@ -308,6 +314,8 @@ struct ClipboardPreview: View {
         case .text:
             if let color = item.colorValue {
                 ColorPreview(color: color, text: item.text ?? "")
+            } else if settings.clipboardFetchLinkPreviews, let webURL = item.websiteURL {
+                ClipboardLinkPreviewView(url: webURL, rawText: item.text ?? "")
             } else {
                 ClipboardCodePreview(text: item.text ?? "")
             }
@@ -404,13 +412,20 @@ private struct ClipboardInfoSection: View {
         }
         switch item.kind {
         case .text:
-            let isColor = item.colorValue != nil
-            rows.append(
-                InfoRow(
-                    label: String(localized: "Type"),
-                    value: isColor ? String(localized: "Color") : String(localized: "Text")))
+            let textForm = item.textForm ?? .plain
+            let typeLabel: String =
+                switch textForm {
+                case .color: String(localized: "Color")
+                case .link: String(localized: "Link")
+                case .email: String(localized: "Email")
+                case .plain: String(localized: "Text")
+                }
+            rows.append(InfoRow(label: String(localized: "Type"), value: typeLabel))
+            if textForm == .link, let host = item.websiteURL?.host {
+                rows.append(InfoRow(label: String(localized: "Host"), value: host))
+            }
             // A colour's own notations are the pane above; its length is not what you came for.
-            if !isColor {
+            if textForm != .color {
                 if let characters = details.characters {
                     rows.append(
                         InfoRow(label: String(localized: "Characters"), value: characters.formatted()))
@@ -646,5 +661,336 @@ private enum ClipboardSyntaxHighlighter {
         }
 
         return attributed
+    }
+}
+
+@MainActor
+@Observable
+final class ClipboardLinkPreviewCache {
+    static let shared = ClipboardLinkPreviewCache()
+
+    struct Entry: Sendable {
+        let metadata: ClipboardLinkMetadata
+        let image: NSImage?
+        let favicon: NSImage?
+    }
+
+    private var entries: [URL: Entry] = [:]
+    private var order: [URL] = []
+    private var inFlight: [URL: Task<Entry?, Never>] = [:]
+    private static let maxMemoryEntries = 80
+
+    private init() {}
+
+    func cached(for url: URL) -> Entry? {
+        entries[url]
+    }
+
+    func prefetch(url: URL) {
+        guard entries[url] == nil, inFlight[url] == nil else { return }
+        _ = startFetch(for: url)
+    }
+
+    func load(url: URL) async -> Entry? {
+        if let hit = entries[url] { return hit }
+        if let existing = inFlight[url] { return await existing.value }
+        let task = startFetch(for: url)
+        return await task.value
+    }
+
+    private func startFetch(for url: URL) -> Task<Entry?, Never> {
+        let task = Task<Entry?, Never> { [weak self] in
+            let fetched = await Self.fetchAndCache(url: url)
+            await MainActor.run {
+                guard let self else { return }
+                self.inFlight[url] = nil
+                if let fetched {
+                    self.storeInMemory(fetched, for: url)
+                }
+            }
+            return fetched
+        }
+        inFlight[url] = task
+        return task
+    }
+
+    private func storeInMemory(_ entry: Entry, for url: URL) {
+        if entries[url] == nil {
+            order.append(url)
+            if order.count > Self.maxMemoryEntries, let oldest = order.first {
+                order.removeFirst()
+                entries.removeValue(forKey: oldest)
+            }
+        }
+        entries[url] = entry
+    }
+
+    private nonisolated static var cacheDirectory: URL {
+        AppPaths.caches().appending(path: "ClipboardLinkPreviews", directoryHint: .isDirectory)
+    }
+
+    private nonisolated static func cacheKey(for url: URL) -> String {
+        let digest = SHA256.hash(data: Data(url.absoluteString.utf8))
+        return digest.map { String(format: "%02x", $0) }.joined()
+    }
+
+    private nonisolated static func fetchAndCache(url: URL) async -> Entry? {
+        let key = cacheKey(for: url)
+        let dir = cacheDirectory
+        let metaURL = dir.appending(path: "\(key).json")
+        let imageFileURL = dir.appending(path: "\(key).img")
+        let faviconFileURL = dir.appending(path: "\(key).fav")
+
+        if let data = try? Data(contentsOf: metaURL),
+           let meta = try? JSONDecoder().decode(ClipboardLinkMetadata.self, from: data) {
+            let hero = (try? Data(contentsOf: imageFileURL)).flatMap { NSImage(data: $0) }
+            let fav = (try? Data(contentsOf: faviconFileURL)).flatMap { NSImage(data: $0) }
+            return Entry(metadata: meta, image: hero, favicon: fav)
+        }
+
+        let config = URLSessionConfiguration.ephemeral
+        config.timeoutIntervalForRequest = 6.0
+        config.timeoutIntervalForResource = 8.0
+        config.httpAdditionalHeaders = [
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Safari/605.1.15",
+            "Accept": "text/html,application/xhtml+xml"
+        ]
+        let session = URLSession(configuration: config)
+        defer { session.invalidateAndCancel() }
+
+        guard let html = await fetchHTMLPrefix(url: url, session: session, maxBytes: 262_144) else {
+            return nil
+        }
+
+        let metadata = ClipboardLinkMetadata.parse(html: html, baseURL: url)
+        let hasUsefulContent = metadata.title != nil || metadata.summary != nil || metadata.imageURL != nil
+        guard hasUsefulContent else { return nil }
+
+        async let heroDataTask: Data? = {
+            guard let imageURL = metadata.imageURL else { return nil }
+            return await fetchImageData(url: imageURL, session: session)
+        }()
+        async let favDataTask = fetchFaviconData(for: metadata.faviconURL, host: url.host, session: session)
+        let heroData = await heroDataTask
+        let favData = await favDataTask
+
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        if let encoded = try? JSONEncoder().encode(metadata) {
+            try? encoded.write(to: metaURL, options: .atomic)
+        }
+        if let heroData { try? heroData.write(to: imageFileURL, options: .atomic) }
+        if let favData { try? favData.write(to: faviconFileURL, options: .atomic) }
+
+        return Entry(
+            metadata: metadata,
+            image: heroData.flatMap { NSImage(data: $0) },
+            favicon: favData.flatMap { NSImage(data: $0) }
+        )
+    }
+
+    private nonisolated static func fetchHTMLPrefix(
+        url: URL,
+        session: URLSession,
+        maxBytes: Int
+    ) async -> String? {
+        guard let (bytes, response) = try? await session.bytes(from: url),
+              let http = response as? HTTPURLResponse,
+              (200...299).contains(http.statusCode)
+        else { return nil }
+
+        if let mime = http.mimeType?.lowercased(), !mime.contains("html") && !mime.contains("xml") {
+            return nil
+        }
+
+        var buffer = Data()
+        buffer.reserveCapacity(min(maxBytes, 32_768))
+        do {
+            for try await byte in bytes {
+                buffer.append(byte)
+                if buffer.count >= maxBytes { break }
+            }
+        } catch {
+            if buffer.isEmpty { return nil }
+        }
+        return String(data: buffer, encoding: .utf8) ?? String(data: buffer, encoding: .isoLatin1)
+    }
+
+    private nonisolated static func fetchImageData(url: URL, session: URLSession) async -> Data? {
+        guard let (data, response) = try? await session.data(from: url),
+              let http = response as? HTTPURLResponse,
+              (200...299).contains(http.statusCode),
+              data.count > 64,
+              data.count <= 4 * 1024 * 1024,
+              NSImage(data: data) != nil
+        else { return nil }
+        return data
+    }
+
+    private nonisolated static func fetchFaviconData(
+        for primaryURL: URL?,
+        host: String?,
+        session: URLSession
+    ) async -> Data? {
+        if let primaryURL, let data = await fetchImageData(url: primaryURL, session: session) {
+            return data
+        }
+        if let host,
+           let googleURL = URL(string: "https://www.google.com/s2/favicons?domain=\(host)&sz=64"),
+           let data = await fetchImageData(url: googleURL, session: session) {
+            return data
+        }
+        return nil
+    }
+}
+
+private struct ClipboardLinkPreviewView: View {
+    let url: URL
+    let rawText: String
+    @State private var entry: ClipboardLinkPreviewCache.Entry?
+    @State private var isLoading = false
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
+                if let entry {
+                    previewCard(entry)
+                } else {
+                    fallbackCard
+                }
+            }
+            .padding(.top, 4)
+            .padding(.bottom, 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .task(id: url) {
+            if let hit = ClipboardLinkPreviewCache.shared.cached(for: url) {
+                entry = hit
+                isLoading = false
+                return
+            }
+            entry = nil
+            isLoading = true
+            let loaded = await ClipboardLinkPreviewCache.shared.load(url: url)
+            entry = loaded
+            isLoading = false
+        }
+    }
+
+    @ViewBuilder
+    private func previewCard(_ entry: ClipboardLinkPreviewCache.Entry) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if let image = entry.image {
+                Image(nsImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(maxWidth: .infinity, maxHeight: 165)
+                    .clipped()
+                    .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.row, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.Radius.row, style: .continuous)
+                            .strokeBorder(Theme.Colors.cardStroke, lineWidth: 1)
+                    )
+            }
+
+            HStack(spacing: 6) {
+                if let favicon = entry.favicon {
+                    Image(nsImage: favicon)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 15, height: 15)
+                        .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
+                } else {
+                    Image(systemName: "globe")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+                Text(verbatim: entry.metadata.siteName ?? url.host ?? url.absoluteString)
+                    .font(.system(size: 11.5, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                Spacer()
+                Button {
+                    NSWorkspace.shared.open(url)
+                } label: {
+                    Label(String(localized: "Open Link"), systemImage: "arrow.up.right.square")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(Color.accentColor)
+            }
+
+            if let title = entry.metadata.title, !title.isEmpty {
+                Text(verbatim: title)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Theme.Colors.textPrimary)
+                    .lineLimit(3)
+                    .textSelection(.enabled)
+            }
+
+            if let summary = entry.metadata.summary, !summary.isEmpty {
+                Text(verbatim: summary)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(4)
+                    .textSelection(.enabled)
+            }
+
+            rawURLBox
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: Theme.Radius.row, style: .continuous)
+                .fill(Theme.Colors.controlSurface.opacity(0.65))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.row, style: .continuous)
+                .strokeBorder(Theme.Colors.cardStroke, lineWidth: 1)
+        )
+    }
+
+    private var fallbackCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "link")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                Text(verbatim: url.host ?? url.absoluteString)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                Spacer()
+                if isLoading {
+                    ProgressView()
+                        .controlSize(.mini)
+                } else {
+                    Button {
+                        NSWorkspace.shared.open(url)
+                    } label: {
+                        Label(String(localized: "Open Link"), systemImage: "arrow.up.right.square")
+                            .font(.system(size: 11, weight: .medium))
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Color.accentColor)
+                }
+            }
+            rawURLBox
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: Theme.Radius.row, style: .continuous)
+                .fill(Theme.Colors.controlSurface.opacity(0.65))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.row, style: .continuous)
+                .strokeBorder(Theme.Colors.cardStroke, lineWidth: 1)
+        )
+    }
+
+    private var rawURLBox: some View {
+        Text(verbatim: rawText.trimmingCharacters(in: .whitespacesAndNewlines))
+            .font(.system(size: 11, design: .monospaced))
+            .foregroundStyle(Theme.Colors.textTertiary)
+            .textSelection(.enabled)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

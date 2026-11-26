@@ -21,6 +21,7 @@ struct SettingsBackup: Codable {
         // Adding a field here means adding it to SettingsBackupCoverage too, or the harness fails.
         // Carried, unlike the consent flags: recording your own copies grants no permission class.
         var clipboardEnabled: Bool?
+        var clipboardFetchLinkPreviews: Bool?
         var clipboardRetentionDays: Int?
         var clipboardDefaultAction: String?
         var clipboardDisabledApps: [String]?
@@ -145,6 +146,7 @@ extension SettingsBackup {
         var backup = SettingsBackup()
         backup.settings = SettingsData(
             clipboardEnabled: s.clipboardEnabled,
+            clipboardFetchLinkPreviews: s.clipboardFetchLinkPreviews,
             clipboardRetentionDays: s.clipboardRetention.rawValue,
             clipboardDefaultAction: s.clipboardDefaultAction.rawValue,
             clipboardDisabledApps: s.clipboardDisabledApps,
@@ -329,6 +331,10 @@ extension SettingsBackup {
         var count = 0
         if let flag = s.clipboardEnabled {
             settings.clipboardEnabled = flag
+            count += 1
+        }
+        if let flag = s.clipboardFetchLinkPreviews {
+            settings.clipboardFetchLinkPreviews = flag
             count += 1
         }
         if let days = s.clipboardRetentionDays, let retention = ClipboardRetention(rawValue: days) {
