@@ -511,7 +511,18 @@ enum Theme {
         static let roomCardShadow = adaptive(
             dark: .srgbInk(0, alpha: 0.25), light: .srgbInk(0, alpha: 0.25))
         static let roomCardDot = ramp(dark: 0.25, light: 0.25)
-        static let searchFlash = Color.accentColor.opacity(0.35)
+        static let settingsAccentNS = NSColor(name: nil) {
+            $0.isDark
+                ? NSColor(srgbRed: 1.0, green: 0.30, blue: 0.43, alpha: 1.0)
+                : NSColor(srgbRed: 1.0, green: 0.22, blue: 0.36, alpha: 1.0)
+        }
+        /// Airbnb Rausch (#FF385C light, coral-rose dark) used for Settings accents.
+        static let settingsAccent = Color(nsColor: settingsAccentNS)
+        /// Monochrome ink for unselected Settings sidebar icons (#222222 light, soft white dark).
+        static let settingsIconInk = adaptive(
+            dark: NSColor(srgbRed: 0.96, green: 0.96, blue: 0.97, alpha: 1.0),
+            light: NSColor(srgbRed: 0.133, green: 0.133, blue: 0.133, alpha: 1.0))
+        static let searchFlash = settingsAccent.opacity(0.35)
         static let accent = Color.accentColor
         static let checkerLight = Color(nsColor: .srgbInk(1, alpha: 0.22))
         static let checkerDark = Color(nsColor: .srgbInk(0, alpha: 0.22))
@@ -566,4 +577,99 @@ extension View {
     func frosted(in shape: some Shape) -> some View {
         glassEffect(.regular.interactive(), in: shape)
     }
+
+    /// Static Airbnb-style card shell matching ``DashboardPalette`` tokens without hover elevation.
+    func dashboardSurfaceCard(
+        cornerRadius: CGFloat = DashboardPalette.cardCornerRadius,
+        padding: CGFloat = 16,
+        alignment: Alignment = .leading,
+        background: Color = DashboardPalette.surfaceCard,
+        stroke: Color = DashboardPalette.hairline
+    ) -> some View {
+        self
+            .padding(padding)
+            .frame(maxWidth: .infinity, alignment: alignment)
+            .background(background)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .strokeBorder(stroke, lineWidth: 1)
+            )
+    }
+}
+
+// MARK: - Airbnb x szcast Adaptive Dashboard Tokens
+
+/// Shared adaptive Rausch/ink/surface palette for cards, metrics, and Settings hubs.
+enum DashboardPalette {
+    static let cardCornerRadius: CGFloat = 16
+    static let subcardCornerRadius: CGFloat = 12
+
+    /// Single brand voltage: Airbnb Rausch (#FF385C light, coral-rose dark).
+    static let rausch = Theme.Colors.settingsAccent
+    static let rauschPressed = Theme.Colors.adaptive(
+        dark: NSColor(srgbRed: 0.90, green: 0.14, blue: 0.29, alpha: 1.0),
+        light: NSColor(srgbRed: 0.878, green: 0.043, blue: 0.255, alpha: 1.0)
+    )
+    static let rauschSoft = Theme.Colors.adaptive(
+        dark: NSColor(srgbRed: 1.0, green: 0.30, blue: 0.43, alpha: 0.15),
+        light: NSColor(srgbRed: 1.0, green: 0.22, blue: 0.36, alpha: 0.10)
+    )
+    static let rauschGlowStroke = Theme.Colors.adaptive(
+        dark: NSColor(srgbRed: 1.0, green: 0.30, blue: 0.43, alpha: 0.42),
+        light: NSColor(srgbRed: 1.0, green: 0.22, blue: 0.36, alpha: 0.32)
+    )
+    static let ink = Theme.Colors.settingsIconInk
+    static let body = Theme.Colors.adaptive(
+        dark: NSColor(srgbRed: 0.82, green: 0.82, blue: 0.85, alpha: 1.0),
+        light: NSColor(srgbRed: 0.247, green: 0.247, blue: 0.247, alpha: 1.0)
+    )
+    static let muted = Theme.Colors.adaptive(
+        dark: NSColor(srgbRed: 0.58, green: 0.58, blue: 0.62, alpha: 1.0),
+        light: NSColor(srgbRed: 0.416, green: 0.416, blue: 0.416, alpha: 1.0)
+    )
+    static let surfaceCard = Theme.Colors.adaptive(
+        dark: NSColor(srgbRed: 0.145, green: 0.145, blue: 0.165, alpha: 1.0),
+        light: NSColor(srgbRed: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
+    )
+    static let surfaceSoft = Theme.Colors.adaptive(
+        dark: NSColor(srgbRed: 0.185, green: 0.185, blue: 0.210, alpha: 1.0),
+        light: NSColor(srgbRed: 0.969, green: 0.969, blue: 0.969, alpha: 1.0)
+    )
+    static let surfaceStrong = Theme.Colors.adaptive(
+        dark: NSColor(srgbRed: 0.23, green: 0.23, blue: 0.26, alpha: 1.0),
+        light: NSColor(srgbRed: 0.949, green: 0.949, blue: 0.949, alpha: 1.0)
+    )
+    static let hairline = Theme.Colors.adaptive(
+        dark: NSColor(srgbRed: 1.0, green: 1.0, blue: 1.0, alpha: 0.09),
+        light: NSColor(srgbRed: 0.867, green: 0.867, blue: 0.867, alpha: 1.0)
+    )
+    static let hairlineHover = Theme.Colors.adaptive(
+        dark: NSColor(srgbRed: 1.0, green: 1.0, blue: 1.0, alpha: 0.22),
+        light: NSColor(srgbRed: 0.757, green: 0.757, blue: 0.757, alpha: 1.0)
+    )
+    static let hoverShadow = Theme.Colors.adaptive(
+        dark: NSColor(srgbRed: 0, green: 0, blue: 0, alpha: 0.36),
+        light: NSColor(srgbRed: 0, green: 0, blue: 0, alpha: 0.10)
+    )
+    static let selectedSegmentBg = Theme.Colors.adaptive(
+        dark: NSColor(srgbRed: 0.95, green: 0.95, blue: 0.97, alpha: 1.0),
+        light: NSColor(srgbRed: 0.133, green: 0.133, blue: 0.133, alpha: 1.0)
+    )
+    static let selectedSegmentInk = Theme.Colors.adaptive(
+        dark: NSColor(srgbRed: 0.10, green: 0.10, blue: 0.12, alpha: 1.0),
+        light: NSColor(srgbRed: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)
+    )
+    static let activeFlame = Theme.Colors.adaptive(
+        dark: NSColor(srgbRed: 1.0, green: 0.62, blue: 0.26, alpha: 1.0),
+        light: NSColor(srgbRed: 0.88, green: 0.44, blue: 0.06, alpha: 1.0)
+    )
+    static let liveGreen = Theme.Colors.adaptive(
+        dark: NSColor(srgbRed: 0.26, green: 0.84, blue: 0.50, alpha: 1.0),
+        light: NSColor(srgbRed: 0.08, green: 0.64, blue: 0.32, alpha: 1.0)
+    )
+    static let rawAmber = Theme.Colors.adaptive(
+        dark: NSColor(srgbRed: 1.0, green: 0.68, blue: 0.28, alpha: 1.0),
+        light: NSColor(srgbRed: 0.78, green: 0.42, blue: 0.04, alpha: 1.0)
+    )
 }

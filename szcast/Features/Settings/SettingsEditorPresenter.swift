@@ -417,6 +417,7 @@ extension View {
             .environment(core.chatGPTSubscription)
             .environment(core.installedAI)
             .scrollContentBackground(.hidden)
+            .tint(Theme.Colors.settingsAccent)
             .motionScope()
     }
 }

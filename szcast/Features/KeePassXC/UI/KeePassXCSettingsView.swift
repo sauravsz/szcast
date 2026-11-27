@@ -19,7 +19,7 @@ struct KeePassXCSettingsView: View {
                 ) {
                     SettingsTabIcon(
                         systemImage: "lock.fill",
-                        tint: .accentColor,
+                        tint: Theme.Colors.settingsAccent,
                         size: Theme.Size.settingsRowIcon * 1.5
                     )
                 } trailing: {

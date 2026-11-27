@@ -57,22 +57,23 @@ struct AboutView: View {
                 .resizable()
                 .interpolation(.high)
                 .frame(width: Self.iconSize, height: Self.iconSize)
-                .shadow(color: .black.opacity(0.35), radius: 12, y: 6)
+                .shadow(color: DashboardPalette.hoverShadow, radius: 12, y: 6)
 
             VStack(spacing: Theme.Spacing.sm) {
                 Text(Bundle.main.appDisplayName)
-                    .font(.title.weight(.bold))
+                    .font(.title.weight(.semibold))
+                    .foregroundStyle(DashboardPalette.ink)
                 Text(Self.version)
                     .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DashboardPalette.muted)
                     .textSelection(.enabled)
                     .padding(.horizontal, Theme.Spacing.md)
                     .padding(.vertical, Theme.Spacing.xs / 2)
                     .background(
-                        Capsule().fill(Theme.Colors.cardFill)
+                        Capsule().fill(DashboardPalette.surfaceSoft)
                     )
                     .overlay(
-                        Capsule().strokeBorder(Theme.Colors.cardStroke, lineWidth: 1)
+                        Capsule().strokeBorder(DashboardPalette.hairline, lineWidth: 1)
                     )
                 Button {
                     core.updateCoordinator.checkForUpdates()
@@ -80,12 +81,13 @@ struct AboutView: View {
                     SettingsRowTitle(.aboutAbout, "Check for Updates")
                 }
                 .buttonStyle(.link)
+                .tint(DashboardPalette.rausch)
                 .font(.caption)
             }
 
             Text("A native macOS launcher built for productivity. Fast, lightweight, and open source.")
                 .font(.callout)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DashboardPalette.body)
         }
     }
 
@@ -98,17 +100,23 @@ struct AboutView: View {
                     HStack(spacing: Theme.Spacing.sm) {
                         Text("v\(currentShortVersion)")
                             .font(.caption.monospacedDigit().weight(.medium))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(DashboardPalette.ink)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 2)
+                            .background(Capsule().fill(DashboardPalette.surfaceSoft))
+                            .overlay(Capsule().strokeBorder(DashboardPalette.hairline, lineWidth: 1))
                         Image(systemName: "chevron.forward")
                             .font(.caption.weight(.semibold))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(DashboardPalette.muted)
                     }
                 } label: {
                     Label {
                         Text("Changelog & Version History")
+                            .foregroundStyle(DashboardPalette.ink)
                     } icon: {
                         Image(systemName: "clock.arrow.circlepath")
                             .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(DashboardPalette.ink)
                     }
                 }
                 .contentShape(Rectangle())
@@ -132,27 +140,27 @@ struct AboutView: View {
     private var support: some View {
         Section {
             HStack(spacing: Theme.Spacing.xl) {
-                // Brand is a fixed hue, so an alpha on it holds up in both appearances.
-                RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-                    .fill(Theme.Colors.brand.opacity(0.16))
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(DashboardPalette.rauschSoft)
                     .frame(width: Self.supportTile, height: Self.supportTile)
                     .overlay(
                         Image(systemName: "heart.fill")
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.brand)
+                            .foregroundStyle(DashboardPalette.rausch)
                     )
                 VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
                     SettingsRowTitle(.aboutLinks, "Support")
                         .font(.body.weight(.medium))
+                        .foregroundStyle(DashboardPalette.ink)
                     Text("Free and open source, funded out of pocket.")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(DashboardPalette.muted)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: Theme.Spacing.lg)
                 Button("Support…") { core.supportCoordinator.showSupport() }
                     .buttonStyle(.borderedProminent)
-                    .tint(Theme.Colors.brand)
+                    .tint(DashboardPalette.rausch)
             }
             .padding(.vertical, Theme.Spacing.xs)
         }
@@ -161,7 +169,7 @@ struct AboutView: View {
     private var footer: some View {
         Text("© 2026 Abue Ammar · szcast is a fork of Tinycast · Released under AGPL-3.0")
             .font(.caption2)
-            .foregroundStyle(.tertiary)
+            .foregroundStyle(DashboardPalette.muted)
     }
 }
 
@@ -206,17 +214,19 @@ private struct AboutLinkRow: View {
             LabeledContent {
                 HStack(spacing: Theme.Spacing.sm) {
                     Text(link.detail)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(DashboardPalette.muted)
                         .lineLimit(1)
                     Image(systemName: "arrow.up.right")
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(hovered ? .secondary : .tertiary)
+                        .foregroundStyle(hovered ? DashboardPalette.ink : DashboardPalette.muted)
                 }
             } label: {
                 Label {
                     Text(link.title)
+                        .foregroundStyle(DashboardPalette.ink)
                 } icon: {
                     glyph
+                        .foregroundStyle(DashboardPalette.ink)
                 }
             }
             .contentShape(Rectangle())

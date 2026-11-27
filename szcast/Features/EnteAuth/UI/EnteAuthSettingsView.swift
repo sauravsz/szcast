@@ -17,7 +17,7 @@ struct EnteAuthSettingsView: View {
                 ) {
                     SettingsTabIcon(
                         systemImage: "key.fill",
-                        tint: .accentColor,
+                        tint: Theme.Colors.settingsAccent,
                         size: Theme.Size.settingsRowIcon * 1.5
                     )
                 } trailing: {

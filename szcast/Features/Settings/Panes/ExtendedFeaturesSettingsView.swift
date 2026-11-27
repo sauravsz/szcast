@@ -15,7 +15,7 @@ struct ExtendedFeaturesSettingsView: View {
                 ) {
                     SettingsTabIcon(
                         systemImage: "sparkles.rectangle.stack",
-                        tint: .accentColor,
+                        tint: DashboardPalette.rausch,
                         size: Theme.Size.settingsRowIcon * 1.5
                     )
                 }
@@ -174,14 +174,15 @@ struct ExtendedFeaturesSettingsView: View {
         HStack(spacing: Theme.Spacing.md) {
             SettingsTabIcon(
                 systemImage: systemImage,
-                tint: isOn.wrappedValue ? .accentColor : .secondary
+                tint: isOn.wrappedValue ? DashboardPalette.rausch : DashboardPalette.muted
             )
             VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
                 Text(title)
                     .font(.body)
+                    .foregroundStyle(isOn.wrappedValue ? DashboardPalette.ink : DashboardPalette.body)
                 Text(subtitle)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DashboardPalette.muted)
             }
             Spacer()
             if isOn.wrappedValue {
@@ -189,6 +190,7 @@ struct ExtendedFeaturesSettingsView: View {
                     navigation.select(targetTab)
                 }
                 .controlSize(.small)
+                .foregroundStyle(DashboardPalette.ink)
             }
             Toggle("", isOn: isOn)
                 .labelsHidden()

@@ -5,7 +5,7 @@ import SwiftUI
 
 struct SettingsTabIcon: View {
     let systemImage: String
-    let tint: Color
+    var tint: Color = Theme.Colors.settingsAccent
     var size = Theme.Size.settingsSidebarGlyph + Theme.Spacing.xs * 2
     @Environment(\.colorScheme) private var colorScheme
 
@@ -36,7 +36,7 @@ struct SettingsFeatureToggleLabel: View {
     var body: some View {
         HStack(spacing: Theme.Spacing.lg) {
             SettingsTabIcon(
-                systemImage: anchor.tab.systemImage, tint: .accentColor,
+                systemImage: anchor.tab.systemImage, tint: Theme.Colors.settingsAccent,
                 size: Theme.Size.settingsRowIcon * 1.5)
             VStack(alignment: .leading, spacing: Theme.Spacing.xxs) {
                 SettingsRowTitle(anchor, title)
@@ -206,6 +206,16 @@ extension View {
     /// The one place that says hiding a row from the launcher never unbinds its shortcut.
     func launcherVisibilityHelp() -> some View {
         help("Show in launcher. Its shortcut works either way.")
+    }
+
+    func settingsSidebarRowHighlight(isSelected: Bool, appearsActive: Bool) -> some View {
+        listRowBackground(
+            (appearsActive && isSelected)
+                ? RoundedRectangle(cornerRadius: Theme.Radius.barControl, style: .continuous)
+                    .fill(Theme.Colors.settingsAccent)
+                    .padding(.horizontal, Theme.Spacing.lg)
+                : nil
+        )
     }
 }
 

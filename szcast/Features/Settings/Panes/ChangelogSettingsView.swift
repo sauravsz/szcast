@@ -597,29 +597,30 @@ struct ChangelogSettingsView: View {
     private var headerView: some View {
         HStack(alignment: .center, spacing: Theme.Spacing.md) {
             ZStack {
-                RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-                    .fill(Theme.Colors.brand.opacity(0.16))
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(DashboardPalette.rauschSoft)
                     .frame(width: 44, height: 44)
                 Image(systemName: "clock.arrow.circlepath")
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.brand)
+                    .foregroundStyle(DashboardPalette.rausch)
             }
 
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: Theme.Spacing.sm) {
                     Text("Changelog")
-                        .font(.system(size: 22, weight: .bold))
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(DashboardPalette.ink)
                     Text("v\(currentAppVersion)")
                         .font(.caption.monospacedDigit().weight(.semibold))
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 6)
+                        .foregroundStyle(DashboardPalette.muted)
+                        .padding(.horizontal, 8)
                         .padding(.vertical, 2)
-                        .background(Capsule().fill(Theme.Colors.cardFill))
-                        .overlay(Capsule().strokeBorder(Theme.Colors.cardStroke, lineWidth: 1))
+                        .background(Capsule().fill(DashboardPalette.surfaceSoft))
+                        .overlay(Capsule().strokeBorder(DashboardPalette.hairline, lineWidth: 1))
                 }
                 Text("Release notes, new features, and complete version history.")
                     .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DashboardPalette.muted)
             }
 
             Spacer()
@@ -627,14 +628,15 @@ struct ChangelogSettingsView: View {
             if let notice = copiedNotice {
                 HStack(spacing: 6) {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(Color.green)
+                        .foregroundStyle(DashboardPalette.liveGreen)
                     Text(notice)
                         .font(.caption.weight(.medium))
+                        .foregroundStyle(DashboardPalette.ink)
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(Capsule().fill(Color(nsColor: .controlBackgroundColor)))
-                .overlay(Capsule().strokeBorder(Color.green.opacity(0.3), lineWidth: 1))
+                .background(Capsule().fill(DashboardPalette.surfaceCard))
+                .overlay(Capsule().strokeBorder(DashboardPalette.liveGreen.opacity(0.35), lineWidth: 1))
                 .transition(.opacity.combined(with: .scale(scale: 0.95)))
             }
         }
@@ -647,28 +649,29 @@ struct ChangelogSettingsView: View {
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DashboardPalette.muted)
                 TextField("Search release notes and features…", text: $searchQuery)
                     .textFieldStyle(.plain)
                     .font(.body)
+                    .foregroundStyle(DashboardPalette.ink)
                 if !searchQuery.isEmpty {
                     Button {
                         searchQuery = ""
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 13))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(DashboardPalette.muted)
                     }
                     .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 7)
-            .background(Color(nsColor: .controlBackgroundColor).opacity(0.7))
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .background(DashboardPalette.surfaceCard)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .strokeBorder(DashboardPalette.hairline, lineWidth: 1)
             )
 
             Picker("", selection: $selectedFilter) {
@@ -691,19 +694,20 @@ struct ChangelogSettingsView: View {
             HStack(alignment: .center, spacing: Theme.Spacing.md) {
                 HStack(spacing: 8) {
                     Text("v\(release.version)")
-                        .font(.system(size: 16, weight: .bold, design: .monospaced))
+                        .font(.system(size: 16, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(DashboardPalette.ink)
                     if isCurrent {
                         Text("CURRENT")
                             .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(Color.green)
-                            .padding(.horizontal, 6)
+                            .foregroundStyle(DashboardPalette.liveGreen)
+                            .padding(.horizontal, 7)
                             .padding(.vertical, 2)
-                            .background(Capsule().fill(Color.green.opacity(0.16)))
-                            .overlay(Capsule().strokeBorder(Color.green.opacity(0.3), lineWidth: 1))
+                            .background(Capsule().fill(DashboardPalette.liveGreen.opacity(0.14)))
+                            .overlay(Capsule().strokeBorder(DashboardPalette.liveGreen.opacity(0.32), lineWidth: 1))
                     }
                     Text(release.date)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(DashboardPalette.muted)
                 }
 
                 Spacer()
@@ -721,6 +725,7 @@ struct ChangelogSettingsView: View {
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
+                    .foregroundStyle(DashboardPalette.ink)
 
                     if let url = release.gitHubURL {
                         Button {
@@ -735,6 +740,7 @@ struct ChangelogSettingsView: View {
                         }
                         .buttonStyle(.bordered)
                         .controlSize(.small)
+                        .foregroundStyle(DashboardPalette.ink)
                     }
                 }
             }
@@ -742,12 +748,16 @@ struct ChangelogSettingsView: View {
             // Summary Callout
             Text(release.summary)
                 .font(.callout)
-                .foregroundStyle(.primary)
+                .foregroundStyle(DashboardPalette.body)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
-                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .background(DashboardPalette.surfaceSoft)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .strokeBorder(DashboardPalette.hairline, lineWidth: 1)
+                )
 
             // Categories
             VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
@@ -756,10 +766,10 @@ struct ChangelogSettingsView: View {
                         HStack(spacing: 6) {
                             Image(systemName: category.icon)
                                 .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(Theme.Colors.brand)
+                                .foregroundStyle(DashboardPalette.rausch)
                             Text(category.name)
                                 .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(.primary)
+                                .foregroundStyle(DashboardPalette.ink)
                         }
 
                         VStack(alignment: .leading, spacing: 5) {
@@ -767,10 +777,10 @@ struct ChangelogSettingsView: View {
                                 HStack(alignment: .top, spacing: 8) {
                                     Text("•")
                                         .font(.subheadline.weight(.bold))
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(DashboardPalette.muted)
                                     Text(item)
                                         .font(.callout)
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(DashboardPalette.body)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
                             }
@@ -780,13 +790,10 @@ struct ChangelogSettingsView: View {
                 }
             }
         }
-        .padding(Theme.Spacing.xl)
-        .frame(maxWidth: .infinity, alignment: .topLeading)
-        .background(Color(nsColor: .controlBackgroundColor).opacity(0.85))
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-                .stroke(Color.primary.opacity(0.08), lineWidth: Theme.Size.hairline)
+        .dashboardSurfaceCard(
+            cornerRadius: DashboardPalette.cardCornerRadius,
+            padding: Theme.Spacing.xl,
+            alignment: .topLeading
         )
     }
 
@@ -796,12 +803,13 @@ struct ChangelogSettingsView: View {
         VStack(spacing: Theme.Spacing.md) {
             Image(systemName: "text.magnifyingglass")
                 .font(.system(size: 36))
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(DashboardPalette.muted)
             Text("No release notes found")
                 .font(.headline)
+                .foregroundStyle(DashboardPalette.ink)
             Text("No releases matching \"\(searchQuery)\". Try searching for features like dictation, gamma, OCR, or URL.")
                 .font(.callout)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DashboardPalette.muted)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)

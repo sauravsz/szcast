@@ -53,10 +53,10 @@ struct ModelLibrarySettingsView: View {
                     Section {
                         HStack(spacing: Theme.Spacing.sm) {
                             Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundStyle(.red)
+                                .foregroundStyle(DashboardPalette.rausch)
                             Text(downloadErrorMessage)
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(DashboardPalette.body)
                             Spacer()
                             Button("Dismiss") { self.downloadErrorMessage = nil }
                                 .buttonStyle(.bordered)
@@ -182,40 +182,42 @@ struct ModelLibrarySettingsView: View {
                     HStack(spacing: Theme.Spacing.xs) {
                         Text(model.title)
                             .font(.system(size: settings.settingsRowTitleFontSize, weight: isSelected ? .semibold : .medium))
-                        Text(sizeText)
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 1)
-                            .background(Capsule().fill(Color.secondary.opacity(0.12)))
+                            .foregroundStyle(DashboardPalette.ink)
+                        modelPillBadge(
+                            sizeText,
+                            foreground: DashboardPalette.muted,
+                            background: DashboardPalette.surfaceSoft,
+                            stroke: DashboardPalette.hairline
+                        )
                         if isRecommended {
-                            Text("Recommended")
-                                .font(.caption2.weight(.medium))
-                                .foregroundStyle(.teal)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 1)
-                                .background(Capsule().fill(Color.teal.opacity(0.14)))
+                            modelPillBadge(
+                                "Recommended",
+                                foreground: DashboardPalette.ink,
+                                background: DashboardPalette.surfaceStrong,
+                                stroke: DashboardPalette.hairline,
+                                weight: .medium
+                            )
                         }
                         if isSelected {
-                            Text("Active")
-                                .font(.caption2.weight(.medium))
-                                .foregroundStyle(Color.accentColor)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 1)
-                                .background(Capsule().fill(Color.accentColor.opacity(0.14)))
+                            modelPillBadge(
+                                "Active",
+                                foreground: DashboardPalette.rausch,
+                                background: DashboardPalette.rauschSoft,
+                                weight: .medium
+                            )
                         }
                         if isHot {
-                            Circle().fill(Color.green).frame(width: 6, height: 6)
-                            Text("Loaded").font(.caption2).foregroundStyle(.green)
+                            Circle().fill(DashboardPalette.liveGreen).frame(width: 6, height: 6)
+                            Text("Loaded").font(.caption2).foregroundStyle(DashboardPalette.liveGreen)
                         } else if isPrewarming {
-                            Circle().fill(Color.orange).frame(width: 6, height: 6)
-                            Text("Warming…").font(.caption2).foregroundStyle(.orange)
+                            Circle().fill(DashboardPalette.rawAmber).frame(width: 6, height: 6)
+                            Text("Warming…").font(.caption2).foregroundStyle(DashboardPalette.rawAmber)
                         }
                     }
 
                     Text("\(model.coverage) — \(model.summary)")
                         .font(.system(size: settings.settingsRowSubtitleFontSize))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(DashboardPalette.muted)
                         .lineLimit(2)
                 }
 
@@ -299,20 +301,20 @@ struct ModelLibrarySettingsView: View {
                         } else {
                             SettingsRowTitle(.modelLibraryAudioTools, "Speaker Diarization")
                         }
-                        Text(sizeText)
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 1)
-                            .background(Capsule().fill(Color.secondary.opacity(0.12)))
+                        modelPillBadge(
+                            sizeText,
+                            foreground: DashboardPalette.muted,
+                            background: DashboardPalette.surfaceSoft,
+                            stroke: DashboardPalette.hairline
+                        )
                         if isInstalled {
-                            Circle().fill(Color.green).frame(width: 6, height: 6)
-                            Text("Installed").font(.caption2).foregroundStyle(.green)
+                            Circle().fill(DashboardPalette.liveGreen).frame(width: 6, height: 6)
+                            Text("Installed").font(.caption2).foregroundStyle(DashboardPalette.liveGreen)
                         }
                     }
                     Text(support.summary)
                         .font(.system(size: settings.settingsRowSubtitleFontSize))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(DashboardPalette.muted)
                 }
 
                 Spacer(minLength: Theme.Spacing.sm)
@@ -366,7 +368,7 @@ struct ModelLibrarySettingsView: View {
                         SettingsRowTitle(.modelLibraryPolish, "Local text models")
                         Text("Download lightweight GGUF models for local llama-server polish, then choose which model is active.")
                             .font(.system(size: settings.settingsRowSubtitleFontSize))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(DashboardPalette.muted)
                     }
                 }
 
@@ -375,10 +377,12 @@ struct ModelLibrarySettingsView: View {
                 }
             } else if settings.dictationPolishProvider == .appleIntelligence {
                 let status = AppleIntelligenceProvider.status()
+                let fallbackText = status.message
+                    ?? "Apple Intelligence unavailable — falls back to S1-mini automatically."
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(status.isAvailable ? "Apple Intelligence is ready on this Mac." : (status.message ?? "Apple Intelligence unavailable — falls back to S1-mini automatically."))
+                    Text(status.isAvailable ? "Apple Intelligence is ready on this Mac." : fallbackText)
                         .font(.system(size: settings.settingsRowSubtitleFontSize))
-                        .foregroundStyle(status.isAvailable ? Color.secondary : Color.orange)
+                        .foregroundStyle(status.isAvailable ? DashboardPalette.muted : DashboardPalette.rawAmber)
                 }
             } else {
                 Picker(selection: bSettings.dictationGroqPolishModel) {
@@ -410,31 +414,32 @@ struct ModelLibrarySettingsView: View {
                     HStack(spacing: Theme.Spacing.xs) {
                         Text(model.title)
                             .font(.system(size: settings.settingsRowTitleFontSize, weight: isSelected ? .semibold : .medium))
-                        Text(model.quantizationBadge)
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 1)
-                            .background(Capsule().fill(Color.secondary.opacity(0.12)))
-                        Text(sizeText)
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 1)
-                            .background(Capsule().fill(Color.secondary.opacity(0.12)))
+                            .foregroundStyle(DashboardPalette.ink)
+                        modelPillBadge(
+                            model.quantizationBadge,
+                            foreground: DashboardPalette.muted,
+                            background: DashboardPalette.surfaceSoft,
+                            stroke: DashboardPalette.hairline
+                        )
+                        modelPillBadge(
+                            sizeText,
+                            foreground: DashboardPalette.muted,
+                            background: DashboardPalette.surfaceSoft,
+                            stroke: DashboardPalette.hairline
+                        )
                         if isSelected {
-                            Text("Active")
-                                .font(.caption2.weight(.medium))
-                                .foregroundStyle(Color.accentColor)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 1)
-                                .background(Capsule().fill(Color.accentColor.opacity(0.14)))
+                            modelPillBadge(
+                                "Active",
+                                foreground: DashboardPalette.rausch,
+                                background: DashboardPalette.rauschSoft,
+                                weight: .medium
+                            )
                         }
                     }
 
                     Text(model.summary)
                         .font(.system(size: settings.settingsRowSubtitleFontSize))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(DashboardPalette.muted)
                         .lineLimit(2)
                 }
 
@@ -480,7 +485,7 @@ struct ModelLibrarySettingsView: View {
             if isDownloadingThis, case .downloading(let progress, let statusText) = coordinator.s1Downloader.status {
                 VStack(alignment: .leading, spacing: 2) {
                     ProgressView(value: progress > 0 ? progress : nil)
-                        .tint(.accentColor)
+                        .tint(DashboardPalette.rausch)
                     HStack {
                         Text(statusText)
                         Spacer()
@@ -489,14 +494,14 @@ struct ModelLibrarySettingsView: View {
                         }
                     }
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(DashboardPalette.muted)
                 }
             }
             if coordinator.s1Downloader.activeDownloadModel == nil,
                case .error(let msg) = coordinator.s1Downloader.status,
                settings.dictationLocalTextModel == model
             {
-                Text(msg).font(.caption).foregroundStyle(.red)
+                Text(msg).font(.caption).foregroundStyle(DashboardPalette.rausch)
             }
         }
         .padding(.vertical, 2)
@@ -582,11 +587,11 @@ struct ModelLibrarySettingsView: View {
             if key.hasPrefix("gsk_") {
                 Label("Stored securely in macOS Keychain.", systemImage: "checkmark.circle.fill")
                     .font(.caption)
-                    .foregroundStyle(.green)
+                    .foregroundStyle(DashboardPalette.liveGreen)
             } else if key.isEmpty {
                 Label("Required for Groq cloud speech or cleanup.", systemImage: "exclamationmark.triangle.fill")
                     .font(.caption)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(DashboardPalette.rawAmber)
             }
         }
     }
@@ -613,11 +618,11 @@ struct ModelLibrarySettingsView: View {
             if !key.isEmpty {
                 Label("Stored securely in macOS Keychain.", systemImage: "checkmark.circle.fill")
                     .font(.caption)
-                    .foregroundStyle(.green)
+                    .foregroundStyle(DashboardPalette.liveGreen)
             } else {
                 Label("Required for Deepgram cloud speech recognition.", systemImage: "exclamationmark.triangle.fill")
                     .font(.caption)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(DashboardPalette.rawAmber)
             }
         }
     }
@@ -627,20 +632,40 @@ struct ModelLibrarySettingsView: View {
         if total > 0 {
             VStack(alignment: .leading, spacing: 2) {
                 ProgressView(value: Double(received), total: Double(total))
-                    .tint(.accentColor)
+                    .tint(DashboardPalette.rausch)
                 HStack {
                     Text("\(received.formatted(.byteCount(style: .file))) of \(total.formatted(.byteCount(style: .file)))")
                     Spacer()
                     Text(Double(received) / Double(total), format: .percent.precision(.fractionLength(0)))
                 }
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(DashboardPalette.muted)
                 .monospacedDigit()
             }
         } else {
             ProgressView()
                 .progressViewStyle(.linear)
+                .tint(DashboardPalette.rausch)
         }
+    }
+
+    @ViewBuilder
+    private func modelPillBadge(
+        _ text: String,
+        foreground: Color,
+        background: Color,
+        stroke: Color? = nil,
+        weight: Font.Weight = .regular
+    ) -> some View {
+        Text(text)
+            .font(.caption2.weight(weight))
+            .foregroundStyle(foreground)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 1)
+            .background(Capsule().fill(background))
+            .overlay(
+                Capsule().strokeBorder(stroke ?? .clear, lineWidth: stroke == nil ? 0 : 1)
+            )
     }
 
     private func formattedModelSize(for model: DictationModel) -> String {

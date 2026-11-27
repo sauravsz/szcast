@@ -61,10 +61,12 @@ struct SettingsSidebarView: View {
                                 SettingsTabIcon(
                                     systemImage: tab.systemImage,
                                     tint: appearsActive
-                                        ? (navigation.tab == tab ? Color.white : RaycastIconTheme.tabColor(for: tab.systemImage))
+                                        ? (navigation.tab == tab ? Color.white : Theme.Colors.settingsIconInk)
                                         : Color.secondary)
                             }
                             .tag(tab)
+                            .settingsSidebarRowHighlight(
+                                isSelected: navigation.tab == tab, appearsActive: appearsActive)
                         }
                     }
                 }
@@ -85,7 +87,14 @@ struct SettingsSidebarView: View {
             List(selection: $highlighted) {
                 Section("Results") {
                     ForEach(results) { entry in
-                        SettingsSearchResultRow(entry: entry).tag(entry.id)
+                        SettingsSearchResultRow(
+                            entry: entry,
+                            isSelected: highlighted == entry.id,
+                            appearsActive: appearsActive
+                        )
+                        .tag(entry.id)
+                        .settingsSidebarRowHighlight(
+                            isSelected: highlighted == entry.id, appearsActive: appearsActive)
                     }
                 }
             }
@@ -118,6 +127,8 @@ struct SettingsSidebarView: View {
 
 private struct SettingsSearchResultRow: View {
     let entry: SettingsSearchEntry
+    let isSelected: Bool
+    let appearsActive: Bool
 
     var body: some View {
         Label {
@@ -132,7 +143,9 @@ private struct SettingsSearchResultRow: View {
         } icon: {
             SettingsTabIcon(
                 systemImage: entry.tab.systemImage,
-                tint: RaycastIconTheme.tabColor(for: entry.tab.systemImage))
+                tint: appearsActive
+                    ? (isSelected ? Color.white : Theme.Colors.settingsIconInk)
+                    : Color.secondary)
         }
         // Centred, not first-baseline: the tile sits against a two-line title and breadcrumb.
         .labelStyle(CenteredLabelStyle())

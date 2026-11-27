@@ -125,6 +125,7 @@ private final class ChecklistCellView: NSTableCellView {
         identifier = Self.reuseID
         checkbox.target = self
         checkbox.action = #selector(toggled)
+        checkbox.bezelColor = Theme.Colors.settingsAccentNS
         checkbox.lineBreakMode = .byTruncatingMiddle
         defaultTag.textColor = .secondaryLabelColor
         divider.boxType = .separator

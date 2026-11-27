@@ -659,7 +659,7 @@ private struct SnippetCollectionRow: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .strokeBorder(isDropTargeted ? Color.accentColor : Color.clear, lineWidth: 1.5)
+                    .strokeBorder(isDropTargeted ? Theme.Colors.settingsAccent : Color.clear, lineWidth: 1.5)
             )
             .contentShape(Rectangle())
         }
@@ -669,10 +669,10 @@ private struct SnippetCollectionRow: View {
 
     private var backgroundColor: Color {
         if isSelected {
-            return Color.accentColor
+            return Theme.Colors.settingsAccent
         }
         if isDropTargeted {
-            return Color.accentColor.opacity(0.14)
+            return Theme.Colors.settingsAccent.opacity(0.14)
         }
         return Color.clear
     }

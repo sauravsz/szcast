@@ -29,13 +29,15 @@ private struct SearchPill: ViewModifier {
             .padding(.vertical, Theme.Spacing.xxs)
             .background(
                 Capsule()
-                    .fill(isFlashing ? Theme.Colors.accent.opacity(0.18) : .clear)
+                    .fill(isFlashing ? Theme.Colors.settingsAccent.opacity(0.18) : .clear)
             )
             .overlay(
                 Capsule()
-                    .strokeBorder(isFlashing ? Theme.Colors.accent.opacity(0.6) : .clear, lineWidth: 1)
+                    .strokeBorder(
+                        isFlashing ? Theme.Colors.settingsAccent.opacity(0.6) : .clear,
+                        lineWidth: 1)
             )
-            .shadow(color: isFlashing ? Theme.Colors.accent.opacity(0.4) : .clear, radius: 4)
+            .shadow(color: isFlashing ? Theme.Colors.settingsAccent.opacity(0.4) : .clear, radius: 4)
             // Given back, so the pill's own padding can't shift the label off its row's edge.
             .padding(.horizontal, -Theme.Spacing.sm)
             .padding(.vertical, -Theme.Spacing.xxs)

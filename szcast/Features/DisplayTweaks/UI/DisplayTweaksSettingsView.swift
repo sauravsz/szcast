@@ -208,7 +208,7 @@ struct DisplayTweaksSettingsView: View {
                                     .font(.caption)
                             }
                             .buttonStyle(.bordered)
-                            .tint(settings.displayTweaksPreset == preset.rawValue ? Color.accentColor : .secondary)
+                            .tint(settings.displayTweaksPreset == preset.rawValue ? Theme.Colors.settingsAccent : .secondary)
                         }
                     }
                     .padding(.vertical, 2)

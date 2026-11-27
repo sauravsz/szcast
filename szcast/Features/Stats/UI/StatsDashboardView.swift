@@ -65,23 +65,26 @@ private struct CPUMetricCard: View {
             HStack {
                 Label("CPU", systemImage: "cpu")
                     .font(Theme.Typography.compactKeyCap)
-                    .foregroundStyle(Theme.Colors.textSecondary)
+                    .foregroundStyle(DashboardPalette.muted)
                 Spacer()
                 Text("\(Int(cpu.totalUsage.rounded()))%")
                     .font(Theme.Typography.panelTitle)
                     .fontWeight(.semibold)
-                    .foregroundStyle(Theme.Colors.textPrimary)
+                    .foregroundStyle(DashboardPalette.ink)
             }
 
             // Progress bar
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(Theme.Colors.border)
+                        .fill(DashboardPalette.surfaceStrong)
                         .frame(height: 6)
                     RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(Theme.Colors.accent)
-                        .frame(width: max(0, min(geo.size.width, geo.size.width * CGFloat(cpu.totalUsage / 100.0))), height: 6)
+                        .fill(DashboardPalette.rausch)
+                        .frame(
+                            width: max(0, min(geo.size.width, geo.size.width * CGFloat(cpu.totalUsage / 100.0))),
+                            height: 6
+                        )
                 }
             }
             .frame(height: 6)
@@ -90,18 +93,18 @@ private struct CPUMetricCard: View {
             HStack(spacing: Theme.Spacing.md) {
                 Text("User: \(Int(cpu.userPercentage.rounded()))%")
                     .font(Theme.Typography.metaLabel)
-                    .foregroundStyle(Theme.Colors.textTertiary)
+                    .foregroundStyle(DashboardPalette.muted)
                 Text("System: \(Int(cpu.systemPercentage.rounded()))%")
                     .font(Theme.Typography.metaLabel)
-                    .foregroundStyle(Theme.Colors.textTertiary)
+                    .foregroundStyle(DashboardPalette.muted)
                 Spacer()
                 Text("\(cpu.logicalCores) Cores")
                     .font(Theme.Typography.metaLabel)
-                    .foregroundStyle(Theme.Colors.textTertiary)
+                    .foregroundStyle(DashboardPalette.muted)
             }
 
             // CPU Load Sparkline
-            SparklineGraphView(data: history, maxValue: 100.0, strokeColor: Theme.Colors.accent)
+            SparklineGraphView(data: history, maxValue: 100.0, strokeColor: DashboardPalette.rausch)
                 .frame(height: 28)
 
             // Multi-core Mini Bars
@@ -112,7 +115,7 @@ private struct CPUMetricCard: View {
                             VStack {
                                 Spacer()
                                 RoundedRectangle(cornerRadius: 1)
-                                    .fill(Theme.Colors.accent.opacity(0.85))
+                                    .fill(DashboardPalette.rausch.opacity(0.85))
                                     .frame(height: max(2, g.size.height * CGFloat(core.usagePercentage / 100.0)))
                             }
                         }
@@ -122,14 +125,7 @@ private struct CPUMetricCard: View {
                 .padding(.top, 2)
             }
         }
-        .padding(Theme.Spacing.md)
-        .frame(maxWidth: .infinity)
-        .background(Theme.Colors.controlSurface)
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-                .strokeBorder(Theme.Colors.cardStroke, lineWidth: 1)
-        )
+        .dashboardSurfaceCard(padding: 16)
     }
 }
 
@@ -144,12 +140,12 @@ private struct RAMMetricCard: View {
             HStack {
                 Label("Memory", systemImage: "memorychip")
                     .font(Theme.Typography.compactKeyCap)
-                    .foregroundStyle(Theme.Colors.textSecondary)
+                    .foregroundStyle(DashboardPalette.muted)
                 Spacer()
                 Text(String(format: "%.1f / %.1f GB", ram.usedGB, ram.totalGB))
                     .font(Theme.Typography.rowTitle)
                     .fontWeight(.semibold)
-                    .foregroundStyle(Theme.Colors.textPrimary)
+                    .foregroundStyle(DashboardPalette.ink)
             }
 
             // Multi-segmented bar (App, Wired, Compressed)
@@ -161,13 +157,13 @@ private struct RAMMetricCard: View {
 
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(Theme.Colors.border)
+                        .fill(DashboardPalette.surfaceStrong)
                         .frame(height: 6)
 
                     HStack(spacing: 0) {
-                        Rectangle().fill(Color.blue).frame(width: max(0, appW))
-                        Rectangle().fill(Color.orange).frame(width: max(0, wiredW))
-                        Rectangle().fill(Color.purple).frame(width: max(0, compW))
+                        Rectangle().fill(DashboardPalette.rausch).frame(width: max(0, appW))
+                        Rectangle().fill(DashboardPalette.rawAmber).frame(width: max(0, wiredW))
+                        Rectangle().fill(DashboardPalette.muted).frame(width: max(0, compW))
                     }
                     .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
                     .frame(height: 6)
@@ -176,34 +172,27 @@ private struct RAMMetricCard: View {
             .frame(height: 6)
 
             // Memory Usage Sparkline
-            SparklineGraphView(data: history, maxValue: 100.0, strokeColor: Color.blue)
+            SparklineGraphView(data: history, maxValue: 100.0, strokeColor: DashboardPalette.ink)
                 .frame(height: 28)
 
             // Legend / breakdown
             HStack(spacing: Theme.Spacing.sm) {
                 Text("App: \(String(format: "%.1f", Double(ram.appBytes) / 1_073_741_824.0))G")
                     .font(Theme.Typography.metaLabel)
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(DashboardPalette.rausch)
                 Text("Wired: \(String(format: "%.1f", Double(ram.wiredBytes) / 1_073_741_824.0))G")
                     .font(Theme.Typography.metaLabel)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(DashboardPalette.rawAmber)
                 Text("Comp: \(String(format: "%.1f", Double(ram.compressedBytes) / 1_073_741_824.0))G")
                     .font(Theme.Typography.metaLabel)
-                    .foregroundStyle(.purple)
+                    .foregroundStyle(DashboardPalette.body)
                 Spacer()
                 Text("Free: \(String(format: "%.1f", ram.freeGB))G")
                     .font(Theme.Typography.metaLabel)
-                    .foregroundStyle(Theme.Colors.textTertiary)
+                    .foregroundStyle(DashboardPalette.muted)
             }
         }
-        .padding(Theme.Spacing.md)
-        .frame(maxWidth: .infinity)
-        .background(Theme.Colors.controlSurface)
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-                .strokeBorder(Theme.Colors.cardStroke, lineWidth: 1)
-        )
+        .dashboardSurfaceCard(padding: 16)
     }
 }
 
@@ -214,26 +203,30 @@ private struct DiskMetricCard: View {
 
     var body: some View {
         let root = disk.rootVolume
+        let usagePct = root?.usagePercentage ?? 0
         VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
             HStack {
                 Label("Disk", systemImage: "internaldrive")
                     .font(Theme.Typography.compactKeyCap)
-                    .foregroundStyle(Theme.Colors.textSecondary)
+                    .foregroundStyle(DashboardPalette.muted)
                 Spacer()
-                Text(String(format: "%.0f%%", root?.usagePercentage ?? 0))
+                Text(String(format: "%.0f%%", usagePct))
                     .font(Theme.Typography.rowTitle)
                     .fontWeight(.semibold)
-                    .foregroundStyle(Theme.Colors.textPrimary)
+                    .foregroundStyle(DashboardPalette.ink)
             }
 
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(Theme.Colors.border)
+                        .fill(DashboardPalette.surfaceStrong)
                         .frame(height: 5)
                     RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(Color.teal)
-                        .frame(width: max(0, min(geo.size.width, geo.size.width * CGFloat((root?.usagePercentage ?? 0) / 100.0))), height: 5)
+                        .fill(usagePct >= 85 ? DashboardPalette.rausch : DashboardPalette.ink)
+                        .frame(
+                            width: max(0, min(geo.size.width, geo.size.width * CGFloat(usagePct / 100.0))),
+                            height: 5
+                        )
                 }
             }
             .frame(height: 5)
@@ -241,21 +234,14 @@ private struct DiskMetricCard: View {
             HStack {
                 Text(String(format: "Free: %.0f GB", Double(root?.freeBytes ?? 0) / 1e9))
                     .font(Theme.Typography.metaLabel)
-                    .foregroundStyle(Theme.Colors.textTertiary)
+                    .foregroundStyle(DashboardPalette.muted)
                 Spacer()
                 Text(String(format: "Total: %.0f GB", Double(root?.totalBytes ?? 0) / 1e9))
                     .font(Theme.Typography.metaLabel)
-                    .foregroundStyle(Theme.Colors.textTertiary)
+                    .foregroundStyle(DashboardPalette.muted)
             }
         }
-        .padding(Theme.Spacing.md)
-        .frame(maxWidth: .infinity)
-        .background(Theme.Colors.controlSurface)
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-                .strokeBorder(Theme.Colors.cardStroke, lineWidth: 1)
-        )
+        .dashboardSurfaceCard(padding: 16)
     }
 }
 
@@ -269,22 +255,25 @@ private struct BatteryMetricCard: View {
             HStack {
                 Label("Battery", systemImage: battery.isCharging ? "bolt.batteryblock" : "battery.100")
                     .font(Theme.Typography.compactKeyCap)
-                    .foregroundStyle(Theme.Colors.textSecondary)
+                    .foregroundStyle(DashboardPalette.muted)
                 Spacer()
                 Text("\(battery.percentage)%")
                     .font(Theme.Typography.rowTitle)
                     .fontWeight(.semibold)
-                    .foregroundStyle(Theme.Colors.textPrimary)
+                    .foregroundStyle(DashboardPalette.ink)
             }
 
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(Theme.Colors.border)
+                        .fill(DashboardPalette.surfaceStrong)
                         .frame(height: 5)
                     RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(battery.percentage < 20 ? Color.red : Color.green)
-                        .frame(width: max(0, min(geo.size.width, geo.size.width * CGFloat(Double(battery.percentage) / 100.0))), height: 5)
+                        .fill(battery.percentage < 20 ? DashboardPalette.rausch : DashboardPalette.liveGreen)
+                        .frame(
+                            width: max(0, min(geo.size.width, geo.size.width * CGFloat(Double(battery.percentage) / 100.0))),
+                            height: 5
+                        )
                 }
             }
             .frame(height: 5)
@@ -292,21 +281,14 @@ private struct BatteryMetricCard: View {
             HStack {
                 Text(battery.isCharging ? "Charging" : (battery.isACConnected ? "Power Adapter" : "On Battery"))
                     .font(Theme.Typography.metaLabel)
-                    .foregroundStyle(Theme.Colors.textTertiary)
+                    .foregroundStyle(DashboardPalette.muted)
                 Spacer()
                 Text(battery.health)
                     .font(Theme.Typography.metaLabel)
-                    .foregroundStyle(Theme.Colors.textTertiary)
+                    .foregroundStyle(DashboardPalette.muted)
             }
         }
-        .padding(Theme.Spacing.md)
-        .frame(maxWidth: .infinity)
-        .background(Theme.Colors.controlSurface)
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-                .strokeBorder(Theme.Colors.cardStroke, lineWidth: 1)
-        )
+        .dashboardSurfaceCard(padding: 16)
     }
 }
 
@@ -322,11 +304,11 @@ private struct NetworkMetricCard: View {
             HStack {
                 Label("Network", systemImage: "network")
                     .font(Theme.Typography.compactKeyCap)
-                    .foregroundStyle(Theme.Colors.textSecondary)
+                    .foregroundStyle(DashboardPalette.muted)
                 Spacer()
                 Text(network.interfaceName)
                     .font(Theme.Typography.compactKeyCap)
-                    .foregroundStyle(Theme.Colors.textSecondary)
+                    .foregroundStyle(DashboardPalette.muted)
             }
 
             HStack(spacing: Theme.Spacing.md) {
@@ -334,46 +316,39 @@ private struct NetworkMetricCard: View {
                     Text("↓ \(formatRate(network.downloadBytesPerSecond))")
                         .font(Theme.Typography.rowTitle)
                         .fontWeight(.semibold)
-                        .foregroundStyle(Color.cyan)
+                        .foregroundStyle(DashboardPalette.liveGreen)
                     Text("Download")
                         .font(Theme.Typography.metaLabel)
-                        .foregroundStyle(Theme.Colors.textTertiary)
+                        .foregroundStyle(DashboardPalette.muted)
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("↑ \(formatRate(network.uploadBytesPerSecond))")
                         .font(Theme.Typography.rowTitle)
                         .fontWeight(.semibold)
-                        .foregroundStyle(Color.mint)
+                        .foregroundStyle(DashboardPalette.rausch)
                     Text("Upload")
                         .font(Theme.Typography.metaLabel)
-                        .foregroundStyle(Theme.Colors.textTertiary)
+                        .foregroundStyle(DashboardPalette.muted)
                 }
             }
 
             // Dual Download / Upload Sparklines
             HStack(spacing: Theme.Spacing.sm) {
-                SparklineGraphView(data: downloadHistory, strokeColor: Color.cyan)
+                SparklineGraphView(data: downloadHistory, strokeColor: DashboardPalette.liveGreen)
                     .frame(height: 22)
-                SparklineGraphView(data: uploadHistory, strokeColor: Color.mint)
+                SparklineGraphView(data: uploadHistory, strokeColor: DashboardPalette.rausch)
                     .frame(height: 22)
             }
 
             HStack {
                 Text(network.localIP)
                     .font(Theme.Typography.metaLabel)
-                    .foregroundStyle(Theme.Colors.textTertiary)
+                    .foregroundStyle(DashboardPalette.muted)
                 Spacer()
             }
         }
-        .padding(Theme.Spacing.md)
-        .frame(maxWidth: .infinity)
-        .background(Theme.Colors.controlSurface)
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-                .strokeBorder(Theme.Colors.cardStroke, lineWidth: 1)
-        )
+        .dashboardSurfaceCard(padding: 16)
     }
 
     private func formatRate(_ bytesPerSec: Double) -> String {
@@ -397,49 +372,53 @@ private struct TopProcessesCard: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.md) {
             Text("Top Active Processes")
                 .font(Theme.Typography.sectionHeader)
-                .foregroundStyle(Theme.Colors.textSecondary)
+                .foregroundStyle(DashboardPalette.ink)
 
             HStack(alignment: .top, spacing: Theme.Spacing.xl) {
                 // By CPU
                 VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                     Text("By CPU")
                         .font(Theme.Typography.metaLabel)
-                        .foregroundStyle(Theme.Colors.textTertiary)
+                        .foregroundStyle(DashboardPalette.muted)
                         .padding(.bottom, 2)
 
                     ForEach(byCPU) { proc in
                         HStack {
                             Text(proc.name)
                                 .font(Theme.Typography.rowTitle)
+                                .foregroundStyle(DashboardPalette.body)
                                 .lineLimit(1)
                             Spacer()
                             Text(String(format: "%.1f%%", proc.cpuPercentage))
                                 .font(Theme.Typography.compactKeyCap)
-                                .foregroundStyle(Color.orange)
+                                .foregroundStyle(DashboardPalette.rausch)
                         }
                         .padding(.vertical, 2)
                     }
                 }
                 .frame(maxWidth: .infinity)
 
-                Divider()
+                Rectangle()
+                    .fill(DashboardPalette.hairline)
+                    .frame(width: 1)
 
                 // By RAM
                 VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
                     Text("By Memory")
                         .font(Theme.Typography.metaLabel)
-                        .foregroundStyle(Theme.Colors.textTertiary)
+                        .foregroundStyle(DashboardPalette.muted)
                         .padding(.bottom, 2)
 
                     ForEach(byRAM) { proc in
                         HStack {
                             Text(proc.name)
                                 .font(Theme.Typography.rowTitle)
+                                .foregroundStyle(DashboardPalette.body)
                                 .lineLimit(1)
                             Spacer()
                             Text(String(format: "%.0f MB", proc.memoryMB))
                                 .font(Theme.Typography.compactKeyCap)
-                                .foregroundStyle(Color.purple)
+                                .foregroundStyle(DashboardPalette.ink)
                         }
                         .padding(.vertical, 2)
                     }
@@ -447,14 +426,7 @@ private struct TopProcessesCard: View {
                 .frame(maxWidth: .infinity)
             }
         }
-        .padding(Theme.Spacing.md)
-        .frame(maxWidth: .infinity)
-        .background(Theme.Colors.controlSurface)
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-                .strokeBorder(Theme.Colors.cardStroke, lineWidth: 1)
-        )
+        .dashboardSurfaceCard(padding: 16)
     }
 }
 
@@ -463,7 +435,7 @@ private struct TopProcessesCard: View {
 struct SparklineGraphView: View {
     let data: [Double]
     var maxValue: Double? = nil
-    var strokeColor: Color = Theme.Colors.accent
+    var strokeColor: Color = DashboardPalette.rausch
     var fillColor: Color? = nil
 
     var body: some View {
@@ -525,7 +497,7 @@ struct SparklineGraphView: View {
                     path.move(to: CGPoint(x: 0, y: h - 1))
                     path.addLine(to: CGPoint(x: w, y: h - 1))
                 }
-                .stroke(Theme.Colors.border, style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                .stroke(DashboardPalette.hairline, style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
             }
         }
     }

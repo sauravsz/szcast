@@ -303,7 +303,7 @@ struct DictationSettingsView: View {
                             .font(.caption)
                     }
                     .buttonStyle(.bordered)
-                    .tint(dictationPresetBinding.wrappedValue == .fn ? .accentColor : .secondary)
+                    .tint(dictationPresetBinding.wrappedValue == .fn ? Theme.Colors.settingsAccent : .secondary)
 
                     Button {
                         hotKeys.setBinding(DictationHotkeyPreset.optionSpace.binding, for: .dictation)
@@ -312,7 +312,7 @@ struct DictationSettingsView: View {
                             .font(.caption)
                     }
                     .buttonStyle(.bordered)
-                    .tint(dictationPresetBinding.wrappedValue == .optionSpace ? .accentColor : .secondary)
+                    .tint(dictationPresetBinding.wrappedValue == .optionSpace ? Theme.Colors.settingsAccent : .secondary)
 
                     Button {
                         hotKeys.setBinding(DictationHotkeyPreset.controlSpace.binding, for: .dictation)
@@ -321,7 +321,7 @@ struct DictationSettingsView: View {
                             .font(.caption)
                     }
                     .buttonStyle(.bordered)
-                    .tint(dictationPresetBinding.wrappedValue == .controlSpace ? .accentColor : .secondary)
+                    .tint(dictationPresetBinding.wrappedValue == .controlSpace ? Theme.Colors.settingsAccent : .secondary)
 
                     Button {
                         hotKeys.recordingAction = .dictation
@@ -330,7 +330,7 @@ struct DictationSettingsView: View {
                             .font(.caption)
                     }
                     .buttonStyle(.bordered)
-                    .tint(dictationPresetBinding.wrappedValue == .custom ? .accentColor : .secondary)
+                    .tint(dictationPresetBinding.wrappedValue == .custom ? Theme.Colors.settingsAccent : .secondary)
                 }
 
                 Text("Press Escape anytime to cancel an active recording.")
@@ -546,7 +546,7 @@ struct DictationSettingsView: View {
             HStack(alignment: .center, spacing: Theme.Spacing.md) {
                 Image(systemName: "text.viewfinder")
                     .font(.system(size: 20))
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(Theme.Colors.settingsAccent)
                     .frame(width: 32, height: 32)
 
                 VStack(alignment: .leading, spacing: 3) {
@@ -1126,7 +1126,7 @@ struct DictationSettingsView: View {
                                     coordinator.historyStore.toggleAudioPlayback(for: item)
                                 } label: {
                                     Image(systemName: isPlaying ? "stop.circle.fill" : "play.circle")
-                                        .foregroundStyle(isPlaying ? Color.accentColor : Color.secondary)
+                                        .foregroundStyle(isPlaying ? Theme.Colors.settingsAccent : Color.secondary)
                                 }
                                 .buttonStyle(.borderless)
                                 .help(isPlaying ? "Stop audio" : "Play recording")

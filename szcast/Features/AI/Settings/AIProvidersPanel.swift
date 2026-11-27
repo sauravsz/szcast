@@ -45,6 +45,7 @@ struct AIProvidersPanel: View {
     @Environment(AISettingsStore.self) private var settings
     @Environment(ChatGPTSubscriptionManager.self) private var subscription
     @Environment(InstalledAIManager.self) private var installedAI
+    @Environment(\.appearsActive) private var appearsActive
 
     let onDone: () -> Void
 
@@ -165,6 +166,7 @@ struct AIProvidersPanel: View {
             Spacer(minLength: 0)
         }
         .tag(route)
+        .settingsSidebarRowHighlight(isSelected: selection == route, appearsActive: appearsActive)
     }
 
     private var listActions: some View {

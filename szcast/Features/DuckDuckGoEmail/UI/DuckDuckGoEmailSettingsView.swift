@@ -17,7 +17,7 @@ struct DuckDuckGoEmailSettingsView: View {
                 ) {
                     SettingsTabIcon(
                         systemImage: "envelope.badge.shield.half.filled",
-                        tint: .accentColor,
+                        tint: Theme.Colors.settingsAccent,
                         size: Theme.Size.settingsRowIcon * 1.5
                     )
                 } trailing: {
