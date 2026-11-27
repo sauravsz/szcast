@@ -22,9 +22,14 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
 
 ## Build / verify (macOS 27, Xcode 27.2)
 - `xcodebuild -project Szcast.xcodeproj -scheme Szcast -configuration Release -derivedDataPath "build/DerivedData" CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="Szcast Self-Signed" OTHER_CODE_SIGN_FLAGS="--timestamp=none" -quiet build`
-- `Scripts/run-tests.sh` — all 139 harnesses pass (276s).
+- `Scripts/run-tests.sh` — all 139 harnesses pass (317s).
 - `node Scripts/check-settings-search.js` — 0 errors.
 - `./Scripts/benchmark-dictation.sh --ci` — synthetic 30s DSP + Mel + NLP/hotword RTF & latency check.
+
+- **Settings Rausch Accent, Monochrome Sidebar Icons & Shared `DashboardPalette` (`81216bf7`, Live in `/Applications/szcast.app`)**:
+  - Unified Settings accent tokens onto Airbnb Rausch (`Theme.Colors.settingsAccent`, `#FF385C` light / `#FF4D6E` dark) and monochrome ink sidebar icons (`Theme.Colors.settingsIconInk`), replacing system blue `.accentColor` and multi-color `RaycastIconTheme` sidebar badges across Settings panes (`SettingsComponents.settingsSidebarRowHighlight` handles AppKit `.listStyle(.sidebar)` row selection tint).
+  - Promoted `DashboardPalette` and added static `View.dashboardSurfaceCard(...)` into `Theme.swift` (deduplicated from `DictationInsightsDashboardView.swift`) and applied static `DashboardPalette` card surfaces, hairlines, pills, and Rausch/ink hierarchy across `StatsDashboardView.swift`, `ModelLibrarySettingsView.swift`, `ExtendedFeaturesSettingsView.swift`, `ChangelogSettingsView.swift`, and `AboutView.swift`.
+  - Verified cleanly via `./Scripts/lint.sh` (`lint-clean`), `node Scripts/check-settings-search.js` (0 errors), `./Scripts/run-tests.sh` (139/139 passed), Debug + Release builds, pushed to `origin/main`, replaced `/Applications/szcast.app`, and deleted `build/DerivedData`.
 
 - **5-Phase Dictation Architecture Overhaul (Phases 1-5 Complete, Installed to `/Applications/szcast.app`)**:
   - Phases 1-2: Pre-allocated tensor/vDSP inference (`ParakeetRecognizer`, `NemotronRecognizer`, `ParakeetCTCRecognizer`, `SileroVADProcessor`), hardware audio conditioning + 350ms warm `AVAudioEngine` pre-roll + CoreAudio device binding, Apple `SpeechAnalyzer`, Deepgram live WebSocket + Groq compressed upload failover, AI/ML & Finance `VocabularyPack` O(N) trie, failed-audio recovery/replay & async `.m4a` history.
