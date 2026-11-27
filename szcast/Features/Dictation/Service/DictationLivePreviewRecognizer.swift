@@ -197,7 +197,15 @@ actor DictationLivePreviewRecognizer {
         self.sfRequest = request
         self.isSessionActive = true
 
-        self.sfTask = recognizer.recognitionTask(with: request) { result, error in
+        self.sfTask = Self.makeRecognitionTask(recognizer: recognizer, request: request, onText: onText)
+    }
+
+    nonisolated private static func makeRecognitionTask(
+        recognizer: SFSpeechRecognizer,
+        request: SFSpeechAudioBufferRecognitionRequest,
+        onText: @escaping @Sendable (String) -> Void
+    ) -> SFSpeechRecognitionTask {
+        recognizer.recognitionTask(with: request) { result, _ in
             if let result {
                 let transcription = result.bestTranscription.formattedString
                 onText(transcription)

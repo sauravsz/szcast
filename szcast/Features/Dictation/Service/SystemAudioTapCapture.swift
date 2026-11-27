@@ -17,6 +17,19 @@ final class SystemAudioTapCapture {
         var phase: Double = 0
         var lastSample: Float = 0
 
+        func installIOProc(on aggregateID: AudioObjectID) -> OSStatus {
+            var newProcID: AudioDeviceIOProcID?
+            let status = AudioDeviceCreateIOProcIDWithBlock(&newProcID, aggregateID, queue) {
+                _, inInputData, _, _, _ in
+                self.appendBufferList(inInputData)
+            }
+            if status == noErr {
+                procID = newProcID
+                isActive = true
+            }
+            return status
+        }
+
         func appendBufferList(_ bufferListPtr: UnsafePointer<AudioBufferList>) {
             guard isActive else { return }
             let list = UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: bufferListPtr))
@@ -116,18 +129,12 @@ final class SystemAudioTapCapture {
             s.sourceChannels = max(1, Int(format.mChannelsPerFrame))
         }
 
-        var procID: AudioDeviceIOProcID?
-        let ioStatus = AudioDeviceCreateIOProcIDWithBlock(&procID, aggregateID, s.queue) {
-            _, inInputData, _, _, _ in
-            s.appendBufferList(inInputData)
-        }
-        guard ioStatus == noErr, let procID else {
+        let ioStatus = s.installIOProc(on: aggregateID)
+        guard ioStatus == noErr, let procID = s.procID else {
             AudioHardwareDestroyAggregateDevice(aggregateID)
             AudioHardwareDestroyProcessTap(tapID)
             throw NSError(domain: NSOSStatusErrorDomain, code: Int(ioStatus))
         }
-        s.procID = procID
-        s.isActive = true
 
         let startStatus = AudioDeviceStart(aggregateID, procID)
         guard startStatus == noErr else {

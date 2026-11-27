@@ -134,7 +134,7 @@ final class DictationCapture {
         }
     }
 
-    private static let logger = Logger(subsystem: "com.sauravsz.szcast", category: "DictationCapture")
+    nonisolated private static let logger = Logger(subsystem: "com.sauravsz.szcast", category: "DictationCapture")
 
     static var microphones: [AVCaptureDevice] {
         AVCaptureDevice.DiscoverySession(
@@ -277,7 +277,9 @@ final class DictationCapture {
             onLevels: { _ in },
             onLimit: {}
         )
-        let engine = try buildAudioEngine(device: device, isBluetooth: isBT, voiceProcessing: voiceProcessing, collector: preCollector)
+        let deviceID = Self.audioDeviceID(forUID: device.uniqueID)
+        let engine = try Self.buildAudioEngine(
+            deviceID: deviceID, isBluetooth: isBT, voiceProcessing: voiceProcessing, collector: preCollector)
         let box = AudioEngineBox(engine)
         let started = await Self.awaitWithin(seconds: Self.sessionStartTimeoutSeconds) {
             try? box.engine.start()
@@ -351,6 +353,12 @@ final class DictationCapture {
         let autoStopSamples = autoStopSilenceSeconds > 0
             ? Int(autoStopSilenceSeconds * Double(DictationWire.sampleRate)) : 0
 
+        let callbacks = Self.makeCollectorCallbacks(
+            capture: self,
+            samplesHandler: samplesHandler,
+            pauseHandler: pauseHandler
+        )
+
         // Fast path 1: Warm Pre-Roll promotion (<2ms, includes trailing 350ms spoken before trigger!).
         if warmPreRollActive,
            let engine = audioEngine, engine.isRunning,
@@ -362,23 +370,13 @@ final class DictationCapture {
                 maximumSamples: maxSamples,
                 startMuted: startMuted,
                 autoStopSilenceSamples: autoStopSamples,
-                onLevels: { [weak self] levels in
-                    Task { @MainActor [weak self] in self?.onLevels?(levels) }
-                },
-                onLimit: { [weak self] in
-                    Task { @MainActor [weak self] in self?.onLimit?() }
-                },
-                onSamples: { chunk in samplesHandler?(chunk) },
-                onPauseChunk: { endIdx, chunk in pauseHandler?(endIdx, chunk) },
-                onSilenceWarning: { [weak self] silent in
-                    Task { @MainActor [weak self] in self?.onSilenceWarning?(silent) }
-                },
-                onClippingWarning: { [weak self] clipping in
-                    Task { @MainActor [weak self] in self?.onClippingWarning?(clipping) }
-                },
-                onAutoStopSilence: { [weak self] in
-                    Task { @MainActor [weak self] in self?.onAutoStopSilence?() }
-                }
+                onLevels: callbacks.onLevels,
+                onLimit: callbacks.onLimit,
+                onSamples: callbacks.onSamples,
+                onPauseChunk: callbacks.onPauseChunk,
+                onSilenceWarning: callbacks.onSilenceWarning,
+                onClippingWarning: callbacks.onClippingWarning,
+                onAutoStopSilence: callbacks.onAutoStopSilence
             )
             Self.logger.debug("DictationCapture promoted warm pre-roll engine in <2ms")
             return
@@ -393,23 +391,13 @@ final class DictationCapture {
             maximumSamples: maxSamples,
             startMuted: startMuted,
             autoStopSilenceSamples: autoStopSamples,
-            onLevels: { [weak self] levels in
-                Task { @MainActor [weak self] in self?.onLevels?(levels) }
-            },
-            onLimit: { [weak self] in
-                Task { @MainActor [weak self] in self?.onLimit?() }
-            },
-            onSamples: { chunk in samplesHandler?(chunk) },
-            onPauseChunk: { endIdx, chunk in pauseHandler?(endIdx, chunk) },
-            onSilenceWarning: { [weak self] silent in
-                Task { @MainActor [weak self] in self?.onSilenceWarning?(silent) }
-            },
-            onClippingWarning: { [weak self] clipping in
-                Task { @MainActor [weak self] in self?.onClippingWarning?(clipping) }
-            },
-            onAutoStopSilence: { [weak self] in
-                Task { @MainActor [weak self] in self?.onAutoStopSilence?() }
-            })
+            onLevels: callbacks.onLevels,
+            onLimit: callbacks.onLimit,
+            onSamples: callbacks.onSamples,
+            onPauseChunk: callbacks.onPauseChunk,
+            onSilenceWarning: callbacks.onSilenceWarning,
+            onClippingWarning: callbacks.onClippingWarning,
+            onAutoStopSilence: callbacks.onAutoStopSilence)
 
         if let pendingStop = sessionStopTask {
             let drained = await Self.awaitWithin(seconds: Self.sessionStartTimeoutSeconds) {
@@ -419,8 +407,9 @@ final class DictationCapture {
         }
 
         // Fast path 2: Low-latency AVAudioEngine with CoreAudio device binding & Voice Processing.
-        if let engine = try? buildAudioEngine(
-            device: device,
+        let deviceID = Self.audioDeviceID(forUID: device.uniqueID)
+        if let engine = try? Self.buildAudioEngine(
+            deviceID: deviceID,
             isBluetooth: isBluetooth,
             voiceProcessing: voiceProcessing,
             collector: collector
@@ -481,8 +470,57 @@ final class DictationCapture {
         }
     }
 
-    private func buildAudioEngine(
-        device: AVCaptureDevice,
+    private struct CollectorCallbacks: Sendable {
+        let onLevels: @Sendable ([Float]) -> Void
+        let onLimit: @Sendable () -> Void
+        let onSamples: (@Sendable ([Float]) -> Void)?
+        let onPauseChunk: (@Sendable (_ rangeEndSample: Int, _ chunk: [Float]) -> Void)?
+        let onSilenceWarning: (@Sendable (Bool) -> Void)?
+        let onClippingWarning: (@Sendable (Bool) -> Void)?
+        let onAutoStopSilence: (@Sendable () -> Void)?
+    }
+
+    nonisolated private static func makeCollectorCallbacks(
+        capture: DictationCapture,
+        samplesHandler: (@Sendable ([Float]) -> Void)?,
+        pauseHandler: (@Sendable (Int, [Float]) -> Void)?
+    ) -> CollectorCallbacks {
+        CollectorCallbacks(
+            onLevels: { [weak capture] levels in
+                Task { @MainActor [weak capture] in capture?.onLevels?(levels) }
+            },
+            onLimit: { [weak capture] in
+                Task { @MainActor [weak capture] in capture?.onLimit?() }
+            },
+            onSamples: samplesHandler,
+            onPauseChunk: pauseHandler,
+            onSilenceWarning: { [weak capture] silent in
+                Task { @MainActor [weak capture] in capture?.onSilenceWarning?(silent) }
+            },
+            onClippingWarning: { [weak capture] clipping in
+                Task { @MainActor [weak capture] in capture?.onClippingWarning?(clipping) }
+            },
+            onAutoStopSilence: { [weak capture] in
+                Task { @MainActor [weak capture] in capture?.onAutoStopSilence?() }
+            }
+        )
+    }
+
+    /// Creates a nonisolated audio tap closure safe for execution on AVAudioEngine's realtime service queue.
+    nonisolated static func makeAudioTapBlock(
+        targetFormat: AVAudioFormat,
+        onPCM16kHz: @escaping @Sendable ([Float]) -> Void
+    ) -> (AVAudioPCMBuffer, AVAudioTime) -> Void {
+        let resampler = AudioTapResampler(targetFormat: targetFormat)
+        return { buffer, _ in
+            if let outSamples = resampler.convertTo16kHzMono(buffer), !outSamples.isEmpty {
+                onPCM16kHz(outSamples)
+            }
+        }
+    }
+
+    nonisolated private static func buildAudioEngine(
+        deviceID: AudioDeviceID?,
         isBluetooth: Bool,
         voiceProcessing: Bool,
         collector: AudioCollector
@@ -490,7 +528,11 @@ final class DictationCapture {
         let engine = AVAudioEngine()
         let inputNode = engine.inputNode
 
-        if let au = inputNode.audioUnit, var devID = Self.audioDeviceID(forUID: device.uniqueID) {
+        if voiceProcessing, !isBluetooth {
+            try? inputNode.setVoiceProcessingEnabled(true)
+        }
+
+        if let au = inputNode.audioUnit, var devID = deviceID {
             let status = AudioUnitSetProperty(
                 au,
                 kAudioOutputUnitProperty_CurrentDevice,
@@ -502,10 +544,6 @@ final class DictationCapture {
             if status != noErr {
                 Self.logger.debug("AudioUnit device binding returned status \(status); using AVAudioEngine default route")
             }
-        }
-
-        if voiceProcessing, !isBluetooth {
-            try? inputNode.setVoiceProcessingEnabled(true)
         }
 
         let hwFormat = inputNode.outputFormat(forBus: 0)
@@ -520,12 +558,10 @@ final class DictationCapture {
             throw Failure.captureUnavailable
         }
 
-        let resampler = AudioTapResampler(targetFormat: targetFormat)
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: nil) { [collector, resampler] buffer, _ in
-            if let outSamples = resampler.convertTo16kHzMono(buffer), !outSamples.isEmpty {
-                collector.enqueuePCM16kHz(outSamples)
-            }
+        let tapBlock = makeAudioTapBlock(targetFormat: targetFormat) { [collector] outSamples in
+            collector.enqueuePCM16kHz(outSamples)
         }
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: nil, block: tapBlock)
         engine.prepare()
         return engine
     }

@@ -119,18 +119,10 @@ final class DictationCoordinator {
         capture.onClamshellWarning = { [weak self] muffled in
             self?.panel.state.isClamshellMuffled = muffled
         }
-        capture.onSamples = { [weak self] samples in
-            self?.livePreviewCoordinator.feed(samples)
-            Task { @MainActor [weak self] in
-                guard let self, self.deepgramStreamActive, let stream = self.deepgramStream else { return }
-                await stream.sendPCM(samples)
-            }
-        }
-        capture.onPauseChunk = { [weak self] rangeEndSample, chunk in
-            Task { @MainActor [weak self] in
-                self?.handlePauseChunk(rangeEndSample: rangeEndSample, chunk: chunk)
-            }
-        }
+        capture.onSamples = Self.makeSampleHandler(
+            coordinator: self, livePreview: livePreviewCoordinator
+        )
+        capture.onPauseChunk = Self.makePauseChunkHandler(coordinator: self)
         livePreviewCoordinator.onPreviewText = { [weak self] preview in
             Task { @MainActor [weak self] in
                 guard let self, phase == .listening else { return }
@@ -140,6 +132,31 @@ final class DictationCoordinator {
         self.lastDictation = historyStore.items.first?.text
         historyStore.skipAudioArchiveOnSuccess = (settings.dictationAudioRetentionDays == 0)
         syncCapturePreferences()
+    }
+
+    nonisolated static func makeSampleHandler(
+        coordinator: DictationCoordinator,
+        livePreview: DictationLivePreviewCoordinator
+    ) -> @Sendable ([Float]) -> Void {
+        { [weak coordinator] samples in
+            livePreview.feed(samples)
+            Task { @MainActor [weak coordinator] in
+                guard let coordinator, coordinator.deepgramStreamActive,
+                      let stream = coordinator.deepgramStream
+                else { return }
+                await stream.sendPCM(samples)
+            }
+        }
+    }
+
+    nonisolated static func makePauseChunkHandler(
+        coordinator: DictationCoordinator
+    ) -> @Sendable (Int, [Float]) -> Void {
+        { [weak coordinator] rangeEndSample, chunk in
+            Task { @MainActor [weak coordinator] in
+                coordinator?.handlePauseChunk(rangeEndSample: rangeEndSample, chunk: chunk)
+            }
+        }
     }
 
     func applyAudioRetentionPolicy() {

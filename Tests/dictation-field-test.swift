@@ -22,6 +22,7 @@ struct DictationFieldTest {
         try await testFailureRecoveryAndSpeculativePauseChunk()
         try await testPhase3VoiceMetaCommandsAndSyntax()
         try await testPhase4InjectionAndPillHUD()
+        try await testOffMainAudioCallbacks()
         print("ALL PASSED")
     }
 
@@ -470,6 +471,25 @@ struct DictationFieldTest {
                 && !jsonStr.contains("Accessibility fallback phrase"),
             "Diagnostic export produces valid redacted JSON excluding secrets and transcripts"
         )
+    }
+
+    private static func testOffMainAudioCallbacks() async throws {
+        let fixture = Fixture()
+        _ = fixture.coordinator
+        let onSamples = fixture.capture.onSamples
+        let onPauseChunk = fixture.capture.onPauseChunk
+        expect(onSamples != nil && onPauseChunk != nil, "Coordinator attaches capture sample callbacks")
+
+        let chunk = [Float](repeating: 0.02, count: 1_600)
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            DispatchQueue(label: "test.dictation.audioCollectorQueue").async {
+                onSamples?(chunk)
+                onPauseChunk?(32_000, [Float](repeating: 0.02, count: 24_000))
+                continuation.resume()
+            }
+        }
+        try await Task.sleep(for: .milliseconds(25))
+        expect(true, "Coordinator capture callbacks run on background audio queue without MainActor trap")
     }
 
     /// The live poll sleeps longer than `wait` allows.
