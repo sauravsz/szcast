@@ -214,15 +214,11 @@ struct InterfaceMetrics: Equatable, Sendable {
         var keyCap: Font { font(Theme.Typography.keyCap, .caption1) }
         var compactKeyCap: Font { font(Theme.Typography.compactKeyCap, .caption2) }
         var heroKeyCap: Font { font(Theme.Typography.heroKeyCap, .body) }
-        var markdownHeading1: Font { font(Theme.Typography.markdownHeading1, .title2, .semibold) }
-        var markdownHeading2: Font { font(Theme.Typography.markdownHeading2, .title3, .semibold) }
-        var markdownHeading3: Font { font(Theme.Typography.markdownHeading3, .headline) }
         var code: Font {
             scale == 1
                 ? Theme.Typography.code
                 : .system(size: nsFont(.callout).pointSize, design: .monospaced)
         }
-        var inlineCode: Font { font(Theme.Typography.inlineCode, .body).monospaced() }
         var bar: Font { resolveFont(size: rowSubtitleSize, weight: .medium) }
         var chip: Font { font(Theme.Typography.chip, .callout) }
         @MainActor var chipNSFont: NSFont { scale == 1 ? Theme.Typography.chipNSFont : nsFont(.callout) }

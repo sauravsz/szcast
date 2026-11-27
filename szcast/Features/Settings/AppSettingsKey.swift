@@ -204,7 +204,6 @@ enum AppSettingsKey: String, CaseIterable {
     case keepassxcEnabled = "keepassxcEnabled"
     case duckDuckGoEmailEnabled = "duckDuckGoEmailEnabled"
     case cleanKeyboardEnabled = "cleanKeyboardEnabled"
-    case textTransformerEnabled = "textTransformerEnabled"
     case appThemePreset = "settings:appThemePreset"
     case statsEnabled = "statsEnabled"
     case statsCPUEnabled = "statsCPUEnabled"

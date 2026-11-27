@@ -300,9 +300,6 @@ run appearance-test        Szcast/Platform/Appearance.swift \
 run palette-theme-preset-test Szcast/Platform/Appearance.swift \
                            Szcast/DesignSystem/PaletteThemePreset.swift \
                            Szcast/DesignSystem/Theme.swift
-run text-transformer-test  Szcast/Platform/URLSanitizer.swift \
-                           Szcast/Features/TextTransformer/Model/TextTransformType.swift \
-                           Szcast/Features/TextTransformer/Model/TextTransformEngine.swift
 run language-test          Szcast/Features/Settings/AppLanguage.swift
 run localized-resource-test Szcast/Platform/LocalizedResource.swift
 run relaunch-test          Szcast/App/AppDelegate.swift Szcast/Platform/RelaunchRunner.swift
@@ -507,7 +504,6 @@ run transcript-migration-test Szcast/Features/Dictation/Model/DictationHistoryIt
                            Szcast/Features/Dictation/Model/MeetingNote.swift \
                            Szcast/Features/Dictation/Model/TimedTranscript.swift \
                            Szcast/Features/Dictation/Model/TranscriptStore.swift \
-                           Szcast/Features/Dictation/Service/TranscriptJSONMigration.swift \
                            Szcast/Platform/AppPaths.swift
 run transcript-export-test Szcast/Features/Dictation/Model/TimedTranscript.swift \
                            Szcast/Features/Dictation/Model/TranscriptExporter.swift \
@@ -748,6 +744,7 @@ run slow snippets-test     $L/SearchRelevance.swift \
                            Szcast/Platform/NotificationToken.swift \
                            Szcast/Platform/HealthTicker.swift \
                            Szcast/Platform/AccessibilityText.swift \
+                           Szcast/Platform/PasteboardFiles.swift \
                            Szcast/Platform/AppPaths.swift \
                            Szcast/Platform/Appearance.swift \
                            Szcast/Platform/Images/SystemIconTheme.swift \

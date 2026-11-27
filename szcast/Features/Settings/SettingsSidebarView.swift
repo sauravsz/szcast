@@ -21,7 +21,6 @@ struct SettingsSidebarView: View {
         case .calendar: return settings.calendarEnabled
         case .cleanKeyboard: return settings.cleanKeyboardEnabled
         case .appleShortcuts: return settings.appleShortcutsEnabled
-        case .textTransformer: return settings.textTransformerEnabled
         default: return true
         }
     }

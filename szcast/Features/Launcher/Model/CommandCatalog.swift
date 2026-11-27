@@ -85,7 +85,6 @@ extension SettingsTab {
         case .enteAuth: [.enteAuth]
         case .duckDuckGoEmail: [.generateDuckAddress]
         case .keepassxc: [.keepassxc]
-        case .textTransformer: [.textTransformer]
         case .stats: [.systemStats]
         default: []
         }

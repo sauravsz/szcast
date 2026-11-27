@@ -734,6 +734,7 @@ final class DictationModelStore {
     func delete(_ model: DictationModel) async throws {}
     func prewarm(_ model: DictationModel) {}
     func ensurePrewarmed(_ model: DictationModel) {}
+    func release() async {}
     func stop() async {}
     func prepareForTermination() {}
 

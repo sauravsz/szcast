@@ -41,14 +41,6 @@ actor DictationS1Polisher {
         return lower == repository || lower.hasPrefix(repository + ":") || lower.contains("s1-mini")
     }
 
-    /// Assembles ChatML frame for S1-mini with an explicitly closed empty think block.
-    /// This fixes the bug where S1-mini GGUF templates end in an unclosed <think> tag,
-    /// causing the model to output empty responses over standard /api/chat or /v1/chat/completions.
-    static func makeRawPrompt(systemPrompt: String, userMessage: String) -> String {
-        let assistantPrefix = "<|im_start|>assistant\n<think>\n\n</think>\n\n"
-        return "<|im_start|>system\n\(systemPrompt)<|im_end|>\n<|im_start|>user\n\(userMessage)<|im_end|>\n\(assistantPrefix)"
-    }
-
     func polish(
         _ transcript: String,
         settings: DictationS1Settings,
@@ -167,50 +159,6 @@ actor DictationS1Polisher {
         }
 
         return text
-    }
-
-    static func normalizedBaseURL(_ url: URL) -> URL {
-        let path = url.path
-        if path.hasSuffix("/v1/chat/completions") || path.hasSuffix("/api/chat") || path.hasSuffix("/api/generate") {
-            var comps = URLComponents(url: url, resolvingAgainstBaseURL: false)
-            comps?.path = ""
-            return comps?.url ?? url
-        }
-        return url
-    }
-
-    /// Probes standard localhost Ollama (11434) and LM Studio (1234) OpenAI-compatible endpoints (300ms timeout).
-    static func detectLocalOpenAIEndpoints() async -> [URL] {
-        let candidates = [
-            URL(string: "http://127.0.0.1:11434")!,
-            URL(string: "http://127.0.0.1:1234")!
-        ]
-        let config = URLSessionConfiguration.ephemeral
-        config.timeoutIntervalForRequest = 0.3
-        config.timeoutIntervalForResource = 0.4
-        let probeSession = URLSession(configuration: config)
-        defer { probeSession.invalidateAndCancel() }
-
-        return await withTaskGroup(of: (Int, URL?).self) { group in
-            for (idx, base) in candidates.enumerated() {
-                group.addTask {
-                    let modelsURL = base.appendingPathComponent("v1/models")
-                    var req = URLRequest(url: modelsURL)
-                    req.httpMethod = "GET"
-                    req.timeoutInterval = 0.3
-                    guard let (_, response) = try? await probeSession.data(for: req),
-                          let http = response as? HTTPURLResponse,
-                          (200...299).contains(http.statusCode)
-                    else { return (idx, nil) }
-                    return (idx, base)
-                }
-            }
-            var hits: [(Int, URL)] = []
-            for await (idx, url) in group {
-                if let url { hits.append((idx, url)) }
-            }
-            return hits.sorted { $0.0 < $1.0 }.map(\.1)
-        }
     }
 
     private func sendChatRequest(

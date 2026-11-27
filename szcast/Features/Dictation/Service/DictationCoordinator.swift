@@ -224,6 +224,8 @@ final class DictationCoordinator {
             syncCapturePreferences()
             enableTask?.cancel()
             cancel()
+            DictationLlamaServerManager.shared.stop()
+            Task { [models] in await models.release() }
             return
         }
         guard enableTask == nil else { return }
@@ -405,12 +407,18 @@ final class DictationCoordinator {
 
     func prewarm() {
         guard settings.dictationEnabled else { return }
-        models.ensurePrewarmed(settings.dictationModel)
+        if settings.dictationTranscriptionProvider == .local {
+            models.ensurePrewarmed(settings.dictationModel)
+        }
         if settings.dictationLivePreviewEnabled {
             livePreviewCoordinator.prewarm(
                 locale: DictationLanguage.previewLocale(for: settings.dictationLanguage))
         }
-        if settings.dictationS1Enabled {
+        if settings.dictationS1Enabled,
+           DictationPolishProvider.resolved(
+               preferred: settings.dictationPolishProvider,
+               groqAPIKey: settings.groqAPIKey
+           ) == .localS1 {
             DictationLlamaServerManager.shared.startDaemon(
                 idleRelease: settings.dictationS1IdleRelease,
                 settings: currentS1Settings
@@ -1165,8 +1173,8 @@ final class DictationCoordinator {
 
     /// Chunk spacing from the caret, else nil.
     private func insertionContext() -> DictationTextFormatter.Context? {
-        if let context = DictationInsertionContext.read(in: target) { return context }
-        return nil
+        guard target?.ownEditor != nil || Permissions.isAccessibilityTrusted() else { return nil }
+        return DictationInsertionContext.read(in: target)
     }
 
     func cancel(in editor: any InjectableTextView) {

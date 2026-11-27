@@ -74,7 +74,6 @@ enum CommandID: String, CaseIterable, Sendable {
     case generateDuckAddress = "command:generate-duck-address"
     case cleanKeyboard = "command:clean-keyboard"
     case keepassxc = "command:keepassxc"
-    case textTransformer = "command:text-transformer"
     case systemStats = "command:system-stats"
     case dictationInsights = "command:dictation-insights"
     case switchTranscriptionModel = "command:switch-transcription-model"
@@ -183,7 +182,6 @@ enum CommandID: String, CaseIterable, Sendable {
         case .generateDuckAddress: return "Generate DuckDuckGo Email"
         case .cleanKeyboard: return "Clean Keyboard Mode"
         case .keepassxc: return "KeePassXC Passwords"
-        case .textTransformer: return "Text Transformer"
         case .systemStats: return "System Stats"
         case .dictationInsights: return "Dictation Insights"
         case .switchTranscriptionModel: return "Switch Transcription Model"
@@ -267,7 +265,6 @@ enum CommandID: String, CaseIterable, Sendable {
         case .generateDuckAddress: return "envelope.badge.shield.half.filled"
         case .cleanKeyboard: return "lock.shield"
         case .keepassxc: return "lock.fill"
-        case .textTransformer: return "text.word.spacing"
         case .systemStats: return "gauge.with.needle"
         case .dictationInsights: return "chart.bar.xaxis"
         case .switchTranscriptionModel: return "cpu"
@@ -342,7 +339,6 @@ enum CommandID: String, CaseIterable, Sendable {
         case .generateDuckAddress: ["duck", "duckduckgo", "email", "alias", "private email", "duck address"]
         case .cleanKeyboard: ["clean keyboard", "lock keyboard", "wipe keyboard", "clean"]
         case .keepassxc: ["keepass", "keepassxc", "kdbx", "password", "passwords", "credentials", "vault"]
-        case .textTransformer: ["transform", "casing", "camelcase", "snakecase", "json", "prettify", "base64", "urlencode", "hex", "slugify"]
         case .systemStats: ["stats", "system stats", "cpu", "ram", "memory", "battery", "hardware", "disk", "activity monitor", "processes"]
         case .dictationInsights: ["insights", "wpm", "words per minute", "dictation insights", "dictation dashboard", "streak"]
         case .switchTranscriptionModel: [

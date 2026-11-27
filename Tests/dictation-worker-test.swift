@@ -27,7 +27,7 @@ struct DictationWorkerTest {
                 id: UUID(), model: model,
                 directory: URL(fileURLWithPath: "/tmp/models"), sampleCount: samples.count,
                 language: nil)
-            let text = try await worker.transcribe(samples, request: request) { readiness.count += 1 }
+            let text = try await worker.transcribeTimed(samples, request: request) { readiness.count += 1 }.text
             guard text == model.rawValue else { fatalError("Model response did not match its request") }
         }
         guard readiness.count == DictationModel.allCases.count else { fatalError("Missing readiness event") }
@@ -43,7 +43,7 @@ struct DictationWorkerTest {
                 language: nil)
             let ready = AsyncStream<Void>.makeStream()
             let task = Task {
-                try await worker.transcribe(samples, request: request) { ready.continuation.yield(()) }
+                try await worker.transcribeTimed(samples, request: request) { ready.continuation.yield(()) }.text
             }
             if behavior == "wait" {
                 var iterator = ready.stream.makeAsyncIterator()
@@ -77,7 +77,7 @@ struct DictationWorkerTest {
         else {
             fatalError("Installed model metadata is incorrect")
         }
-        let cancelled = Task { try await store.transcribe([0], model: .redux) }
+        let cancelled = Task { try await store.transcribeTimed([0], model: .redux).text }
         cancelled.cancel()
         do {
             _ = try await cancelled.value
@@ -87,7 +87,7 @@ struct DictationWorkerTest {
             fatalError("Cancelled transcription launched a helper")
         }
         for model in [DictationModel.redux, .redux, .ultra] {
-            let text = try await store.transcribe([0], model: model)
+            let text = try await store.transcribeTimed([0], model: model).text
             guard text == model.rawValue, store.loadedModel == model, !store.transcribing else {
                 fatalError("Model store failed to finish a request")
             }

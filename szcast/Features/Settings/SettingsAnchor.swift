@@ -149,9 +149,6 @@ extension SettingsAnchor {
     static let keepassxcCommands = Self(tab: .keepassxc, title: "Commands")
     static let keepassxcDatabase = Self(tab: .keepassxc, title: "Database & Master Password")
 
-    static let textTransformerTextTransformer = Self(tab: .textTransformer, title: "Text Transformer")
-    static let textTransformerCommands = Self(tab: .textTransformer, title: "Commands")
-
     static let stats = Self(tab: .stats, title: "System Stats")
     static let statsModules = Self(tab: .stats, title: "Modules")
     static let statsMenuBar = Self(tab: .stats, title: "Menu Bar Items")

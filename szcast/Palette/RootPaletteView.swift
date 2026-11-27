@@ -142,8 +142,6 @@ struct RootPaletteView: View {
             return DuckDuckGoEmailScreen(service: core.duckDuckGoEmailService, core: core, vm: vm)
         case .keepassxc:
             return KeePassXCScreen(service: core.keepassXCService, core: core, vm: vm)
-        case .textTransformer:
-            return TextTransformerScreen(coordinator: core.textTransformerCoordinator, core: core, vm: vm)
         case .systemStats:
             return StatsScreen(core: core, vm: vm)
         case .switchTranscriptionModel:

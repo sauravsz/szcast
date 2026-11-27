@@ -282,7 +282,6 @@ final class AppCore {
         }
         return service
     }()
-    @ObservationIgnored private(set) lazy var textTransformerCoordinator = TextTransformerCoordinator()
 
     @ObservationIgnored private lazy var windowController = PaletteWindowController(core: self)
     /// Every pill shares this panel, so a later one replaces the earlier rather than stacking.
@@ -451,7 +450,6 @@ final class AppCore {
             hotKeys.modifierTapMonitor.healthTicker = healthTicker
             snippetListener.healthTicker = healthTicker
 
-            TranscriptJSONMigration.run(into: dictationCoordinator.historyStore.store)
             hotKeys.onTogglePalette = { [weak self] in self?.paletteCoordinator.togglePalette() }
             hotKeys.dictationEnabled = settings.dictationEnabled
             hotKeys.dictationHoldToTalk = settings.dictationMode == .pushToTalk
@@ -471,21 +469,6 @@ final class AppCore {
             hotKeys.onRunSystemAction = { [weak self] id in
                 self?.systemActionCoordinator.runSystemAction(id: id)
             }
-
-            // Ensure Parakeet local speech-to-text and S1-mini persistent local daemon are always ON on launch
-            dictationModels.ensurePrewarmed(settings.dictationModel)
-            DictationLlamaServerManager.shared.startDaemon(
-                idleRelease: settings.dictationS1IdleRelease,
-                settings: DictationS1Settings(
-                    enabled: settings.dictationS1Enabled,
-                    tone: settings.dictationS1Tone,
-                    structure: settings.dictationS1Structure,
-                    context: settings.dictationS1Context,
-                    idleRelease: settings.dictationS1IdleRelease,
-                    bengaliMode: settings.dictationBengaliMode,
-                    hindiMode: settings.dictationHindiMode
-                )
-            )
 
             // Display Tweaks: only apply if explicitly enabled; default is off and native ColorSync gamma restored
             if settings.displayTweaksEnabled {
@@ -642,19 +625,9 @@ final class AppCore {
     }
 
     func handleReopen() {
-        dictationModels.ensurePrewarmed(settings.dictationModel)
-        DictationLlamaServerManager.shared.startDaemon(
-            idleRelease: settings.dictationS1IdleRelease,
-            settings: DictationS1Settings(
-                enabled: settings.dictationS1Enabled,
-                tone: settings.dictationS1Tone,
-                structure: settings.dictationS1Structure,
-                context: settings.dictationS1Context,
-                idleRelease: settings.dictationS1IdleRelease,
-                bengaliMode: settings.dictationBengaliMode,
-                hindiMode: settings.dictationHindiMode
-            )
-        )
+        if settings.dictationEnabled {
+            dictationCoordinator.prewarm()
+        }
         if settingsCoordinator.focusExisting() { return }
         if aiChatCoordinator.focusExisting() { return }
         if onboardingCoordinator.focusExisting() { return }
@@ -949,6 +922,10 @@ final class AppCore {
                 $0.hotKeys.dictationEnabled = $0.settings.dictationEnabled
                 if $0.settings.dictationEnabled {
                     $0.dictationCoordinator.prewarm()
+                } else {
+                    DictationLlamaServerManager.shared.stop()
+                    let models = $0.dictationModels
+                    Task { await models.release() }
                 }
             })
         track(
@@ -1150,7 +1127,6 @@ final class AppCore {
         appIndex.setCommandsVisible([.keepassxc], settings.keepassxcEnabled)
         appIndex.setCommandsVisible([.generateDuckAddress], settings.duckDuckGoEmailEnabled)
         appIndex.setCommandsVisible([.cleanKeyboard], settings.cleanKeyboardEnabled)
-        appIndex.setCommandsVisible([.textTransformer], settings.textTransformerEnabled)
         appIndex.setCommandsVisible([.systemStats], settings.statsEnabled)
         calendarCoordinator.applyEnabled()
         appleShortcutCoordinator.refresh()

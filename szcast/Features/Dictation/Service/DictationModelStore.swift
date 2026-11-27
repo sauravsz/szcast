@@ -236,12 +236,6 @@ final class DictationModelStore {
         installedModels.remove(model)
     }
 
-    func transcribe(
-        _ samples: [Float], model: DictationModel, language: String? = nil
-    ) async throws -> String {
-        try await transcribeTimed(samples, model: model, language: language).text
-    }
-
     func transcribeTimed(
         _ samples: [Float],
         model: DictationModel,

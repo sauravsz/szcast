@@ -13,7 +13,6 @@ enum Theme {
 
     enum Spacing {
         static let xxs: CGFloat = 2
-        static let dictationWaveGap: CGFloat = 3
         static let xs: CGFloat = 4
         static let sm: CGFloat = 6
         static let md: CGFloat = 8
@@ -295,7 +294,6 @@ enum Theme {
         static let hudWidth: CGFloat = 200
         static let hudHeight: CGFloat = 100
         static let dictationPanel = CGSize(width: 144, height: 44)
-        static let dictationWaveBar: CGFloat = 2
         /// Read-only volume bar geometry used by the HUD.
         static let volumeTrackHeight: CGFloat = 6
         /// Fixed slot for the level readout, sized to the widest string it ever holds.
@@ -396,11 +394,7 @@ enum Theme {
         /// Pair with the matching `Size` for `KeyCapChip.Scale`.
         static let compactKeyCap = Font.caption2
         static let heroKeyCap = Font.body
-        static let markdownHeading1 = Font.title2.weight(.semibold)
-        static let markdownHeading2 = Font.title3.weight(.semibold)
-        static let markdownHeading3 = Font.headline
         static let code = Font.system(.callout, design: .monospaced)
-        static let inlineCode = Font.body.monospaced()
         static let bar = Font.callout.weight(.medium)
         /// A staged chat attachment's name beside the search text; the NSFont measures the chip.
         static let chip = Font.callout

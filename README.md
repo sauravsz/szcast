@@ -70,10 +70,6 @@ open /Applications/szcast.app
 - **Inline Autocomplete (`:`)**: Trigger instant inline emoji suggestions directly inside Notes, AI Chat, and Snippet editors.
 - **Tone & Grid Modifiers**: Configurable 6–10 column grid with zoom shortcuts (`⌘-`/`⌘+`/`⌘0`) and quick skin tone selectors (`⌥⌘V`/`⌥⌘C`).
 
-### Interactive Text Transformer
-- **Instant Text Conversions**: Convert selected text across 15+ formats (camelCase, snake_case, kebab-case, PascalCase, Slugify, Base64, URL encode/decode, SHA-256, MD5, UUID).
-- **Side-by-Side Diff Inspector (`⌘D`)**: Dual-column diff view with real-time word, line, and character count comparisons.
-
 ### Modular Power Tools
 - **Ente Auth 2FA (`Hyper + T`)**: Instant TOTP generation with auto-discovery from `ente_auth.txt`.
 - **KeePassXC Integration**: Rapid password vault lookup via `keepassxc-cli` (`⌘C` password, `⌘T` TOTP, `⌘B` username).

@@ -249,11 +249,6 @@ final class AppSettings {
         }
     }
 
-    /// Whether interactive Text Transformer is enabled.
-    var textTransformerEnabled: Bool {
-        didSet { defaults.set(textTransformerEnabled, forKey: Key.textTransformerEnabled.rawValue) }
-    }
-
     /// Whether Stats system monitoring is enabled.
     var statsEnabled: Bool {
         didSet { defaults.set(statsEnabled, forKey: Key.statsEnabled.rawValue) }
@@ -1169,7 +1164,6 @@ final class AppSettings {
         keepassxcEnabled = defaults.bool(forKey: Key.keepassxcEnabled.rawValue)
         duckDuckGoEmailEnabled = defaults.bool(forKey: Key.duckDuckGoEmailEnabled.rawValue)
         cleanKeyboardEnabled = defaults.bool(forKey: Key.cleanKeyboardEnabled.rawValue)
-        textTransformerEnabled = defaults.bool(forKey: Key.textTransformerEnabled.rawValue)
         statsEnabled = defaults.object(forKey: Key.statsEnabled.rawValue) == nil || defaults.bool(forKey: Key.statsEnabled.rawValue)
         statsCPUEnabled = defaults.object(forKey: Key.statsCPUEnabled.rawValue) == nil || defaults.bool(forKey: Key.statsCPUEnabled.rawValue)
         statsRAMEnabled = defaults.object(forKey: Key.statsRAMEnabled.rawValue) == nil || defaults.bool(forKey: Key.statsRAMEnabled.rawValue)

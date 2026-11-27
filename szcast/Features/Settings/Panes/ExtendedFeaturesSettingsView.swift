@@ -157,20 +157,6 @@ struct ExtendedFeaturesSettingsView: View {
                     targetTab: .stats
                 )
 
-                // 9. Text Transformer
-                featureRow(
-                    title: "Text Transformer",
-                    subtitle: "Developer text processing tool with live casing, formatting, encoding, and metrics.",
-                    systemImage: "text.word.spacing",
-                    isOn: Binding(
-                        get: { settings.textTransformerEnabled },
-                        set: {
-                            settings.textTransformerEnabled = $0
-                            core.applyExtendedFeaturesPresence()
-                        }
-                    ),
-                    targetTab: .textTransformer
-                )
             }
         }
         .formStyle(.grouped)

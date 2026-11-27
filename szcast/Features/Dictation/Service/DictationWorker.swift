@@ -42,13 +42,6 @@ final class DictationWorker: Sendable {
         #endif
     }
 
-    func transcribe(
-        _ samples: [Float], request: DictationWire.Request,
-        onReady: @escaping @MainActor @Sendable () -> Void
-    ) async throws -> String {
-        try await transcribeTimed(samples, request: request, onReady: onReady).text
-    }
-
     func transcribeTimed(
         _ samples: [Float], request: DictationWire.Request,
         onReady: @escaping @MainActor @Sendable () -> Void

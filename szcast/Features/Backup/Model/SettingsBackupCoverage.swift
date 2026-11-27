@@ -354,8 +354,6 @@ enum SettingsBackupCoverage {
             "Extended feature toggle state.",
         AppSettingsKey.cleanKeyboardEnabled.rawValue:
             "Extended feature toggle state.",
-        AppSettingsKey.textTransformerEnabled.rawValue:
-            "Extended feature toggle state.",
         AppSettingsKey.statsEnabled.rawValue:
             "Extended feature toggle state.",
         AppSettingsKey.statsCPUEnabled.rawValue:

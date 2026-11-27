@@ -29,28 +29,6 @@ final class DictationDisplayState {
     var onRetryPasteFallback: (() -> Void)?
 }
 
-private struct DictationWaveform: View {
-    let levels: [Float]
-    let processing: Bool
-
-    var body: some View {
-        HStack(alignment: .center, spacing: Theme.Spacing.dictationWaveGap) {
-            ForEach(levels.indices, id: \.self) { index in
-                let emphasis =
-                    processing
-                    ? Double(levels[index])
-                    : min(1, Double(min(index, levels.count - 1 - index)) / 3)
-                Capsule()
-                    .fill(Theme.Colors.textPrimary.opacity(0.4 + 0.6 * emphasis))
-                    .frame(
-                        width: Theme.Size.dictationWaveBar,
-                        height: 3 + (processing ? 9 : 25) * CGFloat(levels[index]))
-            }
-        }
-        .animation(.easeOut(duration: 0.06), value: levels)
-    }
-}
-
 private struct DictationProcessingWave: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var startedAt = Date()

@@ -34,13 +34,13 @@ struct TranscriptMigrationTest {
             audioDirectory: root.appendingPathComponent("AudioRecordings", isDirectory: true)
         )
 
-        TranscriptJSONMigration.run(into: store, historyFileURL: historyURL, notesFileURL: notesURL)
+        store.importLegacyJSONIfNeeded(historyFileURL: historyURL, notesFileURL: notesURL)
         guard store.records.count == 3 else {
             fatalError("Expected 3 migrated records, got \(store.records.count)")
         }
 
         // Running migration a second time must be idempotent.
-        TranscriptJSONMigration.run(into: store, historyFileURL: historyURL, notesFileURL: notesURL)
+        store.importLegacyJSONIfNeeded(historyFileURL: historyURL, notesFileURL: notesURL)
         guard store.records.count == 3 else {
             fatalError("Migration was not idempotent: \(store.records.count)")
         }
@@ -52,6 +52,6 @@ struct TranscriptMigrationTest {
             fatalError("Migrated MeetingNote metadata lost")
         }
 
-        print("TranscriptJSONMigration tests passed")
+        print("TranscriptStore legacy JSON migration tests passed")
     }
 }

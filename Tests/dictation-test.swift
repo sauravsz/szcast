@@ -256,23 +256,6 @@ struct DictationTest {
             fatalError("Incorrectly identified llama3.2 as S1-mini")
         }
 
-        let rawPrompt = DictationS1Polisher.makeRawPrompt(
-            systemPrompt: DictationS1Settings.systemPrompt,
-            userMessage: "[Styling: semi-formal] [Structure: prose] [Context: general]\nhello world"
-        )
-        guard rawPrompt.contains("<|im_start|>assistant\n<think>\n\n</think>\n\n") else {
-            fatalError("Raw prompt must contain closed empty think block to resolve unclosed thinking tag in GGUF template")
-        }
-        guard rawPrompt.contains("<|im_start|>system\n\(DictationS1Settings.systemPrompt)<|im_end|>\n") else {
-            fatalError("Raw prompt must contain framed system prompt")
-        }
-        guard rawPrompt.contains("<|im_start|>user\n[Styling: semi-formal] [Structure: prose] [Context: general]\nhello world<|im_end|>\n") else {
-            fatalError("Raw prompt must contain framed user message with control line")
-        }
-
-        let normalizedURL = DictationS1Polisher.normalizedBaseURL(URL(string: "http://127.0.0.1:51143/v1/chat/completions")!)
-        check(normalizedURL.absoluteString, "http://127.0.0.1:51143")
-
         check(DictationS1Downloader.defaultModelID, "hf.co/superwhisper/s1-mini-gguf:Q4_K_M")
 
         // S1-mini direct GGUF and llama-server manager verification

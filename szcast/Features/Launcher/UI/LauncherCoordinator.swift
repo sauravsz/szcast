@@ -375,9 +375,6 @@ final class LauncherCoordinator {
         case .keepassxc:
             guard core.settings.keepassxcEnabled else { return }
             paletteCoordinator.togglePalette(mode: .keepassxc, seeding: searchQuery)
-        case .textTransformer:
-            guard core.settings.textTransformerEnabled else { return }
-            paletteCoordinator.togglePalette(mode: .textTransformer, seeding: searchQuery)
         case .systemStats:
             guard core.settings.statsEnabled else { return }
             paletteCoordinator.togglePalette(mode: .systemStats)

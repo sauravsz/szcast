@@ -3,7 +3,7 @@
 Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `sauravsz/szcast`. Clone: `Github Repos/szcast` (`upstream` remote tracked for weekly audit via `skills/szcast-upstream-radar`).
 
 ## Layout
-- Source root `szcast/`, Xcode package `szcast.xcodeproj`, scheme `szcast`, entry `szcast/App/szcastApp.swift`, icon `szcast/szcast.icon`.
+- Source root `szcast/`, Xcode package `szcast.xcodeproj`, scheme `szcast`, entry `szcast/App/szcastApp.swift`, icon `szcast/Assets.xcassets/AppIcon.appiconset` (`szcast/Resources/szcast.icns`).
 - Display strings stay capitalised: `szcast`, `szcast Dev`, `szcast Dictation`; signing identity `szcast Self-Signed`.
 
 ## Identity map
@@ -393,8 +393,14 @@ Standalone root repository (detached from `abue-ammar/tinycast`). GitHub: `saura
   - Removed KeePassXC's detail `Footer Shortcut Legend` (`ShortcutBadge`) and row shortcut badges in `KeePassXCScreen.swift`, and added `actions(at:)` menus to `StatsScreen.swift`, `TextTransformerScreen.swift`, `EnteAuthScreen.swift`, and `KeePassXCScreen.swift`.
   - Synced and translated 8 new keys in `Localizable.xcstrings` across all 8 languages; `./Scripts/lint.sh`, Debug `xcodebuild`, and 139/139 harnesses in `./Scripts/run-tests.sh` pass.
 
+- **Bloat & Dead-Code Cleanup (2026-11-27)**:
+  - Removed the `TextTransformer` feature (`szcast/Features/TextTransformer/`, `Tests/text-transformer-test.swift`, `AppSettings`/`SettingsTab`/`CommandID`/`CommandCatalog`/`PaletteMode`/`RootPaletteView`/`DeepLinkConsentPolicy`/`SettingsBackupCoverage` wiring, plus `README.md` and `site/index.html` feature cards).
+  - Removed dead UI and migration/asset files: `MarkdownView.swift`, `MarkdownCodeView.swift`, `MarkdownTableView.swift`, `MarkdownInline.swift` (+ unused markdown/wave tokens in `Theme.swift`/`InterfaceMetrics.swift`), `TranscriptJSONMigration.swift` (updated `Tests/transcript-migration-test.swift` to call `TranscriptStore.importLegacyJSONIfNeeded`), and legacy `szcast.icon/` asset bundle.
+  - Cleaned dead code paths and eager resource usage: removed `DictationWaveform` (`DictationPanel.swift`), dead `DictationSettingsView` badges/menus/links, unused `DictationS1Polisher` helpers (`makeRawPrompt`, `normalizedBaseURL`, `detectLocalOpenAIEndpoints`), duplicate `transcribe` wrappers (`DictationWorker`, `DictationModelStore`), and hardcoded user-home candidate paths in `DictationLlamaServerManager.swift`.
+  - Gated `AppCore`/`DictationCoordinator` prewarming on `dictationEnabled` and local provider selection (`DictationTranscriptionProvider.local` / `DictationPolishProvider.localS1`), stopped `llama-server` + released `DictationModelStore` on disable, and gated `insertionContext()` external AX reads on `Permissions.isAccessibilityTrusted()`.
+
 ## Active State & Next Steps
-- **Active State**: Committed and pushed 3-level snippet folders and `⌘K` actions consolidation to `origin/main`; signed Release build (`v1.1.6`) built via `Scripts/build-dmg.sh` and installed to `/Applications/szcast.app` (139/139 harnesses pass, lint & Debug build clean).
+- **Active State**: Dead-code and bloat cleanup committed and pushed to `origin/main`; Release & Debug builds, `./Scripts/lint.sh`, and 139/139 test harnesses verified; signed Release `szcast.app` (`v1.1.6`) built and installed cleanly to `/Applications/szcast.app`.
 - **Immediate Next Steps**:
   1. Test long continuous dictation (5+ minutes) in real-world workflows across Hindi and Bengali models.
   2. Perform weekly upstream radar audit (`./Scripts/upstream-radar.sh`).

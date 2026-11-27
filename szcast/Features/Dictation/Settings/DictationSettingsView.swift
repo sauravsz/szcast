@@ -576,22 +576,6 @@ struct DictationSettingsView: View {
 
                 Spacer(minLength: Theme.Spacing.md)
 
-                // Language mode badge/selector
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("Automatic")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(Theme.Colors.textPrimary)
-                    Text("Auto · no language pinned ⇅")
-                        .font(.system(size: 10))
-                        .foregroundStyle(Theme.Colors.textSecondary)
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(Theme.Colors.border.opacity(0.4), lineWidth: 1)
-                )
-
                 Toggle("", isOn: $bSettings.dictationLivePreviewEnabled)
                     .labelsHidden()
                     .toggleStyle(.switch)
@@ -633,27 +617,10 @@ struct DictationSettingsView: View {
                 Text("Ready")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.green)
-
-                Menu {
-                    Button("Automatic (System Default)") {}
-                    Button("English (US)") {}
-                    Button("English (UK)") {}
-                } label: {
-                    Text("Change")
-                        .font(.system(size: 12, weight: .medium))
-                }
-                .menuStyle(.borderedButton)
-                .fixedSize()
             }
             .padding(.vertical, 4)
         } header: {
-            HStack {
-                Text("PREVIEW ENGINE")
-                Spacer()
-                Text("Compare engines ↗")
-                    .font(.caption2)
-                    .foregroundStyle(Color.accentColor)
-            }
+            Text("PREVIEW ENGINE")
         }
     }
 

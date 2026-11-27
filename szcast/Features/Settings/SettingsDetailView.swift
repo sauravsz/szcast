@@ -37,7 +37,6 @@ struct SettingsDetailView: View {
             case .enteAuth: EnteAuthSettingsView()
             case .duckDuckGoEmail: DuckDuckGoEmailSettingsView()
             case .keepassxc: KeePassXCSettingsView()
-            case .textTransformer: TextTransformerSettingsView()
             case .stats: StatsSettingsView()
             case .extendedFeatures: ExtendedFeaturesSettingsView()
             }

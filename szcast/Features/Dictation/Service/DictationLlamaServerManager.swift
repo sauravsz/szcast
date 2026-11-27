@@ -168,11 +168,7 @@ final class DictationLlamaServerManager {
         if FileManager.default.isExecutableFile(atPath: contentsResources.path) {
             return contentsResources
         }
-        let home = FileManager.default.homeDirectoryForCurrentUser
         let candidates = [
-            home.appendingPathComponent("AIOS/Github Repos/szcast/szcast/Resources/llama-server").path,
-            home.appendingPathComponent(".lmstudio/extensions/backends/llama.cpp-mac-arm64-apple-metal-advsimd-2.60.0/llama-server").path,
-            home.appendingPathComponent(".lmstudio/extensions/backends/llama.cpp-mac-arm64-apple-metal-advsimd-2.55.0/llama-server").path,
             "/opt/homebrew/bin/llama-server",
             "/usr/local/bin/llama-server"
         ]
