@@ -118,6 +118,22 @@ struct DictationSettingsView: View {
         }
         .onChange(of: settings.dictationEnabled) { _, enabled in
             if enabled { microphones = DictationCapture.microphones }
+            coordinator.syncCapturePreferences()
+        }
+        .onChange(of: settings.dictationWarmPreRoll) { _, _ in
+            coordinator.syncCapturePreferences()
+        }
+        .onChange(of: settings.dictationMicrophone) { _, _ in
+            coordinator.syncCapturePreferences()
+        }
+        .onChange(of: settings.dictationVoiceProcessing) { _, _ in
+            coordinator.syncCapturePreferences()
+        }
+        .onChange(of: settings.dictationAudioRetentionDays) { _, _ in
+            coordinator.applyAudioRetentionPolicy()
+        }
+        .onChange(of: historySearchQuery) { _, query in
+            coordinator.historyStore.refreshItems(query: query)
         }
         .task {
             for await _ in NotificationCenter.default.notifications(
@@ -193,6 +209,8 @@ struct DictationSettingsView: View {
         .settingsAnchor(.dictationDictation)
 
         if settings.dictationEnabled {
+            dictationHealthInspectorSection(settings: settings)
+
             Section {
                 Picker(selection: microphoneBinding) {
                     Text(microphones.isEmpty ? "No microphone available" : "System default").tag("")
@@ -223,6 +241,21 @@ struct DictationSettingsView: View {
                 Toggle(isOn: $bSettings.dictationWhisperMode) {
                     SettingsRowTitle(.dictationOutput, "Whisper mode")
                     Text("Boosts microphone sensitivity for soft, sub-vocal whispered speech in quiet rooms.")
+                }
+
+                Toggle(isOn: $bSettings.dictationWarmPreRoll) {
+                    SettingsRowTitle(.dictationOutput, "Instant mic pre-roll (350ms)")
+                    Text("Keeps a lightweight ring buffer armed so the first syllable never clips. (Shows mic indicator when enabled.)")
+                }
+
+                Toggle(isOn: $bSettings.dictationVoiceProcessing) {
+                    SettingsRowTitle(.dictationOutput, "Voice isolation & echo cancellation")
+                    Text("Uses Apple Voice Processing DSP on built-in and USB mics to reject speakers and fan noise.")
+                }
+
+                Toggle(isOn: $bSettings.dictationPauseMedia) {
+                    SettingsRowTitle(.dictationOutput, "Pause media automatically")
+                    Text("Pauses Apple Music, Spotify, and browser/video Now-Playing audio while dictating, then resumes.")
                 }
 
                 Picker(selection: dictationPresetBinding) {
@@ -308,6 +341,22 @@ struct DictationSettingsView: View {
                     SettingsRowTitle(.dictationCommands, "Play sounds")
                     Text("Play a sound when recording starts and stops.")
                 }
+
+                Picker(selection: $bSettings.dictationPillPosition) {
+                    ForEach(DictationPillPosition.allCases) { pos in
+                        Text(pos.title).tag(pos)
+                    }
+                } label: {
+                    SettingsRowTitle(.dictationOutput, "Floating pill placement")
+                    Text("Choose where the live listening capsule appears on your screen.")
+                }
+                .accessibilityLabel("Floating pill placement")
+
+                Toggle(isOn: $bSettings.dictationCompactPill) {
+                    SettingsRowTitle(.dictationOutput, "Compact orb pill")
+                    Text("Shows a minimal floating waveform orb instead of a wide live-preview bar.")
+                }
+                .accessibilityLabel("Compact orb pill")
             } header: {
                 SettingsSectionHeader(.dictationCommands)
             }
@@ -608,6 +657,123 @@ struct DictationSettingsView: View {
         }
     }
 
+    @ViewBuilder
+    private func dictationHealthInspectorSection(settings: AppSettings) -> some View {
+        let axTrusted = Permissions.isAccessibilityTrusted()
+        let activeModelInstalled = settings.dictationTranscriptionProvider == .cloud
+            || coordinator.models.isInstalled(settings.dictationModel)
+
+        Section {
+            healthStatusRow(
+                title: "Microphone permission",
+                detail: microphoneAccess == .authorized
+                    ? (settings.dictationMicrophone ?? "System default ready")
+                    : "Allow microphone access for voice capture",
+                isHealthy: microphoneAccess == .authorized,
+                actionTitle: microphoneAccess == .authorized ? nil : "Grant…"
+            ) {
+                if microphoneAccess == .notDetermined {
+                    Task {
+                        _ = await Permissions.requestMicrophoneAccess()
+                        microphoneAccess = Permissions.microphoneAccess()
+                    }
+                } else {
+                    Permissions.openMicrophoneSettings()
+                }
+            }
+
+            healthStatusRow(
+                title: "Accessibility & direct paste",
+                detail: axTrusted
+                    ? "Direct AX insertion & auto-paste enabled"
+                    : "Needed for auto-paste (otherwise copied cleanly)",
+                isHealthy: axTrusted,
+                actionTitle: axTrusted ? nil : "Open Settings"
+            ) {
+                Permissions.openAccessibilitySettings()
+            }
+
+            healthStatusRow(
+                title: "Hotkey & Fn/Globe readiness",
+                detail: coordinator.holdShortcutIssue ?? dictationPresetBinding.wrappedValue.summary,
+                isHealthy: coordinator.holdShortcutIssue == nil,
+                actionTitle: nil
+            ) {}
+
+            healthStatusRow(
+                title: "Speech & AI readiness",
+                detail: activeModelInstalled
+                    ? "\(settings.dictationModel.title) ready"
+                    : "Download selected speech model in Model Library",
+                isHealthy: activeModelInstalled,
+                actionTitle: activeModelInstalled ? nil : "Model Library"
+            ) {
+                selectedSection = .modelLibrary
+            }
+
+            DisclosureGroup("Last Take Telemetry & Diagnostics") {
+                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                    if let telemetry = coordinator.lastStageTelemetry {
+                        Text(telemetry.summaryLine)
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("Complete one dictation take to record stage latencies.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    HStack {
+                        Button("Copy Redacted Diagnostics") {
+                            Paster.copyPlainText(coordinator.redactedDiagnosticBundleJSON(), plainTextOnly: true)
+                        }
+                        .controlSize(.small)
+                        .accessibilityLabel("Copy redacted dictation diagnostics JSON")
+                        Spacer()
+                    }
+                }
+                .padding(.top, 4)
+            }
+        } header: {
+            Text("Dictation Health Inspector")
+        }
+    }
+
+    @ViewBuilder
+    private func healthStatusRow(
+        title: String,
+        detail: String,
+        isHealthy: Bool,
+        actionTitle: String?,
+        action: @escaping () -> Void
+    ) -> some View {
+        HStack(spacing: Theme.Spacing.md) {
+            Image(systemName: isHealthy ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                .foregroundStyle(isHealthy ? Color.green : Color.orange)
+                .font(.system(size: 13))
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 13, weight: .medium))
+                Text(detail)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+
+            Spacer(minLength: Theme.Spacing.md)
+
+            if let actionTitle {
+                Button(actionTitle, action: action)
+                    .controlSize(.small)
+                    .accessibilityLabel("\(title): \(actionTitle)")
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(title)
+        .accessibilityValue(detail)
+    }
+
     // MARK: - Formatting & AI Polish Section
 
     @ViewBuilder
@@ -648,6 +814,24 @@ struct DictationSettingsView: View {
             Toggle(isOn: $bSettings.dictationAutoLearnDictionary) {
                 SettingsRowTitle(.dictationOutput, "Auto-learn corrections")
                 Text("Automatically learns spelling corrections and vocabulary from your post-dictation edits.")
+            }
+            .onChange(of: settings.dictationAutoLearnDictionary) { _, enabled in
+                coordinator.dictionaryStore.selfLearningEnabled = enabled
+            }
+
+            Toggle(isOn: $bSettings.dictationVoiceSubmit) {
+                SettingsRowTitle(.dictationOutput, "Voice submit (“Press enter”)")
+                Text("Automatically presses Return after pasting when you end a dictation with “press enter” or “send message”.")
+            }
+
+            Toggle(isOn: $bSettings.dictationCodeAndMarkdownSyntax) {
+                SettingsRowTitle(.dictationOutput, "Code casing & Markdown syntax")
+                Text("Formats spoken camelCase, snake_case, flags, arrows, headings, tasks, and [[wikilinks]] in code and notes apps.")
+            }
+
+            Toggle(isOn: $bSettings.dictationVoiceCommandsEnabled) {
+                SettingsRowTitle(.dictationOutput, "Voice control & Ask AI commands")
+                Text("Supports standalone commands (“undo that”, “select all”, “copy that”, “new tab”) and “ask AI …” queries.")
             }
         } header: {
             Text("Formatting & Rules")
@@ -764,7 +948,13 @@ struct DictationSettingsView: View {
                 Button {
                     exportWords()
                 } label: {
-                    Label("Export your words", systemImage: "square.and.arrow.up")
+                    Label("Export JSON", systemImage: "square.and.arrow.up")
+                }
+
+                Button {
+                    exportWordsPlainText()
+                } label: {
+                    Label("Export .txt", systemImage: "doc.plaintext")
                 }
 
                 Spacer()
@@ -912,6 +1102,8 @@ struct DictationSettingsView: View {
 
     @ViewBuilder
     private func historySection(settings: AppSettings) -> some View {
+        @Bindable var bSettings = settings
+
         Section {
             HStack {
                 Image(systemName: "magnifyingglass")
@@ -926,17 +1118,34 @@ struct DictationSettingsView: View {
                     .buttonStyle(.borderless)
                 }
             }
+
+            Picker(selection: $bSettings.dictationAudioRetentionDays) {
+                Text("Text only (delete audio immediately)").tag(0)
+                Text("Keep audio for 7 days").tag(7)
+                Text("Keep audio for 14 days").tag(14)
+                Text("Keep audio for 30 days").tag(30)
+            } label: {
+                SettingsRowTitle(.dictationOutput, "Audio archive retention")
+                Text("Controls how long compressed .m4a recordings remain stored for replay and re-transcription.")
+            }
         }
 
-        let filteredItems = historySearchQuery.isEmpty
-            ? coordinator.historyStore.items
-            : coordinator.historyStore.items.filter { $0.text.localizedCaseInsensitiveContains(historySearchQuery) }
+        let filteredItems = coordinator.historyStore.items
 
         if !filteredItems.isEmpty {
             Section {
                 ForEach(filteredItems) { item in
+                    let isRecovery = item.text.hasPrefix("[Dictation Recovery")
+                    let hasAudio = coordinator.historyStore.audioURL(for: item) != nil
+                    let isPlaying = coordinator.historyStore.playingItemID == item.id
+
                     VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
-                        HStack {
+                        HStack(spacing: Theme.Spacing.xs) {
+                            if isRecovery {
+                                Label("Recovery", systemImage: "exclamationmark.triangle.fill")
+                                    .font(.caption2.weight(.semibold))
+                                    .foregroundStyle(.orange)
+                            }
                             Text(item.timestamp.formatted(date: .abbreviated, time: .shortened))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
@@ -944,6 +1153,39 @@ struct DictationSettingsView: View {
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                             Spacer()
+
+                            if hasAudio {
+                                Button {
+                                    coordinator.historyStore.toggleAudioPlayback(for: item)
+                                } label: {
+                                    Image(systemName: isPlaying ? "stop.circle.fill" : "play.circle")
+                                        .foregroundStyle(isPlaying ? Color.accentColor : Color.secondary)
+                                }
+                                .buttonStyle(.borderless)
+                                .help(isPlaying ? "Stop audio" : "Play recording")
+
+                                if isRecovery {
+                                    Button("Retry") {
+                                        coordinator.retranscribeHistoryItem(item)
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .controlSize(.mini)
+                                } else {
+                                    Menu {
+                                        ForEach(DictationModel.allCases.filter { coordinator.models.isInstalled($0) }) { m in
+                                            Button(m.title) {
+                                                coordinator.retranscribeHistoryItem(item, using: m)
+                                            }
+                                        }
+                                    } label: {
+                                        Image(systemName: "arrow.clockwise")
+                                    }
+                                    .menuStyle(.borderlessButton)
+                                    .fixedSize()
+                                    .help("Re-transcribe with another model")
+                                }
+                            }
+
                             Button {
                                 Paster.copyPlainText(item.text)
                             } label: {
@@ -973,6 +1215,16 @@ struct DictationSettingsView: View {
                             .textSelection(.enabled)
                     }
                     .padding(.vertical, Theme.Spacing.xxs)
+                }
+                if coordinator.historyStore.hasMoreItems {
+                    HStack {
+                        Spacer()
+                        Button("Load Older Dictations") {
+                            coordinator.historyStore.loadMore()
+                        }
+                        .controlSize(.small)
+                        Spacer()
+                    }
                 }
             } header: {
                 HStack {
@@ -1047,7 +1299,7 @@ struct DictationSettingsView: View {
             HStack {
                 Button("Open a File…") {
                     let panel = NSOpenPanel()
-                    panel.allowedContentTypes = [.json, .plainText]
+                    panel.allowedContentTypes = [.json, .plainText, .commaSeparatedText]
                     panel.allowsMultipleSelection = false
                     if panel.runModal() == .OK, let url = panel.url {
                         _ = try? coordinator.dictionaryStore.importFromFile(at: url)
@@ -1102,6 +1354,15 @@ struct DictationSettingsView: View {
         panel.nameFieldStringValue = "szcast Words.json"
         if panel.runModal() == .OK, let url = panel.url {
             try? coordinator.dictionaryStore.exportToJSON(to: url)
+        }
+    }
+
+    private func exportWordsPlainText() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.plainText]
+        panel.nameFieldStringValue = "szcast Hotwords.txt"
+        if panel.runModal() == .OK, let url = panel.url {
+            try? coordinator.dictionaryStore.exportToPlainText(to: url)
         }
     }
 

@@ -17,13 +17,29 @@ enum DictationTensor {
 
     static func integer(_ value: Int, shape: [Int] = [1]) throws -> MLMultiArray {
         let array = try zeros(shape, type: .int32)
-        array[0] = NSNumber(value: value)
+        setInteger(value, in: array)
         return array
+    }
+
+    /// Updates a pre-allocated `.int32` scalar/1-element tensor in place without heap allocations.
+    static func setInteger(_ value: Int, in array: MLMultiArray) {
+        if array.dataType == .int32 {
+            array.withUnsafeMutableBufferPointer(ofType: Int32.self) { ptr, _ in
+                if !ptr.isEmpty { ptr[0] = Int32(truncatingIfNeeded: value) }
+            }
+        } else {
+            array[0] = NSNumber(value: value)
+        }
     }
 
     static func predict(_ model: MLModel, _ inputs: [String: MLMultiArray]) throws -> MLFeatureProvider {
         try checkParent()
         return try model.prediction(from: MLDictionaryFeatureProvider(dictionary: inputs))
+    }
+
+    static func predict(_ model: MLModel, _ provider: MLFeatureProvider) throws -> MLFeatureProvider {
+        try checkParent()
+        return try model.prediction(from: provider)
     }
 
     static func array(_ name: String, from features: MLFeatureProvider) throws -> MLMultiArray {
@@ -39,6 +55,31 @@ enum DictationTensor {
         else {
             throw DictationInferenceError.incompatibleModel
         }
+        return try indexOfMaximumFloat16(in: scores)
+    }
+
+    static func indexOfMaximumFloat(in scores: MLMultiArray) throws -> Int {
+        guard scores.count > 0,
+            scores.shape.last?.intValue == scores.count, scores.strides.last?.intValue == 1
+        else {
+            throw DictationInferenceError.incompatibleModel
+        }
+        if scores.dataType == .float32 {
+            var maxVal: Float = 0
+            var maxIdx: vDSP_Length = 0
+            scores.withUnsafeBufferPointer(ofType: Float.self) { buf in
+                guard let base = buf.baseAddress else { return }
+                vDSP_maxvi(base, 1, &maxVal, &maxIdx, vDSP_Length(scores.count))
+            }
+            return Int(maxIdx)
+        }
+        guard scores.dataType == .float16 else {
+            throw DictationInferenceError.incompatibleModel
+        }
+        return try indexOfMaximumFloat16(in: scores)
+    }
+
+    private static func indexOfMaximumFloat16(in scores: MLMultiArray) throws -> Int {
         let values = try [Float](unsafeUninitializedCapacity: scores.count) { values, initialized in
             try scores.withUnsafeBytes { bytes in
                 var source = vImage_Buffer(

@@ -1,9 +1,30 @@
+@preconcurrency import AVFoundation
+import CoreMedia
 import Foundation
+import OSLog
+@preconcurrency import Speech
+
+private final class MemoryPressureMonitor: @unchecked Sendable {
+    private let source: any DispatchSourceMemoryPressure
+
+    init(onPressure: @escaping @Sendable () -> Void) {
+        let src = DispatchSource.makeMemoryPressureSource(eventMask: [.warning, .critical], queue: .main)
+        src.setEventHandler(handler: onPressure)
+        src.resume()
+        self.source = src
+    }
+
+    deinit {
+        source.cancel()
+    }
+}
 
 @MainActor
 @Observable
 final class DictationModelStore {
     typealias Failure = DictationWire.Failure
+    private static let logger = Logger(subsystem: "com.sauravsz.szcast", category: "DictationModelStore")
+    private static let customFoldersDefaultsKey = "dictationCustomModelFolders"
 
     private(set) var downloading: DictationModel?
     private(set) var downloadProgress: (received: Int64, total: Int64)?
@@ -16,6 +37,7 @@ final class DictationModelStore {
     private(set) var installedModels: Set<DictationModel> = []
     private(set) var installedSupportModels: Set<DictationSupportModel> = []
     private(set) var isPrewarming = false
+    private(set) var customDirectories: [DictationModel: URL] = [:]
     @ObservationIgnored private var worker: DictationWorker?
     @ObservationIgnored private var releaseTask: Task<Void, Never>?
     @ObservationIgnored private var prewarmTask: Task<Void, Never>?
@@ -26,11 +48,12 @@ final class DictationModelStore {
     @ObservationIgnored private var supportDownloadTask: Task<Void, Error>?
     @ObservationIgnored private var supportDownloadID: UUID?
     @ObservationIgnored private let tokenProvider: (@Sendable () -> String?)?
+    @ObservationIgnored private var memoryMonitor: MemoryPressureMonitor?
     private let root: URL
     private let makeWorker: () throws -> DictationWorker
 
     var isWorkerRunning: Bool {
-        worker?.isRunning == true
+        loadedModel == .speechAnalyzer || worker?.isRunning == true
     }
 
     private func getOrMakeWorker() throws -> DictationWorker {
@@ -52,7 +75,38 @@ final class DictationModelStore {
         self.root = root
         self.makeWorker = makeWorker
         self.tokenProvider = tokenProvider
+        if let saved = UserDefaults.standard.dictionary(forKey: Self.customFoldersDefaultsKey) as? [String: String] {
+            var loaded: [DictationModel: URL] = [:]
+            for (rawKey, path) in saved {
+                if let model = DictationModel(rawValue: rawKey) {
+                    loaded[model] = URL(fileURLWithPath: path, isDirectory: true)
+                }
+            }
+            self.customDirectories = loaded
+        }
         refreshInstalledModels()
+        self.memoryMonitor = MemoryPressureMonitor { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self, !self.transcribing, !self.isPrewarming, self.worker != nil else { return }
+                Self.logger.notice("Releasing idle dictation worker under macOS memory pressure")
+                await self.release()
+            }
+        }
+    }
+
+    func setCustomDirectory(_ directory: URL?, for model: DictationModel) {
+        if let directory {
+            customDirectories[model] = directory
+        } else {
+            customDirectories.removeValue(forKey: model)
+        }
+        let encoded = Dictionary(uniqueKeysWithValues: customDirectories.map { ($0.key.rawValue, $0.value.path) })
+        UserDefaults.standard.set(encoded, forKey: Self.customFoldersDefaultsKey)
+        refreshInstalledModels()
+    }
+
+    func customDirectory(for model: DictationModel) -> URL? {
+        customDirectories[model]
     }
 
     func setIdleRelease(_ option: DictationIdleRelease) {
@@ -66,14 +120,21 @@ final class DictationModelStore {
     }
 
     func isInstalled(_ model: DictationModel) -> Bool {
-        installedModels.contains(model)
+        if model == .speechAnalyzer {
+            if #available(macOS 26.0, *) { return true } else { return false }
+        }
+        return installedModels.contains(model)
     }
 
     func refreshInstalledModels() {
-        installedModels = Set(
+        var set = Set(
             DictationModel.allCases.filter { model in
-                resolvedDirectory(for: model) != nil
+                model != .speechAnalyzer && resolvedDirectory(for: model) != nil
             })
+        if #available(macOS 26.0, *) {
+            set.insert(.speechAnalyzer)
+        }
+        installedModels = set
         installedSupportModels = Set(
             DictationSupportModel.allCases.filter { supportModel in
                 supportDirectoryIfInstalled(supportModel) != nil
@@ -119,6 +180,10 @@ final class DictationModelStore {
     }
 
     func download(_ model: DictationModel) async throws {
+        guard model != .speechAnalyzer else {
+            refreshInstalledModels()
+            return
+        }
         guard downloading == nil, removing != model else { throw Failure.busy }
         guard !isInstalled(model) else { return }
         downloading = model
@@ -151,10 +216,17 @@ final class DictationModelStore {
     }
 
     func delete(_ model: DictationModel) async throws {
+        guard model != .speechAnalyzer else {
+            setCustomDirectory(nil, for: model)
+            return
+        }
         guard !transcribing, removing == nil, downloading != model else { throw Failure.busy }
         removing = model
         defer { removing = nil }
         if loadedModel == model { await release() }
+        if customDirectories[model] != nil {
+            setCustomDirectory(nil, for: model)
+        }
         let directory = directory(for: model)
         try await Task.detached(priority: .utility) {
             if FileManager.default.fileExists(atPath: directory.path) {
@@ -184,9 +256,18 @@ final class DictationModelStore {
         releaseTask?.cancel()
         releaseTask = nil
 
-        // If background prewarming is currently in flight, await it so we don't abort it and trigger a cold-restart
         if let task = prewarmTask {
             await task.value
+        }
+
+        if model == .speechAnalyzer {
+            transcribing = true
+            loadedModel = .speechAnalyzer
+            defer { transcribing = false; scheduleRelease() }
+            if #available(macOS 26.0, *) {
+                return try await Self.transcribeWithSpeechAnalyzer(samples: samples, language: language)
+            }
+            throw Failure.unavailable
         }
 
         transcribing = true
@@ -196,7 +277,7 @@ final class DictationModelStore {
                 await release()
             }
             try Task.checkCancellation()
-            let worker = try getOrMakeWorker()
+            var worker = try getOrMakeWorker()
             let vadDir = useVAD ? supportDirectoryIfInstalled(.sileroVAD) : nil
             let diarDir = diarizeSpeakers != nil ? supportDirectoryIfInstalled(.speakerDiarization) : nil
             let sendLanguage = (model.isQwen || model.isSraVaani || model.isSpecialized) ? language : nil
@@ -208,29 +289,46 @@ final class DictationModelStore {
             var allWords = [TranscriptWord]()
             var allSegments = [TranscriptSegment]()
             var texts = [String]()
+            var retriedCrashedWorker = false
 
             for range in ranges {
                 try Task.checkCancellation()
                 let chunkSamples = Array(samples[range])
-                let request = DictationWire.Request(
-                    id: UUID(),
-                    model: model,
-                    directory: directory(for: model),
-                    sampleCount: chunkSamples.count,
-                    language: sendLanguage,
-                    useVAD: useVAD,
-                    vadDirectory: vadDir,
-                    diarizeSpeakers: diarizeSpeakers,
-                    diarizationDirectory: diarDir
-                )
-                let part = try await worker.transcribeTimed(chunkSamples, request: request) { [weak self] in
-                    guard let self, self.worker === worker, self.transcribing else { return }
-                    self.loadedModel = model
+                var part: TimedTranscript?
+                while part == nil {
+                    let request = DictationWire.Request(
+                        id: UUID(),
+                        model: model,
+                        directory: directory(for: model),
+                        sampleCount: chunkSamples.count,
+                        language: sendLanguage,
+                        useVAD: useVAD,
+                        vadDirectory: vadDir,
+                        diarizeSpeakers: diarizeSpeakers,
+                        diarizationDirectory: diarDir
+                    )
+                    let activeWorker = worker
+                    do {
+                        part = try await activeWorker.transcribeTimed(chunkSamples, request: request) { [weak self] in
+                            guard let self, self.worker === activeWorker, self.transcribing else { return }
+                            self.loadedModel = model
+                        }
+                    } catch is CancellationError {
+                        throw CancellationError()
+                    } catch {
+                        // Single auto-retry respawn if helper process crashed mid-chunk under memory pressure.
+                        guard !retriedCrashedWorker, !Task.isCancelled else { throw error }
+                        retriedCrashedWorker = true
+                        Self.logger.warning("Dictation worker failed mid-chunk; respawning for one retry")
+                        await release()
+                        worker = try getOrMakeWorker()
+                    }
                 }
+                guard let resolvedPart = part else { continue }
                 let offset = Double(range.lowerBound) / Double(DictationWire.sampleRate)
-                let cleanPart = part.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                let cleanPart = resolvedPart.text.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !cleanPart.isEmpty { texts.append(cleanPart) }
-                Self.appendShifted(part, offset: offset, words: &allWords, segments: &allSegments)
+                Self.appendShifted(resolvedPart, offset: offset, words: &allWords, segments: &allSegments)
             }
             let fullText = texts.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
             return TimedTranscript(text: fullText, words: allWords, segments: allSegments)
@@ -238,6 +336,132 @@ final class DictationModelStore {
             await release()
             throw error
         }
+    }
+
+    @available(macOS 26.0, *)
+    private static func transcribeWithSpeechAnalyzer(
+        samples: [Float],
+        language: String?
+    ) async throws -> TimedTranscript {
+        let totalStart = CFAbsoluteTimeGetCurrent()
+        let requestedLocale: Locale = {
+            let trimmed = language?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            guard !trimmed.isEmpty, trimmed.lowercased() != "auto" else { return Locale(identifier: "en-US") }
+            switch trimmed.lowercased() {
+            case "english": return Locale(identifier: "en-US")
+            case "hindi", "hinglish": return Locale(identifier: "hi-IN")
+            case "bengali", "banglish": return Locale(identifier: "bn-IN")
+            case "cantonese": return Locale(identifier: "zh-HK")
+            case "chinese": return Locale(identifier: "zh-CN")
+            case "spanish": return Locale(identifier: "es-ES")
+            case "french": return Locale(identifier: "fr-FR")
+            case "german": return Locale(identifier: "de-DE")
+            case "japanese": return Locale(identifier: "ja-JP")
+            case "korean": return Locale(identifier: "ko-KR")
+            default: return Locale(identifier: trimmed)
+            }
+        }()
+
+        let installed = await DictationTranscriber.installedLocales
+        let effectiveLocale: Locale
+        if let exact = installed.first(where: { $0.identifier == requestedLocale.identifier }) {
+            effectiveLocale = exact
+        } else if let langMatch = installed.first(where: { $0.language.languageCode == requestedLocale.language.languageCode }) {
+            effectiveLocale = langMatch
+        } else if let supported = await DictationTranscriber.supportedLocale(equivalentTo: requestedLocale) {
+            effectiveLocale = supported
+        } else {
+            effectiveLocale = Locale(identifier: "en-US")
+        }
+
+        guard let sourceFormat = AVAudioFormat(
+            commonFormat: .pcmFormatFloat32,
+            sampleRate: Double(DictationWire.sampleRate),
+            channels: 1,
+            interleaved: false
+        ) else {
+            throw Failure.unavailable
+        }
+
+        let module = DictationTranscriber(locale: effectiveLocale, preset: .timeIndexedLongDictation)
+        guard let targetFormat = await SpeechAnalyzer.bestAvailableAudioFormat(
+            compatibleWith: [module],
+            considering: sourceFormat
+        ) else {
+            throw Failure.unavailable
+        }
+        let converter = (sourceFormat == targetFormat) ? nil : AVAudioConverter(from: sourceFormat, to: targetFormat)
+
+        let (stream, continuation) = AsyncStream<AnalyzerInput>.makeStream(bufferingPolicy: .bufferingNewest(64))
+        let analyzer = SpeechAnalyzer(modules: [module])
+        try await analyzer.prepareToAnalyze(in: targetFormat)
+
+        let collector = Task<[TranscriptSegment], Error> {
+            var collectedSegments = [TranscriptSegment]()
+            for try await result in module.results where result.isFinal {
+                let piece = String(result.text.characters).trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !piece.isEmpty else { continue }
+                let startSec = result.range.start.seconds.isFinite ? max(0, result.range.start.seconds) : 0
+                let durSec = result.range.duration.seconds.isFinite ? max(0, result.range.duration.seconds) : 0
+                collectedSegments.append(
+                    TranscriptSegment(speaker: "", text: piece, start: startSec, end: startSec + durSec)
+                )
+            }
+            return collectedSegments
+        }
+
+        let feedTask = Task.detached(priority: .userInitiated) {
+            let chunkFrames = 32_000
+            var offset = 0
+            while offset < samples.count {
+                let count = min(chunkFrames, samples.count - offset)
+                if let inBuf = AVAudioPCMBuffer(pcmFormat: sourceFormat, frameCapacity: AVAudioFrameCount(count)),
+                   let dst = inBuf.floatChannelData?[0]
+                {
+                    inBuf.frameLength = AVAudioFrameCount(count)
+                    samples.withUnsafeBufferPointer { src in
+                        if let base = src.baseAddress {
+                            dst.update(from: base.advanced(by: offset), count: count)
+                        }
+                    }
+                    let sendBuf: AVAudioPCMBuffer
+                    if let converter {
+                        let ratio = targetFormat.sampleRate / sourceFormat.sampleRate
+                        let cap = AVAudioFrameCount((Double(count) * ratio).rounded(.up) + 256)
+                        guard let outBuf = AVAudioPCMBuffer(pcmFormat: targetFormat, frameCapacity: cap) else {
+                            offset += count
+                            continue
+                        }
+                        var supplied = false
+                        var err: NSError?
+                        converter.convert(to: outBuf, error: &err) { _, outStatus in
+                            if supplied { outStatus.pointee = .noDataNow; return nil }
+                            supplied = true; outStatus.pointee = .haveData; return inBuf
+                        }
+                        guard err == nil, outBuf.frameLength > 0 else {
+                            offset += count
+                            continue
+                        }
+                        sendBuf = outBuf
+                    } else {
+                        sendBuf = inBuf
+                    }
+                    nonisolated(unsafe) let box = sendBuf
+                    continuation.yield(AnalyzerInput(buffer: box))
+                }
+                offset += count
+            }
+            continuation.finish()
+        }
+
+        _ = try await analyzer.analyzeSequence(stream)
+        try await analyzer.finalizeAndFinishThroughEndOfInput()
+        await feedTask.value
+        let segments = try await collector.value
+        let fullText = segments.map(\.text).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+        let totalMs = (CFAbsoluteTimeGetCurrent() - totalStart) * 1000
+        let timings = DictationStageTimings(vadMs: 0, asrMs: totalMs, diarizationMs: 0, totalMs: totalMs)
+        return TimedTranscript(text: fullText, words: [], segments: segments, timings: timings)
     }
 
     private static func appendShifted(
@@ -368,6 +592,11 @@ final class DictationModelStore {
     }
 
     func prewarm(_ model: DictationModel) {
+        guard model != .speechAnalyzer else {
+            loadedModel = .speechAnalyzer
+            isPrewarming = false
+            return
+        }
         guard isInstalled(model), !transcribing else { return }
         releaseTask?.cancel()
         releaseTask = nil
@@ -484,6 +713,13 @@ final class DictationModelStore {
     }
 
     func resolvedDirectory(for model: DictationModel) -> URL? {
+        guard model != .speechAnalyzer else { return nil }
+        if let customDir = customDirectories[model] {
+            let valid = model.requiredFiles.allSatisfy { file in
+                FileManager.default.fileExists(atPath: customDir.appendingPathComponent(file).path)
+            }
+            if valid { return customDir }
+        }
         let candidateRoots = [
             root,
             FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/FluidAudio/Models"),

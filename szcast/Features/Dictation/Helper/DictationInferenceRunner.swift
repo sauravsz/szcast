@@ -2,6 +2,11 @@ import Foundation
 
 protocol DictationRecognizer {
     func transcribeTimed(_ samples: [Float], language: String?) throws -> TimedTranscript
+    func warmupIfNeeded()
+}
+
+extension DictationRecognizer {
+    func warmupIfNeeded() {}
 }
 
 extension ParakeetRecognizer: DictationRecognizer {
@@ -46,6 +51,8 @@ final class DictationInferenceSession {
                 return try ParakeetCTCRecognizer(directory: directory)
             case .nemotron:
                 return try NemotronRecognizer(directory: directory)
+            case .speechAnalyzer:
+                throw DictationInferenceError.incompatibleModel
             case .sravaani:
                 return try SraVaaniRecognizer(directory: directory)
             case .whisperApex:
@@ -58,16 +65,24 @@ final class DictationInferenceSession {
         loadedModelDir = directory
     }
 
+    func warmupIfNeeded() {
+        recognizer?.warmupIfNeeded()
+    }
+
     func transcribe(
         samples: [Float],
         request: DictationWire.Request
     ) throws -> TimedTranscript {
+        let totalStart = CFAbsoluteTimeGetCurrent()
         try prepare(model: request.model, directory: request.directory)
         guard let recognizer else { throw DictationInferenceError.incompatibleModel }
 
+        let vadStart = CFAbsoluteTimeGetCurrent()
         let speechSpans = detectSpeechSpans(
             samples: samples, useVAD: request.useVAD, vadDirectory: request.vadDirectory)
+        let vadMs = (CFAbsoluteTimeGetCurrent() - vadStart) * 1000
 
+        let asrStart = CFAbsoluteTimeGetCurrent()
         var combinedWords = [TranscriptWord]()
         var combinedTexts = [String]()
 
@@ -92,10 +107,12 @@ final class DictationInferenceSession {
                 }
             }
         }
+        let asrMs = (CFAbsoluteTimeGetCurrent() - asrStart) * 1000
 
         let fullText = combinedTexts.joined(separator: " ")
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
+        let diarStart = CFAbsoluteTimeGetCurrent()
         var turns = [SpeakerTurn]()
         if let speakerOption = request.diarizeSpeakers,
             let diarDir = request.diarizationDirectory,
@@ -111,19 +128,28 @@ final class DictationInferenceSession {
                     samples: samples, speakerCount: targetCount, labelPrefix: "Speaker")) ?? []
             }
         }
+        let diarMs = (CFAbsoluteTimeGetCurrent() - diarStart) * 1000
+        let totalMs = (CFAbsoluteTimeGetCurrent() - totalStart) * 1000
 
         let segments = TranscriptSegmentBuilder.build(
             words: combinedWords,
             turns: turns,
             fallbackText: fullText
         )
-        return TimedTranscript(text: fullText, words: combinedWords, segments: segments)
+        let timings = DictationStageTimings(
+            vadMs: vadMs,
+            asrMs: asrMs,
+            diarizationMs: diarMs,
+            totalMs: totalMs
+        )
+        return TimedTranscript(text: fullText, words: combinedWords, segments: segments, timings: timings)
     }
 
     private func detectSpeechSpans(
         samples: [Float], useVAD: Bool, vadDirectory: URL?
     ) -> [DictationVADChunker.SpeechSpan] {
-        guard useVAD, samples.count > 160_000 else { return [] }
+        // Apply Silero VAD down to 1.5s clips so leading/trailing silence and long pauses are stripped.
+        guard useVAD, samples.count > 24_000 else { return [] }
         let rawSpans: [DictationVADChunker.SpeechSpan]
         if let vadDirectory {
             if loadedVADDir != vadDirectory || vad == nil {
@@ -148,6 +174,11 @@ final class DictationInferenceSession {
             } else {
                 coalesced.append(span)
             }
+        }
+        // Short-speech safety fallback: avoid over-trimming soft whispers <= 3s.
+        let totalSpeechSamples = coalesced.reduce(0) { $0 + ($1.endSample - $1.startSample) }
+        if totalSpeechSamples < 4_800, samples.count <= 48_000 {
+            return []
         }
         return coalesced
     }

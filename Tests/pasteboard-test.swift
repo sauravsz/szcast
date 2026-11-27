@@ -25,6 +25,7 @@ struct PasteboardTests {
         fileEntriesWriteBackAsFiles()
         aVanishedFileWritesNothing()
         imageEntriesWriteBackWithTheirFile()
+        pasterHardeningAndLayoutLookup()
 
         print("\(passes)/\(passes + failures) passed")
         if failures > 0 { exit(1) }
@@ -415,6 +416,27 @@ struct PasteboardTests {
                 pb.types?.contains(ClipboardManager.internalType) == true,
                 "marked, so the poller skips our own write")
         }
+    }
+
+    static func pasterHardeningAndLayoutLookup() {
+        expect(
+            !Paster.shouldConvertMarkdownToRTF("[TODO] fix bug #123 and 2 * 3")
+                && !Paster.shouldConvertMarkdownToRTF("Check [[WikiLink]] in Obsidian")
+                && !Paster.shouldConvertMarkdownToRTF("```swift\nlet x = [0]\n```")
+                && Paster.shouldConvertMarkdownToRTF("Please check **bold** emphasis")
+                && Paster.shouldConvertMarkdownToRTF("Read [the docs](https://example.com)")
+                && Paster.shouldConvertMarkdownToRTF("# Weekly Status"),
+            "RTF conversion only triggers on explicit balanced Markdown, never literal brackets or hashes"
+        )
+        expect(
+            Paster.pasteboardRestoreDelay(for: "md.obsidian") >= 0.35
+                && Paster.pasteboardRestoreDelay(for: "com.microsoft.VSCode") >= 0.35
+                && Paster.pasteboardRestoreDelay(for: "com.apple.TextEdit") < 0.20,
+            "Electron and Chromium bundles receive calibrated longer pasteboard restore delays"
+        )
+        let vKey = Paster.commandVirtualKeyCode(for: "v", fallback: 9)
+        let cKey = Paster.commandVirtualKeyCode(for: "c", fallback: 8)
+        expect(vKey < 54 && cKey < 54, "Keyboard layout command key lookup resolves valid ANSI keycodes")
     }
 
     // MARK: - Harness

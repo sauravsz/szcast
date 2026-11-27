@@ -284,6 +284,18 @@ enum SettingsBackupCoverage {
             "Whisper mode microphone gain preference stays local to this Mac.",
         AppSettingsKey.dictationAutoLearnDictionary.rawValue:
             "Auto-learning dictionary preference stays local to this Mac.",
+        AppSettingsKey.dictationVoiceSubmit.rawValue:
+            "Voice submit command preference stays local to this Mac.",
+        AppSettingsKey.dictationCodeAndMarkdownSyntax.rawValue:
+            "Code casing and Markdown syntax command preference stays local to this Mac.",
+        AppSettingsKey.dictationVoiceCommandsEnabled.rawValue:
+            "Standalone voice command execution preference stays local to this Mac.",
+        AppSettingsKey.dictationPillPosition.rawValue:
+            "Dictation HUD pill placement stays local to this Mac.",
+        AppSettingsKey.dictationCompactPill.rawValue:
+            "Dictation compact HUD orb preference stays local to this Mac.",
+        AppSettingsKey.dictationAudioRetentionDays.rawValue:
+            "Archived dictation audio retention window stays local to this Mac.",
         AppSettingsKey.dictationAutoApplyTransform.rawValue:
             "Auto-apply transform preference stays local to this Mac.",
         AppSettingsKey.dictationActiveTransformID.rawValue:
@@ -294,6 +306,12 @@ enum SettingsBackupCoverage {
             "Diarization speaker count stays local to this Mac.",
         AppSettingsKey.dictationVADEnabled.rawValue:
             "Voice activity detection preference stays local to this Mac.",
+        AppSettingsKey.dictationWarmPreRoll.rawValue:
+            "Instant microphone pre-roll preference stays local to this Mac.",
+        AppSettingsKey.dictationVoiceProcessing.rawValue:
+            "Hardware voice isolation preference stays local to this Mac.",
+        AppSettingsKey.dictationPauseMedia.rawValue:
+            "Auto-pause active media preference stays local to this Mac.",
         AppSettingsKey.dictationMeetingCapturesSystemAudio.rawValue:
             "System audio capture toggle stays local to this Mac.",
         AppSettingsKey.dictationMeetingStartMuted.rawValue:

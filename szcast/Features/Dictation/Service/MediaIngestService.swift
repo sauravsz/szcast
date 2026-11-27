@@ -170,9 +170,10 @@ final class MediaIngestService {
                             bengaliMode: settings.dictationBengaliMode,
                             hindiMode: settings.dictationHindiMode
                         )
-                        let provider: DictationPolishProvider =
-                            (settings.dictationPolishProvider == .groq && !settings.groqAPIKey.isEmpty)
-                            ? .groq : .localS1
+                        let provider = DictationPolishProvider.resolved(
+                            preferred: settings.dictationPolishProvider,
+                            groqAPIKey: settings.groqAPIKey
+                        )
                         text = await TranscriptAIService.polishLongTranscript(
                             text,
                             provider: provider,

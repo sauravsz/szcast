@@ -17,6 +17,11 @@ struct DictationFieldTest {
         try await testCancelSilently()
         try await testCancelDuringStartCue()
         try await testBluetoothStartCue()
+        try await testHoldAndDoubleTapHandsFree()
+        try await testWisprVoiceSubmitRestoreAndEnumerations()
+        try await testFailureRecoveryAndSpeculativePauseChunk()
+        try await testPhase3VoiceMetaCommandsAndSyntax()
+        try await testPhase4InjectionAndPillHUD()
         print("ALL PASSED")
     }
 
@@ -215,6 +220,258 @@ struct DictationFieldTest {
         fixture.coordinator.cancel(in: editor)
     }
 
+    private static func testHoldAndDoubleTapHandsFree() async throws {
+        // 1. Hold-key (Fn/Globe) double-tap starts hands-free recording; release ignores stop; single tap stops.
+        do {
+            let fixture = Fixture()
+            fixture.settings.dictationMode = .pushToTalk
+            fixture.settings.dictationDoubleTapToLock = true
+            fixture.hotKeys.dictationBinding = .init(shortcut: nil, holdKey: 63)
+
+            // Bare single tap while idle does not start push-to-talk recording.
+            fixture.coordinator.holdTapped()
+            try await Task.sleep(for: .milliseconds(20))
+            expect(!fixture.capture.isRecording, "A bare single Fn tap while idle does not start push-to-talk")
+
+            // Double-tap enters hands-free lock and ignores hold release.
+            fixture.coordinator.holdDoubleTapped()
+            try await wait { fixture.capture.isRecording }
+            expect(fixture.coordinator.isHandsFreeLocked, "Double-tap Fn locks hands-free mode")
+            fixture.coordinator.released()
+            expect(fixture.capture.isRecording, "Release does not stop a hands-free locked session")
+
+            // A subsequent single tap stops hands-free recording and transcribes.
+            fixture.coordinator.holdTapped()
+            try await wait { fixture.models.pending != nil }
+            fixture.models.finish("Hands free transcript")
+            try await wait { !fixture.coordinator.isHandsFreeLocked && Paster.copies.last == "Hands free transcript" }
+            expect(true, "Single tap cleanly finishes a hands-free session")
+        }
+
+        // 2. Rapid combo double-tap locks instead of stopping on the second press.
+        do {
+            let fixture = Fixture()
+            fixture.settings.dictationMode = .pushToTalk
+            fixture.settings.dictationDoubleTapToLock = true
+            fixture.hotKeys.dictationBinding = .init(shortcut: 49, holdKey: nil)
+
+            fixture.coordinator.pressed()
+            fixture.coordinator.released()
+            fixture.coordinator.pressed()
+            fixture.coordinator.released()
+            try await wait { fixture.capture.isRecording }
+            expect(fixture.coordinator.isHandsFreeLocked, "Rapid combo double-tap locks hands-free instead of stopping")
+            expect(fixture.models.pending == nil, "Locked session keeps recording after second release")
+            fixture.coordinator.cancel()
+            try await wait { !fixture.capture.isRecording }
+        }
+    }
+
+    private static func testWisprVoiceSubmitRestoreAndEnumerations() async throws {
+        Permissions.accessibilityTrusted = true
+        defer { Permissions.accessibilityTrusted = false }
+
+        // 1. Default .paste preserves user clipboard (restorePasteboard == true), formats enumerations,
+        //    strips trailing "press enter" and requests Return press after pasting.
+        do {
+            let fixture = Fixture()
+            fixture.settings.dictationMode = .pushToTalk
+            fixture.settings.dictationDestination = .paste
+            fixture.settings.dictationAutoCopyToClipboard = false
+            fixture.settings.dictationVoiceSubmit = true
+            fixture.hotKeys.dictationBinding = .init(shortcut: nil, holdKey: 63)
+
+            fixture.coordinator.pressed()
+            try await wait { fixture.capture.isRecording }
+            fixture.coordinator.released() // Exercises 120ms tail buffer before accept()
+            try await wait { fixture.models.pending != nil }
+            fixture.models.finish("First buy milk. Second write tests. Press enter.")
+            try await wait { Paster.copies.last == "1. Buy milk.\n2. Write tests" }
+            expect(Paster.lastRestorePasteboard == true, "Paste-only mode restores prior clipboard")
+            expect(Paster.lastPressReturn == true, "Trailing 'Press enter' strips command and submits Return")
+        }
+
+        // 2. Auto-copy keeps clipboard (restorePasteboard == false) and negated phrase avoids submit.
+        do {
+            let fixture = Fixture()
+            fixture.settings.dictationMode = .toggle
+            fixture.settings.dictationDestination = .paste
+            fixture.settings.dictationAutoCopyToClipboard = true
+            fixture.settings.dictationVoiceSubmit = true
+
+            fixture.coordinator.pressed()
+            try await wait { fixture.capture.isRecording }
+            fixture.coordinator.pressed()
+            try await wait { fixture.models.pending != nil }
+            fixture.models.finish("Don't press enter")
+            try await wait {
+                Paster.copies.last?
+                    .trimmingCharacters(in: .whitespaces)
+                    .caseInsensitiveCompare("Don't press enter") == .orderedSame
+            }
+            expect(Paster.lastRestorePasteboard == false, "Auto-copy skips clipboard restoration")
+            expect(Paster.lastPressReturn == false, "Negated 'Don't press enter' does not press Return")
+        }
+
+        // 3. Auto-learn inserted span isolation helper handles both suffix and mid-document edits.
+        expect(
+            DictationCoordinator.extractInsertedSegment(
+                baseline: "Topics - Resume",
+                updated: "Topics - Resume Saurav works"
+            ) == "Saurav works",
+            "Auto-learn segment extractor isolates appended pasted span"
+        )
+        expect(
+            DictationCoordinator.extractInsertedSegment(
+                baseline: "I met today",
+                updated: "I met Saurav Sharma today"
+            ) == "Saurav Sharma",
+            "Auto-learn segment extractor isolates mid-sentence edited span"
+        )
+    }
+
+    private static func testFailureRecoveryAndSpeculativePauseChunk() async throws {
+        // 1. ASR failure on >= 0.8s speech preserves audio in DictationHistoryStore recovery item.
+        do {
+            let fixture = Fixture()
+            fixture.settings.dictationMode = .toggle
+            fixture.coordinator.pressed()
+            try await wait { fixture.capture.isRecording }
+            fixture.capture.simulatedSamples = [Float](repeating: 0.05, count: 16_000)
+            fixture.coordinator.pressed()
+            try await wait { fixture.models.pending != nil }
+            fixture.models.fail(NSError(domain: "dictation.test", code: 42, userInfo: [NSLocalizedDescriptionKey: "Engine hiccup"]))
+            try await wait { fixture.coordinator.historyStore.items.first?.text == "[Dictation Recovery — failed transcription]" }
+            await fixture.coordinator.historyStore.flushPendingWrites()
+            expect(
+                fixture.messages.last?.contains("Audio saved in Dictation History") == true,
+                "Failed >=0.8s dictation preserves recovery audio and notifies user"
+            )
+
+            // Retry / re-transcribe the recovered history item end-to-end with another model.
+            if let recovered = fixture.coordinator.historyStore.items.first(where: {
+                $0.text == "[Dictation Recovery — failed transcription]"
+            }) {
+                fixture.settings.dictationAutoAppRouting = false
+                fixture.coordinator.retranscribeHistoryItem(recovered, using: .redux)
+                try await wait { fixture.models.pending != nil }
+                fixture.models.finish("Recovered transcript successfully.")
+                try await wait {
+                    fixture.coordinator.historyStore.items.first(where: { $0.id == recovered.id })?.text == "Recovered transcript successfully."
+                }
+                expect(
+                    fixture.coordinator.historyStore.items.first(where: { $0.id == recovered.id })?.text == "Recovered transcript successfully.",
+                    "Recovery retry re-transcribes saved audio archive and updates History"
+                )
+            } else {
+                fatalError("Missing recovery item for retry test")
+            }
+        }
+
+        // 2. Speculative pause chunking stitches pre-transcribed chunk cleanly with release tail.
+        do {
+            Permissions.accessibilityTrusted = true
+            defer { Permissions.accessibilityTrusted = false }
+            let fixture = Fixture()
+            fixture.settings.dictationMode = .toggle
+            fixture.settings.dictationDestination = .paste
+            fixture.coordinator.pressed()
+            try await wait { fixture.capture.isRecording }
+            fixture.capture.onPauseChunk?(56_000, [Float](repeating: 0.05, count: 56_000))
+            try await wait { fixture.models.pending != nil }
+            fixture.models.finish("Alpha clause.")
+            try await wait { !fixture.models.transcribing && fixture.models.finished }
+            fixture.models.finished = false
+            fixture.capture.simulatedSamples = [Float](repeating: 0.05, count: 72_000)
+            fixture.coordinator.pressed()
+            try await wait { fixture.models.pending != nil }
+            fixture.models.finish("Beta clause.")
+            try await wait {
+                Paster.copies.last?.trimmingCharacters(in: .whitespaces) == "Alpha clause. Beta clause."
+            }
+            expect(
+                Paster.copies.last?.trimmingCharacters(in: .whitespaces) == "Alpha clause. Beta clause.",
+                "Speculative pause chunk stitches seamlessly with final release tail"
+            )
+            expect(
+                fixture.coordinator.lastStageTelemetry != nil,
+                "Coordinator records per-stage latency telemetry snapshot"
+            )
+        }
+    }
+
+    private static func testPhase3VoiceMetaCommandsAndSyntax() async throws {
+        // Standalone voice meta-command executes in-app without pasting the literal phrase.
+        let fixture = Fixture()
+        fixture.settings.dictationVoiceCommandsEnabled = true
+        let editor = ComposerTextView()
+        editor.string = "Hello world"
+        try await fixture.start(into: editor)
+        fixture.coordinator.toggle(into: editor)
+        try await wait { fixture.models.pending != nil }
+        fixture.models.finish("Select all.")
+        try await wait { fixture.coordinator.field == nil }
+        expect(
+            fixture.coordinator.lastExecutedVoiceCommand == .selectAll,
+            "Standalone 'Select all.' executes voice command rather than pasting literal text"
+        )
+        expect(
+            editor.string == "Hello world",
+            "Executed voice meta-command does not overwrite editor contents with command phrase"
+        )
+    }
+
+    private static func testPhase4InjectionAndPillHUD() async throws {
+        // 1. Floating pill appears immediately on keypress before capture finishes; compact & fallback card work cleanly.
+        let fixture = Fixture()
+        fixture.settings.dictationMode = .toggle
+        fixture.settings.dictationDestination = .paste
+        fixture.settings.dictationPillPosition = .topNotch
+        fixture.settings.dictationCompactPill = true
+        fixture.settings.dictationLanguage = "Hindi"
+        Permissions.accessibilityTrusted = false
+
+        fixture.coordinator.pressed()
+        expect(fixture.panel.isVisible, "Floating HUD pill appears synchronously at 0 ms before capture finishes")
+        expect(fixture.panel.state.isCompact, "Panel tracks compact orb preference")
+        expect(fixture.panel.state.activeLanguageCode == "HI", "Panel surfaces ISO code badge for active language")
+
+        try await wait { fixture.capture.isRecording }
+        fixture.coordinator.pressed()
+        try await wait { fixture.models.pending != nil }
+        fixture.models.finish("Accessibility fallback phrase")
+        try await wait { fixture.panel.state.phase == .fallback }
+        expect(
+            fixture.panel.isVisible
+                && fixture.panel.state.fallbackText == "Accessibility fallback phrase",
+            "Untrusted Accessibility pops fallback copy HUD card instead of silently dropping text"
+        )
+
+        // 2. Quartz top-left AX bounds convert cleanly to Cocoa bottom-left screen coordinates.
+        let converted = DictationInsertionContext.cocoaRect(
+            fromQuartzAXRect: CGRect(x: 200, y: 100, width: 2, height: 18),
+            primaryScreenHeight: 1080
+        )
+        expect(
+            converted == CGRect(x: 200, y: 962, width: 2, height: 18),
+            "AX caret Quartz coordinates convert accurately into Cocoa screen coordinates"
+        )
+        expect(
+            DictationPillPosition.allCases.count == 4,
+            "All four floating pill placement modes are registered"
+        )
+
+        // 3. Redacted diagnostic bundle exports valid JSON without exposing API keys or transcripts.
+        let jsonStr = fixture.coordinator.redactedDiagnosticBundleJSON()
+        let jsonObj = try JSONSerialization.jsonObject(with: Data(jsonStr.utf8)) as? [String: Any]
+        expect(
+            jsonObj?["activeModel"] as? String != nil
+                && !jsonStr.contains("groqAPIKey")
+                && !jsonStr.contains("Accessibility fallback phrase"),
+            "Diagnostic export produces valid redacted JSON excluding secrets and transcripts"
+        )
+    }
+
     /// The live poll sleeps longer than `wait` allows.
     private static func waitLong(until condition: () -> Bool) async throws {
         let deadline = ContinuousClock.now + .seconds(8)
@@ -224,10 +481,16 @@ struct DictationFieldTest {
         }
     }
 
-    private static func wait(until condition: () -> Bool) async throws {
+    private static func wait(
+        _ line: Int = #line,
+        until condition: () -> Bool
+    ) async throws {
         let deadline = ContinuousClock.now + .seconds(2)
         while !condition() {
-            guard ContinuousClock.now < deadline else { throw CocoaError(.coderInvalidValue) }
+            guard ContinuousClock.now < deadline else {
+                fputs("wait timed out at line \(line); copies=\(Paster.copies.suffix(3))\n", stderr)
+                throw CocoaError(.coderInvalidValue)
+            }
             try await Task.sleep(for: .milliseconds(1))
         }
     }
@@ -240,11 +503,12 @@ struct DictationFieldTest {
     @MainActor
     private final class Fixture {
         let settings = AppSettings()
+        let hotKeys = HotKeyManager()
         let models = DictationModelStore()
         let queue = DeliveryQueue()
         var messages: [String] = []
         lazy var coordinator = DictationCoordinator(
-            settings: settings, hotKeys: HotKeyManager(), models: models,
+            settings: settings, hotKeys: hotKeys, models: models,
             injector: TextInjector(
                 clipboardManager: ClipboardManager(), settings: settings, deliveryQueue: queue),
             audioDucker: DictationAudioDucker(), confirmEnable: { false },
@@ -361,11 +625,20 @@ final class AppSettings {
     var dictationAutoAppRouting = true
     var dictationWhisperMode = false
     var dictationAutoLearnDictionary = true
+    var dictationVoiceSubmit = true
+    var dictationCodeAndMarkdownSyntax = true
+    var dictationVoiceCommandsEnabled = true
+    var dictationPillPosition = DictationPillPosition.bottomCenter
+    var dictationCompactPill = false
+    var dictationAudioRetentionDays = 14
     var dictationAutoApplyTransform = false
     var dictationActiveTransformID: String?
     var dictationRetainCancelled = false
     var dictationSpeakerCount = 0
     var dictationVADEnabled = true
+    var dictationWarmPreRoll = false
+    var dictationVoiceProcessing = false
+    var dictationPauseMedia = false
     var dictationMeetingCapturesSystemAudio = true
     var dictationMeetingStartMuted = false
     var dictationAutoStopSilenceSeconds: Double = 0
@@ -382,7 +655,8 @@ final class HotKeyManager {
         var shortcut: Int?
         var holdKey: Int?
     }
-    func binding(for action: HotKeyAction) -> Binding? { nil }
+    var dictationBinding: Binding?
+    func binding(for action: HotKeyAction) -> Binding? { action == .dictation ? dictationBinding : nil }
     func conflictOwner(of binding: Binding, excluding action: HotKeyAction) -> String? { nil }
 }
 
@@ -391,23 +665,29 @@ final class DictationCapture {
     static weak var latest: DictationCapture?
     var onLevels: (([Float]) -> Void)?
     var onSamples: (@Sendable ([Float]) -> Void)?
+    var onPauseChunk: (@Sendable (_ rangeEndSample: Int, _ chunk: [Float]) -> Void)?
     var onLimit: (() -> Void)?
     var onSilenceWarning: ((Bool) -> Void)?
+    var onClippingWarning: ((Bool) -> Void)?
     var onClamshellWarning: ((Bool) -> Void)?
     var onAutoStopSilence: (() -> Void)?
     var isRecording = false
     var isMuted = false
     var isBluetooth = false
     var stopCount = 0
+    var simulatedSamples: [Float]?
 
     init() { Self.latest = self }
     func setMuted(_ muted: Bool) { isMuted = muted }
+    func configureWarmPreRoll(enabled: Bool, microphoneID: String?, voiceProcessing: Bool = false) {}
     func start(
         microphoneID: String?,
+        prioritizedMicrophoneIDs: [String] = [],
         whisperMode: Bool = false,
         allowLongCapture: Bool = false,
         startMuted: Bool = false,
-        autoStopSilenceSeconds: TimeInterval = 0
+        autoStopSilenceSeconds: TimeInterval = 0,
+        voiceProcessing: Bool = false
     ) async throws {
         isMuted = startMuted
         isRecording = true
@@ -417,7 +697,9 @@ final class DictationCapture {
     func stop() async -> [Float] {
         isRecording = false
         stopCount += 1
-        return [Float](repeating: 0, count: 1_600)
+        let out = simulatedSamples ?? [Float](repeating: 0, count: 1_600)
+        simulatedSamples = nil
+        return out
     }
 }
 
@@ -425,6 +707,7 @@ final class DictationCapture {
 final class DictationModelStore {
     var pending: CheckedContinuation<String, any Error>?
     var finished = false
+    var transcribing = false
 
     func isInstalled(_ model: DictationModel) -> Bool { true }
     func download(_ model: DictationModel) async throws {}
@@ -435,7 +718,11 @@ final class DictationModelStore {
     func prepareForTermination() {}
 
     func transcribe(_ samples: [Float], model: DictationModel, language: String?) async throws -> String {
-        defer { finished = true }
+        transcribing = true
+        defer {
+            transcribing = false
+            finished = true
+        }
         return try await withCheckedThrowingContinuation { pending = $0 }
     }
 
@@ -455,11 +742,17 @@ final class DictationModelStore {
         pending = nil
         continuation?.resume(returning: text)
     }
+
+    func fail(_ error: any Error) {
+        let continuation = pending
+        pending = nil
+        continuation?.resume(throwing: error)
+    }
 }
 
 @MainActor
 final class DictationPanelController {
-    enum Phase { case listening, transcribing, completed }
+    enum Phase { case listening, transcribing, completed, fallback }
     @MainActor
     final class State {
         var phase = Phase.listening
@@ -471,8 +764,18 @@ final class DictationPanelController {
         var isClamshellMuffled: Bool = false
         var isMuted: Bool = false
         var isRawMode: Bool = false
+        var isSpeechActive: Bool = false
+        var isCompact: Bool = false
+        var activeLanguageCode: String? = nil
         var commandModeText: String? = nil
+        var fallbackText: String? = nil
+        var fallbackSubtitle: String? = nil
         var onToggleMute: (() -> Void)?
+        var onAccept: (() -> Void)?
+        var onCancel: (() -> Void)?
+        var onSelectLanguage: ((String?) -> Void)?
+        var onCopyFallback: (() -> Void)?
+        var onRetryPasteFallback: (() -> Void)?
     }
     static weak var latest: DictationPanelController?
     let state = State()
@@ -480,7 +783,22 @@ final class DictationPanelController {
     var onCancel: (() -> Void)?
     var isVisible = false
     init() { Self.latest = self }
-    func show() { isVisible = true }
+    func show(
+        position: DictationPillPosition = .bottomCenter,
+        compact: Bool = false,
+        caretRect: CGRect? = nil,
+        activeLanguage: String? = nil
+    ) {
+        state.isCompact = compact
+        state.activeLanguageCode = DictationLanguage.isoCode(for: activeLanguage)?.uppercased()
+        isVisible = true
+    }
+    func showFallbackCard(text: String, subtitle: String) {
+        state.fallbackText = text
+        state.fallbackSubtitle = subtitle
+        state.phase = .fallback
+        isVisible = true
+    }
     func close() { isVisible = false }
     func showSuccessAndClose() { isVisible = false }
     func updatePreviewText(_ text: String) { state.previewText = text }
@@ -514,23 +832,40 @@ final class ClipboardManager {
     func resumeCapture() {}
 }
 
+@MainActor
 enum Permissions {
+    static var accessibilityTrusted = false
     @discardableResult
-    static func ensureAccessibility() -> Bool { false }
-    static func isAccessibilityTrusted() -> Bool { false }
+    static func ensureAccessibility() -> Bool { accessibilityTrusted }
+    static func isAccessibilityTrusted() -> Bool { accessibilityTrusted }
 }
 
 @MainActor
 enum Paster {
     static let szcastEventTag: Int64 = 0x54494E59
     static var copies: [String] = []
-    static func copyPlainText(_ text: String) { copies.append(text) }
-    static func pasteString(_ text: String, previousApp: NSRunningApplication?, completion: (@MainActor () -> Void)? = nil) {
+    static var lastRestorePasteboard = false
+    static var lastPressReturn = false
+    @MainActor
+    static func pasteString(
+        _ text: String,
+        previousApp: NSRunningApplication?,
+        concealed: Bool = false,
+        restorePasteboard: Bool = false,
+        pressReturnAfter: Bool = false,
+        plainTextOnly: Bool = false,
+        completion: (@MainActor () -> Void)? = nil
+    ) {
         copies.append(text)
+        lastRestorePasteboard = restorePasteboard
+        lastPressReturn = pressReturnAfter
         completion?()
     }
-    static func postCommandV(toPid pid: pid_t? = nil) {}
-    static func postCommandC(toPid pid: pid_t? = nil) {}
+    @MainActor static func copyPlainText(_ text: String, plainTextOnly: Bool = false) { copies.append(text) }
+    @MainActor static func copyConcealedText(_ text: String) { copies.append(text) }
+    @MainActor static func postCommandV(toPid pid: pid_t? = nil) {}
+    @MainActor static func postCommandC(toPid pid: pid_t? = nil) {}
+    @MainActor static func postCommandCharacter(_ character: Character, fallback: CGKeyCode, toPid pid: pid_t? = nil) {}
 }
 
 enum DialogTone { case neutral, success, danger }

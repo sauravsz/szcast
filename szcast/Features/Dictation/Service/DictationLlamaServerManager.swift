@@ -23,7 +23,7 @@ final class DictationLlamaServerManager {
         }
     }
 
-    func startDaemon(idleRelease: DictationIdleRelease? = nil) {
+    func startDaemon(idleRelease: DictationIdleRelease? = nil, settings: DictationS1Settings = .default) {
         Task { [weak self] in
             guard let self else { return }
             if !Self.isModelAvailable {
@@ -31,27 +31,33 @@ final class DictationLlamaServerManager {
             }
             guard Self.isModelAvailable, Self.isBinaryAvailable else { return }
             _ = try? await self.ensureRunning(idleRelease: idleRelease ?? .never)
-            self.prewarm(idleRelease: idleRelease ?? .never)
+            self.prewarm(idleRelease: idleRelease ?? .never, settings: settings)
         }
     }
 
-    func prewarm(idleRelease: DictationIdleRelease? = nil) {
+    func prewarm(idleRelease: DictationIdleRelease? = nil, settings: DictationS1Settings = .default) {
         guard isModelAvailable, isBinaryAvailable else { return }
         Task { [weak self] in
             guard let self else { return }
             if let baseURL = try? await self.ensureRunning(idleRelease: idleRelease) {
-                // Background KV-cache prewarming: prime the system prompt and control line into llama-server's KV cache
+                let targetModel = Self.activeTextModel()
+                let isS1 = targetModel == .s1Mini
                 let chatEndpoint = baseURL.appendingPathComponent("v1/chat/completions")
                 var request = URLRequest(url: chatEndpoint)
                 request.httpMethod = "POST"
                 request.setValue("application/json", forHTTPHeaderField: "Content-Type")
                 request.setValue("keep-alive", forHTTPHeaderField: "Connection")
                 request.timeoutInterval = 10.0
+                let userPrompt = DictationS1Settings.normalizedUserMessage(
+                    controlLine: settings.controlLine,
+                    transcript: "Hello",
+                    isS1Mini: isS1
+                )
                 let prewarmPayload: [String: Any] = [
-                    "model": "s1-mini",
+                    "model": targetModel.rawValue,
                     "messages": [
-                        ["role": "system", "content": DictationS1Settings.systemPrompt],
-                        ["role": "user", "content": "\(DictationS1Settings.default.controlLine)\nHello"]
+                        ["role": "system", "content": settings.effectiveSystemPrompt(for: "Hello", isS1Mini: isS1)],
+                        ["role": "user", "content": userPrompt]
                     ],
                     "temperature": 0.0,
                     "max_tokens": 1
@@ -194,7 +200,18 @@ final class DictationLlamaServerManager {
             return baseURL
         }
 
+        // Adopt an already-healthy server for the same model instead of colliding on the port.
+        if !forceRestart, process == nil, await checkHealth(baseURL: baseURL),
+           await runningModelMatches(baseURL: baseURL, expectedFileName: targetModel.fileName) {
+            Self.logger.info("Adopted existing llama-server for \(targetModel.fileName) on \(baseURL.absoluteString)")
+            self.runningPort = port
+            self.runningModel = targetModel
+            scheduleIdleShutdown(idleRelease: currentIdleRelease)
+            return baseURL
+        }
+
         stop()
+        terminateOrphanListeners(on: port)
 
         guard let modelURL = Self.resolveGGUFModel(for: targetModel) else {
             throw NSError(
@@ -267,6 +284,38 @@ final class DictationLlamaServerManager {
             return false
         }
         return true
+    }
+
+    private func runningModelMatches(baseURL: URL, expectedFileName: String) async -> Bool {
+        struct ModelsResponse: Decodable {
+            struct Entry: Decodable { let id: String }
+            let data: [Entry]
+        }
+        var request = URLRequest(url: baseURL.appendingPathComponent("v1/models"))
+        request.timeoutInterval = 0.5
+        guard let (data, response) = try? await URLSession.shared.data(for: request),
+              let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode),
+              let decoded = try? JSONDecoder().decode(ModelsResponse.self, from: data) else {
+            return false
+        }
+        return decoded.data.contains { $0.id.localizedCaseInsensitiveContains(expectedFileName) }
+    }
+
+    private func terminateOrphanListeners(on port: Int) {
+        let lsof = Process()
+        lsof.executableURL = URL(fileURLWithPath: "/usr/sbin/lsof")
+        lsof.arguments = ["-ti", ":\(port)", "-sTCP:LISTEN"]
+        let pipe = Pipe()
+        lsof.standardOutput = pipe
+        lsof.standardError = FileHandle.nullDevice
+        guard (try? lsof.run()) != nil else { return }
+        lsof.waitUntilExit()
+        let out = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        for token in out.split(whereSeparator: \.isWhitespace) {
+            if let pid = Int32(token), pid > 0, pid != ProcessInfo.processInfo.processIdentifier {
+                kill(pid, SIGTERM)
+            }
+        }
     }
 
     func scheduleIdleShutdown(idleRelease: DictationIdleRelease? = nil) {

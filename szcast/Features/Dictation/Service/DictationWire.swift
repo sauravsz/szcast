@@ -60,19 +60,22 @@ nonisolated enum DictationWire {
         var text = ""
         var words: [TranscriptWord] = []
         var segments: [TranscriptSegment] = []
+        var timings: DictationStageTimings? = nil
 
         init(
             id: UUID,
             status: Status,
             text: String = "",
             words: [TranscriptWord] = [],
-            segments: [TranscriptSegment] = []
+            segments: [TranscriptSegment] = [],
+            timings: DictationStageTimings? = nil
         ) {
             self.id = id
             self.status = status
             self.text = text
             self.words = words
             self.segments = segments
+            self.timings = timings
         }
     }
 

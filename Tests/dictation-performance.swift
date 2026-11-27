@@ -87,10 +87,14 @@ struct DictationBenchmark {
                 else { throw DictationWire.Failure.unavailable }
                 let finished = ContinuousClock.now
                 monitor.cancel()
+                let elapsed = loaded.duration(to: finished)
+                let transcribeSec = Double(elapsed.components.seconds) + Double(elapsed.components.attoseconds) / 1e18
+                let audioSec = Double(samples.count) / Double(DictationWire.sampleRate)
+                let rtf = audioSec > 0 ? transcribeSec / audioSec : 0
                 let peak = await monitor.value.map { "\($0 / 1_000_000) MB" } ?? "Unavailable"
                 print(
                     "| \(model.title) | \(run) | \(seconds(started.duration(to: loaded))) s | "
-                        + "\(seconds(loaded.duration(to: finished))) s | \(peak) |")
+                        + "\(seconds(elapsed)) s (\(String(format: "%.3fx", rtf)) RTF) | \(peak) |")
                 transcripts.append("Transcript (\(model.rawValue), \(run)): \(result.text)")
             }
         }

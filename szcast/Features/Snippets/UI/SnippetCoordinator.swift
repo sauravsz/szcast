@@ -94,20 +94,12 @@ final class SnippetCoordinator {
 
     // MARK: - Feature presence
 
-    /// Either switch off means the feature reaches the launcher not at all — rows and commands.
+    /// Keeps snippet feature commands in root search when enabled while excluding individual snippets from root search.
     func applySnippetsLauncherPresence() {
-        let visible = settings.snippetsEnabled && settings.snippetsShowInLauncher
         let commands: Set<CommandID> = [.searchSnippets, .createSnippet]
         appIndex.setCommandsVisible(commands, settings.snippetsEnabled)
         appIndex.setCommandsListed(commands, settings.snippetsShowInLauncher)
-        let enabled = visible ? store.snippets.filter(store.isSnippetEffectivelyEnabled) : []
-        var effectiveKeywords: [String: String] = [:]
-        for record in enabled {
-            if let keyword = store.effectiveKeyword(for: record) {
-                effectiveKeywords[record.entryID] = keyword
-            }
-        }
-        appIndex.updateSnippets(enabled, effectiveKeywords: effectiveKeywords)
+        appIndex.updateSnippets([], effectiveKeywords: [:])
     }
 
     /// Reconciles everything the switch owns; off tears down in dependency order.

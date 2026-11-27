@@ -41,6 +41,8 @@ final class ModifierTapMonitor: HealthCheckable {
     @ObservationIgnored var onHoldPressed: (() -> Void)?
     @ObservationIgnored var onHoldReleased: (() -> Void)?
     @ObservationIgnored var onHoldCancelled: (() -> Void)?
+    @ObservationIgnored var onHoldTap: (() -> Void)?
+    @ObservationIgnored var onHoldDoubleTap: (() -> Void)?
 
     /// Set while a recorder captures, so editing a binding can't trigger it.
     var isPaused = false {
@@ -126,8 +128,11 @@ final class ModifierTapMonitor: HealthCheckable {
         switch event {
         case .pressed(let key):
             if let holdKey, key == holdKey {
-                let hasTapBinding = bound.contains(key.singleBinding) || bound.contains(key.doubleBinding)
-                let holdDelay: TimeInterval = hasTapBinding ? DoubleTapDetector.maxHold : 0.04
+                let hasTapBinding =
+                    bound.contains(key.singleBinding)
+                    || bound.contains(key.doubleBinding)
+                    || onHoldDoubleTap != nil
+                let holdDelay: TimeInterval = hasTapBinding ? DoubleTapDetector.maxHold : 0.11
                 pendingHold = Task { [weak self] in
                     try? await Task.sleep(for: .seconds(holdDelay))
                     guard !Task.isCancelled, let self else { return }
@@ -145,6 +150,12 @@ final class ModifierTapMonitor: HealthCheckable {
                 if holding {
                     holding = false
                     onHoldReleased?()
+                } else if !held {
+                    if doubleTap {
+                        onHoldDoubleTap?()
+                    } else {
+                        onHoldTap?()
+                    }
                 }
                 return
             }

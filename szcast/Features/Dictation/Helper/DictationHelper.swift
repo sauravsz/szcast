@@ -25,6 +25,7 @@ enum DictationHelper {
                 }
                 try DictationWire.write(DictationWire.Response(id: request.id, status: .ready), to: output)
                 if request.prewarmOnly {
+                    session.warmupIfNeeded()
                     try DictationWire.write(
                         DictationWire.Response(id: request.id, status: .result), to: output)
                     continue
@@ -49,7 +50,8 @@ enum DictationHelper {
                                 status: .result,
                                 text: timed.text,
                                 words: timed.words,
-                                segments: timed.segments
+                                segments: timed.segments,
+                                timings: timed.timings
                             ),
                             to: output
                         )

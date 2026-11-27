@@ -9,6 +9,8 @@ final class HotKeyManager {
     var onDictationSecondaryPressed: (() -> Void)?
     var onDictationReleased: (() -> Void)?
     var onDictationCancelled: (() -> Void)?
+    var onDictationHoldTap: (() -> Void)?
+    var onDictationHoldDoubleTap: (() -> Void)?
     var onDictationAddWord: (() -> Void)?
     var onDictationPasteLast: (() -> Void)?
     var onDictationCopyLast: (() -> Void)?
@@ -128,6 +130,8 @@ final class HotKeyManager {
         modifierTapMonitor.onHoldPressed = { [weak self] in self?.perform(.dictation) }
         modifierTapMonitor.onHoldReleased = { [weak self] in self?.onDictationReleased?() }
         modifierTapMonitor.onHoldCancelled = { [weak self] in self?.onDictationCancelled?() }
+        modifierTapMonitor.onHoldTap = { [weak self] in self?.onDictationHoldTap?() }
+        modifierTapMonitor.onHoldDoubleTap = { [weak self] in self?.onDictationHoldDoubleTap?() }
         modifierTapMonitor.start()
         syncModifierTaps()
     }

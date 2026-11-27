@@ -31,7 +31,6 @@ actor GroqPolishService {
         apiKey: String,
         settings: DictationS1Settings,
         vocabularyTerms: [String] = [],
-        surroundingContext: String? = nil,
         model: String = "openai/gpt-oss-120b"
     ) async throws -> String {
         let key = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -43,11 +42,12 @@ actor GroqPolishService {
             return transcript
         }
 
+        let isS1 = DictationS1Polisher.isS1Mini(model)
         let userMessage = DictationS1Settings.normalizedUserMessage(
             controlLine: settings.controlLine,
             transcript: trimmedTranscript,
             vocabularyTerms: vocabularyTerms,
-            surroundingContext: surroundingContext
+            isS1Mini: isS1
         )
         let transcriptWordCount = trimmedTranscript.split(separator: " ").count
         let cap = max(32, min(4096, transcriptWordCount * 2 + 32))
@@ -68,7 +68,7 @@ actor GroqPolishService {
         let body = RequestBody(
             model: model,
             messages: [
-                Message(role: "system", content: settings.effectiveSystemPrompt(for: trimmedTranscript)),
+                Message(role: "system", content: settings.effectiveSystemPrompt(for: trimmedTranscript, isS1Mini: isS1)),
                 Message(role: "user", content: userMessage)
             ],
             temperature: 0.0,

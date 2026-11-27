@@ -79,8 +79,17 @@ enum AppStyleRouter {
         "com.electron.ia-writer"
     ]
 
-    static func category(for bundleID: String?) -> AppCategory {
+    static func category(
+        for bundleID: String?,
+        windowTitle: String? = nil,
+        documentURL: String? = nil
+    ) -> AppCategory {
         guard let bundleID = bundleID?.lowercased().trimmingCharacters(in: .whitespacesAndNewlines), !bundleID.isEmpty else {
+            return categoryFromWindowContext(windowTitle: windowTitle, documentURL: documentURL)
+        }
+        // Strict redaction: never inspect title/URL for credential or 2FA apps.
+        if bundleID.contains("keepass") || bundleID.contains("ente") || bundleID.contains("1password")
+            || bundleID.contains("bitwarden") || bundleID.contains("keychain") {
             return .general
         }
 
@@ -107,12 +116,47 @@ enum AppStyleRouter {
             return .notes
         }
 
+        return categoryFromWindowContext(windowTitle: windowTitle, documentURL: documentURL)
+    }
+
+    private static func categoryFromWindowContext(windowTitle: String?, documentURL: String?) -> AppCategory {
+        let url = (documentURL ?? "").lowercased()
+        let title = (windowTitle ?? "").lowercased()
+        let combined = url + " " + title
+        guard !combined.trimmingCharacters(in: .whitespaces).isEmpty else { return .general }
+
+        if url.contains("mail.google.com") || url.contains("outlook.live.com") || url.contains("outlook.office.com")
+            || url.contains("fastmail.com") || url.contains("proton.me") || title.contains("gmail") || title.hasSuffix(" - mail") {
+            return .email
+        }
+        if url.contains("github.com") || url.contains("gitlab.com") || url.contains("bitbucket.org")
+            || url.contains("linear.app") || url.contains("stackoverflow.com") || url.contains("codepen.io")
+            || title.contains("pull request") || title.contains("github") {
+            return .code
+        }
+        if url.contains("app.slack.com") || url.contains("slack.com") || url.contains("discord.com")
+            || url.contains("teams.microsoft.com") || url.contains("meet.google.com") {
+            return .workMessaging
+        }
+        if url.contains("web.whatsapp.com") || url.contains("web.telegram.org") || url.contains("messages.google.com")
+            || url.contains("messenger.com") {
+            return .personalMessaging
+        }
+        if url.contains("notion.so") || url.contains("docs.google.com") || url.contains("obsidian.md")
+            || url.contains("roamresearch.com") || url.contains("coda.io") || title.contains("notion") || title.contains("google docs") {
+            return .notes
+        }
         return .general
     }
 
-    /// Resolves S1 prompt settings according to the frontmost application category.
-    static func resolvedS1Settings(base: DictationS1Settings, bundleID: String?) -> DictationS1Settings {
-        let cat = category(for: bundleID)
+    /// Resolves S1 prompt settings according to the frontmost application category and browser context.
+    static func resolvedS1Settings(
+        base: DictationS1Settings,
+        bundleID: String?,
+        windowTitle: String? = nil,
+        documentURL: String? = nil
+    ) -> DictationS1Settings {
+        let cat = category(for: bundleID, windowTitle: windowTitle, documentURL: documentURL)
         var resolved = base
 
         switch cat {
@@ -139,17 +183,22 @@ enum AppStyleRouter {
     }
 
     /// Formats post-processed text specifically for the target app category.
-    /// E.g. in personal messaging apps, single short messages drop trailing period.
-    static func applyCategoryFormatting(_ text: String, bundleID: String?) -> String {
-        let cat = category(for: bundleID)
+    /// E.g. in personal messaging & code/terminal apps, single short lines drop a stray trailing period.
+    static func applyCategoryFormatting(
+        _ text: String,
+        bundleID: String?,
+        windowTitle: String? = nil,
+        documentURL: String? = nil
+    ) -> String {
+        let cat = category(for: bundleID, windowTitle: windowTitle, documentURL: documentURL)
         var result = text
 
-        if cat == .personalMessaging {
+        if cat == .personalMessaging || cat == .code {
             let trimmed = result.trimmingCharacters(in: .whitespacesAndNewlines)
-            // If it's a single sentence or short chat line ending in a period, drop the final period
             if trimmed.hasSuffix(".") && !trimmed.hasSuffix("...") && !trimmed.hasSuffix("…") {
                 let periods = trimmed.filter { $0 == "." }.count
-                if periods == 1 {
+                let isSingleLineCode = (cat != .code) || !trimmed.contains("\n")
+                if periods == 1 && isSingleLineCode {
                     result = String(trimmed.dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
                 }
             }

@@ -7,7 +7,7 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
         let encoderUsesGPU: Bool
     }
     enum Family: String, CaseIterable, Identifiable {
-        case parakeet = "Parakeet", nemotron = "Nemotron", qwen = "Qwen", sravaani = "SraVaani", specialized = "Specialized"
+        case parakeet = "Parakeet", nemotron = "Nemotron", apple = "Apple", qwen = "Qwen", sravaani = "SraVaani", specialized = "Specialized"
         var id: Self { self }
         var summary: String {
             switch self {
@@ -15,6 +15,8 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
                 return String(localized: "Fast and memory-efficient")
             case .nemotron:
                 return String(localized: "NVIDIA cache-aware streaming Conformer-RNNT")
+            case .apple:
+                return String(localized: "Zero-download built-in macOS 26 SpeechAnalyzer engine")
             case .qwen:
                 return String(localized: "More languages, but slower")
             case .sravaani:
@@ -30,6 +32,7 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
     case ctc = "parakeet-ctc-0.6b"
     case ctcSmall = "parakeet-ctc-110m"
     case nemotron = "nemotron-0.6b"
+    case speechAnalyzer = "apple-speechanalyzer"
     case qwenSmall = "qwen-0.6b"
     case qwenLarge = "qwen-1.7b"
     case sravaani = "sravaani-1.0"
@@ -46,6 +49,7 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
         case .ctc: "CTC 0.6B (EN)"
         case .ctcSmall: "CTC 110M (Tiny)"
         case .nemotron: "0.6B Streaming"
+        case .speechAnalyzer: "SpeechAnalyzer"
         case .qwenSmall: "0.6B"
         case .qwenLarge: "1.7B"
         case .sravaani: "1.0 (Indic TDT)"
@@ -62,6 +66,7 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
         case .ctc: String(localized: "Fast English FastConformer-CTC (600M, INT8 CoreML, CC-BY-4.0).")
         case .ctcSmall: String(localized: "Lightweight 110M English Conformer-CTC (~102 MB).")
         case .nemotron: String(localized: "Cache-aware streaming English ASR optimized for Apple Neural Engine.")
+        case .speechAnalyzer: String(localized: "Built-in macOS 26 Neural Engine SpeechAnalyzer (zero model download).")
         case .qwenSmall: String(localized: "Smaller and faster.")
         case .qwenLarge: String(localized: "Higher accuracy, more memory.")
         case .sravaani: String(localized: "IISc/ARTPARK CoreML FastConformer-TDT for Indic languages and English.")
@@ -74,12 +79,14 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
         switch self {
         case .ultra, .redux, .v2, .ctc, .ctcSmall: .parakeet
         case .nemotron: .nemotron
+        case .speechAnalyzer: .apple
         case .qwenSmall, .qwenLarge: .qwen
         case .sravaani: .sravaani
         case .whisperApex, .indicFlex: .specialized
         }
     }
     var isNemotron: Bool { family == .nemotron }
+    var isAppleSpeech: Bool { self == .speechAnalyzer }
     var isQwen: Bool { family == .qwen }
     var isSraVaani: Bool { family == .sravaani }
     var isSpecialized: Bool { family == .specialized }
@@ -91,15 +98,32 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
             return .init(joint: "JointDecisionv3", blankToken: 8192, encoderUsesGPU: self == .redux)
         case .v2:
             return .init(joint: "JointDecision", blankToken: 1024, encoderUsesGPU: false)
-        case .ctc, .ctcSmall, .sravaani, .nemotron, .whisperApex, .indicFlex, .qwenSmall, .qwenLarge:
+        case .ctc, .ctcSmall, .sravaani, .nemotron, .speechAnalyzer, .whisperApex, .indicFlex, .qwenSmall, .qwenLarge:
             return nil
         }
+    }
+
+    /// Recommends the optimal local ASR model for this Mac's memory and selected language.
+    static func recommended(
+        forLanguage language: String?,
+        physicalMemoryBytes: UInt64 = ProcessInfo.processInfo.physicalMemory
+    ) -> DictationModel {
+        let lowerLang = language?.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if lowerLang.contains("hinglish") { return .whisperApex }
+        if lowerLang.contains("banglish") { return .indicFlex }
+        if lowerLang == "hindi" || lowerLang == "bengali" { return .sravaani }
+        let gigabytes = physicalMemoryBytes / 1_073_741_824
+        if gigabytes >= 16 { return .ultra }
+        if gigabytes >= 8 { return .redux }
+        if #available(macOS 26.0, *) { return .speechAnalyzer }
+        return .redux
     }
     var coverage: String {
         switch self {
         case .ultra, .redux: String(localized: "25 languages")
         case .v2, .ctc, .ctcSmall: String(localized: "English")
         case .nemotron: String(localized: "English (1120ms streaming)")
+        case .speechAnalyzer: String(localized: "macOS System Languages")
         case .qwenSmall, .qwenLarge: String(localized: "30 languages and 22 Chinese dialects")
         case .sravaani: String(localized: "65 Indian languages and English")
         case .whisperApex: String(localized: "Hindi & Conversational Hinglish")
@@ -111,6 +135,7 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
         case .ultra, .redux: "parakeet-\(rawValue)"
         case .v2, .ctc, .ctcSmall: rawValue
         case .nemotron: "nemotron-speech-streaming-en-0.6b-coreml"
+        case .speechAnalyzer: "apple-speechanalyzer"
         case .qwenSmall, .qwenLarge: rawValue
         case .sravaani: "sravaani-1.0"
         case .whisperApex: "whisper-hindi2hinglish-apex"
@@ -131,6 +156,8 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
             return ["parakeet-ctc-110m", "parakeet-ctc-110m-coreml"]
         case .nemotron:
             return ["nemotron-speech-streaming-en-0.6b-coreml", "nemotron-0.6b"]
+        case .speechAnalyzer:
+            return []
         case .qwenSmall:
             return ["qwen-0.6b", "Qwen3-ASR-0.6B-CoreML-INT8"]
         case .qwenLarge:
@@ -151,6 +178,7 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
         case .ctc: 600
         case .ctcSmall: 102
         case .nemotron: 610
+        case .speechAnalyzer: 0
         case .qwenSmall: 940
         case .qwenLarge: 2352
         case .sravaani: 892
@@ -179,6 +207,8 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
                 "nemotron_coreml_1120ms/joint.mlmodelc",
                 "nemotron_coreml_1120ms/metadata.json"
             ]
+        case .speechAnalyzer:
+            return []
         case .qwenSmall, .qwenLarge:
             return ["encoder.mlmodelc", "decoder.mlmodelc", "embedding.mlmodelc", "config.json"]
         case .sravaani:
@@ -197,7 +227,7 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
 
     var requiredFiles: Set<String> {
         switch self {
-        case .ultra, .redux, .v2, .ctc, .ctcSmall:
+        case .ultra, .redux, .v2, .ctc, .ctcSmall, .speechAnalyzer:
             return components
         case .nemotron:
             return components.union(["nemotron_coreml_1120ms/tokenizer.json"])
@@ -219,6 +249,7 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
         case .ctc: "FluidInference/parakeet-ctc-0.6b-coreml"
         case .ctcSmall: "FluidInference/parakeet-ctc-110m-coreml"
         case .nemotron: "FluidInference/nemotron-speech-streaming-en-0.6b-coreml"
+        case .speechAnalyzer: ""
         case .qwenSmall: "UniMocha/Qwen3-ASR-0.6B-CoreML-INT8"
         case .qwenLarge: "UniMocha/Qwen3-ASR-1.7B-CoreML-INT8"
         case .sravaani: "spashii/SraVaani-1.0-CoreML"
@@ -235,6 +266,7 @@ enum DictationModel: String, CaseIterable, Identifiable, Codable, Sendable {
         case .ctc: "c5e129ca09f50759e3025eca7609f68485fa09a7"
         case .ctcSmall: "accdafd8cf8a2ff1cabe3c11e54416b405d409aa"
         case .nemotron: "0651794847e50f9687bcaa096c3f8ec696ac6fc4"
+        case .speechAnalyzer: ""
         case .qwenSmall: "27b7a26835d7c2cd1cf774b4c490eb5519ca71a0"
         case .qwenLarge: "06312fbac1383cd22e1000c28b017634e03251a2"
         case .sravaani: "3f3daa338ee3f25c878fc6863d96943959cc14a9"

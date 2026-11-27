@@ -1,3 +1,4 @@
+import AVFoundation
 import Foundation
 import OSLog
 
@@ -41,7 +42,12 @@ actor GroqAudioService {
             throw GroqAudioError.emptyAudio
         }
 
-        let wavData = DictationWAVEncoder.encodePCM16(samples: samples, sampleRate: 16000)
+        let compressedM4A = samples.count >= 8_000
+            ? DictationWAVEncoder.encodeCompressedM4A(samples: samples, sampleRate: 16_000)
+            : nil
+        let uploadData = compressedM4A ?? DictationWAVEncoder.encodePCM16(samples: samples, sampleRate: 16_000)
+        let uploadFilename = compressedM4A != nil ? "dictation.m4a" : "dictation.wav"
+        let uploadContentType = compressedM4A != nil ? "audio/mp4" : "audio/wav"
         let boundary = "Boundary-\(UUID().uuidString)"
 
         var request = URLRequest(url: Self.endpoint)
@@ -79,9 +85,9 @@ actor GroqAudioService {
 
         // 4. Audio file
         body.append("--\(boundary)\r\n".data(using: .utf8)!)
-        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"dictation.wav\"\r\n".data(using: .utf8)!)
-        body.append("Content-Type: audio/wav\r\n\r\n".data(using: .utf8)!)
-        body.append(wavData)
+        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(uploadFilename)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: \(uploadContentType)\r\n\r\n".data(using: .utf8)!)
+        body.append(uploadData)
         body.append("\r\n".data(using: .utf8)!)
 
         // Close boundary
@@ -112,6 +118,53 @@ actor GroqAudioService {
 }
 
 enum DictationWAVEncoder {
+    /// Generates compact 32 kbps mono AAC `.m4a` payload (~8x smaller than PCM16 WAV) for cloud upload.
+    static func encodeCompressedM4A(samples: [Float], sampleRate: Double = 16_000) -> Data? {
+        guard !samples.isEmpty,
+              let format = AVAudioFormat(
+                  commonFormat: .pcmFormatFloat32,
+                  sampleRate: sampleRate,
+                  channels: 1,
+                  interleaved: false
+              ),
+              let buffer = AVAudioPCMBuffer(
+                  pcmFormat: format,
+                  frameCapacity: AVAudioFrameCount(samples.count)
+              ),
+              let channel = buffer.floatChannelData?[0]
+        else { return nil }
+
+        samples.withUnsafeBufferPointer { src in
+            if let base = src.baseAddress {
+                channel.update(from: base, count: samples.count)
+            }
+        }
+        buffer.frameLength = AVAudioFrameCount(samples.count)
+
+        let tempURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("szcast-groq-\(UUID().uuidString).m4a")
+        defer { try? FileManager.default.removeItem(at: tempURL) }
+
+        let settings: [String: Any] = [
+            AVFormatIDKey: kAudioFormatMPEG4AAC,
+            AVSampleRateKey: sampleRate,
+            AVNumberOfChannelsKey: 1,
+            AVEncoderBitRateKey: 32_000
+        ]
+        do {
+            let file = try AVAudioFile(
+                forWriting: tempURL,
+                settings: settings,
+                commonFormat: .pcmFormatFloat32,
+                interleaved: false
+            )
+            try file.write(from: buffer)
+            return try Data(contentsOf: tempURL)
+        } catch {
+            return nil
+        }
+    }
+
     /// Generate standard 16-bit PCM RIFF WAV data from mono Float samples.
     static func encodePCM16(samples: [Float], sampleRate: Int = 16000) -> Data {
         let numSamples = samples.count

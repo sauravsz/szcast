@@ -2,6 +2,8 @@ import Foundation
 
 enum VocabularyPackType: String, CaseIterable, Identifiable, Codable, Sendable {
     case tech = "tech"
+    case aiMl = "aiMl"
+    case finance = "finance"
     case medical = "medical"
     case legal = "legal"
     case brands = "brands"
@@ -12,6 +14,8 @@ enum VocabularyPackType: String, CaseIterable, Identifiable, Codable, Sendable {
     var displayName: String {
         switch self {
         case .tech: return "Tech"
+        case .aiMl: return "AI & ML"
+        case .finance: return "MBA & Finance"
         case .medical: return "Medical"
         case .legal: return "Legal"
         case .brands: return "Brands"
@@ -22,6 +26,8 @@ enum VocabularyPackType: String, CaseIterable, Identifiable, Codable, Sendable {
     var blurb: String {
         switch self {
         case .tech: return "Programming, cloud, and developer tools."
+        case .aiMl: return "AI models, CoreML, PyTorch, vectors, and tooling."
+        case .finance: return "Accounting, valuation, strategy, and financial ratios."
         case .medical: return "Medications, conditions, and clinical terms."
         case .legal: return "Litigation, contract, and court terminology."
         case .brands: return "Company, product, and app names."
@@ -32,6 +38,8 @@ enum VocabularyPackType: String, CaseIterable, Identifiable, Codable, Sendable {
     var fixesCount: Int {
         switch self {
         case .tech: return 76
+        case .aiMl: return 16
+        case .finance: return 16
         case .medical: return 87
         case .legal: return 32
         case .brands: return 106
@@ -42,6 +50,8 @@ enum VocabularyPackType: String, CaseIterable, Identifiable, Codable, Sendable {
     var examples: String {
         switch self {
         case .tech: return "AngularJS, Bazel, Blazor, async..."
+        case .aiMl: return "PyTorch, CoreML, Claude, Parakeet..."
+        case .finance: return "EBITDA, WACC, CAGR, DCF..."
         case .medical: return "Celexa, Fosamax, Humira..."
         case .legal: return "FERPA, NLRB, accord..."
         case .brands: return "ASUS, Adyen, Aetna..."

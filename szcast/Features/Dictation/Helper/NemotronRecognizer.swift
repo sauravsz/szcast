@@ -1,3 +1,4 @@
+import Accelerate
 import CoreML
 import Foundation
 
@@ -14,6 +15,7 @@ final class NemotronRecognizer {
     private let decoder: MLModel
     private let joint: MLModel
     private let vocabulary: [Int: String]
+    private var warmedUp = false
 
     init(directory: URL) throws {
         let base = directory.appendingPathComponent("nemotron_coreml_1120ms")
@@ -32,6 +34,14 @@ final class NemotronRecognizer {
         vocabulary = table
     }
 
+    func warmupIfNeeded() {
+        guard !warmedUp else { return }
+        warmedUp = true
+        _ = try? autoreleasepool {
+            try transcribeTimed([Float](repeating: 0, count: 4_000))
+        }
+    }
+
     func transcribe(_ samples: [Float]) throws -> String {
         try transcribeTimed(samples).text
     }
@@ -46,14 +56,20 @@ final class NemotronRecognizer {
         var cacheLen = try DictationTensor.integer(0)
         var hState = try DictationTensor.zeros([2, 1, 640])
         var cState = try DictationTensor.zeros([2, 1, 640])
-        var lastToken = Self.blankToken
+        let tokenTensor = try DictationTensor.integer(Self.blankToken, shape: [1, 1])
+        let tokenLengthTensor = try DictationTensor.integer(1)
+        let melLengthTensor = try DictationTensor.integer(Self.totalMelFrames)
+        let melInput = try DictationTensor.zeros([1, 128, Self.totalMelFrames])
+        let encoderFrame = try DictationTensor.zeros([1, 1024, 1])
+        let encoderFrameFeature = MLFeatureValue(multiArray: encoderFrame)
 
         func advanceDecoder(_ token: Int) throws -> MLMultiArray {
+            DictationTensor.setInteger(token, in: tokenTensor)
             let out = try DictationTensor.predict(
                 decoder,
                 [
-                    "token": DictationTensor.integer(token, shape: [1, 1]),
-                    "token_length": DictationTensor.integer(1),
+                    "token": tokenTensor,
+                    "token_length": tokenLengthTensor,
                     "h_in": hState,
                     "c_in": cState
                 ]
@@ -63,20 +79,26 @@ final class NemotronRecognizer {
             return try DictationTensor.array("decoder_out", from: out)
         }
 
-        var decoderOut = try advanceDecoder(lastToken)
+        var decoderOut = try advanceDecoder(Self.blankToken)
+        var jointProvider = try MLDictionaryFeatureProvider(dictionary: [
+            "decoder": MLFeatureValue(multiArray: decoderOut),
+            "encoder": encoderFrameFeature
+        ])
         var carryMel = [Float](repeating: 0, count: 128 * Self.preEncodeCacheFrames)
         var globalSeconds = 0.0
         var pieces = [(piece: String, start: TimeInterval, end: TimeInterval)]()
         var chunkTexts = [String]()
-
-        let encoderFrame = try DictationTensor.zeros([1, 1024, 1])
 
         for range in DictationAudioChunks.ranges(in: samples, maximum: Self.chunkAudioSamples) {
             try autoreleasepool {
                 let slice = samples[range]
                 let audio = try DictationTensor.zeros([1, slice.count])
                 audio.withUnsafeMutableBufferPointer(ofType: Float.self) { dst, _ in
-                    for (idx, val) in slice.enumerated() { dst[idx] = val }
+                    guard let dstBase = dst.baseAddress else { return }
+                    slice.withUnsafeBufferPointer { src in
+                        guard let srcBase = src.baseAddress else { return }
+                        dstBase.update(from: srcBase, count: slice.count)
+                    }
                 }
                 let prep = try DictationTensor.predict(
                     preprocessor,
@@ -94,35 +116,41 @@ final class NemotronRecognizer {
                 var frameStart = 0
                 while frameStart < availableFrames {
                     let chunkCount = min(Self.chunkMelFrames, availableFrames - frameStart)
-                    let melInput = try DictationTensor.zeros([1, 128, Self.totalMelFrames])
                     let validTotal = Self.preEncodeCacheFrames + chunkCount
                     melInput.withUnsafeMutableBufferPointer(ofType: Float.self) { dst, _ in
                         dst.initialize(repeating: 0)
-                        for band in 0..<128 {
-                            let dstRow = band * Self.totalMelFrames
-                            let carryRow = band * Self.preEncodeCacheFrames
-                            for p in 0..<Self.preEncodeCacheFrames {
-                                dst[dstRow + p] = carryMel[carryRow + p]
-                            }
-                            let srcRow = band * totalBinsStride
-                            for f in 0..<chunkCount {
-                                dst[dstRow + Self.preEncodeCacheFrames + f] = melValues[srcRow + frameStart + f]
+                        guard let dstBase = dst.baseAddress else { return }
+                        carryMel.withUnsafeBufferPointer { carryPtr in
+                            melValues.withUnsafeBufferPointer { melPtr in
+                                guard let carryBase = carryPtr.baseAddress, let melBase = melPtr.baseAddress else {
+                                    return
+                                }
+                                for band in 0..<128 {
+                                    let dstRow = dstBase.advanced(by: band * Self.totalMelFrames)
+                                    let carryRow = carryBase.advanced(by: band * Self.preEncodeCacheFrames)
+                                    dstRow.update(from: carryRow, count: Self.preEncodeCacheFrames)
+                                    let srcRow = melBase.advanced(by: band * totalBinsStride + frameStart)
+                                    dstRow.advanced(by: Self.preEncodeCacheFrames).update(from: srcRow, count: chunkCount)
+                                }
                             }
                         }
                     }
 
                     // Save last 9 valid frames as pre-encode cache for next chunk.
-                    for band in 0..<128 {
-                        let dstRow = band * Self.preEncodeCacheFrames
-                        let srcRow = band * Self.totalMelFrames
-                        melInput.withUnsafeBufferPointer(ofType: Float.self) { src in
-                            for p in 0..<Self.preEncodeCacheFrames {
-                                let sourceFrame = max(0, validTotal - Self.preEncodeCacheFrames + p)
-                                carryMel[dstRow + p] = src[srcRow + sourceFrame]
+                    let sourceStartFrame = max(0, validTotal - Self.preEncodeCacheFrames)
+                    melInput.withUnsafeBufferPointer(ofType: Float.self) { src in
+                        guard let srcBase = src.baseAddress else { return }
+                        carryMel.withUnsafeMutableBufferPointer { carryPtr in
+                            guard let carryBase = carryPtr.baseAddress else { return }
+                            for band in 0..<128 {
+                                let dstRow = carryBase.advanced(by: band * Self.preEncodeCacheFrames)
+                                let srcRow = srcBase.advanced(by: band * Self.totalMelFrames + sourceStartFrame)
+                                dstRow.update(from: srcRow, count: Self.preEncodeCacheFrames)
                             }
                         }
                     }
 
+                    DictationTensor.setInteger(validTotal, in: melLengthTensor)
                     let encOut = try DictationTensor.predict(
                         encoder,
                         [
@@ -130,7 +158,7 @@ final class NemotronRecognizer {
                             "cache_len": cacheLen,
                             "cache_time": cacheTime,
                             "mel": melInput,
-                            "mel_length": DictationTensor.integer(validTotal)
+                            "mel_length": melLengthTensor
                         ]
                     )
                     cacheChannel = try DictationTensor.array("cache_channel_out", from: encOut)
@@ -147,28 +175,48 @@ final class NemotronRecognizer {
                     for t in 0..<encodedLen {
                         encodedShaped.withUnsafeShapedBufferPointer { src, _, strides in
                             encoderFrame.withUnsafeMutableBufferPointer(ofType: Float.self) { dst, _ in
-                                for c in 0..<1024 {
-                                    dst[c] = src[c * strides[1] + t * strides[2]]
+                                if let srcBase = src.baseAddress, let dstBase = dst.baseAddress, strides[1] > 0 {
+                                    var zero: Float = 0
+                                    vDSP_vsadd(
+                                        srcBase.advanced(by: t * strides[2]),
+                                        vDSP_Stride(strides[1]),
+                                        &zero,
+                                        dstBase,
+                                        1,
+                                        1024
+                                    )
+                                } else {
+                                    for c in 0..<1024 {
+                                        dst[c] = src[c * strides[1] + t * strides[2]]
+                                    }
                                 }
                             }
                         }
 
                         var emitted = 0
                         while emitted < 10 {
-                            let jOut = try DictationTensor.predict(
-                                joint, ["decoder": decoderOut, "encoder": encoderFrame])
+                            let jOut = try DictationTensor.predict(joint, jointProvider)
                             let logits = try DictationTensor.array("logits", from: jOut)
-                            let values = try DictationTensor.floatValues(from: logits)
-                            guard let token = values.indices.max(by: { values[$0] < values[$1] }) else {
-                                break
+                            let token: Int
+                            if let argmax = try? DictationTensor.indexOfMaximumFloat(in: logits) {
+                                token = argmax
+                            } else {
+                                let values = try DictationTensor.floatValues(from: logits)
+                                guard let best = values.indices.max(by: { values[$0] < values[$1] }) else {
+                                    break
+                                }
+                                token = best
                             }
                             if token == Self.blankToken { break }
                             if let piece = vocabulary[token], !piece.hasPrefix("<") {
                                 let s = chunkBaseSeconds + Double(t) * Self.frameSeconds
                                 pieces.append((piece, s, s + Self.frameSeconds))
                             }
-                            lastToken = token
                             decoderOut = try advanceDecoder(token)
+                            jointProvider = try MLDictionaryFeatureProvider(dictionary: [
+                                "decoder": MLFeatureValue(multiArray: decoderOut),
+                                "encoder": encoderFrameFeature
+                            ])
                             emitted += 1
                         }
                     }

@@ -50,6 +50,7 @@ enum DictationCloudSpeechProvider: String, CaseIterable, Identifiable, Sendable 
 
 enum DictationPolishProvider: String, CaseIterable, Identifiable, Sendable {
     case localS1 = "localS1"
+    case appleIntelligence = "appleIntelligence"
     case groq = "groq"
 
     var id: String { rawValue }
@@ -58,6 +59,8 @@ enum DictationPolishProvider: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .localS1:
             return String(localized: "S1-mini (Local)")
+        case .appleIntelligence:
+            return String(localized: "Apple Intelligence")
         case .groq:
             return String(localized: "Groq Cloud")
         }
@@ -66,7 +69,16 @@ enum DictationPolishProvider: String, CaseIterable, Identifiable, Sendable {
     var shortTitle: String {
         switch self {
         case .localS1: return "Local S1"
+        case .appleIntelligence: return "Apple AI"
         case .groq: return "Groq Llama"
         }
+    }
+
+    /// Resolves the effective polish provider, falling back to local S1 if Groq is selected without an API key.
+    static func resolved(preferred: Self, groqAPIKey: String) -> Self {
+        if preferred == .groq, groqAPIKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return .localS1
+        }
+        return preferred
     }
 }

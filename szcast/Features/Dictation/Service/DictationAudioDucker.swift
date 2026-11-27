@@ -1,6 +1,7 @@
 import AppKit
 import CoreAudio
 import Foundation
+import os
 import OSLog
 
 @MainActor
@@ -23,6 +24,7 @@ final class DictationAudioDucker {
     private var snapshot: Snapshot?
     private var transition: Task<Void, Never>?
     private var pausedMediaBundleIDs: [String] = []
+    private var pausedViaMediaRemote = false
 
     init(
         fileURL: URL = AppPaths.applicationSupport().appending(path: "dictation-volume.json"),
@@ -82,10 +84,10 @@ final class DictationAudioDucker {
 
     private func pauseMedia() {
         pausedMediaBundleIDs.removeAll()
+        pausedViaMediaRemote = false
         let running = ["com.apple.Music", "com.spotify.client"].filter {
             !NSRunningApplication.runningApplications(withBundleIdentifier: $0).isEmpty
         }
-        guard !running.isEmpty else { return }
         Task.detached(priority: .userInitiated) { [weak self] in
             var paused: [String] = []
             for bundleID in running {
@@ -104,25 +106,78 @@ final class DictationAudioDucker {
                     paused.append(bundleID)
                 }
             }
-            if !paused.isEmpty {
-                await MainActor.run { [weak self] in
-                    self?.pausedMediaBundleIDs = paused
-                }
+            let pausedRemote = paused.isEmpty ? await Self.pauseNowPlayingViaMediaRemoteIfPlaying() : false
+            await MainActor.run { [weak self] in
+                guard let self else { return }
+                self.pausedMediaBundleIDs = paused
+                self.pausedViaMediaRemote = pausedRemote
             }
         }
     }
 
     private func resumeMedia() {
         let toResume = pausedMediaBundleIDs
+        let shouldResumeRemote = pausedViaMediaRemote
         pausedMediaBundleIDs.removeAll()
-        guard !toResume.isEmpty else { return }
+        pausedViaMediaRemote = false
+        guard !toResume.isEmpty || shouldResumeRemote else { return }
         Task.detached(priority: .utility) {
             for bundleID in toResume {
                 let script = "tell application id \"\(bundleID)\" to play"
                 var error: NSDictionary?
                 NSAppleScript(source: script)?.executeAndReturnError(&error)
             }
+            if shouldResumeRemote {
+                _ = Self.sendMediaRemoteCommand(0) // kMRPlay
+            }
         }
+    }
+
+    // MARK: - MediaRemote Now-Playing Bridge (Safari, Chrome, Podcasts, etc.)
+
+    // `dlopen` handle is immutable for process lifetime; store integer address for Swift 6 Sendable safety.
+    nonisolated private static let mediaRemoteAddress: UInt = {
+        guard let handle = dlopen(
+            "/System/Library/PrivateFrameworks/MediaRemote.framework/MediaRemote", RTLD_LAZY)
+        else { return 0 }
+        return UInt(bitPattern: handle)
+    }()
+
+    nonisolated private static var mediaRemoteHandle: UnsafeMutableRawPointer? {
+        mediaRemoteAddress == 0 ? nil : UnsafeMutableRawPointer(bitPattern: mediaRemoteAddress)
+    }
+
+    nonisolated private static func pauseNowPlayingViaMediaRemoteIfPlaying() async -> Bool {
+        guard let handle = mediaRemoteHandle,
+              let sym = dlsym(handle, "MRMediaRemoteGetNowPlayingApplicationIsPlaying")
+        else { return false }
+        typealias IsPlayingFn = @convention(c) (DispatchQueue, @escaping @Sendable (Bool) -> Void) -> Void
+        let isPlayingFn = unsafeBitCast(sym, to: IsPlayingFn.self)
+        let isPlaying: Bool = await withCheckedContinuation { continuation in
+            let settled = OSAllocatedUnfairLock(initialState: false)
+            isPlayingFn(.global(qos: .userInitiated)) { playing in
+                if settled.withLock({ let was = $0; $0 = true; return !was }) {
+                    continuation.resume(returning: playing)
+                }
+            }
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + .milliseconds(120)) {
+                if settled.withLock({ let was = $0; $0 = true; return !was }) {
+                    continuation.resume(returning: false)
+                }
+            }
+        }
+        guard isPlaying else { return false }
+        return sendMediaRemoteCommand(1) // kMRPause
+    }
+
+    @discardableResult
+    nonisolated private static func sendMediaRemoteCommand(_ command: UInt32) -> Bool {
+        guard let handle = mediaRemoteHandle,
+              let sym = dlsym(handle, "MRMediaRemoteSendCommand")
+        else { return false }
+        typealias SendCmdFn = @convention(c) (UInt32, UnsafeRawPointer?) -> Bool
+        let sendCmd = unsafeBitCast(sym, to: SendCmdFn.self)
+        return sendCmd(command, nil)
     }
 
     func restoreImmediately() {

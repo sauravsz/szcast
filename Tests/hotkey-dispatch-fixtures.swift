@@ -43,6 +43,8 @@ final class ModifierTapMonitor {
     var onHoldPressed: (() -> Void)?
     var onHoldReleased: (() -> Void)?
     var onHoldCancelled: (() -> Void)?
+    var onHoldTap: (() -> Void)?
+    var onHoldDoubleTap: (() -> Void)?
     func start() {}
     func update(bound: Set<HotKeyBinding>, holdKey: ModifierKey?) {}
 }

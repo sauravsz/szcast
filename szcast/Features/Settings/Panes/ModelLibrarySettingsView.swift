@@ -173,7 +173,8 @@ struct ModelLibrarySettingsView: View {
         let isRemoving = coordinator.models.removing == model
         let isHot = coordinator.models.loadedModel == model && coordinator.models.isWorkerRunning
         let isPrewarming = !isHot && coordinator.models.isPrewarming && isSelected
-        let sizeText = formattedModelSize(for: model)
+        let isRecommended = model == DictationModel.recommended(forLanguage: settings.dictationLanguage)
+        let sizeText = model == .speechAnalyzer ? String(localized: "Built-in · 0 MB") : formattedModelSize(for: model)
 
         VStack(alignment: .leading, spacing: Theme.Spacing.xs) {
             HStack(alignment: .center, spacing: Theme.Spacing.sm) {
@@ -187,6 +188,14 @@ struct ModelLibrarySettingsView: View {
                             .padding(.horizontal, 5)
                             .padding(.vertical, 1)
                             .background(Capsule().fill(Color.secondary.opacity(0.12)))
+                        if isRecommended {
+                            Text("Recommended")
+                                .font(.caption2.weight(.medium))
+                                .foregroundStyle(.teal)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 1)
+                                .background(Capsule().fill(Color.teal.opacity(0.14)))
+                        }
                         if isSelected {
                             Text("Active")
                                 .font(.caption2.weight(.medium))
@@ -221,25 +230,35 @@ struct ModelLibrarySettingsView: View {
                         Button("Set Active") { activateSpeechModel(model) }
                             .buttonStyle(.borderedProminent)
                             .controlSize(.small)
-                    } else if !isHot && !isPrewarming {
+                    } else if model != .speechAnalyzer && !isHot && !isPrewarming {
                         Button("Prewarm") { coordinator.models.prewarm(model) }
                             .buttonStyle(.bordered)
                             .controlSize(.small)
                     }
-                    Button {
-                        removeSpeechModel(model)
-                    } label: {
-                        Image(systemName: "trash")
+                    if model != .speechAnalyzer {
+                        Button {
+                            removeSpeechModel(model)
+                        } label: {
+                            Image(systemName: "trash")
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .disabled(coordinator.models.transcribing || isRemoving || coordinator.models.removing != nil)
+                        .help("Remove \(model.title)")
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                    .disabled(coordinator.models.transcribing || isRemoving || coordinator.models.removing != nil)
-                    .help("Remove \(model.title)")
                 } else {
                     Button("Download") { downloadSpeechModel(model) }
                         .buttonStyle(.bordered)
                         .controlSize(.small)
                         .disabled(coordinator.models.downloading != nil || isRemoving)
+                    Button {
+                        importCustomModelFolder(for: model)
+                    } label: {
+                        Image(systemName: "folder")
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .help("Use existing local model folder…")
                 }
             }
 
@@ -338,7 +357,7 @@ struct ModelLibrarySettingsView: View {
                 }
             } label: {
                 SettingsRowTitle(.modelLibraryPolish, "Normalization engine")
-                Text("Select an on-device lightweight GGUF text model or Groq cloud cleanup.")
+                Text("Select an on-device lightweight GGUF text model, Apple Intelligence, or Groq cloud cleanup.")
             }
 
             if settings.dictationPolishProvider == .localS1 {
@@ -353,6 +372,13 @@ struct ModelLibrarySettingsView: View {
 
                 ForEach(DictationTextModel.allCases) { textModel in
                     localTextModelRow(textModel)
+                }
+            } else if settings.dictationPolishProvider == .appleIntelligence {
+                let status = AppleIntelligenceProvider.status()
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(status.isAvailable ? "Apple Intelligence is ready on this Mac." : (status.message ?? "Apple Intelligence unavailable — falls back to S1-mini automatically."))
+                        .font(.system(size: settings.settingsRowSubtitleFontSize))
+                        .foregroundStyle(status.isAvailable ? Color.secondary : Color.orange)
                 }
             } else {
                 Picker(selection: bSettings.dictationGroqPolishModel) {
@@ -665,6 +691,23 @@ struct ModelLibrarySettingsView: View {
 
     private func activateSpeechModel(_ model: DictationModel) {
         coordinator.activateLocalModel(model)
+    }
+
+    private func importCustomModelFolder(for model: DictationModel) {
+        let panel = NSOpenPanel()
+        panel.title = String(localized: "Select Local Folder for \(model.title)")
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        if panel.runModal() == .OK, let folder = panel.url {
+            coordinator.models.setCustomDirectory(folder, for: model)
+            if !coordinator.models.isInstalled(model) {
+                coordinator.models.setCustomDirectory(nil, for: model)
+                downloadErrorMessage = String(localized: "Selected folder is missing required model files for \(model.title).")
+            } else {
+                downloadErrorMessage = nil
+            }
+        }
     }
 
     private func downloadSpeechModel(_ model: DictationModel) {

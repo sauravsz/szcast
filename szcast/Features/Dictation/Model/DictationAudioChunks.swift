@@ -87,40 +87,96 @@ enum DictationAudioChunks {
         return ranges
     }
 
-    /// Conditions 16 kHz microphone audio with an 80 Hz high-pass filter and bounded RMS leveling.
+    /// Conditions 16 kHz microphone audio using a vDSP biquad 80 Hz HPF, click suppression,
+    /// active-speech RMS normalization (ignoring silences), and soft-knee peak limiting.
     static func conditionForTranscription(_ samples: [Float], whisperMode: Bool = false) -> [Float] {
         guard samples.count > 64 else { return samples }
 
-        // First-order 80 Hz DC/high-pass filter at 16 kHz removes laptop fan rumble and plosives.
+        // 1. Remove scalar DC offset so turn-on transients never distort filter state.
+        var mean: Float = 0
+        vDSP_meanv(samples, 1, &mean, vDSP_Length(samples.count))
+        var dcRemoved = [Float](repeating: 0, count: samples.count)
+        var negMean = -mean
+        vDSP_vsadd(samples, 1, &negMean, &dcRemoved, 1, vDSP_Length(samples.count))
+
+        // 2. 2nd-order Butterworth 80 Hz high-pass biquad @ 16 kHz.
         var filtered = [Float](repeating: 0, count: samples.count)
-        let alpha: Float = 0.969
-        filtered[0] = samples[0]
-        var prevX = samples[0]
-        var prevY = filtered[0]
-        for i in 1..<samples.count {
-            let x = samples[i]
-            let y = alpha * (prevY + x - prevX)
-            filtered[i] = y
-            prevX = x
-            prevY = y
+        let omega = 2.0 * Double.pi * 80.0 / 16_000.0
+        let cosW = cos(omega)
+        let alpha = sin(omega) / sqrt(2.0)
+        let a0 = 1.0 + alpha
+        let coefficients: [Double] = [
+            (1.0 + cosW) / (2.0 * a0),
+            -(1.0 + cosW) / a0,
+            (1.0 + cosW) / (2.0 * a0),
+            (-2.0 * cosW) / a0,
+            (1.0 - alpha) / a0
+        ]
+        if let setup = vDSP_biquad_CreateSetup(coefficients, 1) {
+            defer { vDSP_biquad_DestroySetup(setup) }
+            var delays = [Float](repeating: 0, count: 4)
+            vDSP_biquad(setup, &delays, dcRemoved, 1, &filtered, 1, vDSP_Length(samples.count))
+        } else {
+            filtered = dcRemoved
         }
 
-        var rms: Float = 0
-        vDSP_rmsqv(filtered, 1, &rms, vDSP_Length(filtered.count))
-        guard rms >= 0.0015 else { return filtered }
+        // 2b. In whisper mode, apply a +4.5 dB 2.5 kHz presence high-shelf so unvoiced consonants stay crisp.
+        if whisperMode {
+            applyWhisperPresenceShelf(&filtered)
+        }
 
-        let targetRMS: Float = 0.065
-        let maxGain: Float = whisperMode ? 6.5 : 4.0
-        let gain = min(maxGain, max(1.0, targetRMS / rms))
+        // 3. Soft keystroke de-clicker on leading/trailing 40ms + 5ms cosine edge fades.
+        suppressEdgeClicks(&filtered)
+
+        // 3b. Soft stationary room/fan noise attenuation preserving speech transients cleanly.
+        applyStationaryNoiseGate(&filtered)
+
+        // 4. Active-speech RMS estimator (excludes silent frames so pauses do not skew leveling).
+        var globalRMS: Float = 0
+        vDSP_rmsqv(filtered, 1, &globalRMS, vDSP_Length(filtered.count))
+
+        let frameLen = 800 // 50ms frames
+        var activeRMSValues = [Float]()
+        if filtered.count >= frameLen {
+            var offset = 0
+            while offset + frameLen <= filtered.count {
+                var frameRMS: Float = 0
+                filtered.withUnsafeBufferPointer { ptr in
+                    if let base = ptr.baseAddress {
+                        vDSP_rmsqv(base.advanced(by: offset), 1, &frameRMS, vDSP_Length(frameLen))
+                    }
+                }
+                if frameRMS >= 0.0025 {
+                    activeRMSValues.append(frameRMS)
+                }
+                offset += frameLen
+            }
+        }
+
+        guard globalRMS >= 0.0015 || !activeRMSValues.isEmpty else { return filtered }
+
+        let speechRMS: Float
+        if !activeRMSValues.isEmpty {
+            let sorted = activeRMSValues.sorted()
+            // 65th percentile reflects conversational speech level while resisting isolated transient spikes.
+            speechRMS = sorted[min(sorted.count - 1, (sorted.count * 65) / 100)]
+        } else {
+            speechRMS = globalRMS
+        }
+        guard speechRMS >= 0.0015 else { return filtered }
+
+        let targetRMS: Float = whisperMode ? 0.085 : 0.072
+        let maxGain: Float = whisperMode ? 6.5 : 4.2
+        let gain = min(maxGain, max(1.0, targetRMS / speechRMS))
         if gain > 1.05 {
             var mutableGain = gain
             vDSP_vsmul(filtered, 1, &mutableGain, &filtered, 1, vDSP_Length(filtered.count))
         }
 
+        // 5. Smooth soft-limiter above 0.85 prevents digital clipping on close-mic plosives.
         var peak: Float = 0
         vDSP_maxmgv(filtered, 1, &peak, vDSP_Length(filtered.count))
         if peak > 0.88 {
-            // Smooth soft-limiter above 0.85 avoids digital clipping on close mic plosives.
             for i in 0..<filtered.count {
                 let s = filtered[i]
                 let mag = abs(s)
@@ -132,5 +188,139 @@ enum DictationAudioChunks {
             }
         }
         return filtered
+    }
+
+    private static func suppressEdgeClicks(_ samples: inout [Float]) {
+        let count = samples.count
+        guard count > 320 else { return }
+
+        // Suppress isolated <8ms hotkey press/release click impulses in edge 40ms windows.
+        let edgeWindow = min(640, count / 4)
+        let interiorStart = edgeWindow
+        let interiorEnd = count - edgeWindow
+        if interiorEnd > interiorStart {
+            var bodyRMS: Float = 0
+            samples.withUnsafeBufferPointer { ptr in
+                if let base = ptr.baseAddress {
+                    vDSP_rmsqv(base.advanced(by: interiorStart), 1, &bodyRMS, vDSP_Length(interiorEnd - interiorStart))
+                }
+            }
+            let spikeThreshold = max(0.08, bodyRMS * 5.0)
+            for idx in 0..<edgeWindow where abs(samples[idx]) > spikeThreshold {
+                samples[idx] *= 0.25
+            }
+            for idx in (count - edgeWindow)..<count where abs(samples[idx]) > spikeThreshold {
+                samples[idx] *= 0.25
+            }
+        }
+
+        // 5ms (80-sample) cosine taper at start & end avoids boundary discontinuities.
+        let fadeSamples = min(80, count / 8)
+        for i in 0..<fadeSamples {
+            let weight = 0.5 - 0.5 * cos(Float.pi * Float(i) / Float(fadeSamples))
+            samples[i] *= weight
+            samples[count - 1 - i] *= weight
+        }
+    }
+
+    private static func applyWhisperPresenceShelf(_ samples: inout [Float]) {
+        guard samples.count > 16 else { return }
+        // High-shelf biquad: +4.5 dB @ 2,500 Hz, fs = 16,000 Hz, slope S = 1 (Q = 1/sqrt(2))
+        let gainDB = 4.5
+        let A = pow(10.0, gainDB / 40.0)
+        let w0 = 2.0 * Double.pi * 2_500.0 / 16_000.0
+        let cosW = cos(w0)
+        let sinW = sin(w0)
+        let alpha = (sinW / 2.0) * sqrt((A + 1.0 / A) * (1.0 / 1.0 - 1.0) + 2.0)
+        let twoSqrtAAlpha = 2.0 * sqrt(A) * alpha
+        let a0 = (A + 1.0) - (A - 1.0) * cosW + twoSqrtAAlpha
+        let coeffs: [Double] = [
+            (A * ((A + 1.0) + (A - 1.0) * cosW + twoSqrtAAlpha)) / a0,
+            (-2.0 * A * ((A - 1.0) + (A + 1.0) * cosW)) / a0,
+            (A * ((A + 1.0) + (A - 1.0) * cosW - twoSqrtAAlpha)) / a0,
+            (2.0 * ((A - 1.0) - (A + 1.0) * cosW)) / a0,
+            ((A + 1.0) - (A - 1.0) * cosW - twoSqrtAAlpha) / a0
+        ]
+        guard let setup = vDSP_biquad_CreateSetup(coeffs, 1) else { return }
+        defer { vDSP_biquad_DestroySetup(setup) }
+        var output = [Float](repeating: 0, count: samples.count)
+        var delays = [Float](repeating: 0, count: 4)
+        vDSP_biquad(setup, &delays, samples, 1, &output, 1, vDSP_Length(samples.count))
+        samples = output
+    }
+
+    private static func applyStationaryNoiseGate(_ samples: inout [Float]) {
+        let hop = 320 // 20ms frames
+        let frameCount = samples.count / hop
+        guard frameCount >= 8 else { return }
+
+        var rmsValues = [Float](repeating: 0, count: frameCount)
+        samples.withUnsafeBufferPointer { ptr in
+            guard let base = ptr.baseAddress else { return }
+            for f in 0..<frameCount {
+                var val: Float = 0
+                vDSP_rmsqv(base.advanced(by: f * hop), 1, &val, vDSP_Length(hop))
+                rmsValues[f] = val
+            }
+        }
+        let sorted = rmsValues.sorted()
+        let noiseFloor = sorted[max(0, (sorted.count * 15) / 100)]
+        let speechCeiling = sorted[min(sorted.count - 1, (sorted.count * 85) / 100)]
+        guard noiseFloor > 0.0005, noiseFloor < 0.015, speechCeiling / max(1e-6, noiseFloor) >= 2.5 else {
+            return
+        }
+
+        let gateThreshold = noiseFloor * 1.4
+        var prevGain: Float = 1.0
+        for f in 0..<frameCount {
+            let targetGain: Float = rmsValues[f] < gateThreshold ? 0.30 : 1.0
+            let start = f * hop
+            let end = (f == frameCount - 1) ? samples.count : (start + hop)
+            let span = max(1, end - start)
+            if prevGain == targetGain {
+                if targetGain < 0.99 {
+                    var g = targetGain
+                    samples.withUnsafeMutableBufferPointer { buf in
+                        guard let base = buf.baseAddress else { return }
+                        vDSP_vsmul(base.advanced(by: start), 1, &g, base.advanced(by: start), 1, vDSP_Length(span))
+                    }
+                }
+            } else {
+                // Smooth 20ms linear ramp prevents click discontinuities on gate transitions.
+                let rampLen = min(span, hop)
+                for i in 0..<rampLen {
+                    let t = Float(i) / Float(rampLen)
+                    samples[start + i] *= prevGain + (targetGain - prevGain) * t
+                }
+                if targetGain < 0.99 && rampLen < span {
+                    for i in rampLen..<span { samples[start + i] *= targetGain }
+                }
+            }
+            prevGain = targetGain
+        }
+    }
+
+    /// Acoustic gate filtering out accidental brief (<150ms) key clicks before ASR wakeup.
+    static func hasUsableSpeechEnergy(_ samples: [Float]) -> Bool {
+        guard samples.count >= 2_400 else { return false }
+        var peak: Float = 0
+        vDSP_maxmgv(samples, 1, &peak, vDSP_Length(samples.count))
+        guard peak >= 0.005 else { return false }
+        let frame = 800
+        var activeFrames = 0
+        samples.withUnsafeBufferPointer { ptr in
+            guard let base = ptr.baseAddress else { return }
+            var offset = 0
+            while offset + frame <= samples.count {
+                var rms: Float = 0
+                vDSP_rmsqv(base.advanced(by: offset), 1, &rms, vDSP_Length(frame))
+                if rms >= 0.0022 {
+                    activeFrames += 1
+                    if activeFrames >= 2 { return }
+                }
+                offset += frame
+            }
+        }
+        return activeFrames >= 2
     }
 }

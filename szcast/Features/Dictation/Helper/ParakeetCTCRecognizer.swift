@@ -1,3 +1,4 @@
+import Accelerate
 import CoreML
 import Foundation
 
@@ -129,10 +130,19 @@ final class ParakeetCTCRecognizer {
                 for frameIdx in 0..<activeFrames {
                     let rowBase = frameIdx * timeStride
                     var bestID = Self.blankID
-                    var bestScore: Float = -.infinity
-                    for tokID in 0..<vocabCount {
-                        let score = value(base[rowBase + tokID * vocabStride])
-                        if score > bestScore { bestScore = score; bestID = tokID }
+                    if Scalar.self == Float.self && vocabStride == 1,
+                       let floatPtr = raw.baseAddress?.assumingMemoryBound(to: Float.self)
+                    {
+                        var maxVal: Float = -.infinity
+                        var maxIdx: vDSP_Length = 0
+                        vDSP_maxvi(floatPtr.advanced(by: rowBase), 1, &maxVal, &maxIdx, vDSP_Length(vocabCount))
+                        bestID = Int(maxIdx)
+                    } else {
+                        var bestScore: Float = -.infinity
+                        for tokID in 0..<vocabCount {
+                            let score = value(base[rowBase + tokID * vocabStride])
+                            if score > bestScore { bestScore = score; bestID = tokID }
+                        }
                     }
                     if bestID != Self.blankID && bestID != previous,
                        let piece = vocabulary[bestID], !piece.isEmpty, piece != "<unk>"

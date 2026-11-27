@@ -459,6 +459,8 @@ final class AppCore {
             hotKeys.onDictationSecondaryPressed = { [weak self] in self?.dictationCoordinator.pressedSecondary() }
             hotKeys.onDictationReleased = { [weak self] in self?.dictationCoordinator.released() }
             hotKeys.onDictationCancelled = { [weak self] in self?.dictationCoordinator.cancel() }
+            hotKeys.onDictationHoldTap = { [weak self] in self?.dictationCoordinator.holdTapped() }
+            hotKeys.onDictationHoldDoubleTap = { [weak self] in self?.dictationCoordinator.holdDoubleTapped() }
             hotKeys.onDictationAddWord = { [weak self] in self?.dictationCoordinator.addSelectedWordToDictionary() }
             hotKeys.onDictationPasteLast = { [weak self] in self?.dictationCoordinator.pasteLastDictation() }
             hotKeys.onDictationCopyLast = { [weak self] in self?.dictationCoordinator.copyLastDictation() }
@@ -472,7 +474,18 @@ final class AppCore {
 
             // Ensure Parakeet local speech-to-text and S1-mini persistent local daemon are always ON on launch
             dictationModels.ensurePrewarmed(settings.dictationModel)
-            DictationLlamaServerManager.shared.startDaemon(idleRelease: settings.dictationS1IdleRelease)
+            DictationLlamaServerManager.shared.startDaemon(
+                idleRelease: settings.dictationS1IdleRelease,
+                settings: DictationS1Settings(
+                    enabled: settings.dictationS1Enabled,
+                    tone: settings.dictationS1Tone,
+                    structure: settings.dictationS1Structure,
+                    context: settings.dictationS1Context,
+                    idleRelease: settings.dictationS1IdleRelease,
+                    bengaliMode: settings.dictationBengaliMode,
+                    hindiMode: settings.dictationHindiMode
+                )
+            )
 
             // Display Tweaks: only apply if explicitly enabled; default is off and native ColorSync gamma restored
             if settings.displayTweaksEnabled {
@@ -630,7 +643,18 @@ final class AppCore {
 
     func handleReopen() {
         dictationModels.ensurePrewarmed(settings.dictationModel)
-        DictationLlamaServerManager.shared.startDaemon(idleRelease: settings.dictationS1IdleRelease)
+        DictationLlamaServerManager.shared.startDaemon(
+            idleRelease: settings.dictationS1IdleRelease,
+            settings: DictationS1Settings(
+                enabled: settings.dictationS1Enabled,
+                tone: settings.dictationS1Tone,
+                structure: settings.dictationS1Structure,
+                context: settings.dictationS1Context,
+                idleRelease: settings.dictationS1IdleRelease,
+                bengaliMode: settings.dictationBengaliMode,
+                hindiMode: settings.dictationHindiMode
+            )
+        )
         if settingsCoordinator.focusExisting() { return }
         if aiChatCoordinator.focusExisting() { return }
         if onboardingCoordinator.focusExisting() { return }

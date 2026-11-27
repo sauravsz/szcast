@@ -635,6 +635,30 @@ final class AppSettings {
         didSet { defaults.set(dictationAutoLearnDictionary, forKey: Key.dictationAutoLearnDictionary.rawValue) }
     }
 
+    var dictationVoiceSubmit: Bool {
+        didSet { defaults.set(dictationVoiceSubmit, forKey: Key.dictationVoiceSubmit.rawValue) }
+    }
+
+    var dictationCodeAndMarkdownSyntax: Bool {
+        didSet { defaults.set(dictationCodeAndMarkdownSyntax, forKey: Key.dictationCodeAndMarkdownSyntax.rawValue) }
+    }
+
+    var dictationVoiceCommandsEnabled: Bool {
+        didSet { defaults.set(dictationVoiceCommandsEnabled, forKey: Key.dictationVoiceCommandsEnabled.rawValue) }
+    }
+
+    var dictationPillPosition: DictationPillPosition {
+        didSet { defaults.set(dictationPillPosition.rawValue, forKey: Key.dictationPillPosition.rawValue) }
+    }
+
+    var dictationCompactPill: Bool {
+        didSet { defaults.set(dictationCompactPill, forKey: Key.dictationCompactPill.rawValue) }
+    }
+
+    var dictationAudioRetentionDays: Int {
+        didSet { defaults.set(dictationAudioRetentionDays, forKey: Key.dictationAudioRetentionDays.rawValue) }
+    }
+
     var dictationAutoApplyTransform: Bool {
         didSet { defaults.set(dictationAutoApplyTransform, forKey: Key.dictationAutoApplyTransform.rawValue) }
     }
@@ -653,6 +677,18 @@ final class AppSettings {
 
     var dictationVADEnabled: Bool {
         didSet { defaults.set(dictationVADEnabled, forKey: Key.dictationVADEnabled.rawValue) }
+    }
+
+    var dictationWarmPreRoll: Bool {
+        didSet { defaults.set(dictationWarmPreRoll, forKey: Key.dictationWarmPreRoll.rawValue) }
+    }
+
+    var dictationVoiceProcessing: Bool {
+        didSet { defaults.set(dictationVoiceProcessing, forKey: Key.dictationVoiceProcessing.rawValue) }
+    }
+
+    var dictationPauseMedia: Bool {
+        didSet { defaults.set(dictationPauseMedia, forKey: Key.dictationPauseMedia.rawValue) }
     }
 
     var dictationMeetingCapturesSystemAudio: Bool {
@@ -1385,12 +1421,28 @@ final class AppSettings {
         dictationWhisperMode = defaults.bool(forKey: Key.dictationWhisperMode.rawValue)
         dictationAutoLearnDictionary = defaults.object(forKey: Key.dictationAutoLearnDictionary.rawValue) == nil
             || defaults.bool(forKey: Key.dictationAutoLearnDictionary.rawValue)
+        dictationVoiceSubmit = defaults.object(forKey: Key.dictationVoiceSubmit.rawValue) == nil
+            || defaults.bool(forKey: Key.dictationVoiceSubmit.rawValue)
+        dictationCodeAndMarkdownSyntax = defaults.object(forKey: Key.dictationCodeAndMarkdownSyntax.rawValue) == nil
+            || defaults.bool(forKey: Key.dictationCodeAndMarkdownSyntax.rawValue)
+        dictationVoiceCommandsEnabled = defaults.object(forKey: Key.dictationVoiceCommandsEnabled.rawValue) == nil
+            || defaults.bool(forKey: Key.dictationVoiceCommandsEnabled.rawValue)
+        dictationPillPosition =
+            defaults.string(forKey: Key.dictationPillPosition.rawValue)
+            .flatMap(DictationPillPosition.init(rawValue:)) ?? .bottomCenter
+        dictationCompactPill = defaults.bool(forKey: Key.dictationCompactPill.rawValue)
+        dictationAudioRetentionDays = defaults.object(forKey: Key.dictationAudioRetentionDays.rawValue) == nil
+            ? 14
+            : max(0, min(90, defaults.integer(forKey: Key.dictationAudioRetentionDays.rawValue)))
         dictationAutoApplyTransform = defaults.bool(forKey: Key.dictationAutoApplyTransform.rawValue)
         dictationActiveTransformID = defaults.string(forKey: Key.dictationActiveTransformID.rawValue)
         dictationRetainCancelled = defaults.bool(forKey: Key.dictationRetainCancelled.rawValue)
         dictationSpeakerCount = max(0, min(12, defaults.integer(forKey: Key.dictationSpeakerCount.rawValue)))
         dictationVADEnabled = defaults.object(forKey: Key.dictationVADEnabled.rawValue) == nil
             || defaults.bool(forKey: Key.dictationVADEnabled.rawValue)
+        dictationWarmPreRoll = defaults.bool(forKey: Key.dictationWarmPreRoll.rawValue)
+        dictationVoiceProcessing = defaults.bool(forKey: Key.dictationVoiceProcessing.rawValue)
+        dictationPauseMedia = defaults.bool(forKey: Key.dictationPauseMedia.rawValue)
         dictationMeetingCapturesSystemAudio = defaults.object(forKey: Key.dictationMeetingCapturesSystemAudio.rawValue) == nil
             || defaults.bool(forKey: Key.dictationMeetingCapturesSystemAudio.rawValue)
         dictationMeetingStartMuted = defaults.bool(forKey: Key.dictationMeetingStartMuted.rawValue)

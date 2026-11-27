@@ -45,13 +45,13 @@ enum Paster {
     }
 
     /// Put a string on the pasteboard unmarked, so it enters history like any other copy.
-    /// If text contains markdown formatting, registers .rtf alongside plain text.
+    /// Converts explicit Markdown spans to RTF unless `plainTextOnly` is requested (e.g. code/markdown editors).
     @MainActor @discardableResult
-    static func copyPlainText(_ text: String) -> Bool {
+    static func copyPlainText(_ text: String, plainTextOnly: Bool = false) -> Bool {
         let pb = NSPasteboard.general
         pb.clearContents()
         var types: [NSPasteboard.PasteboardType] = [.string]
-        let rtf = richTextData(for: text)
+        let rtf = plainTextOnly ? nil : richTextData(for: text)
         if rtf != nil { types.append(.rtf) }
         pb.declareTypes(types, owner: nil)
         let success = pb.setString(text, forType: .string)
@@ -59,9 +59,29 @@ enum Paster {
         return success
     }
 
-    /// Converts markdown syntax to RTF data for rich text insertion across editors.
+    private static let markdownLinkRegex = try? NSRegularExpression(pattern: #"\[[^\[\]\n]+\]\(https?://[^\s\)]+\)"#)
+    private static let markdownBoldRegex = try? NSRegularExpression(pattern: #"\*\*\S(?:.*?\S)?\*\*"#)
+    private static let markdownHeadingRegex = try? NSRegularExpression(pattern: #"(?m)^#{1,3}\s+[A-Za-z][^\n]*"#)
+
+    /// True only when text contains balanced rich-text Markdown rather than literal code brackets/hashes (`[TODO]`, `#123`, `[[Wiki]]`, `2 * 3`).
+    static func shouldConvertMarkdownToRTF(_ text: String) -> Bool {
+        guard !text.isEmpty, !text.contains("```") else { return false }
+        let range = NSRange(text.startIndex..<text.endIndex, in: text)
+        if let markdownBoldRegex, markdownBoldRegex.firstMatch(in: text, options: [], range: range) != nil {
+            return true
+        }
+        if let markdownLinkRegex, markdownLinkRegex.firstMatch(in: text, options: [], range: range) != nil {
+            return true
+        }
+        if let markdownHeadingRegex, markdownHeadingRegex.firstMatch(in: text, options: [], range: range) != nil {
+            return true
+        }
+        return false
+    }
+
+    /// Converts explicit rich Markdown syntax to RTF data without mangling literal code/notes brackets or hashes.
     static func richTextData(for text: String) -> Data? {
-        guard text.contains("**") || text.contains("*") || text.contains("`") || text.contains("[") || text.contains("#") else {
+        guard shouldConvertMarkdownToRTF(text) else {
             return nil
         }
         guard let attributed = try? NSAttributedString(
@@ -98,25 +118,115 @@ enum Paster {
         return success
     }
 
-    /// String counterpart of `paste`, marker-stamped so the text doesn't re-enter history.
+    /// Calibrates clipboard restore delay by target app class so Electron/Chromium/Terminal renderers finish reading ⌘V.
+    static func pasteboardRestoreDelay(for bundleID: String?) -> TimeInterval {
+        let lower = (bundleID ?? "").lowercased()
+        let slowConsumerMarkers = [
+            "vscode", "obsidian", "todesktop", "slack", "discord", "teams",
+            "chrome", "safari", "arc", "zen", "firefox", "brave", "edgemac",
+            "notion", "linear", "iterm", "terminal", "ghostty", "warp", "alacritty",
+            "electron", "cef", "webview", "thebrowser"
+        ]
+        if slowConsumerMarkers.contains(where: { lower.contains($0) }) {
+            return 0.36
+        }
+        return 0.16
+    }
+
+    /// String counterpart of `paste`, marker-stamped so transient pastes do not enter clipboard managers.
+    /// Optionally restores the user's prior pasteboard after the target consumes ⌘V and posts Return.
     @MainActor
     static func pasteString(
         _ text: String,
         previousApp: NSRunningApplication?,
         concealed: Bool = false,
+        restorePasteboard: Bool = false,
+        pressReturnAfter: Bool = false,
+        plainTextOnly: Bool = false,
         completion: (@MainActor () -> Void)? = nil
     ) {
+        let snapshot = restorePasteboard ? snapshotPasteboard() : nil
         let app = previousApp ?? NSWorkspace.shared.frontmostApplication
-        writeString(text, concealed: concealed)
-        app?.activate(options: .activateIgnoringOtherApps)
+        writeString(text, concealed: concealed, transient: restorePasteboard, plainTextOnly: plainTextOnly)
+        let writtenChangeCount = NSPasteboard.general.changeCount
+        app?.activate()
         let delay = app == nil || app?.bundleIdentifier == Bundle.main.bundleIdentifier ? directPostDelay : 0.12
+        let restoreDelay = max(
+            pasteboardRestoreDelay(for: app?.bundleIdentifier),
+            pressReturnAfter ? 0.24 : 0.0
+        )
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
             postCommandV(toPid: app?.processIdentifier)
-            if let completion {
+            if pressReturnAfter {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.04) {
+                    postReturn(toPid: app?.processIdentifier)
+                }
+            }
+            if let completion {
+                DispatchQueue.main.asyncAfter(deadline: .now() + (pressReturnAfter ? 0.08 : 0.04)) {
                     completion()
                 }
             }
+            if let snapshot {
+                DispatchQueue.main.asyncAfter(deadline: .now() + restoreDelay) {
+                    restorePasteboardIfUnchanged(snapshot, expectedChangeCount: writtenChangeCount)
+                }
+            }
+        }
+    }
+
+    @MainActor
+    private static func snapshotPasteboard() -> [[NSPasteboard.PasteboardType: Data]] {
+        let pb = NSPasteboard.general
+        guard let items = pb.pasteboardItems, !items.isEmpty else { return [] }
+        return items.map { item in
+            var dict: [NSPasteboard.PasteboardType: Data] = [:]
+            for type in item.types {
+                if let data = item.data(forType: type) {
+                    dict[type] = data
+                }
+            }
+            return dict
+        }
+    }
+
+    @MainActor
+    private static func restorePasteboardIfUnchanged(
+        _ snapshot: [[NSPasteboard.PasteboardType: Data]],
+        expectedChangeCount: Int
+    ) {
+        let pb = NSPasteboard.general
+        guard pb.changeCount == expectedChangeCount else { return }
+        pb.clearContents()
+        guard !snapshot.isEmpty else { return }
+        let items: [NSPasteboardItem] = snapshot.map { entry in
+            let item = NSPasteboardItem()
+            for (type, data) in entry {
+                item.setData(data, forType: type)
+            }
+            item.setData(Data(), forType: ClipboardManager.internalType)
+            return item
+        }
+        pb.writeObjects(items)
+    }
+
+    @MainActor
+    static func postReturn(toPid pid: pid_t? = nil) {
+        guard Permissions.ensureAccessibility() else { return }
+        let source = CGEventSource(stateID: .combinedSessionState)
+        guard let down = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(kVK_Return), keyDown: true),
+              let up = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(kVK_Return), keyDown: false)
+        else { return }
+        down.setIntegerValueField(.eventSourceUserData, value: szcastEventTag)
+        up.setIntegerValueField(.eventSourceUserData, value: szcastEventTag)
+        if let pid {
+            down.postToPid(pid)
+            Thread.sleep(forTimeInterval: 0.015)
+            up.postToPid(pid)
+        } else {
+            down.post(tap: .cgAnnotatedSessionEventTap)
+            Thread.sleep(forTimeInterval: 0.015)
+            up.post(tap: .cgAnnotatedSessionEventTap)
         }
     }
 
@@ -145,34 +255,43 @@ enum Paster {
     }
 
     @MainActor
-    private static func writeString(_ text: String, concealed: Bool = false) {
+    private static func writeString(
+        _ text: String,
+        concealed: Bool = false,
+        transient: Bool = false,
+        plainTextOnly: Bool = false
+    ) {
         let pb = NSPasteboard.general
         pb.clearContents()
+        let transientType = NSPasteboard.PasteboardType("org.nspasteboard.TransientType")
+        let autoGenerated = NSPasteboard.PasteboardType("org.nspasteboard.AutoGeneratedType")
         if concealed {
             let concealedType = NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType")
-            let transient = NSPasteboard.PasteboardType("org.nspasteboard.TransientType")
-            let autoGenerated = NSPasteboard.PasteboardType("org.nspasteboard.AutoGeneratedType")
             let peterMaurer = NSPasteboard.PasteboardType("de.petermaurer.TransientPasteboardType")
             let appleSensitive = NSPasteboard.PasteboardType("com.apple.is-sensitive")
-            pb.declareTypes([.string, concealedType, transient, autoGenerated, peterMaurer, appleSensitive, ClipboardManager.internalType], owner: nil)
+            pb.declareTypes([.string, concealedType, transientType, autoGenerated, peterMaurer, appleSensitive, ClipboardManager.internalType], owner: nil)
             pb.setString(text, forType: .string)
             pb.setData(Data(), forType: concealedType)
-            pb.setData(Data(), forType: transient)
+            pb.setData(Data(), forType: transientType)
             pb.setData(Data(), forType: autoGenerated)
             pb.setData(Data(), forType: peterMaurer)
             pb.setData(Data(), forType: appleSensitive)
             pb.setData(Data(), forType: ClipboardManager.internalType)
         } else {
-            let rtf = richTextData(for: text)
-            if let rtf {
-                pb.declareTypes([.string, .rtf, ClipboardManager.internalType], owner: nil)
-                pb.setString(text, forType: .string)
-                pb.setData(rtf, forType: .rtf)
-                pb.setData(Data(), forType: ClipboardManager.internalType)
-            } else {
-                pb.declareTypes([.string, ClipboardManager.internalType], owner: nil)
-                pb.setString(text, forType: .string)
-                pb.setData(Data(), forType: ClipboardManager.internalType)
+            let rtf = plainTextOnly ? nil : richTextData(for: text)
+            var types: [NSPasteboard.PasteboardType] = [.string, ClipboardManager.internalType]
+            if rtf != nil { types.append(.rtf) }
+            if transient {
+                types.append(transientType)
+                types.append(autoGenerated)
+            }
+            pb.declareTypes(types, owner: nil)
+            pb.setString(text, forType: .string)
+            if let rtf { pb.setData(rtf, forType: .rtf) }
+            pb.setData(Data(), forType: ClipboardManager.internalType)
+            if transient {
+                pb.setData(Data(), forType: transientType)
+                pb.setData(Data(), forType: autoGenerated)
             }
         }
     }
@@ -227,15 +346,62 @@ enum Paster {
         return true
     }
 
+    /// Resolves the physical virtual key code for a ⌘-shortcut character on the active input source (Dvorak, Colemak, AZERTY, etc.).
+    @MainActor
+    static func commandVirtualKeyCode(for targetCharacter: Character, fallback: CGKeyCode) -> CGKeyCode {
+        guard let source = TISCopyCurrentASCIICapableKeyboardLayoutInputSource()?.takeRetainedValue(),
+              let rawPtr = TISGetInputSourceProperty(source, kTISPropertyUnicodeKeyLayoutData)
+        else { return fallback }
+
+        let layoutData = unsafeBitCast(rawPtr, to: CFData.self)
+        let keyLayout = unsafeBitCast(CFDataGetBytePtr(layoutData), to: UnsafePointer<UCKeyboardLayout>.self)
+        let wanted = String(targetCharacter).lowercased()
+
+        return withExtendedLifetime(source) {
+            for mod in [UInt32(cmdKey >> 8), UInt32(0)] {
+                for keyCode in 0..<54 {
+                    var deadKeyState: UInt32 = 0
+                    var length = 0
+                    var chars = [UniChar](repeating: 0, count: 4)
+                    let status = UCKeyTranslate(
+                        keyLayout,
+                        UInt16(keyCode),
+                        UInt16(kUCKeyActionDisplay),
+                        mod,
+                        UInt32(LMGetKbdType()),
+                        OptionBits(kUCKeyTranslateNoDeadKeysBit),
+                        &deadKeyState,
+                        chars.count,
+                        &length,
+                        &chars
+                    )
+                    if status == noErr, length > 0 {
+                        let translated = String(utf16CodeUnits: chars, count: length).lowercased()
+                        if translated == wanted {
+                            return CGKeyCode(keyCode)
+                        }
+                    }
+                }
+            }
+            return fallback
+        }
+    }
+
     @MainActor
     static func postCommandV(toPid pid: pid_t? = nil) {
-        postCommand(key: CGKeyCode(kVK_ANSI_V), toPid: pid)
+        postCommand(key: commandVirtualKeyCode(for: "v", fallback: CGKeyCode(kVK_ANSI_V)), toPid: pid)
     }
 
     /// Synthesize ⌘C, for reading a selection an app will not surface over Accessibility.
     @MainActor
     static func postCommandC(toPid pid: pid_t? = nil) {
-        postCommand(key: CGKeyCode(kVK_ANSI_C), toPid: pid)
+        postCommand(key: commandVirtualKeyCode(for: "c", fallback: CGKeyCode(kVK_ANSI_C)), toPid: pid)
+    }
+
+    /// Synthesizes any layout-agnostic ⌘+<character> command shortcut (e.g. ⌘Z, ⌘A, ⌘T).
+    @MainActor
+    static func postCommandCharacter(_ character: Character, fallback: CGKeyCode, toPid pid: pid_t? = nil) {
+        postCommand(key: commandVirtualKeyCode(for: character, fallback: fallback), toPid: pid)
     }
 
     @MainActor

@@ -100,9 +100,6 @@ struct LauncherScreen: PaletteScreen {
             case .quicklinks:
                 filteredResults = results.filter { $0.kind == .quicklink }
                 filteredFiles = []
-            case .snippets:
-                filteredResults = results.filter { $0.kind == .snippet }
-                filteredFiles = []
             case .files:
                 filteredResults = []
             case .systemActions:

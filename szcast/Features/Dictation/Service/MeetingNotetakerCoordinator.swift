@@ -369,8 +369,10 @@ final class MeetingNotetakerCoordinator {
             modelID: settings.dictationModel.rawValue
         )
 
-        let polishProvider: DictationPolishProvider =
-            (settings.dictationPolishProvider == .groq && !settings.groqAPIKey.isEmpty) ? .groq : .localS1
+        let polishProvider = DictationPolishProvider.resolved(
+            preferred: settings.dictationPolishProvider,
+            groqAPIKey: settings.groqAPIKey
+        )
         let extracted = await TranscriptAIService.generateStructuredNotes(
             from: draftRecord,
             provider: polishProvider,

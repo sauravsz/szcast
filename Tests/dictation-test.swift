@@ -216,10 +216,16 @@ struct DictationTest {
             }
         }
         for model in DictationModel.allCases {
-            guard !model.components.isEmpty, model.revision.count == 40,
-                model.requiredFiles.isSuperset(of: model.components)
-            else {
-                fatalError("Model installation metadata is incomplete")
+            if model.isAppleSpeech {
+                guard model.components.isEmpty, model.repository.isEmpty, model.approximateInstalledMegabytes == 0 else {
+                    fatalError("Built-in Apple SpeechAnalyzer metadata should not require HuggingFace download")
+                }
+            } else {
+                guard !model.components.isEmpty, model.revision.count == 40,
+                    model.requiredFiles.isSuperset(of: model.components)
+                else {
+                    fatalError("Model installation metadata is incomplete")
+                }
             }
             if let configuration = model.parakeetConfiguration {
                 let expectedBlank = model == .v2 ? 1024 : 8192
@@ -230,7 +236,7 @@ struct DictationTest {
                 else {
                     fatalError("Parakeet download and inference disagree")
                 }
-            } else if !model.isQwen && !model.isSraVaani && !model.isSpecialized && !model.isNemotron && !model.isParakeetCTC {
+            } else if !model.isQwen && !model.isSraVaani && !model.isSpecialized && !model.isNemotron && !model.isParakeetCTC && !model.isAppleSpeech {
                 fatalError("Missing Parakeet decoding configuration")
             }
         }
@@ -364,10 +370,38 @@ struct DictationTest {
         // Phonetic dictionary recovery + anti-false-insertion guard
         dictStore.addWord(canonical: "Shubham")
         dictStore.addWord(canonical: "XcodeGen")
+        dictStore.addWord(canonical: "SDK")
+        dictStore.addWord(canonical: "MCP")
+        dictStore.addWord(canonical: "Point of Sale")
+        dictStore.addWord(canonical: "App Store")
         check(dictStore.applyDictionaryAndPacks("Ask Subham to update ex code gen"), "Ask Shubham to update XcodeGen")
-        check(dictStore.applyDictionaryAndPacks("Their thinking about working today"), "Their thinking about working today")
+        check(dictStore.applyDictionaryAndPacks("Use the s d k for m c p and open point off sale on ap store"), "Use the SDK for MCP and open Point of Sale on App Store")
+        check(dictStore.applyDictionaryAndPacks("Their thinking about working today and the house"), "Their thinking about working today and the house")
         let hints = dictStore.promptVocabularyHint(for: "Ask Subham about PostgreSQL", maxTerms: 10)
         assertTrue(hints.contains("Shubham") && hints.contains("PostgreSQL"), "Vocabulary prompt hint prioritizes matching terms")
+
+        // New AI/ML + Finance packs, CSV import, plain-text export & window context vocabulary extraction
+        store.enabledPacks = Set(VocabularyPackType.allCases)
+        check(String(store.loadedTermsCount(for: .aiMl)), "16")
+        check(String(store.loadedTermsCount(for: .finance)), "16")
+        check(store.applyDictionaryAndPacks("Train with pie torch and check ebita plus wacc"), "Train with PyTorch and check EBITDA plus WACC")
+        let csvCount = dictStore.importFromText("Supabase, supa base, soopabase\nFastAPI, fast api")
+        assertTrue(csvCount == 2, "CSV hotword import parses canonical and aliases")
+        check(dictStore.applyDictionaryAndPacks("Deploy fast api on supa base"), "Deploy FastAPI on Supabase")
+        let contextSymbols = DictationDictionaryStore.extractContextVocabulary(
+            fromWindowTitle: "DictationCoordinator.swift — szcast (SDK)")
+        assertTrue(
+            contextSymbols.contains("DictationCoordinator.swift") && contextSymbols.contains("SDK"),
+            "Window title symbol extractor surfaces filenames and uppercase acronyms"
+        )
+        assertTrue(
+            DictationModel.recommended(forLanguage: "English", physicalMemoryBytes: 32 * 1_073_741_824) == .ultra,
+            "32GB Mac recommends Parakeet Ultra"
+        )
+        assertTrue(
+            DictationModel.recommended(forLanguage: "Hinglish", physicalMemoryBytes: 8 * 1_073_741_824) == .whisperApex,
+            "Hinglish recommends Whisper Apex"
+        )
 
         // Whisper hallucination & repetition loop suppression
         check(DictationTextFormatter.stripHallucinations("Thank you for watching."), "")
@@ -389,12 +423,11 @@ struct DictationTest {
         let userMsg = DictationS1Settings.normalizedUserMessage(
             controlLine: codeSwitchSettings.controlLine,
             transcript: "test",
-            vocabularyTerms: ["Shubham"],
-            surroundingContext: "Hi team,"
+            vocabularyTerms: ["Shubham"]
         )
         assertTrue(
-            userMsg.contains("[Vocabulary: Shubham]") && userMsg.contains("[Preceding text"),
-            "Normalized user message embeds hints cleanly"
+            userMsg.contains("[Vocabulary: Shubham]") && !userMsg.contains("[Preceding text"),
+            "Normalized user message embeds vocabulary hints without leaking surrounding text"
         )
 
         // Deterministic Hinglish & Banglish phonetic converters (schwa insertion + word-boundary protection)
@@ -433,6 +466,282 @@ struct DictationTest {
                 "আমি ভালো আছি", bengaliMode: .off, isCloud: false, localModel: .redux
             ),
             "আমি ভালো আছি"
+        )
+
+        // Wispr-style brackets, symbols, slashes, Roman numerals & structural formatting
+        check(
+            DictationTextFormatter.convertSpokenPunctuation("it is a bracket start hello world bracket close"),
+            "it is (hello world)"
+        )
+        check(
+            DictationTextFormatter.convertSpokenPunctuation("open square bracket alpha close square bracket"),
+            "[alpha]"
+        )
+        check(
+            DictationTextFormatter.convertSpokenPunctuation("curly bracket start key colon value curly bracket close"),
+            "{key: value}"
+        )
+        check(
+            DictationTextFormatter.convertSpokenPunctuation("input forward slash output"),
+            "input/output"
+        )
+        check(
+            DictationTextFormatter.convertSpokenPunctuation("column slash row and yes / no"),
+            "column/row and yes/no"
+        )
+        check(
+            DictationTextFormatter.convertSpokenPunctuation("path backslash folder"),
+            "path\\folder"
+        )
+        check(
+            DictationTextFormatter.convertSpokenPunctuation("my underscore var at the rate domain dot com"),
+            "my_var @domain dot com"
+        )
+        check(
+            DictationTextFormatter.convertSpokenPunctuation("dollar sign 50 and 25 percent sign and hashtag ai"),
+            "$50 and 25% and #ai"
+        )
+        check(
+            DictationTextFormatter.convertSpokenPunctuation("he said open quote stay focused close quote"),
+            "he said \"stay focused\""
+        )
+        check(
+            DictationTextFormatter.convertSpokenPunctuation("it's column one and roman numeral one and roman numeral two"),
+            "it's Column I and I and II"
+        )
+        check(
+            DictationTextFormatter.convertSpokenPunctuation("column number two with roman numeral to and roman numeral IV"),
+            "Column II with II and IV"
+        )
+        check(
+            DictationTextFormatter.convertSpokenPunctuation("numeral four bullet point all caps urgent task"),
+            "4\n- URGENT task"
+        )
+
+        // Fast-path clean-speech bypass & model-aware prompting
+        let cleanProseSettings = DictationS1Settings(
+            enabled: true, tone: .semiFormal, structure: .prose, context: .general
+        )
+        assertTrue(
+            !DictationS1Settings.needsLLMCleanup(
+                "Principle of self-awareness, self-control, and duty-oriented action. Emotional regulation.",
+                s1Settings: cleanProseSettings
+            ),
+            "Clean short prose skips LLM round-trip (<1ms)"
+        )
+        assertTrue(
+            DictationS1Settings.needsLLMCleanup("Wait no, send it to Sarah instead", s1Settings: cleanProseSettings),
+            "Mid-sentence repair triggers LLM cleanup"
+        )
+        assertTrue(
+            DictationS1Settings.needsLLMCleanup("Meeting at 5 बजे hai", s1Settings: codeSwitchSettings),
+            "Native Devanagari triggers Hinglish transliteration pass"
+        )
+        assertTrue(
+            !DictationS1Settings.needsLLMCleanup("Meeting at 5 pm today", s1Settings: codeSwitchSettings),
+            "Pure ASCII skips Indic LLM pass"
+        )
+        let nonS1Prompt = DictationS1Settings.normalizedUserMessage(
+            controlLine: cleanProseSettings.controlLine,
+            transcript: "Column I",
+            vocabularyTerms: ["szcast"],
+            isS1Mini: false
+        )
+        assertTrue(
+            !nonS1Prompt.contains("[Styling:") && nonS1Prompt.contains("Transcript:\nColumn I"),
+            "Non-S1 instruct models avoid raw S1 control-tag headers"
+        )
+
+        // Expanded Wispr symbols, comma-wrapped filler removal, auto-lists, voice submit, code style, auto-learn & provider routing
+        check(
+            DictationTextFormatter.convertSpokenPunctuation(
+                "copyright symbol registered trademark trademark symbol section sign division sign multiplication sign plus minus sign greater than sign less than sign"
+            ),
+            "© ® ™ § ÷ × ± > <"
+        )
+        check(
+            DictationTextFormatter.removeFillerWords("Well, you know, we should ship it."),
+            "Well we should ship it."
+        )
+        check(
+            DictationTextFormatter.formatSpokenEnumerations("First buy milk. Second write tests. Third ship code."),
+            "1. Buy milk.\n2. Write tests.\n3. Ship code."
+        )
+        check(
+            DictationTextFormatter.formatSpokenEnumerations("First, let me explain."),
+            "First, let me explain."
+        )
+        let submitPositive = DictationTextFormatter.extractTrailingSubmitCommand("Send update, press enter.")
+        assertTrue(
+            submitPositive.shouldSubmit && submitPositive.text == "Send update",
+            "Trailing voice submit extracts command cleanly"
+        )
+        let submitNegative = DictationTextFormatter.extractTrailingSubmitCommand("Don't press enter yet")
+        assertTrue(
+            !submitNegative.shouldSubmit && submitNegative.text == "Don't press enter yet",
+            "Negated submit phrase is preserved untouched"
+        )
+        check(
+            AppStyleRouter.applyCategoryFormatting("git status.", bundleID: "com.microsoft.VSCode"),
+            "git status"
+        )
+        check(
+            AppStyleRouter.applyCategoryFormatting("First line.\nSecond line.", bundleID: "com.microsoft.VSCode"),
+            "First line.\nSecond line."
+        )
+        let learnedSingle = DictationDictionaryStore.detectEditedWordPair(
+            original: "Saurab built szcast today.",
+            edited: "Saurav built szcast today."
+        )
+        assertTrue(
+            learnedSingle?.original == "Saurab" && learnedSingle?.corrected == "Saurav",
+            "Single-word post-edit detects dictionary correction pair"
+        )
+        assertTrue(
+            DictationDictionaryStore.detectEditedWordPair(
+                original: "Alpha beta gamma.",
+                edited: "Delta epsilon gamma."
+            ) == nil,
+            "Multi-word edits do not trigger false dictionary auto-learn"
+        )
+        assertTrue(
+            DictationPolishProvider.resolved(preferred: .groq, groqAPIKey: "") == .localS1,
+            "Groq without API key resolves back to localS1"
+        )
+        assertTrue(
+            DictationPolishProvider.resolved(preferred: .appleIntelligence, groqAPIKey: "") == .appleIntelligence,
+            "Apple Intelligence resolves directly when selected"
+        )
+
+        // Phase 3: Sentence-scoped backtrack, stutter collapse, ITN, list continuation, syntax commands, browser routing & diff circuit breaker
+        check(
+            DictationTextFormatter.resolveBacktracks("Meet at 3pm. Call John, sorry I mean Sarah."),
+            "Meet at 3pm. Sarah."
+        )
+        check(
+            DictationTextFormatter.collapseRepetitions("b-b-because wh-what we re-enter by e-mail"),
+            "because what we re-enter by e-mail"
+        )
+        check(
+            DictationTextFormatter.convertSpokenPunctuation("version one point two point three"),
+            "v1.2.3"
+        )
+        check(
+            DictationTextFormatter.convertSpokenPunctuation("Meet at three fifteen pm for forty five percent"),
+            "Meet at 3:15 PM for 45%"
+        )
+        check(
+            DictationTextFormatter.convertSpokenPunctuation("Email john dot doe at gmail dot com"),
+            "Email john.doe@gmail.com"
+        )
+        check(
+            DictationTextFormatter.format("- first item", context: Context(before: "- existing\n- ", after: "")),
+            "First item"
+        )
+        check(
+            DictationTextFormatter.format("1. third item\n2. fourth item", context: Context(before: "1. a\n2. b\n3. ", after: "")),
+            "Third item\n4. fourth item"
+        )
+        check(
+            DictationTextFormatter.format("docs", context: Context(before: "https://", after: "")),
+            "docs"
+        )
+        check(
+            DictationTextFormatter.formatSyntaxCommands(
+                "heading two Release Notes\ntask item Verify build\nwiki link Architecture",
+                isCodeContext: false,
+                isNotesContext: true
+            ),
+            "## Release Notes\n- [ ] Verify build\n[[Architecture]]"
+        )
+        check(
+            DictationTextFormatter.formatSyntaxCommands(
+                "camel case user id triple equals constant case max retries and dash dash verbose in tilde slash dot env",
+                isCodeContext: true,
+                isNotesContext: false
+            ),
+            "userId === MAX_RETRIES and --verbose in ~/.env"
+        )
+        assertTrue(
+            DictationTextFormatter.extractVoiceMetaCommand("Undo that.") == .undoLast
+                && DictationTextFormatter.extractVoiceMetaCommand("Select all") == .selectAll
+                && DictationTextFormatter.extractVoiceMetaCommand("Copy that!") == .copyThat
+                && DictationTextFormatter.extractVoiceMetaCommand("Open new tab") == .newTab
+                && DictationTextFormatter.extractVoiceMetaCommand("Please undo that edit in the second paragraph") == nil,
+            "Standalone voice meta-commands match cleanly without false positives"
+        )
+        assertTrue(
+            DictationTextFormatter.extractAskAIQuery("Ask AI: what is the capital of Japan?") == "what is the capital of Japan?"
+                && DictationTextFormatter.extractAskAIQuery("I will ask AI later") == nil,
+            "Ask AI prefix extracts explicit queries without triggering mid-sentence"
+        )
+        assertTrue(
+            AppStyleRouter.category(for: "com.google.Chrome", windowTitle: "Fix #42 · Pull Request", documentURL: "https://github.com/org/repo/pull/42") == .code
+                && AppStyleRouter.category(for: "com.apple.Safari", windowTitle: "Inbox", documentURL: "https://mail.google.com/mail/u/0/#inbox") == .email
+                && AppStyleRouter.category(for: "org.keepassxc.keepassxc", windowTitle: "github.com", documentURL: "https://github.com") == .general,
+            "Browser URL/title routing detects code/email while strictly redacting credential apps"
+        )
+        assertTrue(
+            DictationS1Settings.isSafePolishEdit(original: "Ship the release build at five today", candidate: "Ship the release build at 5 PM today.", structure: .prose)
+                && !DictationS1Settings.isSafePolishEdit(original: "Ship the release build at five today please", candidate: "As an AI language model, I cannot assist with that.", structure: .prose)
+                && !DictationS1Settings.isSafePolishEdit(original: "One two three four five six seven eight", candidate: "One.", structure: .prose)
+                && !DictationS1Settings.isSafePolishEdit(original: "Ship clean build", candidate: "Here is a huge greeting 🎉 " + String(repeating: "extra words ", count: 20), structure: .prose),
+            "LLM diff circuit breaker rejects chatty preambles, truncations, and explosive prose hallucinations"
+        )
+
+        // Phase 4: Apostrophe-insensitive echo strip, cursor marker extraction & pill positions
+        check(
+            DictationTextFormatter.stripEcho("launch's status, tomorrow", after: "about the launch’s status"),
+            " tomorrow"
+        )
+        let cursorParen = DictationTextFormatter.extractCursorMarker(from: "foo(|)bar")
+        assertTrue(
+            cursorParen.text == "foobar" && cursorParen.cursorOffsetFromEnd == 3,
+            "Cursor marker (|) extracts exact end offset"
+        )
+        let cursorToken = DictationTextFormatter.extractCursorMarker(from: "hello {cursor}")
+        assertTrue(
+            cursorToken.text == "hello " && cursorToken.cursorOffsetFromEnd == nil,
+            "Trailing {cursor} leaves nil offset at end of text"
+        )
+
+        // Phase 5: Hotword Precision/Recall Torture Suite & Mixed Punctuation/Backtrack Pipeline
+        let tortureDir = FileManager.default.temporaryDirectory.appendingPathComponent("szcast-p5-\(UUID())")
+        let tortureDict = DictationDictionaryStore(
+            fileURL: tortureDir.appending(path: "words.json"),
+            snippetsFileURL: tortureDir.appending(path: "snippets.json")
+        )
+        defer { try? FileManager.default.removeItem(at: tortureDir) }
+        tortureDict.enabledPacks = Set(VocabularyPackType.allCases)
+        for term in ["Kubernetes", "PostgreSQL", "LangGraph", "SDK", "API", "ROI", "Point of Sale", "App Store"] {
+            tortureDict.addWord(canonical: term)
+        }
+        tortureDict.addWord(canonical: "SDK", aliases: ["ess dee kay"])
+        tortureDict.addWord(canonical: "API", aliases: ["aye pee eye"])
+        tortureDict.addWord(canonical: "szcast", aliases: ["sz cast", "s z cast"])
+        let jargonExpectations: [(String, String)] = [
+            ("kubernetis postgresgl pie torch langraff", "Kubernetes PostgreSQL PyTorch LangGraph"),
+            ("ess dee kay m c p aye pee eye", "SDK MCP API"),
+            ("e bit da wack roi g g u f", "EBITDA WACC ROI GGUF"),
+            ("point of sail and app star using core m l for sz cast", "Point of Sale and App Store using CoreML for szcast"),
+            ("common words stay normal in at on it is to as hello water light", "common words stay normal in at on it is to as hello water light"),
+            ("I love this app", "I love this app")
+        ]
+        for (input, expected) in jargonExpectations {
+            let actual = tortureDict.applyDictionaryAndPacks(input)
+            check(actual, expected)
+        }
+
+        let tortureRaw = "Um, first item. Call John, sorry I mean Sarah at three fifteen pm, b-b-because version two point oh in bracket start column one bracket close."
+        var tortureOut = DictationTextFormatter.stripHallucinations(tortureRaw)
+        tortureOut = DictationTextFormatter.resolveBacktracks(tortureOut)
+        tortureOut = DictationTextFormatter.collapseRepetitions(tortureOut)
+        tortureOut = DictationTextFormatter.convertSpokenPunctuation(tortureOut)
+        tortureOut = DictationTextFormatter.removeFillerWords(tortureOut)
+        tortureOut = DictationTextFormatter.format(tortureOut, context: nil)
+        check(
+            tortureOut,
+            "First item. Sarah at 3:15 PM, because v2.0 in (Column I). "
         )
 
         print("Dictation text formatting passed")

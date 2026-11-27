@@ -53,14 +53,35 @@ struct TranscriptSegment: Codable, Equatable, Hashable, Identifiable, Sendable {
     }
 }
 
+struct DictationStageTimings: Codable, Equatable, Sendable {
+    var vadMs: Double
+    var asrMs: Double
+    var diarizationMs: Double
+    var totalMs: Double
+
+    init(vadMs: Double = 0, asrMs: Double = 0, diarizationMs: Double = 0, totalMs: Double = 0) {
+        self.vadMs = vadMs
+        self.asrMs = asrMs
+        self.diarizationMs = diarizationMs
+        self.totalMs = totalMs
+    }
+}
+
 struct TimedTranscript: Codable, Equatable, Sendable {
     var text: String
     var words: [TranscriptWord]
     var segments: [TranscriptSegment]
+    var timings: DictationStageTimings?
 
-    init(text: String, words: [TranscriptWord] = [], segments: [TranscriptSegment] = []) {
+    init(
+        text: String,
+        words: [TranscriptWord] = [],
+        segments: [TranscriptSegment] = [],
+        timings: DictationStageTimings? = nil
+    ) {
         self.text = text
         self.words = words
+        self.timings = timings
         if !segments.isEmpty {
             self.segments = segments
         } else if !words.isEmpty {

@@ -281,7 +281,6 @@ enum LauncherCategoryFilter: String, CaseIterable, Sendable {
     case apps = "Apps"
     case commands = "Commands"
     case quicklinks = "Quicklinks"
-    case snippets = "Snippets"
     case files = "Files"
     case systemActions = "Actions"
 
@@ -293,7 +292,6 @@ enum LauncherCategoryFilter: String, CaseIterable, Sendable {
         case .apps: return "app.fill"
         case .commands: return "command"
         case .quicklinks: return "link"
-        case .snippets: return "text.quote"
         case .files: return "doc.fill"
         case .systemActions: return "gearshape.fill"
         }

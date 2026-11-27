@@ -281,9 +281,10 @@ final class TranscriptStudioCoordinator {
         Task { @MainActor [weak self] in
             guard let self else { return }
             defer { self.isBusyProcessing = false }
-            let provider: DictationPolishProvider =
-                (self.settings.dictationPolishProvider == .groq && !self.settings.groqAPIKey.isEmpty)
-                ? .groq : .localS1
+            let provider = DictationPolishProvider.resolved(
+                preferred: self.settings.dictationPolishProvider,
+                groqAPIKey: self.settings.groqAPIKey
+            )
             guard let notes = await TranscriptAIService.generateStructuredNotes(
                 from: record,
                 provider: provider,
@@ -316,9 +317,10 @@ final class TranscriptStudioCoordinator {
         Task { @MainActor [weak self] in
             guard let self else { return }
             defer { self.isAnsweringQuestion = false }
-            let provider: DictationPolishProvider =
-                (self.settings.dictationPolishProvider == .groq && !self.settings.groqAPIKey.isEmpty)
-                ? .groq : .localS1
+            let provider = DictationPolishProvider.resolved(
+                preferred: self.settings.dictationPolishProvider,
+                groqAPIKey: self.settings.groqAPIKey
+            )
             do {
                 let answer = try await TranscriptAIService.askQuestion(
                     trimmed,

@@ -124,7 +124,8 @@ final class DictationWorker: Sendable {
             return TimedTranscript(
                 text: finalResponse.text,
                 words: finalResponse.words,
-                segments: finalResponse.segments
+                segments: finalResponse.segments,
+                timings: finalResponse.timings
             )
         } onCancel: {
             self.terminate()

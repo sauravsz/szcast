@@ -135,20 +135,50 @@ struct DictationInferenceTest {
             fatalError("Live insertion flushed speech without a pause, or silence as speech")
         }
 
-        // vDSP 80 Hz high-pass & loudness conditioning
-        let lowHum = (0..<1600).map { i -> Float in
-            let hum = 0.04 * sin(2 * Float.pi * 40 * Float(i) / 16000)
-            let voice = 0.008 * sin(2 * Float.pi * 300 * Float(i) / 16000)
+        // vDSP 2nd-order Butterworth 80 Hz high-pass, de-click & active-speech loudness conditioning
+        let lowHum = (0..<3_200).map { i -> Float in
+            let hum = 0.04 * sin(2 * Float.pi * 40 * Float(i) / 16_000)
+            let voice = 0.015 * sin(2 * Float.pi * 300 * Float(i) / 16_000)
             return hum + voice
         }
-        let conditioned = DictationAudioChunks.conditionForTranscription(lowHum)
+        var withEdgeClick = lowHum
+        withEdgeClick[12] = 0.95
+        withEdgeClick[withEdgeClick.count - 12] = -0.95
+        let conditioned = DictationAudioChunks.conditionForTranscription(withEdgeClick)
+        let whisperConditioned = DictationAudioChunks.conditionForTranscription(withEdgeClick, whisperMode: true)
         let silentBuf = [Float](repeating: 0.0001, count: 1600)
         let conditionedSilent = DictationAudioChunks.conditionForTranscription(silentBuf)
+        let tinyClick = [Float](repeating: 0.5, count: 1200)
+        let realSpeech = (0..<4_800).map { Float(0.05 * sin(2 * Float.pi * 250 * Float($0) / 16_000)) }
         guard conditioned.count == lowHum.count,
+              whisperConditioned.count == lowHum.count,
+              whisperConditioned.allSatisfy({ abs($0) <= 1.0 }),
               conditioned.allSatisfy({ abs($0) <= 1.0 }),
-              conditionedSilent.allSatisfy({ abs($0) < 0.001 })
+              abs(conditioned[12]) < 0.35,
+              conditionedSilent.allSatisfy({ abs($0) < 0.001 }),
+              !DictationAudioChunks.hasUsableSpeechEnergy(tinyClick),
+              !DictationAudioChunks.hasUsableSpeechEnergy(silentBuf),
+              DictationAudioChunks.hasUsableSpeechEnergy(realSpeech)
         else {
-            fatalError("Audio conditioning failed bounds or silence floor preservation")
+            fatalError("Audio conditioning failed biquad bounds, whisper shelf, speech gate, or silence floor")
+        }
+
+        // Backwards-compatible DictationWire.Response timings Codable round-trip
+        let legacyJSON = Data("{\"id\":\"00000000-0000-0000-0000-000000000001\",\"status\":\"result\",\"text\":\"hi\",\"words\":[],\"segments\":[]}".utf8)
+        let decodedLegacy = try JSONDecoder().decode(DictationWire.Response.self, from: legacyJSON)
+        let timedResp = DictationWire.Response(
+            id: UUID(),
+            status: .result,
+            text: "ok",
+            timings: DictationStageTimings(vadMs: 12.5, asrMs: 48.0, diarizationMs: 0, totalMs: 61.0)
+        )
+        let decodedModern = try JSONDecoder().decode(
+            DictationWire.Response.self, from: JSONEncoder().encode(timedResp))
+        guard decodedLegacy.timings == nil,
+              decodedModern.timings?.asrMs == 48.0,
+              decodedModern.timings?.vadMs == 12.5
+        else {
+            fatalError("DictationStageTimings Codable round-trip failed")
         }
 
         // IndicFlex array vocab + romanized prompt + WhisperApex ISO codes
@@ -202,6 +232,28 @@ struct DictationInferenceTest {
               DictationModel.ctcSmall.repository == "FluidInference/parakeet-ctc-110m-coreml"
         else {
             fatalError("SraVaani / Parakeet v2 / Parakeet CTC metadata check failed")
+        }
+
+        // Phase 5: Multi-chunk (45s) boundary continuity & consecutive Mel consistency across chunks
+        var longSpeech = [Float](repeating: 0.4, count: 720_000)
+        for silentStart in [212_000, 442_000, 668_000] {
+            for s in silentStart..<(silentStart + 12_000) { longSpeech[s] = 0 }
+        }
+        let longChunks = DictationAudioChunks.ranges(in: longSpeech, maximum: 240_000)
+        guard longChunks.count == 4,
+              longChunks.first?.lowerBound == 0,
+              longChunks.last?.upperBound == 720_000,
+              zip(longChunks, longChunks.dropFirst()).allSatisfy({ $0.upperBound == $1.lowerBound }),
+              (212_000...224_000).contains(longChunks[0].upperBound),
+              (442_000...454_000).contains(longChunks[1].upperBound),
+              (668_000...680_000).contains(longChunks[2].upperBound)
+        else {
+            fatalError("45s multi-chunk boundaries split mid-speech or broke continuity: \(longChunks)")
+        }
+        let chunkA = try mel.features(conditioned[..<1600])
+        let chunkB = try mel.features(conditioned[..<1600])
+        guard chunkA.frames == chunkB.frames && zip(chunkA.values, chunkB.values).allSatisfy({ abs($0 - $1) < 1e-6 }) else {
+            fatalError("Repeated Mel feature extraction drifted")
         }
 
         print(
